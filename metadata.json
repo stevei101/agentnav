@@ -1,0 +1,5 @@
+{
+  "name": "Agentic Navigator",
+  "description": "A multi-agent knowledge explorer that uses specialized AI agents—such as summarizers, linkers, and visualizers—to collaboratively analyze and summarize complex documents or codebases. Powered by Gemini, it delivers coordinated, real-time insights through a web dashboard.",
+  "requestFramePermissions": []
+}
