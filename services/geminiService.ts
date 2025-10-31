@@ -1,11 +1,10 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = (window as any).GEMINI_API_KEY;
 
 if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+  throw new Error("API_KEY is not available. Check the config.js script and deployment configuration.");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
