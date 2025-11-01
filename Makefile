@@ -6,7 +6,8 @@
 
 # Detect Podman
 PODMAN := $(shell command -v podman 2> /dev/null)
-PODMAN_COMPOSE := $(shell command -v podman-compose 2> /dev/null)
+# Note: PODMAN_COMPOSE not currently used - all operations use native podman commands
+# Kept for potential future compose-based operations (e.g., demo target)
 
 # Load environment variables from .env file
 ifneq (,$(wildcard .env))
@@ -190,6 +191,8 @@ start-backend: check-podman network-create start-firestore
 start-frontend: check-podman network-create start-backend
 	@if ! podman ps -a --format "{{.Names}}" | grep -q "^$(FRONTEND_CONTAINER)$$"; then \
 		echo "🚀 Starting frontend..."; \
+		# Note: Monorepo structure - frontend files are in root
+		# Mounting root is intentional for this project structure
 		podman run -d \
 			--name $(FRONTEND_CONTAINER) \
 			--network $(NETWORK) \
