@@ -26,9 +26,6 @@ resource "google_project_service" "apis" {
 
     # Cloud Build (for Connect Repo / automatic deployments)
     "cloudbuild.googleapis.com",
-
-    # Source Repositories API (for GitHub integration)
-    "sourcerepo.googleapis.com",
   ])
 
   project = var.project_id
