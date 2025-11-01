@@ -12,7 +12,6 @@ RUN bun install --frozen-lockfile || bun install
 
 # Development stage
 FROM base AS development
-EXPOSE 3000
 EXPOSE 5173
 
 # Copy source code (will be mounted as volume in compose)
@@ -21,6 +20,6 @@ COPY . .
 
 # Ensure dependencies are available even after mount
 # Run Vite dev server with hot-reload via bun
-# Vite config already sets port 3000 and host 0.0.0.0
+# Vite config sets port 5173 (mapped to 3000 on host in docker-compose)
 CMD ["bun", "run", "dev"]
 

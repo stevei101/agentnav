@@ -6,17 +6,17 @@ services:
   agentnav-frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: frontend.Dockerfile.dev
       target: development
     container_name: agentnav-frontend
     ports:
-      - "3000:3000"
+      - "3000:5173"
     volumes:
       - .:/app
       - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:8080
-      - VITE_GEMINI_API_KEY=${GEMINI_API_KEY}
+      # SECURITY: Removed VITE_GEMINI_API_KEY - frontend should use backend API endpoint
     env_file:
       - .env
     networks:
@@ -24,7 +24,7 @@ services:
     depends_on:
       - agentnav-backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -33,7 +33,7 @@ services:
   agentnav-backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: backend/Dockerfile.dev
       target: development
     container_name: agentnav-backend
     ports:
@@ -55,7 +55,7 @@ services:
       firestore-emulator:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -65,7 +65,8 @@ services:
     image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
     container_name: firestore-emulator
     ports:
-      - "8081:8080"
+      - "8081:8080"  # API port
+      - "9090:9150"  # UI port (if available)
     volumes:
       - firestore-data:/firestore
     command: >

@@ -33,7 +33,15 @@ async def root():
 
 @app.get("/health", tags=["health"], response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint (legacy)"""
+    return HealthResponse(
+        status="healthy",
+        environment=os.getenv("ENVIRONMENT", "development")
+    )
+
+@app.get("/healthz", tags=["health"], response_model=HealthResponse)
+async def healthz_check():
+    """Health check endpoint (Cloud Run standard)"""
     return HealthResponse(
         status="healthy",
         environment=os.getenv("ENVIRONMENT", "development")
