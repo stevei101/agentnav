@@ -16,9 +16,17 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies using pip (PyTorch already in base image)
-COPY requirements-gemma.txt .
-RUN pip install --no-cache-dir -r requirements-gemma.txt
+# Install additional Python dependencies (PyTorch already in base image)
+# Only install packages not already in the base image to avoid disk space issues
+RUN pip install --no-cache-dir \
+    transformers>=4.40.0 \
+    accelerate>=0.30.0 \
+    bitsandbytes>=0.41.0 \
+    fastapi>=0.115.0 \
+    uvicorn[standard]>=0.30.0 \
+    pydantic>=2.0.0 \
+    python-dotenv>=1.0.0 \
+    huggingface-hub>=0.23.0
 
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
