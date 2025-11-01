@@ -28,3 +28,12 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
