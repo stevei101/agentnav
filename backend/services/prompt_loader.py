@@ -3,6 +3,7 @@ Prompt Loader Service
 Loads and caches agent prompts from Firestore
 """
 import logging
+import threading
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 
@@ -15,15 +16,16 @@ CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class PromptCache:
-    """In-memory cache for prompts with TTL"""
+    """In-memory cache for prompts with TTL (thread-safe)"""
     
     def __init__(self, ttl_seconds: int = CACHE_TTL_SECONDS):
         self.ttl_seconds = ttl_seconds
         self._cache: Dict[str, dict] = {}
+        self._lock = threading.Lock()
     
     def get(self, key: str) -> Optional[str]:
         """
-        Get cached value if not expired
+        Get cached value if not expired (thread-safe)
         
         Args:
             key: Cache key
@@ -31,47 +33,51 @@ class PromptCache:
         Returns:
             Cached value or None if expired/not found
         """
-        if key not in self._cache:
-            return None
-        
-        entry = self._cache[key]
-        if datetime.now() > entry["expires_at"]:
-            # Cache expired
-            del self._cache[key]
-            logger.debug(f"Cache expired for: {key}")
-            return None
-        
-        return entry["value"]
+        with self._lock:
+            if key not in self._cache:
+                return None
+            
+            entry = self._cache[key]
+            if datetime.now() > entry["expires_at"]:
+                # Cache expired
+                del self._cache[key]
+                logger.debug(f"Cache expired for: {key}")
+                return None
+            
+            return entry["value"]
     
     def set(self, key: str, value: str):
         """
-        Store value in cache with expiration
+        Store value in cache with expiration (thread-safe)
         
         Args:
             key: Cache key
             value: Value to cache
         """
-        self._cache[key] = {
-            "value": value,
-            "expires_at": datetime.now() + timedelta(seconds=self.ttl_seconds)
-        }
+        with self._lock:
+            self._cache[key] = {
+                "value": value,
+                "expires_at": datetime.now() + timedelta(seconds=self.ttl_seconds)
+            }
         logger.debug(f"Cached prompt: {key} (TTL: {self.ttl_seconds}s)")
     
     def clear(self):
-        """Clear all cached entries"""
-        self._cache.clear()
+        """Clear all cached entries (thread-safe)"""
+        with self._lock:
+            self._cache.clear()
         logger.info("Prompt cache cleared")
     
     def invalidate(self, key: str):
         """
-        Remove specific entry from cache
+        Remove specific entry from cache (thread-safe)
         
         Args:
             key: Cache key to invalidate
         """
-        if key in self._cache:
-            del self._cache[key]
-            logger.debug(f"Invalidated cache for: {key}")
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                logger.debug(f"Invalidated cache for: {key}")
 
 
 class PromptLoaderService:
