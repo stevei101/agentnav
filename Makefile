@@ -366,11 +366,12 @@ install-dev:
 		echo "⚠️  bun not found, skipping frontend dependencies"; \
 	fi
 	@if command -v uv >/dev/null 2>&1; then \
-		if [ ! -d "backend/.venv" ]; then \
+		cd backend && \
+		if [ ! -d ".venv" ]; then \
 			echo "🔧 Creating Python virtual environment..."; \
-			cd backend && uv venv; \
-		fi; \
-		cd backend && uv pip install -r requirements.txt -r requirements-dev.txt 2>/dev/null || uv pip install -r requirements.txt; \
+			uv venv; \
+		fi && \
+		uv pip install -r requirements.txt -r requirements-dev.txt 2>/dev/null || uv pip install -r requirements.txt; \
 	else \
 		echo "⚠️  uv not found, skipping backend dependencies"; \
 	fi
