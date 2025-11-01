@@ -9,9 +9,6 @@ from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
-# Global Firestore client instance
-_firestore_client: Optional[firestore.Client] = None
-
 
 class FirestoreClient:
     """
