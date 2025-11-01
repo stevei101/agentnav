@@ -2,7 +2,7 @@
 
 **Summary:**
 You are a professional full stack developer who has excellent working knowledge and experience with our systems.
-**Terraform** cloud deployments are used for Google Cloud, run by **GitHub Actions**. The code is **frontend** (UI with **TypeScript** and **React** with requirements managed by **bun**) and **backend** (Python API using **FastAPI** and **Google Agent Development Kit (ADK)** with **Agent2Agent (A2A) Protocol** orchestrated AI agents, with Python requirements managed by **uv**). **Firestore** is used for persistent session memory and knowledge caching. The whole project uses **Podman** to build containers and deploys with **Cloud Run** (serverless) on **GCP**. The requirements include IAM, **Google Artifact Registry (GAR)**, Workload Identity Federation, and Cloud Run's built-in TLS management for the domain: `agentnav.lornu.com` (or your configured domain).
+**Terraform** cloud deployments are used for Google Cloud, run by **GitHub Actions**. The code is **frontend** (UI with **TypeScript** and **React** with requirements managed by **bun**) and **backend** (Python API using **FastAPI** and **Google Agent Development Kit (ADK)** with **Agent2Agent (A2A) Protocol** orchestrated AI agents, with Python requirements managed by **uv**). **Firestore** is used for persistent session memory and knowledge caching. The whole project uses **Podman** to build containers and deploys with **Cloud Run** (serverless) on **GCP**. The requirements include IAM, **Google Artifact Registry (GAR)**, **Workload Identity Federation (WIF)** for GitHub Actions CI/CD, **Workload Identity (WI)** for Cloud Run service authentication, and Cloud Run's built-in TLS management for the domain: `agentnav.lornu.com` (or your configured domain).
 
 ## Overview of the Deployment Pipeline
 
@@ -16,7 +16,7 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 | :--- | :--- | :--- |
 | **Google Cloud Run** | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference. | Terraform, Cloud Run API |
 | **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)** | Terraform, Podman CI |
-| **GCP IAM & WIF** | **Workload Identity Federation (WIF)** allows the GitHub Actions runner to securely assume a GCP Service Account without using static keys. | Terraform, GitHub Actions |
+| **GCP IAM & Identity** | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
 | **Cloud DNS & TLS** | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination. | Terraform, Cloud Run |
 | **Firestore** | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). | Terraform, Firestore API |
 | **Secret Manager** | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets. | Terraform, Secret Manager API |
@@ -24,7 +24,66 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 
 ---
 
-## Application and Deployment Tools
+## Identity & Authentication Architecture
+
+The project uses **two distinct identity mechanisms** for different purposes:
+
+### 1. Workload Identity Federation (WIF) - For CI/CD
+
+**Purpose:** Secure authentication for GitHub Actions to access GCP during deployment.
+
+**Where Used:** GitHub Actions runner (CI/CD pipeline)
+
+**How It Works:**
+- GitHub Actions uses WIF to impersonate a GCP Service Account (the "Deployment Service Account")
+- Eliminates need for static, long-lived Service Account JSON keys stored as GitHub Secrets
+- Access is temporary, tied to GitHub Action runtime, and revocable
+- Required IAM roles: `roles/run.admin` (deploy Cloud Run), `roles/artifactregistry.writer` (push containers)
+
+**Setup:** Configured via Terraform in FR#007 (Terraform Infrastructure)
+
+**Benefits:**
+- No static credentials in GitHub Secrets
+- Improved security posture
+- Temporary, scoped access
+- Modern best practice for CI/CD
+
+### 2. Workload Identity (WI) - For Cloud Run Services
+
+**Purpose:** Secure authentication for running Cloud Run services to access other GCP services.
+
+**Where Used:** Running Cloud Run containers (backend, frontend, gemma-service)
+
+**How It Works:**
+- Each Cloud Run service has a built-in Service Account (defaults to Compute Engine default Service Account, or custom Service Account)
+- By granting this Service Account minimum necessary IAM roles, the running code automatically authenticates
+- No API keys, Service Account JSON files, or credential files needed in the container
+- Fully managed by GCP
+
+**Required IAM Roles:**
+- Backend Service Account:
+  - `roles/datastore.user` (Firestore read/write)
+  - `roles/secretmanager.secretAccessor` (Secret Manager access)
+- Gemma Service Account:
+  - `roles/secretmanager.secretAccessor` (if accessing Secret Manager)
+  - Custom IAM policy for A2A communication (if restricting to backend Service Account only)
+
+**Benefits:**
+- No credentials in container images
+- Automatic authentication
+- Least-privilege access via IAM roles
+- Standard Cloud Run best practice
+
+### Identity Summary Table
+
+| Identity Mechanism | Where Used | Purpose | Setup Method |
+| :--- | :--- | :--- | :--- |
+| **Workload Identity Federation (WIF)** | GitHub Actions Runner | CI/CD authentication (deploy, push containers) | Terraform (FR#007) |
+| **Workload Identity (WI)** | Cloud Run Services | Runtime authentication (Firestore, Secret Manager) | Terraform (Service Account IAM roles) |
+
+**Both are necessary** and represent modern GCP security best practices.
+
+---
 
 ### 1. Application Components
 
@@ -60,7 +119,7 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 
 1. **Code Commit:** Changes are pushed to the GitHub repository.
 2. **GitHub Action Trigger:** The push triggers a GitHub Actions workflow.
-3. **Authentication:** GitHub Actions uses **Workload Identity Federation** to securely authenticate to GCP.
+3. **Authentication:** GitHub Actions uses **Workload Identity Federation (WIF)** to securely authenticate to GCP for deployment tasks (eliminates need for static Service Account keys).
 4. **Terraform Provisioning (IaC):** The action triggers **Terraform Cloud** to provision/update GCP infrastructure (Cloud Run services, GAR, IAM, Cloud DNS, Firestore, Secret Manager).
 5. **Container Build (Podman):** The CI step uses **Podman** to build container images for both frontend and backend services. Images are tagged with the Git SHA and pushed to **Google Artifact Registry (GAR)**.
 6. **Application Deployment (Cloud Run):**
@@ -69,6 +128,7 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
    - Backend service: FastAPI orchestrator with ADK agents (region: `europe-west1`).
    - Gemma GPU service: GPU-accelerated model serving with NVIDIA L4 GPU (region: `europe-west1`).
    - Environment variables (including secrets from Secret Manager) are injected during deployment.
+   - Cloud Run services use **Workload Identity (WI)** with their Service Accounts to automatically authenticate to Firestore and Secret Manager (no credentials in containers).
    - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
    - **Final Commands:**
      - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
@@ -309,7 +369,8 @@ Firestore is used for persistent session memory and knowledge caching:
 
 - **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
 - **IAM Roles:** Use least-privilege IAM roles for all service accounts.
-- **Workload Identity Federation:** Prefer WIF over static service account keys.
+- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication (no credentials in containers).
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.

@@ -1,0 +1,51 @@
+# Files to ignore during Cloud Build
+# Similar to .dockerignore
+
+# Git
+.git
+.gitignore
+
+# Documentation
+docs/
+markdown/
+*.md
+README.md
+
+# Node modules (if not using Docker layer caching)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Terraform
+terraform/
+.terraform/
+*.tfstate
+*.tfvars
+
+# Docker
+docker-compose*.yml
+Makefile
+
+# Testing
+*.test.js
+*.spec.js
+test/
+tests/
+
