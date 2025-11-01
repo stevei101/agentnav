@@ -94,7 +94,6 @@ resource "google_iam_workload_identity_pool" "github_actions" {
   workload_identity_pool_id = var.workload_identity_pool_id
   display_name              = "GitHub Actions Pool"
   description               = "Workload Identity Pool for GitHub Actions CI/CD"
-  location                  = "global"
 }
 
 resource "google_iam_workload_identity_pool_provider" "github_actions" {
