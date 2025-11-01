@@ -1,13 +1,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 
+// SECURITY: Frontend no longer uses API keys directly
+// API calls should go through the backend API endpoint
+// This is kept for legacy compatibility but should be migrated to backend API calls
+
 const API_KEY = (window as any).GEMINI_API_KEY;
 
+// Gracefully handle missing API key - don't throw, let the backend handle it
+// TODO: Migrate to backend API endpoint for secure API key handling
 if (!API_KEY) {
-  throw new Error("API_KEY is not available. Check the config.js script and deployment configuration.");
+  console.warn("GEMINI_API_KEY not found. Frontend should use backend API endpoint instead.");
+  // Don't throw - let the backend handle API calls
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// Only initialize if API_KEY is available (for backward compatibility)
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 const analysisSchema = {
   type: Type.OBJECT,
@@ -78,6 +86,12 @@ Here is the content to analyze:
 ${documentText}
 ---
 `;
+
+  // TODO: Migrate to backend API endpoint (http://localhost:8080/api/analyze)
+  // For now, check if API key is available for backward compatibility
+  if (!ai) {
+    throw new Error("API key not configured. Please use the backend API endpoint instead: http://localhost:8080/api/analyze");
+  }
 
   try {
     const response = await ai.models.generateContent({
