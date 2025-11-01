@@ -13,6 +13,18 @@ logger = logging.getLogger(__name__)
 # Constants
 MAX_PROMPT_LENGTH = 2000  # Maximum length of document content in prompt
 
+# Fallback prompt (used if Firestore unavailable)
+FALLBACK_PROMPT = """Generate a {viz_type} visualization for the following content.
+
+Content:
+{content}
+
+Return a JSON structure with:
+- nodes: array of {{id, label, group}}
+- edges: array of {{from, to, label}}
+
+Focus on key concepts and their relationships."""
+
 
 class VisualizerAgent:
     """
@@ -24,6 +36,44 @@ class VisualizerAgent:
     
     def __init__(self, gemma_service_url: Optional[str] = None):
         self.gemma_service_url = gemma_service_url or os.getenv("GEMMA_SERVICE_URL")
+        self._prompt_template: Optional[str] = None
+    
+    def _get_prompt_template(self) -> str:
+        """
+        Get prompt template from Firestore or fallback
+        
+        Returns:
+            Prompt template string
+            
+        Raises:
+            RuntimeError: If Firestore unavailable in production/staging
+        """
+        # If already loaded, return cached version
+        if self._prompt_template:
+            return self._prompt_template
+        
+        try:
+            # Try to load from Firestore
+            from services.prompt_loader import get_prompt
+            self._prompt_template = get_prompt("visualizer_graph_generation")
+            logger.info("✅ Loaded prompt from Firestore")
+            return self._prompt_template
+        except Exception as e:
+            # Fallback behavior depends on environment
+            environment = os.getenv("ENVIRONMENT", "development")
+            
+            if environment in ["production", "staging"]:
+                # Critical error in production - enforce prompt management
+                error_msg = f"CRITICAL: Failed to load prompt from Firestore in {environment} environment"
+                logger.error(error_msg)
+                logger.error(f"   Error: {e}")
+                raise RuntimeError(error_msg)
+            else:
+                # Allow fallback for development only
+                logger.warning(f"⚠️  Could not load prompt from Firestore: {e}")
+                logger.info("Using fallback prompt (development mode only)")
+                self._prompt_template = FALLBACK_PROMPT
+                return self._prompt_template
         
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -44,17 +94,14 @@ class VisualizerAgent:
         # Determine visualization type
         viz_type = "MIND_MAP" if content_type == "document" else "DEPENDENCY_GRAPH"
         
-        # Create prompt for Gemma to generate graph structure
-        graph_prompt = f"""Generate a {viz_type} visualization for the following content.
+        # Get prompt template from Firestore (or fallback)
+        prompt_template = self._get_prompt_template()
         
-Content:
-{document[:MAX_PROMPT_LENGTH]}
-
-Return a JSON structure with:
-- nodes: array of {{id, label, group}}
-- edges: array of {{from, to, label}}
-
-Focus on key concepts and their relationships."""
+        # Create prompt for Gemma to generate graph structure
+        graph_prompt = prompt_template.format(
+            viz_type=viz_type,
+            content=document[:MAX_PROMPT_LENGTH]
+        )
 
         try:
             # Call Gemma GPU service for complex graph generation
