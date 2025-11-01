@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+FEATURE_REQUEST*.md
+SYSTEM_INSTRUCTION.md
+CURSOR_RESPONSE*.md
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# CI/CD
+.github/
+cloudbuild.yaml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+

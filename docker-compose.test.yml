@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  agentnav-backend:
+    extends:
+      file: docker-compose.yml
+      service: agentnav-backend
+    environment:
+      - ENVIRONMENT=test
+      - FIRESTORE_PROJECT_ID=agentnav-test
+    command: ["pytest", "-v", "--tb=short"]
+
+  firestore-emulator:
+    extends:
+      file: docker-compose.yml
+      service: firestore-emulator
+    environment:
+      - FIRESTORE_PROJECT_ID=agentnav-test
+
