@@ -4,6 +4,13 @@ variable "project_id" {
   # This will be set via environment variable or terraform.tfvars
 }
 
+variable "google_credentials" {
+  description = "GCP service account credentials JSON (for Terraform Cloud remote execution)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "default_region" {
   description = "Default GCP region"
   type        = string
