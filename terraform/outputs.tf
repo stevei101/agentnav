@@ -8,7 +8,7 @@
 
 output "wif_service_account_email" {
   description = "Service account email used by Workload Identity Federation"
-  value       = google_service_account.github_actions.email
+  value       = local.github_actions_sa_email
   sensitive   = false
 }
 
