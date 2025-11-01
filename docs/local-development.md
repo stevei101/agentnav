@@ -70,7 +70,7 @@ podman-compose up -d --build
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:8080
 - **API Documentation:** http://localhost:8080/docs
-- **Firestore Emulator:** http://localhost:8081
+- **Firestore Emulator API:** http://localhost:8081 (API-only, no built-in UI)
 
 ## Development Workflow
 
