@@ -107,8 +107,8 @@ resource "google_iam_workload_identity_pool_provider" "github_actions" {
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
     "attribute.repository" = "assertion.repository"
-    "attribute.actor"       = "assertion.actor"
-    "attribute.ref"         = "assertion.ref"
+    "attribute.actor"      = "assertion.actor"      # Available for future logging/auditing (not currently used in IAM conditions)
+    "attribute.ref"        = "assertion.ref"         # Available for future branch-specific policies (not currently used in IAM conditions)
   }
 
   oidc {
