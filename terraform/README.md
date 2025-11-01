@@ -11,6 +11,7 @@ This Terraform configuration provisions:
 - **Firestore** database for session memory and knowledge caching
 - **Secret Manager** secrets for API keys
 - **Cloud Run** service blueprints (frontend, backend, Gemma GPU)
+- **Cloud Build Triggers** for automatic "Connect Repo" deployments from GitHub (frontend & backend)
 
 ## Prerequisites
 
@@ -109,6 +110,7 @@ After `terraform apply`, you'll get WIF outputs that need to be added as GitHub 
 - `firestore.tf` - Firestore database
 - `secret_manager.tf` - Secret Manager secrets
 - `cloud_run.tf` - Cloud Run service definitions
+- `cloud_build.tf` - Cloud Build triggers for "Connect Repo" automatic deployments
 - `outputs.tf` - Output values (WIF info, service URLs, etc.)
 
 ## Outputs

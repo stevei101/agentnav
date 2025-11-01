@@ -65,3 +65,12 @@ output "project_number" {
   value       = data.google_project.current.number
 }
 
+# Cloud Build Triggers (Connect Repo)
+output "cloud_build_triggers" {
+  description = "Cloud Build trigger names for Connect Repo"
+  value = {
+    frontend = var.enable_connect_repo && length(google_cloudbuild_trigger.frontend) > 0 ? google_cloudbuild_trigger.frontend[0].name : null
+    backend  = var.enable_connect_repo && length(google_cloudbuild_trigger.backend) > 0 ? google_cloudbuild_trigger.backend[0].name : null
+  }
+}
+

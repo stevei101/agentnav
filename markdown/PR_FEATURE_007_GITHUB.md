@@ -188,7 +188,7 @@ gcloud iam workload-identity-pools list
 
 ## What's Changed
 
-### New Files (15 files)
+### New Files (19 files)
 
 **Core Terraform Configuration:**
 - `terraform/versions.tf` - Terraform and provider version requirements
@@ -205,6 +205,7 @@ gcloud iam workload-identity-pools list
 - `terraform/firestore.tf` - Firestore Native mode database
 - `terraform/secret_manager.tf` - Secret Manager secrets
 - `terraform/cloud_run.tf` - All 3 Cloud Run service blueprints
+- `terraform/cloud_build.tf` - **Cloud Build triggers for "Connect Repo"** (NEW - bonus feature)
 
 **Supporting Files:**
 - `terraform/.gitignore` - Git ignore rules for Terraform
@@ -212,9 +213,15 @@ gcloud iam workload-identity-pools list
 - `terraform/terraform.tfvars.example` - Configuration template
 - `terraform/scripts/post-apply-gpu-setup.sh` - GPU configuration helper
 
+**Cloud Build Configuration Files:**
+- `cloudbuild-frontend.yaml` - Frontend automatic deployment config
+- `cloudbuild-backend.yaml` - Backend automatic deployment config
+- `.cloudbuildignore` - Files excluded from Cloud Build
+
 **Documentation:**
 - `markdown/GITHUB_SECRETS_REQUIRED.md` - Complete secrets guide
 - `markdown/FEATURE_007_IMPLEMENTATION_STATUS.md` - Implementation status
+- `markdown/CONNECT_REPO_SETUP.md` - Connect Repo setup guide
 
 ### Modified Files
 
@@ -226,17 +233,25 @@ gcloud iam workload-identity-pools list
 
 ### 1. Automatic API Enablement
 - ✅ **NEW:** Automatically enables all required GCP APIs via Terraform
-- ✅ APIs: Cloud Run, Artifact Registry, Firestore, Secret Manager, IAM, Resource Manager
+- ✅ APIs: Cloud Run, Artifact Registry, Firestore, Secret Manager, IAM, Resource Manager, **Cloud Build**
 - ✅ Proper dependency management (APIs enabled before resource creation)
 - ✅ Timeout configuration (10 minutes for API enablement)
 
-### 2. Workload Identity Federation (WIF)
+### 2. Cloud Run "Connect Repo" (BONUS Feature!)
+- ✅ **Automatic deployments** from GitHub to Cloud Run
+- ✅ **Cloud Build triggers** configured for frontend and backend
+- ✅ **Build configurations** (`cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`)
+- ✅ **Push-to-deploy:** Automatically builds and deploys on push to main branch
+- ✅ **Simplified CI/CD:** Reduces need for complex GitHub Actions for standard deployments
+- ✅ **IAM permissions** properly configured for Cloud Build
+
+### 3. Workload Identity Federation (WIF)
 - ✅ WIF pool and provider for GitHub Actions
 - ✅ OIDC configuration for GitHub
 - ✅ Service account binding with repository-specific access
 - ✅ Secure CI/CD authentication (no static keys)
 
-### 3. Service Accounts & IAM
+### 4. Service Accounts & IAM
 - ✅ 4 service accounts with least-privilege roles:
   - Frontend Cloud Run service account
   - Backend Cloud Run service account
@@ -244,7 +259,7 @@ gcloud iam workload-identity-pools list
   - GitHub Actions service account
 - ✅ IAM role bindings for Firestore, Secret Manager, Artifact Registry, Cloud Run
 
-### 4. Cloud Run Service Blueprints
+### 5. Cloud Run Service Blueprints
 - ✅ **Frontend Service** (`us-central1`)
   - Port 80, 512Mi memory, 1 CPU
   - Public access, scaling 0-10 instances
@@ -261,15 +276,24 @@ gcloud iam workload-identity-pools list
   - Model configuration environment variables
   - Scaling 0-2 instances (cost control)
 
-### 5. Infrastructure Services
+### 6. Infrastructure Services
 - ✅ **Artifact Registry** - Docker repository for container images
 - ✅ **Firestore** - Native mode database with point-in-time recovery
 - ✅ **Secret Manager** - Secrets for API keys (GEMINI_API_KEY, HUGGINGFACE_TOKEN, FIRESTORE_CREDENTIALS)
 
-### 6. Terraform Cloud Integration
+### 7. Terraform Cloud Integration
 - ✅ Remote backend configuration
 - ✅ State management in Terraform Cloud
 - ✅ Outputs for GitHub Secrets configuration
+
+### 8. Cloud Run "Connect Repo" Integration (Bonus Feature!)
+- ✅ **Cloud Build triggers** for automatic deployments from GitHub
+- ✅ **Frontend & Backend:** Automatic build and deploy on push to main branch
+- ✅ **Cloud Build configurations** (`cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`)
+- ✅ **IAM permissions** configured for Cloud Build service account
+- ✅ **GitHub repository connection** via Terraform
+- ✅ **Simplified CI/CD:** No need for complex GitHub Actions workflows for standard deployments
+- ✅ **Gemma GPU:** Still uses manual deployment (GPU configuration complexity)
 
 ---
 
@@ -435,12 +459,14 @@ See `terraform/README.md` for detailed instructions.
 
 ## Future Enhancements
 
+- [x] **Cloud Run "Connect Repo" integration** (BONUS - completed!)
 - [ ] Terraform modules for multi-environment support (dev/staging/prod)
 - [ ] Custom domain mapping for Cloud Run services
 - [ ] Cloud DNS configuration
 - [ ] Monitoring and alerting setup
 - [ ] Backup and disaster recovery configuration
 - [ ] Cost optimization tags and labels
+- [ ] Cloud Build trigger for Gemma service (if GPU config becomes Terraform-supported)
 
 ---
 
@@ -483,6 +509,8 @@ frontend_service_url = "https://agentnav-frontend-xxx.run.app"
 **Next Steps After Merge:**
 1. User sets GitHub secrets
 2. User runs `terraform apply`
-3. User configures GPU and secrets
-4. CI/CD pipeline can begin using WIF for deployments
+3. User connects GitHub repository (one-time, see `markdown/CONNECT_REPO_SETUP.md`)
+4. User configures GPU and secrets
+5. **Automatic deployments enabled** - push to `main` branch triggers deployment!
+6. CI/CD pipeline can use WIF for Gemma GPU service (or manual deployment)
 

@@ -5,6 +5,12 @@ project_id = "your-gcp-project-id"
 github_repository = "stevei101/agentnav"
 environment = "prod"
 
+# GitHub branch for automatic deployments (Connect Repo)
+github_branch = "main"
+
+# Enable Cloud Run "Connect Repo" automatic deployments
+enable_connect_repo = true
+
 # Optional: Override defaults
 # default_region = "us-central1"
 # frontend_region = "us-central1"
