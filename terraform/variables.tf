@@ -16,17 +16,18 @@ variable "github_repository" {
   default     = "stevei101/agentnav"
 }
 
-variable "workload_identity_pool_id" {
-  description = "Workload Identity Pool ID for GitHub Actions"
-  type        = string
-  default     = "github-actions-pool"
-}
-
-variable "workload_identity_provider_id" {
-  description = "Workload Identity Provider ID for GitHub Actions"
-  type        = string
-  default     = "github-provider"
-}
+# TODO: Uncomment when WIF resources are uncommented in iam.tf
+# variable "workload_identity_pool_id" {
+#   description = "Workload Identity Pool ID for GitHub Actions"
+#   type        = string
+#   default     = "github-actions-pool"
+# }
+#
+# variable "workload_identity_provider_id" {
+#   description = "Workload Identity Provider ID for GitHub Actions"
+#   type        = string
+#   default     = "github-provider"
+# }
 
 variable "artifact_registry_location" {
   description = "Location for Artifact Registry (should match region with GPU support)"
