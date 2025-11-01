@@ -1,463 +1,290 @@
-# GPU Setup Guide for Cloud Run
-## Adding Gemma Model with NVIDIA L4 GPU
+# GPU Setup Guide for Gemma Service
 
-This guide helps you add GPU support to target the **GPU Category** in addition to the AI Agents category.
-
----
+This guide covers deploying the Gemma GPU service on Cloud Run with NVIDIA L4 GPU acceleration.
 
 ## Prerequisites
 
-1. Google Cloud Project with billing enabled
-2. GPU quota requested (if needed)
-3. gcloud SDK installed and configured
-4. Docker/Podman installed
+1. **GCP Project** with billing enabled
+2. **GPU Quota** in `europe-west1` region
+   - Request NVIDIA L4 GPU quota via Cloud Console if needed
+   - Default quota is often 0 GPUs, requires approval
+3. **Google Artifact Registry (GAR)** repository for container images
+4. **gcloud CLI** installed and authenticated
+5. **Podman** installed for building containers
 
----
+## GPU Quota Request
 
-## Step 1: Request GPU Quota
+1. Go to [GCP Console > IAM & Admin > Quotas](https://console.cloud.google.com/iam-admin/quotas)
+2. Filter by:
+   - **Service:** Cloud Run API
+   - **Location:** europe-west1
+   - **Metric:** NVIDIA L4 GPUs
+3. Click "Edit Quotas" and request 1-2 GPUs
+4. Wait for approval (usually 1-2 business days)
 
-### Check Current Quota
+## Quick Deployment
+
+### Option 1: Using Deployment Script
 
 ```bash
-# List GPU quotas
-gcloud compute project-info describe \
-  --project=YOUR_PROJECT_ID \
-  --format="value(quotas)"
-
-# Or check in Cloud Console:
-# https://console.cloud.google.com/iam-admin/quotas
-# Filter: "NVIDIA L4 GPUs" in europe-west1
-```
-
-### Request Quota Increase
-
-1. Go to [Cloud Console Quotas](https://console.cloud.google.com/iam-admin/quotas)
-2. Filter: `NVIDIA L4 GPUs` in `europe-west1`
-3. Select quota
-4. Click "EDIT QUOTAS"
-5. Request increase (start with 1-2 GPUs)
-6. Wait for approval (usually minutes to hours)
-
----
-
-## Step 2: Create Gemma Dockerfile
-
-Create `backend/Dockerfile.gemma`:
-
-```dockerfile
-# Use Python base image with CUDA support
-FROM python:3.11-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PyTorch with CUDA support
-RUN pip install --no-cache-dir \
-    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Install transformers and other dependencies
-RUN pip install --no-cache-dir \
-    transformers \
-    accelerate \
-    fastapi \
-    uvicorn \
-    httpx
-
-# Copy Gemma service code
-WORKDIR /app
-COPY backend/gemma_service.py .
-COPY backend/requirements-gemma.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements-gemma.txt
-
-# Expose port
-EXPOSE 8080
-
 # Set environment variables
-ENV PORT=8080
-ENV MODEL_NAME=google/gemma-7b-it
+export GCP_PROJECT_ID=your-project-id
+export GAR_REPO=docker-repo
+export IMAGE_TAG=latest
 
-# Run Gemma service
-CMD ["python", "gemma_service.py"]
+# Run deployment script
+./scripts/deploy-gemma.sh
 ```
 
----
+### Option 2: Manual Deployment
 
-## Step 3: Create Gemma Service Code
-
-Create `backend/gemma_service.py`:
-
-```python
-"""
-Gemma Service - Runs Gemma model on GPU-enabled Cloud Run
-"""
-import os
-import torch
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForCausalLM
-
-app = FastAPI()
-
-# Load model on startup
-MODEL_NAME = os.getenv("MODEL_NAME", "google/gemma-7b-it")
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-print(f"Loading model {MODEL_NAME} on {device}...")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-    device_map="auto" if device == "cuda" else None
-)
-if device == "cpu":
-    model = model.to(device)
-
-print(f"Model loaded successfully on {device}")
-
-class GenerateRequest(BaseModel):
-    prompt: str
-    max_tokens: int = 500
-    temperature: float = 0.7
-
-class GenerateResponse(BaseModel):
-    text: str
-    device: str
-
-@app.get("/healthz")
-async def health_check():
-    """Health check endpoint for Cloud Run"""
-    return {
-        "status": "healthy",
-        "device": device,
-        "model": MODEL_NAME,
-        "gpu_available": torch.cuda.is_available()
-    }
-
-@app.post("/generate", response_model=GenerateResponse)
-async def generate(request: GenerateRequest):
-    """Generate text using Gemma model"""
-    try:
-        # Tokenize input
-        inputs = tokenizer(request.prompt, return_tensors="pt").to(device)
-        
-        # Generate
-        with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=request.max_tokens,
-                temperature=request.temperature,
-                do_sample=True
-            )
-        
-        # Decode output
-        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        return GenerateResponse(
-            text=generated_text,
-            device=device
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
-```
-
----
-
-## Step 4: Create Requirements File
-
-Create `backend/requirements-gemma.txt`:
-
-```
-torch>=2.0.0
-transformers>=4.35.0
-accelerate>=0.24.0
-fastapi>=0.104.0
-uvicorn>=0.24.0
-httpx>=0.25.0
-```
-
----
-
-## Step 5: Build and Push Image
+#### Step 1: Build Container Image
 
 ```bash
-# Set variables
-PROJECT_ID=your-project-id
-IMAGE_NAME=gemma-service
-REGION=europe-west1
+cd backend
+podman build -f Dockerfile.gemma -t gemma-service:latest .
+```
 
-# Build image with Podman
-podman build -f backend/Dockerfile.gemma \
-  -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/agentnav-repo/${IMAGE_NAME}:latest \
-  .
+#### Step 2: Tag for Google Artifact Registry
 
-# Authenticate with Artifact Registry
+```bash
+export PROJECT_ID=your-project-id
+export REGION=europe-west1
+export GAR_REPO=docker-repo
+
+podman tag gemma-service:latest \
+  ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest
+```
+
+#### Step 3: Authenticate to GAR
+
+```bash
 gcloud auth configure-docker ${REGION}-docker.pkg.dev
-
-# Push image
-podman push ${REGION}-docker.pkg.dev/${PROJECT_ID}/agentnav-repo/${IMAGE_NAME}:latest
 ```
 
----
-
-## Step 6: Deploy to Cloud Run with GPU
+#### Step 4: Push Image to GAR
 
 ```bash
-# Deploy Gemma service with GPU
+podman push \
+  ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest
+```
+
+#### Step 5: Deploy to Cloud Run
+
+```bash
 gcloud run deploy gemma-service \
-  --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/agentnav-repo/${IMAGE_NAME}:latest \
-  --region=${REGION} \
-  --platform=managed \
-  --cpu=gpu \
-  --memory=16Gi \
-  --gpu-type=nvidia-l4 \
-  --gpu-count=1 \
-  --port=8080 \
+  --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest \
+  --region europe-west1 \
+  --platform managed \
+  --cpu gpu \
+  --memory 16Gi \
+  --gpu-type nvidia-l4 \
+  --gpu-count 1 \
+  --port 8080 \
+  --timeout 300s \
+  --min-instances 0 \
+  --max-instances 2 \
   --allow-unauthenticated \
-  --set-env-vars="MODEL_NAME=google/gemma-7b-it" \
-  --timeout=300s \
-  --max-instances=2 \
-  --min-instances=0
-
-# Get service URL
-gcloud run services describe gemma-service \
-  --region=${REGION} \
-  --format="value(status.url)"
+  --set-env-vars "MODEL_NAME=google/gemma-7b-it"
 ```
 
----
+## Service Configuration
 
-## Step 7: Integrate with Backend
+### Resource Requirements
 
-Update `backend/services/gemma_service.py`:
+- **Memory:** 16Gi (for Gemma 7B) or 8Gi (for Gemma 2B)
+- **GPU:** NVIDIA L4 (1 GPU)
+- **CPU:** GPU-enabled (automatically set with `--cpu gpu`)
+- **Port:** 8080 (Cloud Run standard)
 
-```python
-import os
-import httpx
+### Environment Variables
 
-GEMMA_SERVICE_URL = os.getenv(
-    "GEMMA_SERVICE_URL",
-    "https://gemma-service-XXXXX.run.app"  # Replace with your URL
-)
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MODEL_NAME` | Hugging Face model name | `google/gemma-7b-it` |
+| `HUGGINGFACE_TOKEN` | Optional: For private models | - |
+| `USE_8BIT_QUANTIZATION` | Enable 8-bit quantization | `false` |
+| `PORT` | Service port (set by Cloud Run) | `8080` |
 
-async def generate_with_gemma(prompt: str, max_tokens: int = 500) -> str:
-    """Call Gemma service running on GPU"""
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        try:
-            response = await client.post(
-                f"{GEMMA_SERVICE_URL}/generate",
-                json={
-                    "prompt": prompt,
-                    "max_tokens": max_tokens,
-                    "temperature": 0.7
-                }
-            )
-            response.raise_for_status()
-            return response.json()["text"]
-        except httpx.HTTPError as e:
-            print(f"Error calling Gemma service: {e}")
-            raise
-```
+### Scaling Configuration
 
----
+- **Min Instances:** 0 (scale to zero to save costs)
+- **Max Instances:** 2 (control costs with GPU)
+- **Concurrency:** 1 request per instance (GPU workloads)
 
-## Step 8: Update Visualizer Agent
+## Verifying Deployment
 
-Update `backend/agents/visualizer_agent.py`:
-
-```python
-from google.adk import Agent
-from services.gemma_service import generate_with_gemma
-
-class VisualizerAgent(Agent):
-    async def process(self, context: dict) -> dict:
-        """Use Gemma on GPU for complex graph generation"""
-        
-        # Use Gemma for complex visualization tasks
-        graph_prompt = f"""
-        Analyze this document and create a knowledge graph:
-        
-        {context['document'][:2000]}
-        
-        Generate nodes and edges in JSON format.
-        """
-        
-        # Call Gemma service (GPU-accelerated)
-        graph_data = await generate_with_gemma(graph_prompt, max_tokens=1000)
-        
-        # Parse and structure
-        return self.parse_graph_data(graph_data)
-```
-
----
-
-## Step 9: Update Environment Variables
-
-Add to your `.env` file:
+### 1. Check Service Status
 
 ```bash
-# Gemma GPU Service
-GEMMA_SERVICE_URL=https://gemma-service-XXXXX.run.app
+gcloud run services describe gemma-service --region europe-west1
 ```
 
-Update Cloud Run backend service:
+### 2. Test Health Endpoint
 
 ```bash
-gcloud run services update agentnav-backend \
-  --region=us-central1 \
-  --set-env-vars="GEMMA_SERVICE_URL=https://gemma-service-XXXXX.run.app"
+SERVICE_URL=$(gcloud run services describe gemma-service \
+  --region europe-west1 \
+  --format='value(status.url)')
+
+curl ${SERVICE_URL}/healthz
 ```
 
----
-
-## Step 10: Test GPU Service
-
-```bash
-# Test health endpoint
-curl https://gemma-service-XXXXX.run.app/healthz
-
-# Test generation
-curl -X POST https://gemma-service-XXXXX.run.app/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Explain quantum computing in simple terms.",
-    "max_tokens": 200
-  }'
-```
-
----
-
-## Step 11: Monitor GPU Usage
-
-### View GPU Metrics
-
-```bash
-# View service logs
-gcloud run services logs read gemma-service --region=europe-west1
-
-# View in Cloud Console
-# https://console.cloud.google.com/run/detail/europe-west1/gemma-service/metrics
-```
-
-### Check GPU Utilization
-
-The health endpoint returns GPU status:
+Expected response:
 ```json
 {
   "status": "healthy",
-  "device": "cuda",
   "model": "google/gemma-7b-it",
-  "gpu_available": true
+  "device": "cuda",
+  "gpu_available": true,
+  "model_loaded": true,
+  "gpu_name": "NVIDIA L4",
+  "gpu_memory_gb": 24.0
 }
 ```
 
----
+### 3. Test Generation Endpoint
 
-## ?? Cost Considerations
+```bash
+curl -X POST ${SERVICE_URL}/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Explain quantum computing in simple terms:",
+    "max_tokens": 100,
+    "temperature": 0.7
+  }'
+```
 
-### GPU Pricing (Approximate)
-- **NVIDIA L4 GPU**: ~$0.75/hour per GPU
-- **Memory**: 16Gi recommended
-- **Min instances**: 0 (scale to zero when not in use)
-- **Max instances**: 2 (limit costs)
+## Integration with Backend
+
+### 1. Set Environment Variable
+
+Add to your backend service:
+
+```bash
+gcloud run services update agentnav-backend \
+  --set-env-vars "GEMMA_SERVICE_URL=https://gemma-service-XXXXX.run.app"
+```
+
+### 2. Use in Code
+
+```python
+from services.gemma_service import generate_with_gemma
+
+# Generate text
+text = await generate_with_gemma(
+    prompt="Analyze this code: ...",
+    max_tokens=500,
+    temperature=0.7
+)
+```
+
+## Cost Management
+
+### Estimated Costs
+
+- **NVIDIA L4 GPU:** ~$0.75/hour per GPU
+- **Memory:** Included with GPU instance
+- **With scale-to-zero:** Only pay when processing requests
 
 ### Cost Optimization Tips
-1. **Scale to zero** - Set min-instances=0
-2. **Use only when needed** - Call Gemma for complex tasks only
-3. **Cache results** - Store in Firestore
-4. **Batch requests** - Process multiple requests together
 
----
+1. **Set min-instances=0** to scale to zero when idle
+2. **Limit max-instances** to control peak costs
+3. **Use caching** to reduce GPU calls
+4. **Consider smaller model** (Gemma 2B) if cost is concern
+5. **Monitor usage** via Cloud Console metrics
 
-## ?? Troubleshooting
+### Setting Up Cost Alerts
 
-### Issue: "Quota exceeded"
+1. Go to [Cloud Console > Billing > Budgets & Alerts](https://console.cloud.google.com/billing/budgets)
+2. Create budget alert for Cloud Run GPU usage
+3. Set threshold (e.g., $50/month)
+
+## Troubleshooting
+
+### Model Not Loading
+
+- **Check logs:** `gcloud run services logs read gemma-service --region europe-west1`
+- **Verify memory:** May need to increase to 16Gi for Gemma 7B
+- **Check model name:** Ensure Hugging Face model name is correct
+
+### GPU Not Detected
+
+- **Verify GPU quota:** Check quotas in europe-west1
+- **Check Cloud Run configuration:** Ensure `--cpu gpu --gpu-type nvidia-l4` is set
+- **Check logs:** Look for CUDA/GPU initialization messages
+
+### Slow Startup
+
+- **Model download:** First startup downloads model (~13GB for Gemma 7B)
+- **Timeout:** Increase `--timeout` to 300s or higher
+- **Warm instances:** Consider setting `--min-instances 1` for faster response
+
+### Out of Memory
+
+- **Use smaller model:** Switch to `google/gemma-2b-it`
+- **Enable quantization:** Set `USE_8BIT_QUANTIZATION=true`
+- **Increase memory:** Use 16Gi or higher
+
+## Monitoring
+
+### View Metrics
+
+1. Go to [Cloud Console > Cloud Run > gemma-service](https://console.cloud.google.com/run)
+2. View metrics:
+   - Request count
+   - Latency
+   - GPU utilization (if available)
+   - Memory usage
+   - Error rate
+
+### View Logs
+
 ```bash
-# Request quota increase
-gcloud compute project-info describe --project=YOUR_PROJECT_ID
-# Then request via Cloud Console
+gcloud run services logs read gemma-service --region europe-west1 --limit 50
 ```
 
-### Issue: "GPU not available"
+## Security
+
+### Authentication (Production)
+
+For production, remove `--allow-unauthenticated` and set up authentication:
+
 ```bash
-# Check region
-gcloud run services describe gemma-service --region=europe-west1
-
-# Verify GPU configuration
-gcloud run services describe gemma-service --region=europe-west1 \
-  --format="value(spec.template.spec.containers[0].resources)"
+gcloud run deploy gemma-service \
+  --no-allow-unauthenticated \
+  --service-account gemma-service@PROJECT_ID.iam.gserviceaccount.com
 ```
 
-### Issue: "Model too large"
-- Use smaller model: `google/gemma-2b-it`
-- Reduce memory: `--memory=8Gi`
-- Use quantization
+### Secret Management
 
-### Issue: "Slow startup"
-- Increase timeout: `--timeout=600s`
-- Use pre-warmed instances: `--min-instances=1`
-- Optimize Dockerfile (layer caching)
+Store Hugging Face token in Secret Manager:
 
----
+```bash
+# Create secret
+echo -n "your-token" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
 
-## ? Verification Checklist
+# Grant access to Cloud Run service account
+gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
+  --member="serviceAccount:gemma-service@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
 
-- [ ] GPU quota approved
-- [ ] Gemma Dockerfile created
-- [ ] Service code written
-- [ ] Image built and pushed
-- [ ] Service deployed with GPU
-- [ ] Health check working
-- [ ] Backend integrated
-- [ ] Visualizer Agent updated
-- [ ] Environment variables set
-- [ ] GPU usage visible in metrics
-
----
-
-## ?? Architecture Update
-
-Add to your architecture diagram:
-
-```
-???????????????????????????????????????????
-?      Backend (Cloud Run)               ?
-?      us-central1                       ?
-?      ????????????????????????          ?
-?      ?  Visualizer Agent    ?          ?
-?      ????????????????????????          ?
-??????????????????????????????????????????
-                   ?
-         ?????????????????????
-         ?                    ?
-???????????????????  ???????????????????
-?  Gemini API     ?  ?  Gemma Service  ?
-?  (Cloud API)    ?  ?  Cloud Run GPU  ?
-?                 ?  ?  NVIDIA L4      ?
-?                 ?  ?  europe-west1   ?
-???????????????????  ???????????????????
+# Use in deployment
+gcloud run services update gemma-service \
+  --set-secrets "HUGGINGFACE_TOKEN=HUGGINGFACE_TOKEN:latest"
 ```
 
----
+## Next Steps
 
-## ?? Next Steps
+1. **Integrate with Visualizer Agent** - Use Gemma for complex graph generation
+2. **Add caching** - Cache frequent queries to reduce GPU calls
+3. **Performance testing** - Benchmark GPU vs CPU performance
+4. **Update architecture diagram** - Include Gemma service
+5. **Documentation** - Update SYSTEM_INSTRUCTION.md with GPU service details
 
-1. ? Complete GPU setup
-2. ? Update architecture diagram
-3. ? Update demo video to show GPU
-4. ? Update submission text
-5. ? Test end-to-end
-6. ? Monitor costs
+## References
 
----
-
-**You're now targeting BOTH categories! ????**
+- [Cloud Run GPU Documentation](https://cloud.google.com/run/docs/using/gpus)
+- [Gemma Model Card](https://huggingface.co/google/gemma-7b-it)
+- [NVIDIA L4 GPU Specs](https://www.nvidia.com/en-us/data-center/l4/)
