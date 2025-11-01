@@ -77,7 +77,17 @@
 - ✅ **`terraform/README.md`** - Comprehensive documentation
 - ✅ **`terraform/scripts/post-apply-gpu-setup.sh`** - GPU configuration script
 
-### 5. Documentation
+### 5. Cloud Build "Connect Repo" Integration
+
+- ✅ **`terraform/cloud_build.tf`** - Cloud Build triggers for automatic deployments
+- ✅ **`cloudbuild-frontend.yaml`** - Build config for frontend automatic deployment
+- ✅ **`cloudbuild-backend.yaml`** - Build config for backend automatic deployment
+- ✅ **`.cloudbuildignore`** - Files to exclude from Cloud Build
+- ✅ IAM permissions for Cloud Build service account
+- ✅ GitHub repository connection configured
+- ✅ Automatic deployment on push to main branch
+
+### 6. Documentation
 
 - ✅ **`markdown/GITHUB_SECRETS_REQUIRED.md`** - Complete secrets guide
 - ✅ **`terraform/README.md`** - Setup and usage instructions
@@ -99,16 +109,7 @@ Set these secrets in GitHub before running Terraform:
 
 ### Phase 2: Terraform Setup
 
-1. **Enable Required APIs:**
-   ```bash
-   gcloud services enable \
-     run.googleapis.com \
-     artifactregistry.googleapis.com \
-     firestore.googleapis.com \
-     secretmanager.googleapis.com \
-     iam.googleapis.com \
-     cloudresourcemanager.googleapis.com
-   ```
+1. **Note:** APIs are automatically enabled by Terraform (see `apis.tf`)
 
 2. **Configure Terraform:**
    ```bash
@@ -123,6 +124,23 @@ Set these secrets in GitHub before running Terraform:
    terraform plan
    terraform apply
    ```
+
+4. **Connect GitHub Repository (first time only):**
+   ```bash
+   # This may require manual setup in Cloud Console:
+   # 1. Go to Cloud Build > Triggers
+   # 2. Click "Connect Repository"
+   # 3. Select GitHub and authorize
+   # 4. Select your repository
+   # 
+   # Or use gcloud:
+   gcloud builds triggers connect github \
+     --repo-name=agentnav \
+     --repo-owner=stevei101 \
+     --region=global
+   ```
+   
+   **Note:** After connecting, Terraform triggers will work automatically!
 
 ### Phase 3: Post-Apply Configuration
 

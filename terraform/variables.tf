@@ -76,3 +76,15 @@ variable "domain_name" {
   default     = ""
 }
 
+variable "github_branch" {
+  description = "GitHub branch to deploy from (e.g., 'main', 'production')"
+  type        = string
+  default     = "main"
+}
+
+variable "enable_connect_repo" {
+  description = "Enable Cloud Run Connect Repo for automatic deployments from GitHub"
+  type        = bool
+  default     = true
+}
+
