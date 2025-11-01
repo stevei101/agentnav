@@ -77,8 +77,7 @@ def seed_prompts():
     logger.info("🌱 Starting prompt seeding...")
     
     try:
-        firestore_client = get_firestore_client()
-        collection = firestore_client.get_collection("agent_prompts")
+        collection = get_firestore_client().get_collection("agent_prompts")
         
         seeded_count = 0
         updated_count = 0
@@ -92,9 +91,11 @@ def seed_prompts():
                 if doc.exists:
                     # Update existing document
                     logger.info(f"  ↻ Updating existing prompt: {prompt_id}")
+                    current_version = doc.to_dict().get("version", 1)
                     doc_ref.update({
                         "prompt_text": prompt_text,
                         "updated_at": datetime.now(timezone.utc),
+                        "version": current_version + 1,
                     })
                     updated_count += 1
                 else:
@@ -136,11 +137,9 @@ def verify_seed():
     logger.info("🔍 Verifying seed...")
     
     try:
-        firestore_client = get_firestore_client()
-        
         for prompt_id in PROMPTS.keys():
             try:
-                prompt_text = get_prompt_loader().get_prompt(prompt_id)
+                get_prompt_loader().get_prompt(prompt_id)
                 logger.info(f"  ✓ {prompt_id}: Loaded successfully")
             except Exception as e:
                 logger.error(f"  ✗ {prompt_id}: Failed to load - {e}")
