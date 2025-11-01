@@ -2,6 +2,7 @@
 Summarizer Agent - ADK Implementation
 Creates concise, comprehensive summaries of content
 """
+import hashlib
 import logging
 from typing import Dict, Any
 from .base_agent import Agent, A2AMessage
@@ -196,8 +197,8 @@ Create a comprehensive summary that captures the essence and key information.
                 "session_id": insights.get("session_id", "default")  # Could be passed in context
             }
             
-            # Use content hash as document ID for deduplication
-            content_hash = str(hash(summary))
+            # Use content hash as document ID for deduplication (deterministic across restarts)
+            content_hash = hashlib.sha256(summary.encode('utf-8')).hexdigest()[:16]  # Use first 16 chars
             await db.collection("summaries").document(content_hash).set(doc_data)
             
             self.logger.info(f"💾 Stored summary results in Firestore: {content_hash}")
