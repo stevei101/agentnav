@@ -3,10 +3,15 @@ Visualizer Agent
 Uses Gemma GPU service for complex graph generation tasks
 """
 import os
+import json
+import re
 import logging
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
+
+# Constants
+MAX_PROMPT_LENGTH = 2000  # Maximum length of document content in prompt
 
 
 class VisualizerAgent:
@@ -43,7 +48,7 @@ class VisualizerAgent:
         graph_prompt = f"""Generate a {viz_type} visualization for the following content.
         
 Content:
-{document[:2000]}  # Limit prompt length
+{document[:MAX_PROMPT_LENGTH]}
 
 Return a JSON structure with:
 - nodes: array of {{id, label, group}}
@@ -63,20 +68,18 @@ Focus on key concepts and their relationships."""
             )
             
             # Parse the response (Gemma should return JSON)
-            import json
             try:
                 # Try to extract JSON from the response
                 graph_data = json.loads(graph_text)
             except json.JSONDecodeError:
                 # If not pure JSON, try to extract it
-                import re
                 json_match = re.search(r'\{.*\}', graph_text, re.DOTALL)
                 if json_match:
                     graph_data = json.loads(json_match.group())
                 else:
                     # Fallback: create basic structure
                     logger.warning("Could not parse JSON from Gemma response, using fallback")
-                    graph_data = self._create_fallback_graph(document, viz_type)
+                    return self._create_fallback_graph(document, viz_type)
             
             return {
                 "type": viz_type,
@@ -92,11 +95,23 @@ Focus on key concepts and their relationships."""
             return self._create_fallback_graph(document, viz_type)
     
     def _create_fallback_graph(self, document: str, viz_type: str) -> Dict[str, Any]:
-        """Create a basic fallback graph structure"""
+        """
+        Create a basic fallback graph structure.
+        
+        Returns consistent structure matching successful response format:
+        - type: visualization type
+        - title: visualization title
+        - nodes: array of graph nodes
+        - edges: array of graph edges
+        - generated_by: service identifier
+        """
         return {
+            "type": viz_type,
+            "title": f"{viz_type} Visualization",
             "nodes": [
                 {"id": "root", "label": "Content Root", "group": "main"}
             ],
-            "edges": []
+            "edges": [],
+            "generated_by": "fallback",
         }
 

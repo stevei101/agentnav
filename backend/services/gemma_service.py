@@ -57,12 +57,12 @@ class GemmaServiceClient:
                 result = response.json()
                 return result["text"]
                 
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as e:
             logger.error("Gemma service timeout")
-            raise Exception("Gemma service request timeout")
+            raise Exception("Gemma service request timeout") from e
         except httpx.HTTPStatusError as e:
             logger.error(f"Gemma service error: {e.response.status_code}")
-            raise Exception(f"Gemma service error: {e.response.status_code}")
+            raise Exception(f"Gemma service error: {e.response.status_code}") from e
         except Exception as e:
             logger.error(f"Error calling Gemma service: {e}")
             raise
