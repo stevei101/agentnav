@@ -243,16 +243,25 @@ ps: check-podman
 # Follow all logs
 logs: check-podman
 	@echo "📊 Following logs from all running containers (Ctrl+C to exit)..."
-	@running_containers=""; \
+	@running_count=0; \
 	for container in $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER); do \
 		if podman ps --format "{{.Names}}" | grep -q "^$$container$$"; then \
-			running_containers="$$running_containers $$container"; \
+			running_count=$$((running_count + 1)); \
 		fi; \
 	done; \
-	if [ -z "$$running_containers" ]; then \
+	if [ $$running_count -eq 0 ]; then \
 		echo "⚠️  No containers are running. Use 'make up' to start them."; \
 	else \
-		podman logs -f $$running_containers; \
+		echo "Following logs from $$running_count container(s)..."; \
+		for container in $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER); do \
+			if podman ps --format "{{.Names}}" | grep -q "^$$container$$"; then \
+				echo ""; \
+				echo "━━━ Logs for $$container ━━━"; \
+				podman logs -f $$container 2>&1 & \
+			fi; \
+		done; \
+		trap 'kill 0' INT TERM; \
+		wait; \
 	fi
 
 # Follow frontend logs only
