@@ -1,0 +1,25 @@
+# Frontend Development Dockerfile
+# Multi-stage build for optimal development experience
+# Uses bun's efficient dependency management (no node_modules needed)
+
+FROM oven/bun:latest AS base
+WORKDIR /app
+
+# Install dependencies using bun
+# Note: bun creates node_modules for compatibility with tools like vite
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile || bun install
+
+# Development stage
+FROM base AS development
+EXPOSE 5173
+
+# Copy source code (will be mounted as volume in compose)
+# Note: bun stores dependencies globally, so mounting source won't overwrite them
+COPY . .
+
+# Ensure dependencies are available even after mount
+# Run Vite dev server with hot-reload via bun
+# Vite config sets port 5173 (mapped to 3000 on host in docker-compose)
+CMD ["bun", "run", "dev"]
+

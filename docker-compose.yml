@@ -1,0 +1,97 @@
+# Podman-compatible Docker Compose V2 syntax
+# Works with both 'podman-compose' and 'docker-compose' commands
+version: '3.8'
+
+services:
+  agentnav-frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile.dev
+      target: development
+    container_name: agentnav-frontend
+    ports:
+      - "3000:5173"
+    volumes:
+      # Note: Monorepo structure - frontend files are in root directory
+      # Mounting root (.:/app) is intentional for this project structure
+      # In production or refactored projects, use ./frontend:/app instead
+      - .:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      # SECURITY: Removed VITE_GEMINI_API_KEY - frontend should use backend API endpoint
+    env_file:
+      - .env
+    networks:
+      - agentnav-network
+    depends_on:
+      - agentnav-backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  agentnav-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+      # Note: Single-stage build (no target needed)
+    container_name: agentnav-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - backend-venv:/app/.venv
+    environment:
+      - ENVIRONMENT=development
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:8080
+      - FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-agentnav-dev}
+      - FIRESTORE_DATABASE_ID=${FIRESTORE_DATABASE_ID:-default}
+    env_file:
+      - .env
+    networks:
+      - agentnav-network
+    depends_on:
+      firestore-emulator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  firestore-emulator:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+    container_name: firestore-emulator
+    ports:
+      - "8081:8080"  # API port
+      - "9090:9150"  # UI port (if available)
+    volumes:
+      - firestore-data:/firestore
+    command: >
+      gcloud beta emulators firestore start
+      --host-port=0.0.0.0:8080
+      --project=${FIRESTORE_PROJECT_ID:-agentnav-dev}
+    environment:
+      - FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-agentnav-dev}
+    networks:
+      - agentnav-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  backend-venv:
+  firestore-data:
+
+networks:
+  agentnav-network:
+    driver: bridge
+
