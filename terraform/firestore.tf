@@ -3,7 +3,7 @@
 resource "google_firestore_database" "main" {
   project     = var.project_id
   name        = var.firestore_database_id
-  location_id = var.backend_region  # Firestore location should match backend region
+  location_id = var.backend_region # Firestore location should match backend region
   type        = "FIRESTORE_NATIVE"
 
   # Point-in-time recovery (optional but recommended)
