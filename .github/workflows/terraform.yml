@@ -81,9 +81,6 @@ jobs:
         with:
           working_directory: terraform
           soft_fail: true
-          format: default
-          output_format: json
-          output_file_path: terraform/tfsec-results.json
         continue-on-error: true
 
       - name: Terraform Plan
