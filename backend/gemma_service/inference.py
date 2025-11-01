@@ -3,7 +3,6 @@ Inference functions for Gemma model
 Handles text generation and tokenization
 """
 import logging
-from typing import Optional
 import torch
 
 logger = logging.getLogger(__name__)

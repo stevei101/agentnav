@@ -4,7 +4,6 @@ Handles GPU detection, model loading, and device management
 """
 import os
 import logging
-from typing import Optional
 import torch
 
 logger = logging.getLogger(__name__)
@@ -72,9 +71,8 @@ class ModelLoader:
                 token=os.getenv("HUGGINGFACE_TOKEN")
             )
             
-            # Move to device if not using device_map
-            if self.device == "cuda" and "device_map" not in model_kwargs:
-                self.model = self.model.to(self.device)
+            # When device_map="auto" is used, model placement is handled automatically
+            # No need to manually move to device in that case
             
             # Set to evaluation mode
             self.model.eval()
