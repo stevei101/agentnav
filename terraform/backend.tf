@@ -1,16 +1,17 @@
 # Terraform Cloud Backend Configuration
 # State is stored remotely in Terraform Cloud
+# This uses partial configuration - values must be provided via:
+#   - Environment variables: TF_CLOUD_ORGANIZATION, TF_WORKSPACE
+#   - CLI flags: -backend-config="organization=..." -backend-config="workspaces.name=..."
+#   - terraform.tfvars (if using a local backend alternative)
 terraform {
   backend "remote" {
-    organization = "CHANGE_ME"  # Set via environment variable TF_CLOUD_ORGANIZATION
-
-    workspaces {
-      name = "CHANGE_ME"  # Set via environment variable TF_WORKSPACE
-    }
+    # Organization and workspace must be provided via -backend-config flags or environment variables
+    # Do NOT hardcode values here - use partial configuration instead
   }
 }
 
-# Note: To initialize with Terraform Cloud:
+# To initialize with Terraform Cloud backend:
 # terraform init \
 #   -backend-config="organization=YOUR_ORG" \
 #   -backend-config="workspaces.name=YOUR_WORKSPACE"
