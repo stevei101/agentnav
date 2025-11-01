@@ -200,14 +200,6 @@ resource "google_cloud_run_v2_service" "gemma" {
       }
     }
 
-    # GPU Configuration (v2 API)
-    vpc_access {
-      # VPC connector not currently configured (connector = null)
-      # If GPU services need VPC access in the future, configure a VPC connector here
-      connector = null
-      egress    = "ALL_TRAFFIC"
-    }
-
     timeout = "300s"
   }
 
