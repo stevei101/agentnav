@@ -3,7 +3,7 @@
 
 **A multi-agent knowledge explorer for complex documents and codebases.**
 
-This project is a submission for the **Google Cloud Run Hackathon** on Devpost (**AI Agents + GPU Categories**). It demonstrates a multi-agent AI system built with Google's Agent Development Kit (ADK), Agent2Agent (A2A) Protocol, Gemma model on GPU, and deployed on Cloud Run.
+This project is a submission for the **Google Cloud Run Hackathon** on Devpost (**AI Agents + GPU Categories**). It demonstrates a multi-agent AI system using Gemini models, Gemma GPU service, and deployed on Cloud Run.
 
 ?? **Hackathon Categories:** AI Agents + GPU  
 ?? **Devpost:** https://run.devpost.com/
@@ -30,27 +30,43 @@ The system consists of the following agents:
 -   **Dynamic UI**: The web dashboard allows users to pan, zoom, and hover over the graph to explore connections in real-time.
 -   **Real-time Status Updates**: The UI shows the status of each agent as it works, providing transparency into the analysis process.
 
-## Technology Stack
+## ?? Built With
 
-### Core Technologies
--   **AI Model**: **Google Gemini 2.5 Pro** for advanced reasoning, instruction-following, and JSON output capabilities.
--   **Agent Framework**: **Google Agent Development Kit (ADK)** for agent orchestration.
--   **Agent Communication**: **Agent2Agent (A2A) Protocol** for inter-agent messaging.
--   **Frontend Framework**: **React** with **TypeScript** for a robust and scalable user interface.
--   **Styling**: **Tailwind CSS** for rapid and modern UI development.
--   **Visualization**: A custom-built interactive graph component using **SVG**, providing full control over rendering and user interactions without heavy library dependencies.
--   **Backend**: **FastAPI** with Python for API endpoints and agent coordination.
--   **Database**: **Firestore** for session persistence and knowledge caching.
--   **Deployment**: **Google Cloud Run** for serverless container hosting.
+**Languages & Frameworks**
+- ?? **Python** ? core backend logic, FastAPI orchestrator  
+- ?? **React + TypeScript** ? responsive web dashboard for visualization  
+- ?? **Tailwind CSS** ? modern UI styling (via CDN)
+
+**AI & ML**
+- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation  
+- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization  
+- ?? **Recharts** ? interactive data visualization library
+
+**Cloud Infrastructure**
+- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard  
+- ??? **Google Firestore** ? session memory and persistent agent state  
+- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1  
+- ?? **Google Artifact Registry (GAR)** ? container image storage  
+- ?? **Google Secret Manager** ? secure credential storage
+
+**Developer Tools & DevOps**
+- ?? **Podman** ? containerization for reproducible deployments  
+- ?? **Vite** ? fast frontend build tool and dev server  
+- ?? **uv** ? fast Python package management  
+- ?? **GitHub Actions** ? automated testing and Cloud Run deployment  
+- ??? **Terraform Cloud** ? infrastructure as code provisioning  
+- ?? **Workload Identity Federation (WIF)** ? secure GitHub Actions authentication
+
+**Other Utilities**
+- ?? **Markdown** ? documentation and knowledge representation  
+- ?? **OpenAPI / FastAPI Docs** ? API endpoints and interface documentation
 
 ### Hackathon Requirements Met
 
 **AI Agents Category:**
-? Built with Google's Agent Development Kit (ADK)  
 ? Multi-agent system (4 agents: Orchestrator, Summarizer, Linker, Visualizer)  
-? Agents communicate via A2A Protocol  
 ? Deployed to Cloud Run  
-? Uses Google AI models (Gemini)
+? Uses Google AI models (Gemini + Gemma)
 
 **GPU Category:**
 ? Gemma model deployed on Cloud Run with NVIDIA L4 GPU  
@@ -255,7 +271,7 @@ agentnav/
 ??? Makefile                    # Development commands (Podman-based)
 ??? .env.example                # Environment variables template
 ??? cloudbuild.yaml             # Cloud Build CI/CD
-??? package.json                # Frontend dependencies (bun)
+??? package.json                # Frontend dependencies
 ??? vite.config.ts              # Vite configuration
 ??? SYSTEM_INSTRUCTION.md       # System architecture guide
 ```
@@ -312,8 +328,8 @@ For more troubleshooting, see [docs/local-development.md](docs/local-development
 
 Built for the [Google Cloud Run Hackathon](https://run.devpost.com/) using:
 - Google Cloud Run (Serverless)
-- Google Agent Development Kit (ADK)
-- Agent2Agent (A2A) Protocol
 - Google Gemini API (for agent reasoning)
 - Gemma Model on NVIDIA L4 GPU (for GPU acceleration)
 - Google Firestore (for session persistence)
+- Podman (container builds)
+- Terraform Cloud (infrastructure provisioning)
