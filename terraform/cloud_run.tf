@@ -19,7 +19,7 @@ resource "google_cloud_run_v2_service" "frontend" {
 
     containers {
       name  = "frontend"
-      image = "gcr.io/${var.project_id}/agentnav-frontend:latest"  # Placeholder - updated by CI/CD
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-frontend:latest"  # Placeholder - updated by CI/CD
 
       ports {
         container_port = 80
@@ -69,7 +69,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
     containers {
       name  = "backend"
-      image = "gcr.io/${var.project_id}/agentnav-backend:latest"  # Placeholder - updated by CI/CD
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-backend:latest"  # Placeholder - updated by CI/CD
 
       ports {
         container_port = 8080
@@ -202,7 +202,8 @@ resource "google_cloud_run_v2_service" "gemma" {
 
     # GPU Configuration (v2 API)
     vpc_access {
-      # GPU services may need VPC access
+      # VPC connector not currently configured (connector = null)
+      # If GPU services need VPC access in the future, configure a VPC connector here
       connector = null
       egress    = "ALL_TRAFFIC"
     }
