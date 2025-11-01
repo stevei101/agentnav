@@ -13,8 +13,8 @@ resource "google_secret_manager_secret" "gemini_api_key" {
   }
 
   labels = {
-    service   = "backend"
-    api_type  = "gemini"
+    service    = "backend"
+    api_type   = "gemini"
     managed_by = "terraform"
   }
 

@@ -14,8 +14,8 @@ data "google_project" "project" {
 resource "google_project_iam_member" "cloudbuild_service_account_roles" {
   for_each = toset([
     "roles/run.admin",                    # Deploy to Cloud Run
-    "roles/iam.serviceAccountUser",      # Use service accounts
-    "roles/artifactregistry.writer",     # Push images to Artifact Registry
+    "roles/iam.serviceAccountUser",       # Use service accounts
+    "roles/artifactregistry.writer",      # Push images to Artifact Registry
     "roles/secretmanager.secretAccessor", # Access secrets during build
   ])
 
