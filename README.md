@@ -42,6 +42,37 @@ The system consists of the following agents:
 4.  **Structured Output**: The API returns a single, clean JSON object containing the summary and the complete data for the visualization (type, title, nodes, and edges).
 5.  **Rendering**: The React application parses the JSON response and dynamically renders the summary and the interactive graph, allowing the user to explore the results.
 
+## Local Development
+
+This project includes a complete Podman-based local development environment.
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone <repo-url>
+cd agentnav
+
+# One command setup (handles everything!)
+make setup
+
+# View logs
+make logs
+
+# See all commands
+make help
+```
+
+For detailed local development instructions, see [docs/local-development.md](docs/local-development.md).
+
+### What's Included
+
+- **Frontend**: React + TypeScript + Vite with hot-reload
+- **Backend**: FastAPI with hot-reload (ready for ADK integration)
+- **Firestore Emulator**: Local database for development
+- **Makefile**: Simplified commands for all operations
+- **Podman Support**: Automatic Podman machine management (macOS)
+
 ## Deployment & Automation
 
 This project is configured for automated deployment to Google Cloud Run using Cloud Build.

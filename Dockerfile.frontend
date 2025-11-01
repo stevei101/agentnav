@@ -1,0 +1,20 @@
+# Frontend Development Dockerfile
+# Multi-stage build for optimal development experience
+
+FROM oven/bun:latest AS base
+WORKDIR /app
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install
+
+# Development stage
+FROM base AS development
+EXPOSE 3000
+
+# Copy source code (will be mounted as volume in compose)
+COPY . .
+
+# Run Vite dev server with hot-reload
+CMD ["bun", "run", "dev", "--host", "0.0.0.0", "--port", "3000"]
+
