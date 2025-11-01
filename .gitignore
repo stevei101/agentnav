@@ -96,3 +96,5 @@ PROJECT_COMPLETION_SUMMARY.md
 REVIEW_ANALYSIS_COMPLETE.md
 CI_WORKFLOW_FIX.md
 
+=======
+>>>>>>> f6e564d... Remove .env file and update .gitignore
