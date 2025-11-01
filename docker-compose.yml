@@ -12,6 +12,9 @@ services:
     ports:
       - "3000:5173"
     volumes:
+      # Note: Monorepo structure - frontend files are in root directory
+      # Mounting root (.:/app) is intentional for this project structure
+      # In production or refactored projects, use ./frontend:/app instead
       - .:/app
       - /app/node_modules
     environment:

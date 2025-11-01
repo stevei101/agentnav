@@ -10,9 +10,12 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
+      // SECURITY: Removed GEMINI_API_KEY exposure - frontend should call backend API
+      // API keys should NEVER be exposed to browser/client-side code
+      // Frontend should use backend API endpoints for secure API key handling
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        // Only include safe, public configuration
+        // API_KEY removed for security - use backend API instead
       },
       resolve: {
         alias: {
