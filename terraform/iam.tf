@@ -35,6 +35,11 @@ resource "google_service_account" "github_actions" {
   project      = var.project_id
 
   depends_on = [google_project_service.apis]
+
+  # Service account may already exist from manual creation
+  lifecycle {
+    ignore_changes = [display_name, description]
+  }
 }
 
 # IAM roles for Cloud Run services
