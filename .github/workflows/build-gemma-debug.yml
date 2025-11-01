@@ -17,26 +17,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show repo layout and Dockerfile
+      - name: Show repo layout and Dockerfile(s)
         run: |
           set -x
           echo "Repository root contents:"
           ls -la
           echo "\nbackend directory contents:"
           ls -la backend || true
-          echo "\nShow backend/Dockerfile.gemma (if present):"
+          echo "\nShow backend/Dockerfile.gemma.ci (CI friendly):"
+          sed -n '1,240p' backend/Dockerfile.gemma.ci || true
+          echo "\nShow backend/Dockerfile.gemma (GPU production Dockerfile):"
           sed -n '1,240p' backend/Dockerfile.gemma || true
 
-      - name: Build Gemma image (context: ./backend)
+      - name: Build Gemma CI image - context ./backend
         run: |
           set -x
           docker version
-          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma -t gemma:pr-${{ github.event.number }} ./backend
+          echo "Building CI-friendly image using backend/Dockerfile.gemma.ci"
+          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma.ci -t gemma-ci:pr-${{ github.event.number }} ./backend
 
-      - name: Build Gemma image (context: repo root) (debug alternate)
+      - name: Build Gemma production image - debug alternate
         if: failure()
         run: |
           set -x
+          echo "Attempting to build production GPU image (backend/Dockerfile.gemma) with repo root as context"
           docker build --progress=plain --no-cache -f backend/Dockerfile.gemma -t gemma:pr-${{ github.event.number }} .
 
       - name: Finish
