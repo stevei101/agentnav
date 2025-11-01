@@ -88,3 +88,21 @@ variable "enable_connect_repo" {
   default     = true
 }
 
+variable "frontend_container_port" {
+  description = "Container port for frontend Cloud Run service"
+  type        = number
+  default     = 80
+}
+
+variable "backend_container_port" {
+  description = "Container port for backend Cloud Run service"
+  type        = number
+  default     = 8080
+}
+
+variable "gemma_container_port" {
+  description = "Container port for Gemma GPU Cloud Run service"
+  type        = number
+  default     = 8080
+}
+
