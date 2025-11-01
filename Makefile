@@ -168,6 +168,7 @@ start-backend: check-podman network-create start-firestore
 			--network $(NETWORK) \
 			-p 8080:8080 \
 			-v $$(pwd)/backend:/app \
+			-v backend-venv:/app/.venv \
 			-e PORT=8080 \
 			-e ENVIRONMENT=development \
 			-e GEMINI_API_KEY=$${GEMINI_API_KEY} \
@@ -185,6 +186,7 @@ start-backend: check-podman network-create start-firestore
 	fi
 
 # Start frontend
+# Note: VITE_GEMINI_API_KEY removed for security - frontend should use backend API
 start-frontend: check-podman network-create start-backend
 	@if ! podman ps -a --format "{{.Names}}" | grep -q "^$(FRONTEND_CONTAINER)$$"; then \
 		echo "🚀 Starting frontend..."; \
@@ -196,7 +198,6 @@ start-frontend: check-podman network-create start-backend
 			-v frontend-node-modules:/app/node_modules:Z \
 			-e VITE_API_URL=http://localhost:8080 \
 			agentnav-frontend:dev; \
-			# Note: VITE_GEMINI_API_KEY removed for security - frontend should use backend API
 	else \
 		if ! podman ps --format "{{.Names}}" | grep -q "^$(FRONTEND_CONTAINER)$$"; then \
 			echo "🔄 Starting existing frontend container..."; \
@@ -346,7 +347,7 @@ clean: check-podman
 	@echo "🧹 Cleaning up containers, volumes, and networks..."
 	@podman stop $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER) 2>/dev/null || true
 	@podman rm $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER) 2>/dev/null || true
-	@podman volume rm firestore-data frontend-node-modules 2>/dev/null || true
+	@podman volume rm firestore-data frontend-node-modules backend-venv 2>/dev/null || true
 	@podman network rm $(NETWORK) 2>/dev/null || true
 	@echo "✅ Cleanup complete."
 
