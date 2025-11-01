@@ -1,9 +1,10 @@
 # Workload Identity Federation Outputs (for GitHub Secrets)
-output "wif_provider" {
-  description = "Workload Identity Federation Provider resource name"
-  value       = google_iam_workload_identity_pool_provider.github_actions.name
-  sensitive   = false
-}
+# TODO: Uncomment when WIF resources are imported into Terraform state
+# output "wif_provider" {
+#   description = "Workload Identity Federation Provider resource name"
+#   value       = google_iam_workload_identity_pool_provider.github_actions.name
+#   sensitive   = false
+# }
 
 output "wif_service_account_email" {
   description = "Service account email used by Workload Identity Federation"
