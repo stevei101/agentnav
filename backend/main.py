@@ -52,3 +52,24 @@ async def api_docs():
     """API documentation endpoint"""
     return {"docs_url": "/docs"}
 
+
+# Gemma Service Integration Example
+# Uncomment when Gemma service is deployed
+# from services.gemma_service import generate_with_gemma
+
+# @app.post("/api/generate", tags=["agents"])
+# async def generate_text(prompt: str, max_tokens: int = 500):
+#     """
+#     Generate text using Gemma GPU service
+#     Example integration endpoint
+#     """
+#     try:
+#         text = await generate_with_gemma(
+#             prompt=prompt,
+#             max_tokens=max_tokens,
+#         )
+#         return {"generated_text": text}
+#     except Exception as e:
+#         from fastapi import HTTPException
+#         raise HTTPException(status_code=503, detail=f"Gemma service unavailable: {str(e)}")
+
