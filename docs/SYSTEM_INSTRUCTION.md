@@ -283,7 +283,7 @@ class SummarizerAgent(Agent):
 
 ## Firestore Schema
 
-Firestore is used for persistent session memory and knowledge caching:
+Firestore is used for persistent session memory, knowledge caching, and agent prompt management:
 
 **Collections:**
 
@@ -302,6 +302,15 @@ Firestore is used for persistent session memory and knowledge caching:
   - `session_id` (document ID)
   - `context_data` (map)
   - `last_updated_by` (agent name)
+  
+- `agent_prompts/` - **Agent prompt configurations** (externalized for AI Studio compliance)
+  - Document IDs: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
+  - `prompt_text` (string) - The actual prompt template
+  - `created_at`, `updated_at` (timestamp)
+  - `version` (integer) - Prompt version number
+  - `metadata` (map) - Additional metadata
+    - `agent_name` - Name of the agent
+    - `prompt_type` - Type/use case of the prompt
 
 ---
 
