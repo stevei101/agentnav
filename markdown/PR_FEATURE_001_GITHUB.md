@@ -18,6 +18,7 @@ Implements a complete Podman-based local development environment enabling develo
 - ? Makefile with Podman-native commands
 - ? Setup/teardown scripts (`scripts/podman-setup.sh`, `scripts/podman-teardown.sh`)
 - ? Environment template (`.env.example`)
+- ? `.dockerignore` for optimized builds
 - ? Developer documentation (`docs/local-development.md`)
 
 ### Modified
@@ -42,7 +43,7 @@ make setup  # Handles Podman machine, .env, build & start
 ### Services Included
 - **Frontend** (React + TypeScript + Vite) - Port 3000, hot-reload
 - **Backend** (FastAPI + Python) - Port 8080, auto-reload  
-- **Firestore Emulator** - Ports 8081 (API), 9090 (UI)
+- **Firestore Emulator** - Port 8081 (API only, UI port mapping may not be available)
 
 ### Cloud Run Alignment
 - ? PORT environment variable support

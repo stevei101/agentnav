@@ -54,6 +54,7 @@ This PR introduces a **Podman-based containerized development environment** that
    - `scripts/podman-setup.sh` - One-command setup script
    - `scripts/podman-teardown.sh` - Cleanup script
    - `.env.example` - Environment variables template
+   - `.dockerignore` - Optimized build context (excludes docs, git, node_modules)
 
 4. **Documentation**
    - `docs/local-development.md` - Comprehensive developer guide
@@ -74,6 +75,7 @@ Makefile                             # Podman-based development commands
 scripts/podman-setup.sh              # Setup automation script
 scripts/podman-teardown.sh           # Cleanup script
 .env.example                         # Environment variables template
+.dockerignore                        # Build context optimization
 docs/local-development.md            # Developer guide
 ```
 
@@ -125,7 +127,7 @@ make logs-firestore  # Firestore emulator logs
 **Services:**
 - `agentnav-frontend` - React dev server (port 3000, hot-reload)
 - `agentnav-backend` - FastAPI dev server (port 8080, auto-reload)
-- `firestore-emulator` - Firestore emulator (ports 8081 API, 9090 UI)
+- `firestore-emulator` - Firestore emulator (port 8081 API, port 9090:9150 UI mapping - UI may not be available)
 
 **Features:**
 - Volume mounts for live code reloading
@@ -168,6 +170,7 @@ make logs-firestore  # Firestore emulator logs
    - Frontend: http://localhost:3000 (should load React app)
    - Backend: http://localhost:8080/docs (should show FastAPI docs)
    - Health: http://localhost:8080/healthz (should return healthy)
+   - Firestore API: http://localhost:8081 (should be accessible)
 
 5. **Test Cleanup:**
    ```bash
@@ -204,7 +207,7 @@ $ make setup
    - Backend API:   http://localhost:8080
    - API Docs:      http://localhost:8080/docs
    - Health Check:  http://localhost:8080/healthz
-   - Firestore UI:  http://localhost:9090
+   - Firestore API: http://localhost:8081
 ```
 
 ### Health Check Output
@@ -250,6 +253,7 @@ Firestore Emulator:
 - [x] Makefile with Podman commands implemented
 - [x] Setup scripts created
 - [x] Environment template (`.env.example`) created
+- [x] `.dockerignore` configured for optimized builds
 - [x] Documentation written
 - [x] Health checks implemented
 - [x] Hot-reload configured for both services
