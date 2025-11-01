@@ -6,12 +6,9 @@ FROM oven/bun:latest AS base
 WORKDIR /app
 
 # Install dependencies using bun
-# Note: bun installs to node_modules for compatibility, even though it uses a global cache
+# Note: bun creates node_modules for compatibility with tools like vite
 COPY package.json bun.lockb* ./
 RUN bun install --frozen-lockfile || bun install
-
-# Verify vite is installed
-RUN bun pm ls | grep vite || echo "Installing dependencies..."
 
 # Development stage
 FROM base AS development

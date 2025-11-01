@@ -144,7 +144,6 @@ start-firestore: check-podman network-create
 			--name $(FIRESTORE_CONTAINER) \
 			--network $(NETWORK) \
 			-p 8081:8080 \
-			-p 4000:4000 \
 			-v firestore-data:/firestore \
 			-e FIRESTORE_PROJECT_ID=$${FIRESTORE_PROJECT_ID:-agentnav-dev} \
 			gcr.io/google.com/cloudsdktool/cloud-sdk:emulators \
@@ -194,6 +193,7 @@ start-frontend: check-podman network-create start-backend
 			--network $(NETWORK) \
 			-p 3000:3000 \
 			-v $$(pwd):/app:Z \
+			-v frontend-node-modules:/app/node_modules:Z \
 			-e VITE_API_URL=http://localhost:8080 \
 			-e VITE_GEMINI_API_KEY=$${GEMINI_API_KEY} \
 			agentnav-frontend:dev; \
@@ -215,7 +215,7 @@ up: start-frontend
 	@echo "   - Backend API:   http://localhost:8080"
 	@echo "   - API Docs:      http://localhost:8080/docs"
 	@echo "   - Health Check:  http://localhost:8080/healthz"
-	@echo "   - Firestore UI:  http://localhost:4000"
+	@echo "   - Firestore API: http://localhost:8081 (FIRESTORE_EMULATOR_HOST=localhost:8081)"
 	@echo ""
 	@echo "📊 View logs: make logs"
 
@@ -321,14 +321,15 @@ health: check-podman
 		echo "  ❌ Backend health check failed"
 	@echo ""
 	@echo "Frontend Health Check:"
-	@curl -s http://localhost:5173 >/dev/null 2>&1 && \
+	@curl -s http://localhost:3000 >/dev/null 2>&1 && \
 		echo "  ✅ Frontend is healthy" || \
 		echo "  ❌ Frontend health check failed"
 	@echo ""
 	@echo "Firestore Emulator:"
 	@curl -s http://localhost:8081 >/dev/null 2>&1 && \
-		echo "  ✅ Firestore emulator is running" || \
-		echo "  ❌ Firestore emulator is not accessible"
+		echo "  ✅ Firestore emulator API is running (http://localhost:8081)" || \
+		echo "  ❌ Firestore emulator API is not accessible"
+	@echo "  ℹ️  Note: Firestore emulator is API-only (no built-in UI)"
 	@echo ""
 
 # Clean: Stop and remove everything (including volumes)
@@ -336,7 +337,7 @@ clean: check-podman
 	@echo "🧹 Cleaning up containers, volumes, and networks..."
 	@podman stop $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER) 2>/dev/null || true
 	@podman rm $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER) 2>/dev/null || true
-	@podman volume rm firestore-data 2>/dev/null || true
+	@podman volume rm firestore-data frontend-node-modules 2>/dev/null || true
 	@podman network rm $(NETWORK) 2>/dev/null || true
 	@echo "✅ Cleanup complete."
 
