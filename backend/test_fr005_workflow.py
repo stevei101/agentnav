@@ -180,7 +180,14 @@ Applications include image recognition, natural language processing, and recomme
 
 
 async def test_context_persistence():
-    """Test Firestore context persistence"""
+    """
+    Test Firestore context persistence
+    
+    Note: This test requires Firestore to be available (emulator or production).
+    If Firestore is unavailable, the test will detect this and pass with a warning.
+    The system is designed to gracefully handle Firestore unavailability,
+    continuing operation without persistence (context will not be recovered on failure).
+    """
     print("\n🧪 Testing Context Persistence Service")
     
     try:

@@ -7,6 +7,10 @@ from pydantic import BaseModel, Field
 import time
 
 
+# Standard agent execution order for the workflow
+STANDARD_AGENT_ORDER = ["orchestrator", "summarizer", "linker", "visualizer"]
+
+
 class EntityRelationship(BaseModel):
     """
     Relationship between two entities
@@ -119,9 +123,12 @@ class SessionContext(BaseModel):
         })
     
     def is_complete(self) -> bool:
-        """Check if all required agents have completed"""
-        required_agents = ["orchestrator", "summarizer", "linker", "visualizer"]
-        return all(agent in self.completed_agents for agent in required_agents)
+        """
+        Check if all required agents have completed
+        
+        Uses the standard agent order defined in STANDARD_AGENT_ORDER.
+        """
+        return all(agent in self.completed_agents for agent in STANDARD_AGENT_ORDER)
     
     def to_firestore_dict(self) -> Dict[str, Any]:
         """

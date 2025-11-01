@@ -311,8 +311,15 @@ class AgentWorkflow:
             
         Returns:
             Updated SessionContext with all agent outputs
+            
+        Raises:
+            TypeError: If session_context is not a SessionContext instance
         """
         from models.context_model import SessionContext
+        
+        # Validate input type
+        if not isinstance(session_context, SessionContext):
+            raise TypeError(f"session_context must be a SessionContext instance, got {type(session_context)}")
         
         # Initialize persistence service if not already done
         if self.persistence_service is None:
@@ -326,7 +333,9 @@ class AgentWorkflow:
         session_context.workflow_status = "in_progress"
         
         # Define execution order for sequential workflow
-        execution_order = ["orchestrator", "summarizer", "linker", "visualizer"]
+        # Uses standard agent order from context_model
+        from models.context_model import STANDARD_AGENT_ORDER
+        execution_order = STANDARD_AGENT_ORDER
         
         for agent_name in execution_order:
             if agent_name not in self.agents:

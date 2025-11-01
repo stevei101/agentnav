@@ -74,7 +74,13 @@ class ContextPersistenceService:
             
         Returns:
             SessionContext if found, None otherwise
+            
+        Raises:
+            ValueError: If session_id is empty or None
         """
+        if not session_id:
+            raise ValueError("session_id cannot be empty or None")
+        
         try:
             client = self._get_client()
             doc_ref = client.get_document(self._collection_name, session_id)
