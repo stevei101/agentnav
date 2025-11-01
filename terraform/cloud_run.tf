@@ -19,10 +19,10 @@ resource "google_cloud_run_v2_service" "frontend" {
 
     containers {
       name  = "frontend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-frontend:latest"  # Placeholder - updated by CI/CD
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-frontend:latest" # Placeholder - updated by CI/CD
 
       ports {
-        container_port = 80
+        container_port = var.frontend_container_port
       }
 
       resources {
@@ -69,15 +69,15 @@ resource "google_cloud_run_v2_service" "backend" {
 
     containers {
       name  = "backend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-backend:latest"  # Placeholder - updated by CI/CD
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-backend:latest" # Placeholder - updated by CI/CD
 
       ports {
-        container_port = 8080
+        container_port = var.backend_container_port
       }
 
       env {
         name  = "PORT"
-        value = "8080"
+        value = tostring(var.backend_container_port)
       }
 
       env {
@@ -154,20 +154,20 @@ resource "google_cloud_run_v2_service" "gemma" {
 
     scaling {
       min_instance_count = 0
-      max_instance_count = 2  # GPU instances are expensive
+      max_instance_count = 2 # GPU instances are expensive
     }
 
     containers {
       name  = "gemma"
-      image = "${var.gemma_region}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/gemma-service:latest"  # Placeholder
+      image = "${var.gemma_region}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/gemma-service:latest" # Placeholder
 
       ports {
-        container_port = 8080
+        container_port = var.gemma_container_port
       }
 
       env {
         name  = "PORT"
-        value = "8080"
+        value = tostring(var.gemma_container_port)
       }
 
       env {
