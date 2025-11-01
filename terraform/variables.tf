@@ -70,12 +70,6 @@ variable "environment" {
   default     = "prod"
 }
 
-variable "domain_name" {
-  description = "Custom domain name for Cloud Run services (optional)"
-  type        = string
-  default     = ""
-}
-
 variable "github_branch" {
   description = "GitHub branch to deploy from (e.g., 'main', 'production')"
   type        = string
