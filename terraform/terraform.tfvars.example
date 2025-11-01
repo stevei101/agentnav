@@ -1,0 +1,16 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id = "your-gcp-project-id"
+github_repository = "stevei101/agentnav"
+environment = "prod"
+
+# Optional: Override defaults
+# default_region = "us-central1"
+# frontend_region = "us-central1"
+# backend_region = "europe-west1"
+# gemma_region = "europe-west1"
+# artifact_registry_location = "europe-west1"
+# artifact_registry_repository_id = "agentnav-containers"
+# firestore_database_id = "agentnav-db"
+
