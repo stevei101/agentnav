@@ -134,7 +134,7 @@ build: check-podman podman-start
 	@echo "Building frontend..."
 	@podman build -f frontend.Dockerfile.dev -t agentnav-frontend:dev --target development .
 	@echo "Building backend..."
-	@podman build -f backend/Dockerfile.dev -t agentnav-backend:dev --target development ./backend
+	@podman build -f backend/Dockerfile.dev -t agentnav-backend:dev ./backend
 	@echo "✅ All containers built successfully"
 
 # Start Firestore emulator
@@ -188,11 +188,11 @@ start-backend: check-podman network-create start-firestore
 
 # Start frontend
 # Note: VITE_GEMINI_API_KEY removed for security - frontend should use backend API
+# Note: Monorepo structure - frontend files are in root directory
+# Mounting root (.:/app) is intentional for this project structure
 start-frontend: check-podman network-create start-backend
 	@if ! podman ps -a --format "{{.Names}}" | grep -q "^$(FRONTEND_CONTAINER)$$"; then \
 		echo "🚀 Starting frontend..."; \
-		# Note: Monorepo structure - frontend files are in root
-		# Mounting root is intentional for this project structure
 		podman run -d \
 			--name $(FRONTEND_CONTAINER) \
 			--network $(NETWORK) \

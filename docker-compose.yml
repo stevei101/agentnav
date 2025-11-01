@@ -37,7 +37,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile.dev
-      target: development
+      # Note: Single-stage build (no target needed)
     container_name: agentnav-backend
     ports:
       - "8080:8080"
