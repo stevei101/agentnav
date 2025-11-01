@@ -5,7 +5,7 @@ Multi-agent system with ADK and A2A Protocol
 """
 import os
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -180,7 +180,6 @@ async def analyze_content(request: AnalyzeRequest):
         # Extract results from each agent
         orchestrator_result = workflow_results.get("orchestrator", {})
         summarizer_result = workflow_results.get("summarizer", {})
-        linker_result = workflow_results.get("linker", {})
         visualizer_result = workflow_results.get("visualizer", {})
         
         # Prepare unified response

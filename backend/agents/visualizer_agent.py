@@ -96,7 +96,6 @@ class VisualizerAgent(Agent):
         """
         document = context.get("document", "")
         content_type = context.get("content_type", "document")  # 'document' or 'codebase'
-        shared_context = context.get("shared_context", {})
         
         if not document:
             raise ValueError("Document content is required")

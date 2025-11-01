@@ -3,7 +3,7 @@ Linker Agent - ADK Implementation
 Identifies key entities and their relationships for visualization
 """
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 from .base_agent import Agent, A2AMessage
 import time
 import re
@@ -392,9 +392,7 @@ Extract 5-10 key entities:
         # This could use summary insights to weight or filter relationships
         insights = summary_context.get("insights", {})
         
-        # For now, just add metadata based on content complexity
-        complexity = insights.get("key_metrics", {})
-        
+        # For now, just add metadata based on content length
         for relationship in relationships:
             relationship["confidence"] = "high" if len(relationships) < 10 else "medium"
             relationship["source"] = "linker_agent"

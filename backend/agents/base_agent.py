@@ -2,7 +2,6 @@
 Base Agent - ADK-Compatible Agent Framework
 Implements Agent Development Kit (ADK) patterns and Agent2Agent (A2A) Protocol
 """
-import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod

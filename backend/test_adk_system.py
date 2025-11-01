@@ -7,8 +7,6 @@ Tests the new /api/analyze endpoint and agent functionality
 import sys
 import os
 import asyncio
-import json
-from typing import Dict, Any
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -109,8 +107,6 @@ async def test_api_components():
     print("\n🧪 Testing API Components")
     
     try:
-        import main
-        
         # Test AnalyzeRequest model
         from main import AnalyzeRequest, AnalyzeResponse
         
