@@ -27,6 +27,7 @@ echo "   Image: ${IMAGE_PATH}"
 echo ""
 echo "📦 Building container image..."
 cd "$(dirname "$0")/../backend"
+# Build context is ./backend, Dockerfile expects files relative to that
 podman build -f Dockerfile.gemma -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
 # Tag for GAR
