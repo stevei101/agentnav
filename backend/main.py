@@ -31,9 +31,14 @@ async def root():
     """Root endpoint"""
     return {"message": "Agentic Navigator API", "version": "0.1.0"}
 
-@app.get("/health", tags=["health"], response_model=HealthResponse)
+@app.get("/health", tags=["health"], response_model=HealthResponse, deprecated=True)
 async def health_check():
-    """Health check endpoint (legacy)"""
+    """
+    Health check endpoint (DEPRECATED)
+    
+    This endpoint is deprecated in favor of /healthz (Cloud Run standard).
+    Please migrate to /healthz. This endpoint will be removed in a future version.
+    """
     return HealthResponse(
         status="healthy",
         environment=os.getenv("ENVIRONMENT", "development")

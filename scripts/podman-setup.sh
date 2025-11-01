@@ -50,7 +50,12 @@ if [ ! -f .env ]; then
     echo "📝 Creating .env file from template..."
     cp .env.example .env
     echo "⚠️  Please edit .env file and add your GEMINI_API_KEY"
-    read -p "Press Enter to continue after adding your API key..."
+    # Only prompt interactively if running in a terminal (not in CI/CD)
+    if [ -t 0 ] && [ -z "$CI" ]; then
+        read -p "Press Enter to continue after adding your API key..."
+    else
+        echo "ℹ️  Running in non-interactive mode. Please edit .env and add GEMINI_API_KEY manually."
+    fi
 fi
 
 # Build and start services
