@@ -129,12 +129,20 @@ class AnalyzeResponse(BaseModel):
 @app.post("/api/analyze", tags=["agents"], response_model=AnalyzeResponse)
 async def analyze_content(request: AnalyzeRequest):
     """
-    Unified content analysis using ADK Multi-Agent System
+    Unified content analysis using ADK Multi-Agent System with SessionContext (FR#005)
     
     This endpoint orchestrates all agents (Orchestrator, Summarizer, Linker, Visualizer)
     using the Agent Development Kit (ADK) and Agent2Agent (A2A) Protocol.
     
-    Replaces direct frontend-to-Gemini calls with a complete multi-agent workflow.
+    Implements the sequential workflow specified in FR#005:
+    1. Creates SessionContext with raw_input
+    2. Orchestrator analyzes content and delegates
+    3. Summarizer updates SessionContext.summary_text
+    4. Linker updates SessionContext.key_entities and relationships
+    5. Visualizer updates SessionContext.graph_json
+    6. Returns final SessionContext (summary + graph)
+    
+    SessionContext is persisted to Firestore after each agent step.
     """
     import time
     start_time = time.time()
@@ -144,10 +152,21 @@ async def analyze_content(request: AnalyzeRequest):
             AgentWorkflow, OrchestratorAgent, SummarizerAgent, 
             LinkerAgent, VisualizerAgent
         )
+        from models.context_model import SessionContext
         
-        logger.info("🎬 Starting ADK Multi-Agent Analysis")
+        logger.info("🎬 Starting ADK Multi-Agent Analysis (FR#005 Sequential Workflow)")
         
-        # Create agent workflow
+        # Step 1: Initialize SessionContext with raw_input
+        session_context = SessionContext(
+            session_id=f"session_{int(start_time)}",
+            raw_input=request.document,
+            content_type=request.content_type or "document",
+            workflow_status="initializing"
+        )
+        
+        logger.info(f"📋 Created SessionContext: {session_context.session_id}")
+        
+        # Step 2: Create agent workflow
         workflow = AgentWorkflow()
         
         # Initialize all agents
@@ -162,31 +181,15 @@ async def analyze_content(request: AnalyzeRequest):
         workflow.register_agent(linker)
         workflow.register_agent(visualizer)
         
-        # Set agent dependencies for proper execution order
-        workflow.set_dependencies("summarizer", [])  # No dependencies
-        workflow.set_dependencies("linker", [])       # No dependencies 
-        workflow.set_dependencies("visualizer", ["summarizer", "linker"])  # Depends on both
-        workflow.set_dependencies("orchestrator", [])  # Runs first
+        # Step 3: Execute sequential workflow (FR#005)
+        # This replaces the parallel execute_workflow with sequential execution
+        session_context = await workflow.execute_sequential_workflow(session_context)
         
-        # Execute the complete workflow
-        context = {
-            "document": request.document,
-            "content_type": request.content_type or "document",  # Auto-detect if needed
-            "session_id": f"session_{int(start_time)}"
-        }
+        # Step 4: Extract results from SessionContext
+        summary = session_context.summary_text or "Analysis completed"
         
-        workflow_results = await workflow.execute_workflow(context)
-        
-        # Extract results from each agent
-        orchestrator_result = workflow_results.get("orchestrator", {})
-        summarizer_result = workflow_results.get("summarizer", {})
-        visualizer_result = workflow_results.get("visualizer", {})
-        
-        # Prepare unified response
-        summary = summarizer_result.get("summary", "Analysis completed")
-        
-        # Use visualizer result, or create fallback visualization
-        visualization = visualizer_result if visualizer_result else {
+        # Use graph_json from SessionContext, or create fallback visualization
+        visualization = session_context.graph_json or {
             "type": "MIND_MAP",
             "title": "Content Analysis",
             "nodes": [{"id": "root", "label": "Content", "group": "main"}],
@@ -195,15 +198,21 @@ async def analyze_content(request: AnalyzeRequest):
         
         # Agent workflow status
         agent_workflow = {
-            "orchestration": orchestrator_result.get("workflow_plan", {}),
-            "agent_status": workflow.get_workflow_status(),
+            "session_id": session_context.session_id,
+            "workflow_status": session_context.workflow_status,
+            "completed_agents": session_context.completed_agents,
             "total_agents": len(workflow.agents),
-            "successful_agents": len([r for r in workflow_results.values() if r.get("processing_complete")])
+            "errors": session_context.errors,
+            "firestore_persisted": workflow.persistence_service is not None
         }
         
         processing_time = time.time() - start_time
         
         logger.info(f"🏁 ADK Multi-Agent Analysis completed in {processing_time:.2f}s")
+        logger.info(f"   Summary: {len(summary)} chars")
+        logger.info(f"   Entities: {len(session_context.key_entities)}")
+        logger.info(f"   Relationships: {len(session_context.relationships)}")
+        logger.info(f"   Graph nodes: {len(visualization.get('nodes', []))}")
         
         return AnalyzeResponse(
             summary=summary,
@@ -214,6 +223,8 @@ async def analyze_content(request: AnalyzeRequest):
         
     except ImportError as e:
         logger.error(f"ADK agents not available: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=503,
             detail="ADK multi-agent system not available. Check agent implementations."
@@ -221,6 +232,8 @@ async def analyze_content(request: AnalyzeRequest):
     except Exception as e:
         processing_time = time.time() - start_time
         logger.error(f"Multi-agent analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Analysis failed after {processing_time:.2f}s: {str(e)}"

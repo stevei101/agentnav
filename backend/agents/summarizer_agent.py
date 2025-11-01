@@ -199,7 +199,8 @@ Create a comprehensive summary that captures the essence and key information.
             
             # Use content hash as document ID for deduplication (deterministic across restarts)
             content_hash = hashlib.sha256(summary.encode('utf-8')).hexdigest()[:16]  # Use first 16 chars
-            await db.collection("summaries").document(content_hash).set(doc_data)
+            doc_ref = db.get_document("summaries", content_hash)
+            doc_ref.set(doc_data)
             
             self.logger.info(f"💾 Stored summary results in Firestore: {content_hash}")
             

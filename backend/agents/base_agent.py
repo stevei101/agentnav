@@ -237,6 +237,7 @@ class AgentWorkflow:
         self.a2a = A2AProtocol()
         self.agents: Dict[str, Agent] = {}
         self.dependencies: Dict[str, List[str]] = {}  # agent -> [prerequisite_agents]
+        self.persistence_service = None  # Lazy initialization
     
     def register_agent(self, agent: Agent):
         """Register an agent with the workflow"""
@@ -291,6 +292,162 @@ class AgentWorkflow:
         
         logger.info("🏁 ADK Agent Workflow completed")
         return workflow_results
+    
+    async def execute_sequential_workflow(self, session_context) -> "SessionContext":
+        """
+        Execute the workflow sequentially using SessionContext (FR#005)
+        
+        This method implements the sequential workflow as specified in FR#005:
+        1. Orchestrator analyzes and delegates
+        2. Summarizer processes and updates SessionContext
+        3. Linker processes and updates SessionContext
+        4. Visualizer processes and updates SessionContext
+        
+        Each agent updates the SessionContext, which is persisted to Firestore
+        after each step for fault tolerance.
+        
+        Args:
+            session_context: SessionContext object with raw_input populated
+            
+        Returns:
+            Updated SessionContext with all agent outputs
+            
+        Raises:
+            TypeError: If session_context is not a SessionContext instance
+        """
+        from models.context_model import SessionContext
+        
+        # Validate input type
+        if not isinstance(session_context, SessionContext):
+            raise TypeError(f"session_context must be a SessionContext instance, got {type(session_context)}")
+        
+        # Initialize persistence service if not already done
+        if self.persistence_service is None:
+            try:
+                from services.context_persistence import get_persistence_service
+                self.persistence_service = get_persistence_service()
+            except Exception as e:
+                logger.warning(f"⚠️  Could not initialize persistence service: {e}")
+        
+        logger.info("🎬 Starting Sequential ADK Agent Workflow (FR#005)")
+        session_context.workflow_status = "in_progress"
+        
+        # Define execution order for sequential workflow
+        # Uses standard agent order from context_model
+        from models.context_model import STANDARD_AGENT_ORDER
+        execution_order = STANDARD_AGENT_ORDER
+        
+        for agent_name in execution_order:
+            if agent_name not in self.agents:
+                logger.warning(f"⚠️  Agent '{agent_name}' not registered, skipping")
+                continue
+            
+            agent = self.agents[agent_name]
+            
+            try:
+                logger.info(f"🔄 Executing agent: {agent_name}")
+                session_context.set_current_agent(agent_name)
+                
+                # Convert SessionContext to dict for agent execution
+                context_dict = {
+                    "document": session_context.raw_input,
+                    "content_type": session_context.content_type,
+                    "session_id": session_context.session_id,
+                    "session_context": session_context,  # Pass the full context
+                }
+                
+                # Execute agent
+                result = await agent.execute(context_dict)
+                
+                # Update SessionContext based on agent type and results
+                self._update_session_context_from_result(session_context, agent_name, result)
+                
+                # Mark agent as complete
+                session_context.mark_agent_complete(agent_name)
+                
+                # Persist context to Firestore after each step
+                if self.persistence_service:
+                    await self.persistence_service.save_context(session_context)
+                
+                logger.info(f"✅ Agent {agent_name} completed successfully")
+                
+            except Exception as e:
+                logger.error(f"❌ Agent {agent_name} failed: {e}")
+                session_context.add_error(agent_name, str(e))
+                
+                # Continue with next agent even if one fails (graceful degradation)
+                session_context.mark_agent_complete(agent_name)
+                
+                if self.persistence_service:
+                    await self.persistence_service.save_context(session_context)
+        
+        # Mark workflow as complete
+        session_context.workflow_status = "completed" if session_context.is_complete() else "partially_completed"
+        session_context.current_agent = None
+        
+        # Final persistence
+        if self.persistence_service:
+            await self.persistence_service.save_context(session_context)
+        
+        logger.info(f"🏁 Sequential ADK Agent Workflow completed: {session_context.workflow_status}")
+        
+        return session_context
+    
+    def _update_session_context_from_result(self, session_context, agent_name: str, result: Dict[str, Any]):
+        """
+        Update SessionContext with agent-specific results
+        
+        Maps agent results to SessionContext fields as specified in FR#005
+        """
+        if agent_name == "summarizer":
+            # Summarizer updates summary_text
+            if "summary" in result:
+                session_context.summary_text = result["summary"]
+            if "insights" in result:
+                session_context.summary_insights = result["insights"]
+        
+        elif agent_name == "linker":
+            # Linker updates key_entities and relationships
+            if "entities" in result:
+                # Extract entity labels/IDs
+                entities = result["entities"]
+                session_context.key_entities = [
+                    entity.get("label", entity.get("id", "unknown"))
+                    for entity in entities
+                ]
+            
+            if "relationships" in result:
+                # Convert relationship dicts to EntityRelationship objects
+                from models.context_model import EntityRelationship
+                relationships = result["relationships"]
+                session_context.relationships = [
+                    EntityRelationship(
+                        source=rel.get("from", rel.get("source", "unknown")),
+                        target=rel.get("to", rel.get("target", "unknown")),
+                        type=rel.get("type", "related"),
+                        label=rel.get("label"),
+                        confidence=rel.get("confidence")
+                    )
+                    for rel in relationships
+                ]
+            
+            if "graph_data" in result:
+                session_context.entity_metadata = result["graph_data"]
+        
+        elif agent_name == "visualizer":
+            # Visualizer updates graph_json
+            # Extract the visualization data, excluding agent metadata
+            graph_json = {}
+            for key in ["type", "title", "nodes", "edges"]:
+                if key in result:
+                    graph_json[key] = result[key]
+            
+            if graph_json:
+                session_context.graph_json = graph_json
+        
+        elif agent_name == "orchestrator":
+            # Orchestrator doesn't update specific fields but may set metadata
+            pass
     
     def get_workflow_status(self) -> Dict[str, Any]:
         """Get status of all agents in the workflow"""
