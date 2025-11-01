@@ -1,0 +1,59 @@
+repos:
+  # Python formatting and linting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        files: ^backend/
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: ^backend/
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        files: ^backend/
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        files: ^backend/
+        additional_dependencies: [types-requests]
+        args: [--ignore-missing-imports]
+
+  # Frontend formatting and linting  
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend ESLint
+        entry: bun
+        args: [run, lint]
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+        exclude: ^backend/
+
+      - id: frontend-format-check
+        name: Frontend Prettier Check
+        entry: bun
+        args: [run, format:check]
+        language: system
+        files: \.(ts|tsx|js|jsx|json|css|md)$
+        exclude: ^backend/
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
