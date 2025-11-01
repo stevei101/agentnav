@@ -192,8 +192,8 @@ start-frontend: check-podman network-create start-backend
 		podman run -d \
 			--name $(FRONTEND_CONTAINER) \
 			--network $(NETWORK) \
-			-p 5173:5173 \
-			-v $$(pwd):/app \
+			-p 3000:3000 \
+			-v $$(pwd):/app:Z \
 			-e VITE_API_URL=http://localhost:8080 \
 			-e VITE_GEMINI_API_KEY=$${GEMINI_API_KEY} \
 			agentnav-frontend:dev; \
@@ -211,7 +211,7 @@ up: start-frontend
 	@echo "✅ All services started!"
 	@echo ""
 	@echo "📍 Access points:"
-	@echo "   - Frontend:      http://localhost:5173"
+	@echo "   - Frontend:      http://localhost:3000"
 	@echo "   - Backend API:   http://localhost:8080"
 	@echo "   - API Docs:      http://localhost:8080/docs"
 	@echo "   - Health Check:  http://localhost:8080/healthz"
@@ -242,8 +242,18 @@ ps: check-podman
 
 # Follow all logs
 logs: check-podman
-	@podman logs -f $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER) 2>/dev/null || \
-		echo "⚠️  Some containers may not be running. Use 'make up' to start them."
+	@echo "📊 Following logs from all running containers (Ctrl+C to exit)..."
+	@running_containers=""; \
+	for container in $(FRONTEND_CONTAINER) $(BACKEND_CONTAINER) $(FIRESTORE_CONTAINER); do \
+		if podman ps --format "{{.Names}}" | grep -q "^$$container$$"; then \
+			running_containers="$$running_containers $$container"; \
+		fi; \
+	done; \
+	if [ -z "$$running_containers" ]; then \
+		echo "⚠️  No containers are running. Use 'make up' to start them."; \
+	else \
+		podman logs -f $$running_containers; \
+	fi
 
 # Follow frontend logs only
 logs-frontend: check-podman
