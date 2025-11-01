@@ -47,6 +47,7 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Format Check
         id: fmt
@@ -56,10 +57,7 @@ jobs:
       - name: Terraform Init
         id: init
         working-directory: terraform
-        run: |
-          terraform init \
-            -backend-config="organization=${TF_CLOUD_ORGANIZATION}" \
-            -backend-config="workspaces.name=${TF_WORKSPACE}"
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
