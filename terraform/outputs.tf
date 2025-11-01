@@ -41,7 +41,7 @@ output "gemma_service_url" {
 # Firestore Outputs
 output "firestore_database_id" {
   description = "Firestore database ID"
-  value       = google_firestore_database.main.database_id
+  value       = google_firestore_database.main.name
 }
 
 # Secret Manager Outputs
