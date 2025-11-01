@@ -1,0 +1,32 @@
+# backend/Dockerfile.dev (REVISED)
+# Python 3.11+ with uv for fast dependency management - Single Stage for Dev
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    APP_HOME=/app \
+    PORT=8080
+
+WORKDIR $APP_HOME
+
+# Install uv by copying the pre-compiled binary
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+RUN chmod +x /usr/local/bin/uv
+
+# Copy dependency file(s) - assumes pyproject.toml and requirements.txt are present
+# Note: Build context is ./backend, so paths are relative to backend/
+COPY pyproject.toml requirements.txt ./
+
+# Install dependencies to the system site-packages for consistency with volume-mounted code
+# CRITICAL: Ensure 'google-adk' and other ADK components are in requirements.txt
+# Since we use --system flag, we don't need to create a venv
+# The backend-venv volume mount in docker-compose.yml handles persistence
+RUN uv pip install --system -r requirements.txt
+
+EXPOSE 8080
+
+# Command to run the development server with hot-reload
+# Code will be mounted via volume in docker-compose.yml, so no COPY . . needed
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+
