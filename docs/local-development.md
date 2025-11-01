@@ -1,5 +1,16 @@
 # Local Development Guide
 
+## ADK Quickstart Process
+
+This local development environment follows the **Google ADK Quickstart** philosophy:
+> **"No heavy cloud setups. No complex DevOps. Just clone, code, run—and see your agent live in minutes"**
+
+The containerized setup enables you to:
+- ✅ **Focus on agent logic** - not environment configuration
+- ✅ **Iterate quickly** - changes reflect immediately with hot-reload
+- ✅ **Match production** - local environment mirrors Cloud Run deployment
+- ✅ **Get started fast** - single command setup (`make setup`)
+
 ## Prerequisites
 
 - **Podman** (or Docker Desktop as fallback)
@@ -7,7 +18,7 @@
   - Linux: See [Podman Installation](https://podman.io/getting-started/installation)
   - Windows: Use WSL2 with Podman
 
-- **podman-compose** (or docker-compose)
+- **podman-compose** (optional - Makefile uses Podman commands directly)
   ```bash
   pip install podman-compose
   ```
