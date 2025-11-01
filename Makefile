@@ -131,9 +131,9 @@ check-env: setup-env
 build: check-podman podman-start
 	@echo "🔨 Building containers with Podman..."
 	@echo "Building frontend..."
-	@podman build -f Dockerfile.frontend -t agentnav-frontend:dev --target development .
+	@podman build -f frontend.Dockerfile.dev -t agentnav-frontend:dev --target development .
 	@echo "Building backend..."
-	@podman build -f backend/Dockerfile -t agentnav-backend:dev --target development ./backend
+	@podman build -f backend/Dockerfile.dev -t agentnav-backend:dev --target development ./backend
 	@echo "✅ All containers built successfully"
 
 # Start Firestore emulator
@@ -191,12 +191,12 @@ start-frontend: check-podman network-create start-backend
 		podman run -d \
 			--name $(FRONTEND_CONTAINER) \
 			--network $(NETWORK) \
-			-p 3000:3000 \
+			-p 3000:5173 \
 			-v $$(pwd):/app:Z \
 			-v frontend-node-modules:/app/node_modules:Z \
 			-e VITE_API_URL=http://localhost:8080 \
-			-e VITE_GEMINI_API_KEY=$${GEMINI_API_KEY} \
 			agentnav-frontend:dev; \
+			# Note: VITE_GEMINI_API_KEY removed for security - frontend should use backend API
 	else \
 		if ! podman ps --format "{{.Names}}" | grep -q "^$(FRONTEND_CONTAINER)$$"; then \
 			echo "🔄 Starting existing frontend container..."; \
