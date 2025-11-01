@@ -21,6 +21,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global model instance
+# Note: These are set during lifespan startup and are read-only after initialization.
+# The lifespan function ensures model loading completes before the app accepts requests,
+# so race conditions during startup are not a concern for normal operation.
 model_loader: Optional[ModelLoader] = None
 inference_engine: Optional[GemmaInference] = None
 
@@ -175,7 +178,9 @@ async def generate(request: GenerateRequest):
         )
         
         # Estimate tokens (simple approximation)
-        tokens_generated = len(generated_text.split()) * 1.3  # Rough estimate
+        # Rough multiplier: average token length ~1.3 words (language-dependent)
+        TOKEN_ESTIMATION_MULTIPLIER = 1.3
+        tokens_generated = len(generated_text.split()) * TOKEN_ESTIMATION_MULTIPLIER
         
         return GenerateResponse(
             text=generated_text,

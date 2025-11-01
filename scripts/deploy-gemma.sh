@@ -28,15 +28,15 @@ echo ""
 echo "📦 Building container image..."
 cd "$(dirname "$0")/../backend"
 # Build context is ./backend, Dockerfile expects files relative to that
-podman build -f Dockerfile.gemma -t ${IMAGE_NAME}:${IMAGE_TAG} .
+podman build -f Dockerfile.gemma -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
 # Tag for GAR
-podman tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_PATH}
+podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_PATH}"
 
 # Push to GAR (requires authentication)
 echo ""
 echo "📤 Pushing to Google Artifact Registry..."
-podman push ${IMAGE_PATH}
+podman push "${IMAGE_PATH}"
 
 # Deploy to Cloud Run
 echo ""

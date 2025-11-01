@@ -4,7 +4,8 @@ Development server with hot-reload support
 """
 import os
 import logging
-from fastapi import FastAPI
+from typing import Optional
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -63,10 +64,6 @@ async def api_docs():
 
 # Gemma Service Integration
 # Endpoint to call Gemma GPU service for text generation
-from fastapi import HTTPException
-from pydantic import BaseModel
-from typing import Optional
-
 
 class GenerateRequest(BaseModel):
     """Request model for Gemma text generation"""
@@ -102,7 +99,7 @@ async def generate_text(request: GenerateRequest):
     except ImportError:
         raise HTTPException(
             status_code=503,
-            detail="Gemma service client not available. Install httpx dependency."
+            detail="Gemma service client not available. Check your Python environment and ensure all dependencies are installed."
         )
     except Exception as e:
         logger.error(f"Gemma service error: {e}")
