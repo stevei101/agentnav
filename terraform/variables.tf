@@ -4,13 +4,6 @@ variable "project_id" {
   # This will be set via environment variable or terraform.tfvars
 }
 
-variable "google_credentials" {
-  description = "GCP service account credentials JSON (for Terraform Cloud remote execution)"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 variable "default_region" {
   description = "Default GCP region"
   type        = string
@@ -23,17 +16,18 @@ variable "github_repository" {
   default     = "stevei101/agentnav"
 }
 
-variable "workload_identity_pool_id" {
-  description = "Workload Identity Pool ID for GitHub Actions"
-  type        = string
-  default     = "github-actions-pool"
-}
-
-variable "workload_identity_provider_id" {
-  description = "Workload Identity Provider ID for GitHub Actions"
-  type        = string
-  default     = "github-provider"
-}
+# TODO: Uncomment when WIF resources are uncommented in iam.tf
+# variable "workload_identity_pool_id" {
+#   description = "Workload Identity Pool ID for GitHub Actions"
+#   type        = string
+#   default     = "github-actions-pool"
+# }
+#
+# variable "workload_identity_provider_id" {
+#   description = "Workload Identity Provider ID for GitHub Actions"
+#   type        = string
+#   default     = "github-provider"
+# }
 
 variable "artifact_registry_location" {
   description = "Location for Artifact Registry (should match region with GPU support)"

@@ -89,36 +89,43 @@ resource "google_project_iam_member" "github_actions_storage_admin" {
 }
 
 # Workload Identity Federation Setup
-resource "google_iam_workload_identity_pool" "github_actions" {
-  project                   = var.project_id
-  workload_identity_pool_id = var.workload_identity_pool_id
-  display_name              = "GitHub Actions Pool"
-  description               = "Workload Identity Pool for GitHub Actions CI/CD"
-}
+# Note: These resources are managed outside of Terraform (manually created)
+# They need to be imported into Terraform state if we want to manage them with Terraform
+# Import commands:
+# terraform import google_iam_workload_identity_pool.github_actions projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool
+# terraform import google_iam_workload_identity_pool_provider.github_actions projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider
 
-resource "google_iam_workload_identity_pool_provider" "github_actions" {
-  project                            = var.project_id
-  workload_identity_pool_id          = google_iam_workload_identity_pool.github_actions.workload_identity_pool_id
-  workload_identity_pool_provider_id = var.workload_identity_provider_id
-  display_name                       = "GitHub Provider"
-  description                        = "OIDC provider for GitHub Actions"
+# TODO: Uncomment and import these resources once they're in Terraform state
+# resource "google_iam_workload_identity_pool" "github_actions" {
+#   project                   = var.project_id
+#   workload_identity_pool_id = var.workload_identity_pool_id
+#   display_name              = "GitHub Actions Pool"
+#   description               = "Workload Identity Pool for GitHub Actions CI/CD"
+# }
 
-  attribute_mapping = {
-    "google.subject"       = "assertion.sub"
-    "attribute.repository" = "assertion.repository"
-    "attribute.actor"      = "assertion.actor" # Available for future logging/auditing (not currently used in IAM conditions)
-    "attribute.ref"        = "assertion.ref"   # Available for future branch-specific policies (not currently used in IAM conditions)
-  }
-
-  oidc {
-    issuer_uri = "https://token.actions.githubusercontent.com"
-  }
-}
+# resource "google_iam_workload_identity_pool_provider" "github_actions" {
+#   project                            = var.project_id
+#   workload_identity_pool_id          = google_iam_workload_identity_pool.github_actions.workload_identity_pool_id
+#   workload_identity_pool_provider_id = var.workload_identity_provider_id
+#   display_name                       = "GitHub Provider"
+#   description                        = "OIDC provider for GitHub Actions"
+#
+#   attribute_mapping = {
+#     "google.subject"       = "assertion.sub"
+#     "attribute.repository" = "assertion.repository"
+#     "attribute.actor"      = "assertion.actor"
+#     "attribute.ref"        = "assertion.ref"
+#   }
+#
+#   oidc {
+#     issuer_uri = "https://token.actions.githubusercontent.com"
+#   }
+# }
 
 # Bind GitHub Actions service account to WIF
-resource "google_service_account_iam_member" "github_actions_workload_identity" {
-  service_account_id = google_service_account.github_actions.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/attribute.repository/${var.github_repository}"
-}
+# resource "google_service_account_iam_member" "github_actions_workload_identity" {
+#   service_account_id = google_service_account.github_actions.name
+#   role               = "roles/iam.workloadIdentityUser"
+#   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/attribute.repository/${var.github_repository}"
+# }
 
