@@ -136,6 +136,6 @@ jobs:
         uses: google/osv-scanner-action@v1.7.4
         with:
           scan-args: |-
-            -r
+            --recursive
             --skip-git
             ./
