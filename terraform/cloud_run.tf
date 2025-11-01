@@ -76,11 +76,6 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name  = "PORT"
-        value = tostring(var.backend_container_port)
-      }
-
-      env {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
@@ -163,11 +158,6 @@ resource "google_cloud_run_v2_service" "gemma" {
 
       ports {
         container_port = var.gemma_container_port
-      }
-
-      env {
-        name  = "PORT"
-        value = tostring(var.gemma_container_port)
       }
 
       env {
