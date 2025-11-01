@@ -1,10 +1,11 @@
 """
 Agentic Navigator Backend - FastAPI Application
 Development server with hot-reload support
+Multi-agent system with ADK and A2A Protocol
 """
 import os
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -109,27 +110,149 @@ async def generate_text(request: GenerateRequest):
         )
 
 
-# Visualizer Agent Integration
-# Endpoint that uses Gemma GPU service for complex graph generation
+# Unified Analysis API - ADK Multi-Agent Orchestration
+class AnalyzeRequest(BaseModel):
+    """Request model for unified analysis endpoint"""
+    document: str
+    content_type: Optional[str] = None  # Auto-detected if not provided
+
+
+class AnalyzeResponse(BaseModel):
+    """Response model for unified analysis"""
+    summary: str
+    visualization: Dict[str, Any]
+    agent_workflow: Dict[str, Any]
+    processing_time: float
+    generated_by: str = "adk_multi_agent"
+
+
+@app.post("/api/analyze", tags=["agents"], response_model=AnalyzeResponse)
+async def analyze_content(request: AnalyzeRequest):
+    """
+    Unified content analysis using ADK Multi-Agent System
+    
+    This endpoint orchestrates all agents (Orchestrator, Summarizer, Linker, Visualizer)
+    using the Agent Development Kit (ADK) and Agent2Agent (A2A) Protocol.
+    
+    Replaces direct frontend-to-Gemini calls with a complete multi-agent workflow.
+    """
+    import time
+    start_time = time.time()
+    
+    try:
+        from agents import (
+            AgentWorkflow, OrchestratorAgent, SummarizerAgent, 
+            LinkerAgent, VisualizerAgent
+        )
+        
+        logger.info("🎬 Starting ADK Multi-Agent Analysis")
+        
+        # Create agent workflow
+        workflow = AgentWorkflow()
+        
+        # Initialize all agents
+        orchestrator = OrchestratorAgent(workflow.a2a)
+        summarizer = SummarizerAgent(workflow.a2a)
+        linker = LinkerAgent(workflow.a2a)
+        visualizer = VisualizerAgent(workflow.a2a)
+        
+        # Register agents with workflow
+        workflow.register_agent(orchestrator)
+        workflow.register_agent(summarizer) 
+        workflow.register_agent(linker)
+        workflow.register_agent(visualizer)
+        
+        # Set agent dependencies for proper execution order
+        workflow.set_dependencies("summarizer", [])  # No dependencies
+        workflow.set_dependencies("linker", [])       # No dependencies 
+        workflow.set_dependencies("visualizer", ["summarizer", "linker"])  # Depends on both
+        workflow.set_dependencies("orchestrator", [])  # Runs first
+        
+        # Execute the complete workflow
+        context = {
+            "document": request.document,
+            "content_type": request.content_type or "document",  # Auto-detect if needed
+            "session_id": f"session_{int(start_time)}"
+        }
+        
+        workflow_results = await workflow.execute_workflow(context)
+        
+        # Extract results from each agent
+        orchestrator_result = workflow_results.get("orchestrator", {})
+        summarizer_result = workflow_results.get("summarizer", {})
+        linker_result = workflow_results.get("linker", {})
+        visualizer_result = workflow_results.get("visualizer", {})
+        
+        # Prepare unified response
+        summary = summarizer_result.get("summary", "Analysis completed")
+        
+        # Use visualizer result, or create fallback visualization
+        visualization = visualizer_result if visualizer_result else {
+            "type": "MIND_MAP",
+            "title": "Content Analysis",
+            "nodes": [{"id": "root", "label": "Content", "group": "main"}],
+            "edges": []
+        }
+        
+        # Agent workflow status
+        agent_workflow = {
+            "orchestration": orchestrator_result.get("workflow_plan", {}),
+            "agent_status": workflow.get_workflow_status(),
+            "total_agents": len(workflow.agents),
+            "successful_agents": len([r for r in workflow_results.values() if r.get("processing_complete")])
+        }
+        
+        processing_time = time.time() - start_time
+        
+        logger.info(f"🏁 ADK Multi-Agent Analysis completed in {processing_time:.2f}s")
+        
+        return AnalyzeResponse(
+            summary=summary,
+            visualization=visualization,
+            agent_workflow=agent_workflow,
+            processing_time=processing_time
+        )
+        
+    except ImportError as e:
+        logger.error(f"ADK agents not available: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="ADK multi-agent system not available. Check agent implementations."
+        )
+    except Exception as e:
+        processing_time = time.time() - start_time
+        logger.error(f"Multi-agent analysis failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed after {processing_time:.2f}s: {str(e)}"
+        )
+
+
+# Legacy endpoints for backward compatibility
+
+# Visualizer Agent Integration (Legacy)
 class VisualizeRequest(BaseModel):
-    """Request model for visualization"""
+    """Request model for visualization (Legacy)"""
     document: str
     content_type: Optional[str] = "document"  # 'document' or 'codebase'
 
 
-@app.post("/api/visualize", tags=["agents"])
+@app.post("/api/visualize", tags=["agents"], deprecated=True)
 async def visualize_content(request: VisualizeRequest):
     """
-    Generate visualization using Visualizer Agent and Gemma GPU service
+    Generate visualization using Visualizer Agent (LEGACY)
     
-    This endpoint uses the Visualizer Agent which calls the Gemma GPU service
-    to generate knowledge graphs (Mind Maps or Dependency Graphs).
+    This endpoint is deprecated in favor of /api/analyze which provides
+    complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-        from agents.visualizer_agent import VisualizerAgent
+        from agents import VisualizerAgent, A2AProtocol
         
-        agent = VisualizerAgent()
-        result = await agent.process({
+        # Create minimal A2A Protocol for standalone operation
+        a2a = A2AProtocol()
+        agent = VisualizerAgent(a2a)
+        
+        result = await agent.execute({
             "document": request.document,
             "content_type": request.content_type,
         })
@@ -147,4 +270,50 @@ async def visualize_content(request: VisualizeRequest):
             status_code=500,
             detail=f"Visualization failed: {str(e)}"
         )
+
+
+# Agent Status API
+@app.get("/api/agents/status", tags=["agents"])
+async def get_agent_status():
+    """
+    Get status of all available agents in the ADK system
+    """
+    try:
+        from agents import (
+            OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
+        )
+        
+        # Create temporary agents to check status
+        a2a = A2AProtocol()
+        agents = {
+            "orchestrator": OrchestratorAgent(a2a),
+            "summarizer": SummarizerAgent(a2a), 
+            "linker": LinkerAgent(a2a),
+            "visualizer": VisualizerAgent(a2a)
+        }
+        
+        agent_status = {}
+        for name, agent in agents.items():
+            agent_status[name] = {
+                "name": agent.name,
+                "state": agent.state.value,
+                "available": True,
+                "execution_history_count": len(agent.execution_history)
+            }
+        
+        return {
+            "total_agents": len(agents),
+            "agents": agent_status,
+            "adk_system": "operational",
+            "a2a_protocol": "enabled"
+        }
+        
+    except ImportError as e:
+        return {
+            "total_agents": 0,
+            "agents": {},
+            "adk_system": "unavailable",
+            "error": str(e)
+        }
+
 
