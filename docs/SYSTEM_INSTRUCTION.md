@@ -20,6 +20,7 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 | **Cloud DNS & TLS** | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination. | Terraform, Cloud Run |
 | **Firestore** | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). | Terraform, Firestore API |
 | **Secret Manager** | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets. | Terraform, Secret Manager API |
+| **Gemma GPU Service** | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks. | Podman, Cloud Run API |
 
 ---
 
@@ -30,7 +31,8 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 | Component | Technology Stack | Dependency Management | Best Practices |
 | :--- | :--- | :--- | :--- |
 | **Frontend (UI)** | **TypeScript**, **React**, **Vite**, **Tailwind CSS** | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run. |
-| **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini/Gemma** | **uv** (for fast Python package installation/resolution) | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
+| **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini** | **uv** (for fast Python package installation/resolution) | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
+| **Gemma GPU Service** | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image) | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU. |
 
 ### 2. Multi-Agent Architecture
 
@@ -62,14 +64,16 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 4. **Terraform Provisioning (IaC):** The action triggers **Terraform Cloud** to provision/update GCP infrastructure (Cloud Run services, GAR, IAM, Cloud DNS, Firestore, Secret Manager).
 5. **Container Build (Podman):** The CI step uses **Podman** to build container images for both frontend and backend services. Images are tagged with the Git SHA and pushed to **Google Artifact Registry (GAR)**.
 6. **Application Deployment (Cloud Run):**
-   - The CI/CD step uses `gcloud` CLI to deploy both frontend and backend services to Cloud Run.
-   - Frontend service: Serves static React assets via Nginx.
-   - Backend service: FastAPI orchestrator with ADK agents, configured with GPU acceleration in `europe-west1` region.
+   - The CI/CD step uses `gcloud` CLI to deploy frontend, backend, and Gemma GPU services to Cloud Run.
+   - Frontend service: Serves static React assets via Nginx (region: `us-central1`).
+   - Backend service: FastAPI orchestrator with ADK agents (region: `europe-west1`).
+   - Gemma GPU service: GPU-accelerated model serving with NVIDIA L4 GPU (region: `europe-west1`).
    - Environment variables (including secrets from Secret Manager) are injected during deployment.
    - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
    - **Final Commands:**
      - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
-     - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 8Gi --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
+     - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
+     - `gcloud run deploy gemma-service --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 --port 8080 --timeout 300s`
 
 ---
 
@@ -80,6 +84,8 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 * **Frontend:** React application located in `frontend/` or root directory (if monorepo structure).
 * **Backend:** FastAPI application located in `backend/` directory.
 * **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
+* **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
+* **Service Clients:** HTTP clients for external services located in `backend/services/`.
 
 **GitHub Secrets List:**
 
@@ -112,11 +118,11 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 ### Backend Service Configuration
 
 - **Region:** `europe-west1` (for GPU availability)
-- **CPU:** GPU-enabled (NVIDIA T4 or A100)
-- **Memory:** 8Gi (or higher for large models)
-- **Max Instances:** 5 (GPU instances are expensive)
+- **CPU:** Standard CPU (GPU handled by separate Gemma service)
+- **Memory:** 8Gi
+- **Max Instances:** 10
 - **Min Instances:** 0 (can scale to zero)
-- **Concurrency:** 1 request per instance (GPU workloads)
+- **Concurrency:** 80 requests per instance
 - **Container Port:** **Must use PORT environment variable** (Cloud Run sets this automatically, defaults to 8080)
 - **Health Check:** Implement `/healthz` endpoint (Cloud Run requirement)
 - **Startup Probe:** Configure startup timeout (Cloud Run default: 240s)
@@ -124,36 +130,54 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 - **Environment Variables:**
   - `PORT` (set automatically by Cloud Run, but must be handled in code)
   - `GEMINI_API_KEY` (from Secret Manager)
+  - `GEMMA_SERVICE_URL` (URL of Gemma GPU service)
   - `FIRESTORE_PROJECT_ID`
   - `FIRESTORE_DATABASE_ID`
   - `ADK_AGENT_CONFIG_PATH`
   - `A2A_PROTOCOL_ENABLED=true`
 
+### Gemma GPU Service Configuration
+
+- **Region:** `europe-west1` (GPU availability)
+- **CPU:** GPU-enabled (NVIDIA L4)
+- **GPU Type:** `nvidia-l4`
+- **GPU Count:** 1
+- **Memory:** 16Gi (for Gemma 7B) or 8Gi (for Gemma 2B)
+- **Max Instances:** 2 (GPU instances are expensive)
+- **Min Instances:** 0 (can scale to zero)
+- **Concurrency:** 1 request per instance (GPU workloads)
+- **Container Port:** 8080
+- **Health Check:** `/healthz` endpoint (returns GPU status)
+- **Startup Timeout:** 300s (for model loading)
+- **Request Timeout:** 300s
+- **Environment Variables:**
+  - `PORT` (set automatically by Cloud Run)
+  - `MODEL_NAME` (default: `google/gemma-7b-it`)
+  - `HUGGINGFACE_TOKEN` (optional, from Secret Manager)
+  - `USE_8BIT_QUANTIZATION` (optional, for memory efficiency)
+
 ### GPU Configuration
 
-Cloud Run GPU support is available in specific regions (`europe-west1`, `us-central1`, `asia-northeast1`). Configure GPU resources in Terraform:
+Cloud Run GPU support is available in specific regions (`europe-west1`, `us-central1`, `asia-northeast1`). The Gemma GPU service uses NVIDIA L4 GPUs in `europe-west1` region.
 
-```hcl
-resource "google_cloud_run_service" "backend" {
-  # ... other configuration ...
-  
-  template {
-    spec {
-      containers {
-        resources {
-          limits = {
-            cpu    = "4"
-            memory = "8Gi"
-          }
-          # GPU configuration (requires terraform provider support)
-        }
-      }
-    }
-  }
-}
+**Deploy Gemma GPU Service:**
+
+```bash
+gcloud run deploy gemma-service \
+  --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest \
+  --region europe-west1 \
+  --platform managed \
+  --cpu gpu \
+  --memory 16Gi \
+  --gpu-type nvidia-l4 \
+  --gpu-count 1 \
+  --port 8080 \
+  --timeout 300s \
+  --min-instances 0 \
+  --max-instances 2
 ```
 
-Or use `gcloud` CLI with `--cpu gpu` flag during deployment.
+See [docs/GPU_SETUP_GUIDE.md](GPU_SETUP_GUIDE.md) for detailed deployment instructions.
 
 ---
 
@@ -254,6 +278,14 @@ Firestore is used for persistent session memory and knowledge caching:
 - **Connection Pooling:** Reuse Firestore connections across requests.
 - **Caching:** Cache analysis results in Firestore to avoid redundant processing.
 - **Async Processing:** Use FastAPI's async capabilities for non-blocking I/O.
+- **Gemma Service Integration:** Call Gemma GPU service for complex tasks; cache results to reduce GPU calls.
+
+### Gemma GPU Service Optimization
+
+- **Model Quantization:** Use 8-bit quantization for memory efficiency if needed.
+- **Scale to Zero:** Set `min-instances=0` to save costs when idle.
+- **Caching:** Implement result caching to reduce redundant GPU inference.
+- **Batch Processing:** Consider batching requests when possible.
 
 ### Firestore Optimization
 
@@ -348,21 +380,6 @@ This system instruction reflects the target architecture for **agentnav**. Curre
 - **ADK Agent:** Inherit from `Agent` base class, implement `process()` method, use A2A Protocol for communication.
 - **Firestore Operation:** Use async Firestore client, batch operations, handle errors gracefully.
 - **Terraform Resource:** Use `google_cloud_run_service`, `google_artifact_registry_repository`, `google_firestore_database`.
-
----
-
-## Key Differences from product-baseline Template
-
-| Aspect | product-baseline | agentnav |
-| :--- | :--- | :--- |
-| **Compute Platform** | GKE (Kubernetes) | Cloud Run (Serverless) |
-| **Deployment Tool** | Kustomize | Cloud Run API / gcloud CLI |
-| **Database** | PostgreSQL (CloudNativePG) | Firestore (NoSQL) |
-| **Container Orchestration** | Kubernetes Manifests | Cloud Run Service Definitions |
-| **GPU Support** | Via GKE GPU nodes | Via Cloud Run GPU instances |
-| **TLS Management** | Cert-Manager + Let's Encrypt | Cloud Run built-in HTTPS |
-| **Agent Architecture** | N/A | ADK + A2A Protocol |
-| **Backend Framework** | Generic Python API | FastAPI |
 
 ---
 
