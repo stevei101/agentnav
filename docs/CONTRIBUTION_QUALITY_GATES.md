@@ -71,14 +71,108 @@ curl -X PUT -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vn
 - Aligns with GitHub's recommendation for path-filtered required checks
 - No waiting for checks that will never run
 
+## Running checks locally
+
+Before pushing your changes, you can run the equivalent checks locally using Makefile commands.
+
+### CODE_QUALITY checks
+
+Run all code quality checks locally:
+```bash
+# Lint frontend code
+make lint
+
+# Or run individual checks:
+bun run lint              # Frontend ESLint
+bun run format:check      # Frontend Prettier formatting
+ruff check backend/       # Backend linting
+black --check backend/    # Backend formatting
+mypy backend/             # Backend type checking
+
+# Run tests
+make test                 # All tests (frontend + backend)
+make test-frontend        # Frontend tests only
+make test-backend         # Backend tests only
+
+# Run full CI locally
+make ci                   # Lint + test (same as CI pipeline)
+```
+
+### SECURITY_AUDIT checks
+
+Run security scans locally:
+```bash
+# Terraform security scan
+cd terraform
+tfsec .
+
+# OSV dependency scan (requires Docker)
+docker run --rm -v "$(pwd)":/app ossf/osv-scanner --recursive /app
+```
+
+### INFRA_VERIFICATION checks
+
+Validate Terraform changes:
+```bash
+cd terraform
+terraform fmt -check -recursive     # Format check
+terraform init                      # Initialize
+terraform validate                  # Validate syntax
+terraform plan                      # Preview changes (on PR, this posts as comment)
+```
+
+## Troubleshooting
+
+### Check fails but works locally
+
+1. **Different Python/Node versions**: Ensure local versions match CI:
+   - Python: 3.11
+   - Bun: latest
+
+2. **Missing dependencies**: Run `make install-dev` to install all dev dependencies
+
+3. **Environment variables**: Check `.env` file has required variables (see `.env.example`)
+
+### Understanding failure messages
+
+If a composite check fails, click on the failed check to see details:
+- **CODE_QUALITY failed**: Look for "Code Quality", "Frontend Unit Tests", or "Backend Tests" job failures
+- **SECURITY_AUDIT failed**: Check "Terraform Security Scan" or "OSV Dependency Vulnerability Scan" logs
+- **INFRA_VERIFICATION failed**: Review "Terraform" job logs for plan errors
+
 ## Notes and rationale
 
 - This approach preserves detailed logs for debugging while providing a simpler PR status surface area for reviewers.
 - The `INFRA_VERIFICATION` check runs `terraform plan` on pull requests and posts the plan as a comment. It will not apply changes.
 - If a composite check fails, open the failed job's logs to find the specific failing underlying step (lint, tests, or a scanner).
+- All checks run automatically on every push to any branch, providing immediate feedback during development.
+
+## Implementation details
+
+### Status check execution
+
+Status checks execute on:
+- **All pushes** to any branch (immediate feedback during development)
+- **Pull requests** targeting `main` (required for merge)
+- **Direct pushes** to `main` (would be blocked if protection enabled)
+
+### Required status checks
+
+The following checks are **mandatory** for merging to `main`:
+- `CODE_QUALITY` - Ensures code quality, style, and tests pass
+- `SECURITY_AUDIT` - Ensures no security vulnerabilities introduced
+- `INFRA_VERIFICATION` - Ensures Terraform changes are valid
+
+### Operational checks (optional)
+
+These checks run but are **not required** for merge:
+- `Build and Push Containers` - Container build verification
+- `Build Gemma Debug` - Gemma service debug builds
 
 ## Next steps
 
-- Update branch protection rules in GitHub to require only these checks.
-- Optionally, add an automated job to validate that the three contexts exist for new repositories or generate a periodic report of status checks.
+- ✅ GitHub Actions workflows configured with composite jobs
+- ✅ Status checks appear automatically on all pushes
+- ⏳ Update branch protection rules in GitHub to require these checks (see setup script)
+- ⏳ Optional: Add automated job to validate status check existence
 
