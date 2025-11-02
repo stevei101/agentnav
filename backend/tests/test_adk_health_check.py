@@ -4,7 +4,6 @@ Unit tests for ADK health check endpoints (FR#085)
 Tests verify that the /healthz and /api/agents/status endpoints
 correctly detect ADK system availability and provide diagnostic information.
 """
-import pytest
 from unittest.mock import patch, MagicMock
 import sys
 import os
