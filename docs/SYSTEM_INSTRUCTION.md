@@ -157,6 +157,23 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
      - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
      - `gcloud run deploy gemma-service --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 --port 8080 --timeout 300s`
 
+### CI/CD Failure Response (Zero-Tolerance Policy)
+
+**CRITICAL: Mandatory Response to CI Failures**
+
+When any GitHub Actions status check fails:
+
+1. **Stop all other work immediately**
+2. **Search for an existing open, assigned issue** tracking this failure
+3. **If no issue exists, create a new Feature Request immediately** with:
+   - Full log output of the failure
+   - Error code and preliminary root cause analysis
+   - Appropriate priority (Critical/High/Medium/Low)
+   - Assigned owner and target resolution deadline
+4. **Do not merge or bypass the failed check** without explicit maintainer approval
+
+This is the **highest priority workflow item** after a CI run. See [ZERO_TOLERANCE_FAILURE_POLICY.md](ZERO_TOLERANCE_FAILURE_POLICY.md) for complete procedures.
+
 ---
 
 ## Code Organization and Secrets
@@ -443,6 +460,7 @@ Firestore is used for persistent session memory and knowledge caching:
 7. **Code Quality Gate:** **Enforce a minimum of 70% test coverage for all new or modified code before merging.**
 8. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
 9. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
+10. **Zero-Tolerance CI Failure Policy:** **Any failed GitHub Actions status check that is not already tracked by an open, assigned issue MUST result in a new Feature Request being created immediately.** This is the highest priority workflow item after a CI run. See [ZERO_TOLERANCE_FAILURE_POLICY.md](ZERO_TOLERANCE_FAILURE_POLICY.md) for complete policy details.
 
 ---
 

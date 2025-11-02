@@ -424,6 +424,7 @@ Firestore is used for persistent session memory, knowledge caching, and agent pr
 6. **Error Handling:** Centralize error handling with consistent error shapes.
 7. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
 8. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
+9. **Zero-Tolerance CI Failure Policy:** Any failed GitHub Actions status check that is not already tracked by an open, assigned issue **MUST** result in a new Feature Request being created immediately. See [docs/ZERO_TOLERANCE_FAILURE_POLICY.md](../docs/ZERO_TOLERANCE_FAILURE_POLICY.md) for complete policy details.
 
 ---
 
