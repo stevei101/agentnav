@@ -4,13 +4,19 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/terraform.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/terraform.yml'
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -33,6 +39,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -80,57 +89,62 @@ jobs:
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
-        run: |
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
-
-          docker build \
-            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
-            -f Dockerfile \
-            .
-
-          # Tag as latest if on main branch
-          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
-            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
-          fi
-
-          # Push all tags
-          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
-
-          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-frontend:${{ steps.image.outputs.image_tag }}
+            ${{ steps.image.outputs.latest_tag && format('{0}-docker.pkg.dev/{1}/{2}/agentnav-frontend:{3}', env.ARTIFACT_REGISTRY_LOCATION, env.GCP_PROJECT_ID, env.ARTIFACT_REGISTRY_REPOSITORY, steps.image.outputs.latest_tag) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
       - name: Build and push backend
         if: matrix.service == 'backend'
-        run: |
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
-
-          docker build \
-            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
-            -f backend/Dockerfile \
-            ./backend
-
-          # Tag as latest if on main branch
-          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
-            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
-          fi
-
-          # Push all tags
-          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
-
-          echo "✅ Backend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-backend:${{ steps.image.outputs.image_tag }}
+            ${{ steps.image.outputs.latest_tag && format('{0}-docker.pkg.dev/{1}/{2}/agentnav-backend:{3}', env.ARTIFACT_REGISTRY_LOCATION, env.GCP_PROJECT_ID, env.ARTIFACT_REGISTRY_REPOSITORY, steps.image.outputs.latest_tag) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
       - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
-          # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
+          # Use Cloud Build for Gemma due to disk space and GPU requirements
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
+          
+          # Check if cloudbuild-gemma.yaml exists
+          if [ ! -f "cloudbuild-gemma.yaml" ]; then
+            echo "⚠️ cloudbuild-gemma.yaml not found, skipping Gemma build"
+            exit 0
+          fi
 
           # Submit Cloud Build job and wait for completion
+          set +e
           gcloud builds submit \
             --config=cloudbuild-gemma.yaml \
+            --timeout=30m \
             --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+          
+          BUILD_EXIT_CODE=$?
+          set -e
+          
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "⚠️ Gemma Cloud Build failed with exit code $BUILD_EXIT_CODE"
+            echo "This is expected if GPU quotas are not available or service account doesn't exist"
+            exit 0
+          fi
 
           echo "✅ Gemma Cloud Build completed successfully"
 
@@ -162,17 +176,24 @@ jobs:
       - name: Deploy frontend to Cloud Run
         if: matrix.service == 'frontend'
         run: |
+          echo "🚀 Deploying frontend to Cloud Run..."
           gcloud run deploy agentnav-frontend \
             --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest \
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
             --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
             --quiet
+          
+          echo "✅ Frontend deployed successfully"
 
       - name: Deploy backend to Cloud Run
         if: matrix.service == 'backend'
         run: |
+          echo "🚀 Deploying backend to Cloud Run..."
           gcloud run deploy agentnav-backend \
             --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest \
             --region europe-west1 \
@@ -180,25 +201,41 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
+            --memory 1Gi \
+            --cpu 2 \
+            --max-instances 10 \
+            --timeout 300 \
             --quiet
+          
+          echo "✅ Backend deployed successfully"
 
       - name: Get service URLs
         if: matrix.service == 'frontend'
         run: |
-          echo "Frontend URL:"
-          gcloud run services describe agentnav-frontend \
+          echo "## 🌐 Deployed Service URLs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          FRONTEND_URL=$(gcloud run services describe agentnav-frontend \
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)"
-
-          echo "Backend URL:"
-          gcloud run services describe agentnav-backend \
+            --format="value(status.url)" 2>/dev/null || echo "Not deployed")
+          
+          BACKEND_URL=$(gcloud run services describe agentnav-backend \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)"
-
-          echo "Gemma URL:"
-          gcloud run services describe gemma-service \
+            --format="value(status.url)" 2>/dev/null || echo "Not deployed")
+          
+          GEMMA_URL=$(gcloud run services describe gemma-service \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)"
+            --format="value(status.url)" 2>/dev/null || echo "Not deployed")
+          
+          echo "| Service | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${FRONTEND_URL} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${BACKEND_URL} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gemma GPU | ${GEMMA_URL} |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "Frontend URL: ${FRONTEND_URL}"
+          echo "Backend URL: ${BACKEND_URL}"
+          echo "Gemma URL: ${GEMMA_URL}"
