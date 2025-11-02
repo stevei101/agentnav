@@ -97,6 +97,9 @@ class ModelLoader:
                     quantization_config = BitsAndBytesConfig(
                         load_in_8bit=True,
                         llm_int8_threshold=6.0,
+                        # Set llm_int8_has_fp16_weight=False for Gemma compatibility.
+                        # Gemma models do not require FP16 weights for 8-bit quantization.
+                        # See: https://huggingface.co/docs/transformers/main/en/main_classes/quantization#transformers.BitsAndBytesConfig
                         llm_int8_has_fp16_weight=False,
                     )
                     model_kwargs["quantization_config"] = quantization_config
