@@ -76,20 +76,20 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
 **Repository Structure:**
 ```
 agentnav/
-??? README.md (comprehensive)
-??? SYSTEM_INSTRUCTION.md
-??? docs/
-?   ??? ARCHITECTURE.md
-?   ??? HACKATHON_SUBMISSION.md
-?   ??? GCP_SETUP_GUIDE.md
-??? backend/
-?   ??? agents/ (ADK agent definitions)
-?   ??? main.py (FastAPI)
-?   ??? Dockerfile
-??? frontend/
-?   ??? components/
-?   ??? services/
-?   ??? Dockerfile
+|-- README.md (comprehensive)
+|-- SYSTEM_INSTRUCTION.md
+|-- docs/
+|   |-- ARCHITECTURE.md
+|   |-- HACKATHON_SUBMISSION.md
+|   |-- GCP_SETUP_GUIDE.md
+|-- backend/
+|   |-- agents/ (ADK agent definitions)
+|   |-- main.py (FastAPI)
+|   |-- Dockerfile
+|-- frontend/
+|   |-- components/
+|   |-- services/
+|   |-- Dockerfile
 ??? docker-compose.yml
 ??? Makefile
 ??? terraform/ (infrastructure as code)

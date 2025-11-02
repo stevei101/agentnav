@@ -2,9 +2,9 @@ name: CI - Tests & Security
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   code-quality:
@@ -102,8 +102,8 @@ jobs:
 
       - name: Run backend tests
         env:
-          FIRESTORE_EMULATOR_HOST: "localhost:8081"
-          FIRESTORE_PROJECT_ID: "agentnav-dev"
+          FIRESTORE_EMULATOR_HOST: 'localhost:8081'
+          FIRESTORE_PROJECT_ID: 'agentnav-dev'
         run: |
           pytest -q backend/tests
 
@@ -131,7 +131,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Run OSV-Scanner
         uses: google/osv-scanner-action@v1.8.5
         with:
@@ -139,4 +139,23 @@ jobs:
             --recursive
             .
         continue-on-error: true
-            ./
+
+  # Composite job that aggregates the frontend/backend and python lint/tests
+  CODE_QUALITY:
+    name: CODE_QUALITY
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-tests, backend-tests]
+    steps:
+      - name: Aggregate Code Quality
+        run: |
+          echo "CODE_QUALITY: All aggregated code quality jobs completed successfully."
+
+  # Composite job that aggregates the infrastructure/security scans
+  SECURITY_AUDIT:
+    name: SECURITY_AUDIT
+    runs-on: ubuntu-latest
+    needs: [tfsec-scan, osv-scanner]
+    steps:
+      - name: Aggregate Security Results
+        run: |
+          echo "SECURITY_AUDIT: All aggregated security scans completed successfully."
