@@ -71,22 +71,21 @@ async def healthz_check():
     firestore_status = None
     errors = {}
     
-    # Check ADK System availability
+    # Check ADK System availability (lightweight check - verify imports only)
     try:
         from agents import (
             OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
         )
         
-        # Test agent instantiation (doesn't require full initialization)
-        a2a = A2AProtocol()
-        test_agent = OrchestratorAgent(a2a)
-        
-        if test_agent and hasattr(test_agent, 'name'):
+        # Lightweight validation: just verify classes are importable
+        # This avoids expensive instantiation on every health check request
+        if (OrchestratorAgent and SummarizerAgent and LinkerAgent and 
+            VisualizerAgent and A2AProtocol):
             adk_status = "operational"
             logger.debug("✅ ADK system check passed")
         else:
             adk_status = "degraded"
-            errors["adk"] = "Agent instantiation incomplete"
+            errors["adk"] = "Agent classes not fully available"
             
     except ImportError as e:
         adk_status = "unavailable"

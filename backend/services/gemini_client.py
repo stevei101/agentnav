@@ -8,7 +8,7 @@ All direct calls to Gemini models should use this client for consistency and fea
 import os
 import logging
 import asyncio
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 logger = logging.getLogger(__name__)
 
 try:

@@ -2,13 +2,13 @@
 Tests for Gemma Service JWT Authentication
 """
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from gemma_service.auth import verify_jwt_token, REQUIRE_AUTH
+import gemma_service.auth
 
 
 class TestJWTAuthentication:
