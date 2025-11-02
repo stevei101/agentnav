@@ -19,6 +19,7 @@ We consolidated the CI checks into three primary, high-level checks. Each of the
 3. INFRA_VERIFICATION
    - Underlying job: `Terraform` (run as `terraform plan` on PRs)
    - Purpose: Verifies that proposed IaC changes produce a valid `terraform plan` and surface the plan in a PR comment. This workflow will not run `terraform apply` on PRs.
+   - **Important**: This workflow runs conditionally based on path filters (only when `terraform/**` files change). GitHub will automatically skip this check for PRs without Terraform changes, and the check will show as "successful" in branch protection rules. This is expected behavior.
 
 ## How the consolidation works
 
@@ -55,6 +56,20 @@ curl -X PUT -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vn
   https://api.github.com/repos/OWNER/REPO/branches/main/protection/required_status_checks \
   -d '{ "strict": true, "contexts": ["CODE_QUALITY", "SECURITY_AUDIT", "INFRA_VERIFICATION"] }'
 ```
+
+## Understanding INFRA_VERIFICATION status
+
+**Path Filtering Behavior:**
+- `INFRA_VERIFICATION` only runs when `terraform/**` files are modified
+- For PRs without Terraform changes, GitHub automatically skips the check
+- **The check shows as "successful" in branch protection**, even though it was skipped
+- This is the **correct and expected behavior** per GitHub's path filtering design
+
+**Why This Design?**
+- Prevents unnecessary Terraform validation runs for non-infrastructure PRs
+- Reduces CI/CD costs and execution time
+- Aligns with GitHub's recommendation for path-filtered required checks
+- No waiting for checks that will never run
 
 ## Notes and rationale
 
