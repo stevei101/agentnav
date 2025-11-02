@@ -17,15 +17,6 @@ steps:
       - './backend'
     waitFor: ['-']
 
-  # Push to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-gemma'
-    args:
-      - 'push'
-      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
-      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:latest'
-    waitFor: ['build-gemma']
-
   # Deploy to Cloud Run with GPU
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-gemma'
@@ -63,7 +54,7 @@ steps:
       - 'HUGGINGFACE_TOKEN=HUGGINGFACE_TOKEN:latest'
       - '--service-account'
       - '${_SERVICE_ACCOUNT}'
-    waitFor: ['push-gemma']
+    waitFor: ['build-gemma']
 
 # Store images in Artifact Registry
 images:
