@@ -101,8 +101,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         .join("\n\n");
 
       // Determine content type based on document type (used in onSessionStart callback)
-      // const contentType =
-      //   documentType === "codebase" ? "codebase" : "document";
 
       // Generate session ID
       const sessionId = `session-${Date.now()}`;
