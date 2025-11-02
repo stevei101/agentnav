@@ -5,6 +5,7 @@ This document provides setup instructions and usage guidance for the multi-layer
 ## Overview
 
 The testing strategy covers:
+
 - **Frontend Unit Tests** (Vitest + Testing Library)
 - **Backend Integration Tests** (pytest + Firestore emulator)
 - **Infrastructure Security Scans** (tfsec for Terraform)
@@ -17,11 +18,13 @@ The testing strategy covers:
 ### Local Development
 
 1. **Run all tests:**
+
    ```bash
    make test
    ```
 
 2. **Run frontend tests only:**
+
    ```bash
    bun run test
    # Or with the Makefile:
@@ -29,16 +32,18 @@ The testing strategy covers:
    ```
 
 3. **Run backend tests only:**
+
    ```bash
    make test-backend
    ```
 
 4. **Run code quality checks:**
+
    ```bash
    # Frontend linting and formatting
    bun run lint
    bun run format:check
-   
+
    # Backend linting and formatting
    black --check backend/
    isort --check-only --profile black backend/
@@ -59,16 +64,19 @@ The GitHub Actions CI workflow (`.github/workflows/ci.yml`) automatically runs:
 ## Frontend Testing
 
 ### Technology Stack
+
 - **Test Runner:** Vitest
 - **Testing Library:** @testing-library/react
 - **Test Environment:** jsdom
 
 ### Configuration Files
+
 - `vitest.config.ts` - Vitest configuration
 - `vitest.setup.ts` - Test setup (imports jest-dom)
 - `components/__tests__/` - Component test files
 
 ### Example Test
+
 ```typescript
 // components/__tests__/AgentCard.test.tsx
 import React from 'react'
@@ -93,6 +101,7 @@ describe('AgentCard', () => {
 ```
 
 ### Running Frontend Tests
+
 ```bash
 # Install dependencies
 bun install
@@ -110,15 +119,18 @@ bun run test -- --coverage
 ## Backend Testing
 
 ### Technology Stack
+
 - **Test Runner:** pytest
 - **Database:** Firestore emulator
 - **Async Support:** pytest-asyncio
 
 ### Configuration
+
 - `backend/tests/` - Test directory
 - `backend/tests/test_firestore_client.py` - Firestore integration tests
 
 ### Firestore Emulator Integration
+
 The backend tests use the Firestore emulator for isolated testing:
 
 ```python
@@ -128,6 +140,7 @@ FIRESTORE_PROJECT_ID=agentnav-dev
 ```
 
 ### Example Test
+
 ```python
 # backend/tests/test_firestore_client.py
 import os
@@ -156,6 +169,7 @@ def test_can_write_and_read_document(monkeypatch):
 ```
 
 ### Running Backend Tests
+
 ```bash
 # Using Makefile (recommended - starts emulator automatically)
 make test-backend
@@ -168,6 +182,7 @@ pytest backend/tests  # Run tests
 ## Code Quality
 
 ### Pre-commit Hooks
+
 Install pre-commit hooks for automatic code quality checks:
 
 ```bash
@@ -182,14 +197,17 @@ pre-commit run --all-files
 ```
 
 ### Frontend Code Quality
+
 - **ESLint** - TypeScript/React linting
 - **Prettier** - Code formatting
 
 Configuration files:
+
 - `.eslintrc.json` - ESLint rules
 - `.prettierrc.json` - Prettier settings
 
-### Backend Code Quality  
+### Backend Code Quality
+
 - **Black** - Code formatting
 - **isort** - Import sorting
 - **ruff** - Fast Python linter
@@ -198,6 +216,7 @@ Configuration files:
 ## Security Scanning
 
 ### Infrastructure Security (tfsec)
+
 Scans Terraform files for security misconfigurations:
 
 ```bash
@@ -209,6 +228,7 @@ tfsec terraform/
 ```
 
 ### Dependency Vulnerability Scanning (OSV-scanner)
+
 Scans for known vulnerabilities in dependencies:
 
 ```bash
@@ -220,10 +240,11 @@ osv-scanner -r --skip-git ./
 ```
 
 ### GitHub Secret Scanning
+
 **Manual Setup Required:**
 
 1. Go to repository Settings → Security & analysis
-2. Enable "Secret scanning" 
+2. Enable "Secret scanning"
 3. Enable "Push protection" (recommended)
 
 ## Dependabot Configuration
@@ -234,6 +255,7 @@ Automatic dependency updates are configured in `.github/dependabot.yml`:
 - **Backend dependencies** (pip) - Weekly checks
 
 Dependabot will create PRs for:
+
 - Security updates (immediate)
 - Version updates (weekly)
 
@@ -248,30 +270,35 @@ Dependabot will create PRs for:
 5. **osv-scanner** - Scans dependencies for vulnerabilities
 
 ### Environment Variables (CI)
+
 ```yaml
 # Backend tests
-FIRESTORE_EMULATOR_HOST: "localhost:8081"
-FIRESTORE_PROJECT_ID: "agentnav-dev"
+FIRESTORE_EMULATOR_HOST: 'localhost:8081'
+FIRESTORE_PROJECT_ID: 'agentnav-dev'
 ```
 
 ### Workflow Triggers
+
 - **Pull requests** to `main` branch
 - **Pushes** to `main` branch
 
 ## Expanding the Test Suite
 
 ### Adding Frontend Tests
+
 1. Create test files in `components/__tests__/`
 2. Follow the naming convention: `ComponentName.test.tsx`
 3. Use Vitest + Testing Library patterns
 
 ### Adding Backend Tests
+
 1. Create test files in `backend/tests/`
 2. Follow the naming convention: `test_module_name.py`
 3. Use pytest fixtures and async patterns
 4. Mock external services (Gemini API, etc.)
 
 ### A2A Protocol Testing (Future)
+
 For testing the Agent2Agent protocol:
 
 ```python
@@ -284,6 +311,7 @@ async def test_orchestrator_to_summarizer_flow():
 ```
 
 ### API Route Testing (Future)
+
 For testing FastAPI endpoints:
 
 ```python
@@ -302,18 +330,22 @@ def test_analyze_endpoint():
 ### Common Issues
 
 **Frontend tests failing:**
+
 - Ensure bun is installed: `curl -fsSL https://bun.sh/install | bash`
 - Check dependencies: `bun install`
 
 **Backend tests failing:**
+
 - Ensure Firestore emulator is running: `make start-firestore`
 - Check Python dependencies: `pip install -r backend/requirements.txt`
 
 **Pre-commit hooks failing:**
+
 - Install hooks: `pre-commit install`
 - Update hooks: `pre-commit autoupdate`
 
 **CI workflow failing:**
+
 - Check GitHub Actions logs
 - Verify secrets are configured
 - Ensure all dependencies are in package.json/requirements.txt
@@ -321,6 +353,7 @@ def test_analyze_endpoint():
 ## Coverage Goals
 
 Per Feature Request #013 acceptance criteria:
+
 - **Target:** 80% coverage for core utilities and API routes
 - **Current:** Basic test scaffolding implemented
 - **Next Steps:** Expand test coverage for:
@@ -333,11 +366,13 @@ Per Feature Request #013 acceptance criteria:
 ## Performance Considerations
 
 ### Local Development
+
 - Firestore emulator provides fast, isolated testing
 - Vitest provides fast frontend test execution
 - Pre-commit hooks catch issues early
 
 ### CI/CD
+
 - Parallel job execution reduces total pipeline time
 - Docker-based Firestore emulator for consistent CI environment
 - Soft-fail on some security scans to avoid blocking deployments

@@ -209,7 +209,10 @@ async def analyze_content(request: AnalyzeRequest):
             "completed_agents": session_context.completed_agents,
             "total_agents": len(workflow.agents),
             "errors": session_context.errors,
-            "firestore_persisted": workflow.persistence_service is not None
+            "firestore_persisted": workflow.persistence_service is not None,
+            "session_service_enabled": workflow.session_service is not None,
+            "cache_service_enabled": workflow.cache_service is not None,
+            "from_cache": session_context.workflow_status == "completed_from_cache"
         }
         
         processing_time = time.time() - start_time
