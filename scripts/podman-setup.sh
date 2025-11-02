@@ -67,13 +67,23 @@ fi
 echo "🔨 Building and starting services..."
 $COMPOSE_CMD up -d --build
 
+# Extract port configurations from environment and config files
+FRONTEND_PORT=${FRONTEND_PORT:-5173}  # Vite default (see vite.config.ts)
+BACKEND_PORT=${BACKEND_PORT:-8080}    # Backend default (see backend/main.py)
+FIRESTORE_PORT=${FIRESTORE_PORT:-8080} # Firestore emulator API port
+FIRESTORE_UI_PORT=${FIRESTORE_UI_PORT:-4000} # Firestore emulator UI port
+
 echo "✅ Setup complete!"
 echo ""
-echo "📍 Access points:"
-echo "   - Frontend: http://localhost:3000"
-echo "   - Backend API: http://localhost:8080"
-echo "   - API Docs: http://localhost:8080/docs"
-echo "   - Firestore Emulator: http://localhost:8081"
+echo "📍 Access points (default development ports):"
+echo "   - Frontend: http://localhost:${FRONTEND_PORT}"
+echo "   - Backend API: http://localhost:${BACKEND_PORT}"
+echo "   - API Docs: http://localhost:${BACKEND_PORT}/docs"
+echo "   - Firestore Emulator UI: http://localhost:${FIRESTORE_UI_PORT}"
+echo ""
+echo "ℹ️  Port configuration:"
+echo "   Set FRONTEND_PORT, BACKEND_PORT, FIRESTORE_PORT, or FIRESTORE_UI_PORT"
+echo "   environment variables to override defaults"
 echo ""
 echo "📊 View logs: $COMPOSE_CMD logs -f"
 echo "🛑 Stop services: $COMPOSE_CMD down"
