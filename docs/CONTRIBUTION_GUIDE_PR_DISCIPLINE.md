@@ -340,6 +340,7 @@ If unsure, ask in the PR description or discuss with reviewers.
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - General contribution guidelines
 - [docs/TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Testing best practices
+- [docs/COPILOT_AGENT_GUIDE.md](COPILOT_AGENT_GUIDE.md) - Using the agentnav-copilot-agent
 - [docs/local-development.md](local-development.md) - Local development setup
 - [.gitignore](../.gitignore) - Files excluded from version control
 - [.dockerignore](../.dockerignore) - Files excluded from build context

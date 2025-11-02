@@ -23,6 +23,7 @@ These documents are:
 
 - `SYSTEM_INSTRUCTION.md` - Complete system architecture and deployment guide
 - `ARCHITECTURE_DIAGRAM_GUIDE.md` - How to create architecture diagrams
+- `COPILOT_AGENT_GUIDE.md` - Using the custom agentnav-copilot-agent for development
 
 ### Hackathon Submission Guides
 
@@ -39,6 +40,7 @@ If you're a developer looking to:
 - **Deploy to Google Cloud** ? See `GCP_SETUP_GUIDE.md`
 - **Understand the architecture** ? Read `SYSTEM_INSTRUCTION.md`
 - **Add GPU support** ? Follow `GPU_SETUP_GUIDE.md`
+- **Use the AI assistant** ? See `COPILOT_AGENT_GUIDE.md`
 
 ## For Reviewers
 
