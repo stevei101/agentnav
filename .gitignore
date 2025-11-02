@@ -83,11 +83,4 @@ build/
 *.temp
 .cache/
 
-# Development notes and tracking
-markdown/
-ideas/
-metadata.json
 
-# Local development
-docker-compose*.yml
-entrypoint.sh
