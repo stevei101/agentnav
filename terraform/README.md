@@ -12,6 +12,7 @@ This Terraform configuration provisions:
 - **Firestore** database for session memory and knowledge caching
 - **Secret Manager** secrets for API keys
 - **Cloud Run** service blueprints (frontend, backend, Gemma GPU)
+- **Staging Environment** Cloud Run services (frontend-staging, backend-staging)
 - **Cloud Build Triggers** for automatic "Connect Repo" deployments from GitHub (frontend & backend)
 
 ## Prerequisites
@@ -52,6 +53,7 @@ export TF_WORKSPACE="agentnav-production"
 project_id = "your-gcp-project-id"
 github_repository = "stevei101/agentnav"
 environment = "prod"
+enable_staging_environment = true  # Enable staging Cloud Run services
 ```
 
 ### 4. Initialize Terraform
@@ -106,24 +108,42 @@ After `terraform apply`, you'll get WIF outputs that need to be added as GitHub 
 - `versions.tf` - Terraform and provider version requirements
 - `provider.tf` - Google Cloud provider configuration
 - `backend.tf` - Terraform Cloud remote backend
-- `variables.tf` - Input variables
+- `variables.tf` - Input variables (includes `enable_staging_environment`)
 - `data.tf` - Data sources (project info, etc.)
 - `iam.tf` - IAM roles, service accounts, and WIF setup
 - `artifact_registry.tf` - Artifact Registry repository
 - `firestore.tf` - Firestore database
 - `secret_manager.tf` - Secret Manager secrets
-- `cloud_run.tf` - Cloud Run service definitions
+- `cloud_run.tf` - Cloud Run service definitions (production and staging)
 - `cloud_build.tf` - Cloud Build triggers for "Connect Repo" automatic deployments
-- `outputs.tf` - Output values (WIF info, service URLs, etc.)
+- `outputs.tf` - Output values (WIF info, service URLs, staging URLs, etc.)
 
 ## Outputs
 
 After applying, Terraform outputs:
 
 - WIF provider and service account (for GitHub Secrets)
-- Service URLs for all Cloud Run services
+- Service URLs for all Cloud Run services (production and staging)
 - Artifact Registry repository info
 - Firestore database ID
+
+### Staging Environment
+
+The staging environment is controlled by the `enable_staging_environment` variable (default: `true`):
+
+```hcl
+variable "enable_staging_environment" {
+  description = "Enable staging environment Cloud Run services"
+  type        = bool
+  default     = true
+}
+```
+
+When enabled, Terraform provisions:
+- `agentnav-frontend-staging` (us-central1)
+- `agentnav-backend-staging` (europe-west1)
+
+These services are used by the CI/CD pipeline for deployment gates. See `docs/BRANCH_PROTECTION_SETUP.md` for details.
 
 ## CI/CD Integration
 
