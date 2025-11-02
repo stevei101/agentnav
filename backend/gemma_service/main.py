@@ -81,31 +81,32 @@ app.add_middleware(
 
 
 # Request/Response Models
-class GenerateRequest(BaseModel):
-    """Request model for text generation"""
+class ReasonRequest(BaseModel):
+    """Request model for reasoning/text generation"""
     prompt: str = Field(..., description="Input prompt for generation")
+    context: Optional[str] = Field(None, description="Additional context for reasoning")
     max_tokens: int = Field(500, ge=1, le=2048, description="Maximum tokens to generate")
     temperature: float = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
     top_p: float = Field(0.9, ge=0.0, le=1.0, description="Nucleus sampling parameter")
     top_k: int = Field(50, ge=1, le=100, description="Top-k sampling parameter")
 
 
-class GenerateResponse(BaseModel):
-    """Response model for text generation"""
+class ReasonResponse(BaseModel):
+    """Response model for reasoning/text generation"""
     text: str = Field(..., description="Generated text")
     tokens_generated: Optional[int] = Field(None, description="Number of tokens generated")
     model: str = Field(..., description="Model name used")
     device: str = Field(..., description="Device used (cuda/cpu)")
 
 
-class EmbeddingRequest(BaseModel):
-    """Request model for embedding generation"""
-    text: str = Field(..., description="Text to generate embeddings for")
+class EmbedRequest(BaseModel):
+    """Request model for embedding generation (batch support)"""
+    texts: list[str] = Field(..., description="Batch of text strings to generate embeddings for")
 
 
-class EmbeddingResponse(BaseModel):
-    """Response model for embeddings"""
-    embeddings: list = Field(..., description="Embedding vector")
+class EmbedResponse(BaseModel):
+    """Response model for embeddings (batch support)"""
+    embeddings: list[list[float]] = Field(..., description="List of embedding vectors")
     dimension: int = Field(..., description="Embedding dimension")
     model: str = Field(..., description="Model name used")
 
@@ -128,7 +129,7 @@ async def root():
     return {
         "service": "Gemma GPU Service",
         "version": "0.1.0",
-        "endpoints": ["/healthz", "/generate", "/embeddings"]
+        "endpoints": ["/healthz", "/reason", "/embed"]
     }
 
 
@@ -154,13 +155,13 @@ async def health_check():
     )
 
 
-@app.post("/generate", tags=["inference"], response_model=GenerateResponse)
-async def generate(request: GenerateRequest):
+@app.post("/reason", tags=["inference"], response_model=ReasonResponse)
+async def reason(request: ReasonRequest):
     """
-    Generate text using Gemma model
+    Generate reasoning/text using Gemma model with optional context
     
     Args:
-        request: Generation parameters
+        request: Reasoning parameters including prompt and optional context
         
     Returns:
         Generated text
@@ -169,8 +170,13 @@ async def generate(request: GenerateRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
+        # Combine prompt with context if provided
+        full_prompt = request.prompt
+        if request.context:
+            full_prompt = f"Context: {request.context}\n\nPrompt: {request.prompt}"
+        
         generated_text = inference_engine.generate(
-            prompt=request.prompt,
+            prompt=full_prompt,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             top_p=request.top_p,
@@ -182,7 +188,7 @@ async def generate(request: GenerateRequest):
         TOKEN_ESTIMATION_MULTIPLIER = 1.3
         tokens_generated = len(generated_text.split()) * TOKEN_ESTIMATION_MULTIPLIER
         
-        return GenerateResponse(
+        return ReasonResponse(
             text=generated_text,
             tokens_generated=int(tokens_generated),
             model=model_loader.model_name,
@@ -190,30 +196,37 @@ async def generate(request: GenerateRequest):
         )
         
     except Exception as e:
-        logger.error(f"Generation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+        logger.error(f"Reasoning error: {e}")
+        raise HTTPException(status_code=500, detail=f"Reasoning failed: {str(e)}")
 
 
-@app.post("/embeddings", tags=["inference"], response_model=EmbeddingResponse)
-async def generate_embeddings(request: EmbeddingRequest):
+@app.post("/embed", tags=["inference"], response_model=EmbedResponse)
+async def embed(request: EmbedRequest):
     """
-    Generate embeddings for text
+    Generate embeddings for a batch of text strings
     
     Args:
-        request: Text to embed
+        request: Batch of texts to embed
         
     Returns:
-        Embedding vector
+        List of embedding vectors
     """
     if not inference_engine:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
-        embeddings = inference_engine.generate_embeddings(request.text)
+        # Generate embeddings for each text in the batch
+        all_embeddings = []
+        for text in request.texts:
+            embeddings = inference_engine.generate_embeddings(text)
+            all_embeddings.append(embeddings)
         
-        return EmbeddingResponse(
-            embeddings=embeddings,
-            dimension=len(embeddings),
+        # All embeddings should have the same dimension
+        dimension = len(all_embeddings[0]) if all_embeddings else 0
+        
+        return EmbedResponse(
+            embeddings=all_embeddings,
+            dimension=dimension,
             model=model_loader.model_name,
         )
         
