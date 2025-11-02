@@ -70,13 +70,13 @@ jobs:
 
           # Set outputs for subsequent build/push steps
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT || true
 
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          [ -n "${LATEST_TAG}" ] && echo "Latest tag: ${LATEST_TAG}"
+          [ -n "${LATEST_TAG}" ] && echo "Latest tag: ${LATEST_TAG}" || true
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
@@ -95,7 +95,7 @@ jobs:
 
           # Push all tags
           docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
 
           echo "✅ Frontend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
 
@@ -116,7 +116,7 @@ jobs:
 
           # Push all tags
           docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
 
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
 
