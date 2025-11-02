@@ -287,12 +287,15 @@ agentnav/
 
 ## Contributing
 
-1. Clone the repository
-2. Set up your local environment: `make setup`
-3. Create a feature branch
-4. Make your changes
-5. Test locally: `make test`
-6. Submit a pull request
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+- How to set up your development environment
+- Our development workflow
+- Code style guidelines
+- How to submit pull requests
+
+Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
+For security vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ## Troubleshooting
 
@@ -322,7 +325,9 @@ For more troubleshooting, see [docs/local-development.md](docs/local-development
 
 ## License
 
-[Add your license here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+By contributing to this project, you agree that your contributions will be licensed under the Apache License 2.0.
 
 ## Acknowledgments
 
