@@ -2,7 +2,7 @@
 # Uses Podman commands directly (no docker-compose dependency)
 # Aligned with Cloud Run best practices
 
-.PHONY: help setup up down logs logs-frontend logs-backend logs-firestore build clean test test-frontend test-backend demo teardown restart ps podman-start validate health check-env install-dev lint format shell-frontend shell-backend
+.PHONY: help setup up down logs logs-frontend logs-backend logs-firestore build clean test test-frontend test-backend demo teardown restart ps podman-start validate health check-env install-dev lint format shell-frontend shell-backend ci
 
 # Detect Podman
 PODMAN := $(shell command -v podman 2> /dev/null)
@@ -46,6 +46,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-frontend  Run frontend tests"
 	@echo "  make test-backend   Run backend tests"
+	@echo "  make ci             Run full CI check (lint + test)"
 	@echo ""
 	@echo "🎬 Demo & Validation:"
 	@echo "  make demo           Start demo environment"
@@ -400,3 +401,16 @@ shell-backend: check-podman
 	@podman exec -it $(BACKEND_CONTAINER) /bin/sh || \
 	podman exec -it $(BACKEND_CONTAINER) /bin/bash || \
 	echo "❌ Could not open shell in backend container"
+
+# CI: Run full integration check (lint, format check, test)
+# This is the target to run before merging a PR
+ci: lint test
+	@echo ""
+	@echo "✅ All CI checks passed!"
+	@echo ""
+	@echo "📋 Checklist completed:"
+	@echo "  ✓ Code linting"
+	@echo "  ✓ Frontend tests"
+	@echo "  ✓ Backend tests"
+	@echo ""
+	@echo "🚀 Ready for review and merge!"
