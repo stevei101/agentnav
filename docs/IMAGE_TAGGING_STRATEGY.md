@@ -406,7 +406,6 @@ docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
 - [CI/CD Workflow](../.github/workflows/build.yml)
 - [Google Artifact Registry (GAR) Setup](./GCP_SETUP_GUIDE.md)
 - [Cloud Run Deployment](./CLOUD_RUN_UPDATES_SUMMARY.md)
-- [Feature Request #025: Standardized Image Tagging](../markdown/FR_025_IMAGE_TAGGING.md)
 
 ---
 
