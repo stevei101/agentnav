@@ -12,7 +12,7 @@ The video link you shared (`https://youtu.be/4Ybidk3bBQk`) and the related searc
 
 1.  **Reinforces the Architecture:** It confirms that our choice of a multi-agent system, using **ADK** for orchestration and **Gemini** as the model, is the correct, modern approach for complex agentic workflows.
 2.  **Validates Implementation Details:** Many of the search snippets mention the use of **FastAPI** and deployment to **Cloud Run** , which validates our backend stack and deployment strategy.
-3.  **Local Dev Context:** Snippets mention the importance of a quick start: "No heavy cloud setups. No complex DevOps. Just clone, code, run—and see your agent live in minutes" . This directly validates the *why* and the *success criteria* of the Podman-based local environment, as the ADK ecosystem is explicitly designed for easy local development before cloud deployment.
+3.  **Local Dev Context:** Snippets mention the importance of a quick start: "No heavy cloud setups. No complex DevOps. Just clone, code, run—and see your agent live in minutes" . This directly validates the _why_ and the _success criteria_ of the Podman-based local environment, as the ADK ecosystem is explicitly designed for easy local development before cloud deployment.
 4.  **Documentation Focus:** The documentation (`docs/local-development.md`) should emphasize that the containerized setup is the **ADK Quickstart** process, ensuring developers can immediately focus on agent logic (the "magic") rather than environment configuration (the "DevOps").
 
 ---
@@ -124,13 +124,13 @@ services:
     container_name: firestore-emulator
     command: gcloud emulators firestore start --host-and-port 0.0.0.0:8080 --database-mode datastore-native
     ports:
-      - "8081:8080" # Map host port 8081 to container port 8080 for the emulator API
-      - "9090:9150" # Map host port 9090 to container port 9150 for the Emulator UI
+      - '8081:8080' # Map host port 8081 to container port 8080 for the emulator API
+      - '9090:9150' # Map host port 9090 to container port 9150 for the Emulator UI
     volumes:
       # Persistent storage for the emulator data
       - firestore-data:/root/.config/gcloud/emulators/firestore
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -145,7 +145,7 @@ services:
       dockerfile: backend/Dockerfile.dev
     container_name: agentnav-backend
     ports:
-      - "8080:8080" # Map host port 8080 to container port 8080 (FastAPI default)
+      - '8080:8080' # Map host port 8080 to container port 8080 (FastAPI default)
     volumes:
       # Live code reload for the backend
       - ./backend:/app:Z
@@ -158,7 +158,7 @@ services:
       firestore-emulator:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/healthz']
       interval: 15s
       timeout: 5s
       retries: 3
@@ -173,7 +173,7 @@ services:
       dockerfile: frontend/Dockerfile.dev
     container_name: agentnav-frontend
     ports:
-      - "3000:5173" # Map host port 3000 to Vite's default 5173
+      - '3000:5173' # Map host port 3000 to Vite's default 5173
     volumes:
       # Live code reload for the frontend
       - ./frontend:/app:Z

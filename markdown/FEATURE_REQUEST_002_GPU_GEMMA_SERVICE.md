@@ -12,6 +12,7 @@
 To compete in the **GPU Category** of the Cloud Run Hackathon, we need to deploy and run an open-source AI model (Gemma) on Cloud Run with NVIDIA L4 GPU acceleration. Currently, our project uses Gemini API for agent reasoning, but we lack GPU-powered model inference capabilities.
 
 **The Problem:**
+
 - We cannot compete in the GPU category without a GPU-enabled service
 - Complex visualization and embedding tasks could benefit from GPU acceleration
 - No open-source model deployment in our current architecture
@@ -19,6 +20,7 @@ To compete in the **GPU Category** of the Cloud Run Hackathon, we need to deploy
 - Cannot show performance improvements from GPU acceleration
 
 **I'm always frustrated when** I need to:
+
 - Run complex AI tasks on CPU (slow inference times)
 - Wait for embeddings or graph generation without GPU acceleration
 - Cannot demonstrate GPU capabilities to hackathon judges
@@ -63,6 +65,7 @@ To compete in the **GPU Category** of the Cloud Run Hackathon, we need to deploy
 ### Implementation Components
 
 **Service Architecture:**
+
 ```
 Backend API (FastAPI)
     ?
@@ -74,6 +77,7 @@ Backend API (FastAPI)
 ```
 
 **Service Features:**
+
 - REST API endpoints for model inference
 - Support for text generation, embeddings, and analysis
 - Health check endpoint for Cloud Run
@@ -85,26 +89,31 @@ Backend API (FastAPI)
 ## Describe alternatives you've considered
 
 ### Alternative 1: **Deploy Gemma as Cloud Run Job**
+
 - **Pros:** Better for batch processing, one-time tasks
 - **Cons:** Not suitable for real-time HTTP requests, harder to integrate with agents
 - **Decision:** Use Cloud Run Service for HTTP integration
 
 ### Alternative 2: **Use Vertex AI Model Garden**
+
 - **Pros:** Managed service, easier deployment
 - **Cons:** Not "open-source model on Cloud Run" - doesn't meet hackathon requirement
 - **Decision:** Must deploy model directly on Cloud Run
 
 ### Alternative 3: **Use Smaller Model (Gemma 2B)**
+
 - **Pros:** Lower memory requirements, faster startup
 - **Cons:** Less capable, may not demonstrate GPU benefits as clearly
 - **Decision:** Use Gemma 7B for better demonstration, optimize if needed
 
 ### Alternative 4: **CPU-Only Deployment**
+
 - **Pros:** Lower cost, simpler deployment
 - **Cons:** Doesn't meet GPU category requirement, slower performance
 - **Decision:** Must use GPU for hackathon category
 
 ### **Why GPU-Enabled Cloud Run Service is Best:**
+
 - ? Meets hackathon requirement (open-source model on Cloud Run with GPU)
 - ? Integrates seamlessly with existing backend architecture
 - ? Allows real-time HTTP requests from agents
@@ -119,6 +128,7 @@ Backend API (FastAPI)
 ### Hackathon Requirements
 
 **GPU Category Requirements:**
+
 - ? Utilize NVIDIA L4 GPUs on Cloud Run
 - ? Use europe-west1 or europe-west4 region
 - ? Deploy open-source model (Gemma qualifies)
@@ -126,6 +136,7 @@ Backend API (FastAPI)
 - ? Demonstrate performant AI/ML model inference
 
 **Why Gemma?**
+
 - Open-source model (meets requirement)
 - Developed by Google (aligns with hackathon ecosystem)
 - Good performance on Cloud Run GPUs
@@ -135,6 +146,7 @@ Backend API (FastAPI)
 ### Technical Requirements
 
 **Dockerfile Requirements:**
+
 - Base image with CUDA support
 - PyTorch with CUDA enabled
 - Transformers library for Gemma
@@ -143,6 +155,7 @@ Backend API (FastAPI)
 - GPU memory management
 
 **Model Configuration:**
+
 - Model: `google/gemma-7b-it` or `google/gemma-2b-it`
 - Quantization: Consider 8-bit or 4-bit for memory efficiency
 - Device: CUDA (GPU)
@@ -150,6 +163,7 @@ Backend API (FastAPI)
 - Max tokens: Configurable per request
 
 **Cloud Run Configuration:**
+
 - Service name: `gemma-service`
 - Region: `europe-west1`
 - GPU type: `nvidia-l4`
@@ -164,6 +178,7 @@ Backend API (FastAPI)
 ### Integration Points
 
 **Backend Integration:**
+
 ```python
 # backend/services/gemma_service.py
 async def generate_with_gemma(prompt: str) -> str:
@@ -176,6 +191,7 @@ async def generate_with_gemma(prompt: str) -> str:
 ```
 
 **Agent Integration:**
+
 ```python
 # backend/agents/visualizer_agent.py
 class VisualizerAgent(Agent):
@@ -204,22 +220,26 @@ GPU_COUNT=1
 ### Success Criteria
 
 ? **GPU Deployment:**
+
 - Gemma model deployed on Cloud Run with NVIDIA L4 GPU
 - Service accessible via HTTP endpoint
 - Health check endpoint working
 - GPU utilization visible in Cloud Console
 
 ? **Integration:**
+
 - Backend can call Gemma service
 - Visualizer Agent uses Gemma for complex tasks
 - Error handling and fallback mechanisms in place
 
 ? **Performance:**
+
 - GPU inference faster than CPU (demonstrable)
 - Model startup time acceptable (< 5 minutes)
 - Request latency reasonable (< 10 seconds for generation)
 
 ? **Hackathon Requirements:**
+
 - Meets all GPU category requirements
 - Can demonstrate GPU usage in demo video
 - Architecture diagram shows GPU service
@@ -245,6 +265,7 @@ GPU_COUNT=1
 ### Implementation Steps
 
 1. **Request GPU Quota**
+
    ```bash
    # Check quota
    gcloud compute project-info describe --project=PROJECT_ID
@@ -265,12 +286,14 @@ GPU_COUNT=1
    - Error handling
 
 4. **Build and Push Image**
+
    ```bash
    podman build -f backend/Dockerfile.gemma -t gemma-service .
    podman push gcr.io/PROJECT_ID/gemma-service:latest
    ```
 
 5. **Deploy to Cloud Run**
+
    ```bash
    gcloud run deploy gemma-service \
      --image=gcr.io/PROJECT_ID/gemma-service:latest \
@@ -298,11 +321,13 @@ GPU_COUNT=1
 ### Cost Considerations
 
 **GPU Costs (Approximate):**
+
 - NVIDIA L4 GPU: ~$0.75/hour per GPU
 - Memory: Included in GPU instance
 - With scale-to-zero: Only pay when processing requests
 
 **Cost Optimization:**
+
 - Set `min-instances=0` (scale to zero)
 - Limit `max-instances=2` (control costs)
 - Use caching to reduce GPU calls
@@ -330,6 +355,7 @@ GPU_COUNT=1
 ### Reference Implementation
 
 **Example Gemma Service Structure:**
+
 ```
 backend/
 ??? gemma_service/
@@ -342,6 +368,7 @@ backend/
 ```
 
 **Example FastAPI Endpoints:**
+
 ```python
 POST /generate
 {
@@ -382,18 +409,21 @@ GET /healthz
 ## Judging Criteria Alignment
 
 ### Technical Implementation (40%)
+
 - ? Clean, efficient code for model serving
 - ? Proper Cloud Run GPU configuration
 - ? Error handling and resilience
 - ? Production-ready service design
 
 ### Demo & Presentation (40%)
+
 - ? Clear demonstration of GPU usage
 - ? Performance comparison (CPU vs GPU)
 - ? Architecture diagram shows GPU service
 - ? Explains GPU integration clearly
 
 ### Innovation & Creativity (20%)
+
 - ? Hybrid approach (Gemini + Gemma)
 - ? GPU used for appropriate tasks
 - ? Efficient resource utilization
@@ -414,21 +444,25 @@ GET /healthz
 ## Risk Assessment
 
 **High Risk:**
+
 - GPU quota not approved in time
 - Model too large for available memory
 - Slow model startup affecting UX
 
 **Medium Risk:**
+
 - Integration complexity with existing agents
 - Cost overruns if not properly configured
 - Performance not meeting expectations
 
 **Low Risk:**
+
 - Model download delays
 - API compatibility issues
 - Documentation gaps
 
 **Mitigation Strategies:**
+
 - Request GPU quota early
 - Test with smaller model first (2B)
 - Implement proper error handling

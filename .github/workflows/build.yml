@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for Workload Identity Federation
+      id-token: write # Required for Workload Identity Federation
 
     strategy:
       matrix:
@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           LATEST_TAG=""
-          
+
           # 1. Check for Pull Request trigger
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             IMAGE_TAG="pr-${{ github.event.pull_request.number }}"
@@ -71,7 +71,7 @@ jobs:
           # Set outputs for subsequent build/push steps
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
-          
+
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
@@ -82,42 +82,42 @@ jobs:
         if: matrix.service == 'frontend'
         run: |
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
-          
+
           docker build \
             -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
             -f Dockerfile \
             .
-          
+
           # Tag as latest if on main branch
           if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
             docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
           fi
-          
+
           # Push all tags
           docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
           [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
-          
+
           echo "✅ Frontend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
 
       - name: Build and push backend
         if: matrix.service == 'backend'
         run: |
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
-          
+
           docker build \
             -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
             -f backend/Dockerfile \
             ./backend
-          
+
           # Tag as latest if on main branch
           if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
             docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
           fi
-          
+
           # Push all tags
           docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
           [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
-          
+
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
 
       - name: Build and push gemma with Cloud Build
@@ -126,12 +126,12 @@ jobs:
         run: |
           # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
-          
+
           # Submit Cloud Build job and wait for completion
           gcloud builds submit \
             --config=cloudbuild-gemma.yaml \
             --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-          
+
           echo "✅ Gemma Cloud Build completed successfully"
 
   deploy:
@@ -190,16 +190,15 @@ jobs:
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-          
+
           echo "Backend URL:"
           gcloud run services describe agentnav-backend \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-          
+
           echo "Gemma URL:"
           gcloud run services describe gemma-service \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-

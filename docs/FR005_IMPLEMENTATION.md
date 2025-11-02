@@ -11,6 +11,7 @@ This document describes the implementation of Feature Request #005: Core Multi-A
 The `SessionContext` is the core data structure that flows through the entire multi-agent workflow. It is defined as a Pydantic model in `backend/models/context_model.py`.
 
 **Key Fields:**
+
 - `raw_input`: Original document/codebase content
 - `summary_text`: Output from Summarizer Agent
 - `key_entities`: List of key entities from Linker Agent
@@ -47,6 +48,7 @@ A2AMessage(
 ```
 
 The A2A Protocol handles:
+
 - Message queuing and priority
 - Shared context management
 - Agent completion notifications
@@ -57,14 +59,16 @@ The A2A Protocol handles:
 ### `/api/analyze` Endpoint
 
 **Request:**
+
 ```json
 {
   "document": "Your document or code content here...",
-  "content_type": "document"  // or "codebase"
+  "content_type": "document" // or "codebase"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "summary": "Generated summary text...",
@@ -169,6 +173,7 @@ python3 test_adk_system.py
 ### Test Coverage
 
 The test suite validates:
+
 - ✅ SessionContext model creation and validation
 - ✅ Pydantic serialization/deserialization
 - ✅ Sequential workflow execution
@@ -256,6 +261,7 @@ Errors are logged and included in the `SessionContext.errors` list for debugging
 ## Future Enhancements
 
 Potential improvements beyond FR#005:
+
 - Parallel execution for independent agents (Summarizer and Linker could run in parallel)
 - Context compression for large documents
 - Caching of intermediate results
@@ -265,6 +271,7 @@ Potential improvements beyond FR#005:
 ## Support
 
 For issues or questions:
+
 - Check test files: `test_fr005_workflow.py` and `test_adk_system.py`
 - Review agent implementations in `backend/agents/`
 - See API documentation at `/docs` endpoint when server is running

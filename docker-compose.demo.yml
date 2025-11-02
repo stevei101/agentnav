@@ -21,4 +21,3 @@ services:
     extends:
       file: docker-compose.yml
       service: firestore-emulator
-

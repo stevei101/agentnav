@@ -10,10 +10,10 @@ Based on our system instructions and best practices for CI/CD, we need a **clean
 
 We will standardize on the following:
 
-| Trigger Event | Tag 1 | Tag 2 (Optional) | Purpose |
-| :--- | :--- | :--- | :--- |
-| **`pull_request`** | `pr-{PR_NUMBER}` | None | For deployment to ephemeral environments (e.g., Staging/Review Apps). |
-| **`push` to `main`** | `{GIT_SHA}` (Full SHA) | `latest` | For production builds. The SHA provides immutability; `latest` provides convenience. |
+| Trigger Event        | Tag 1                  | Tag 2 (Optional) | Purpose                                                                              |
+| :------------------- | :--------------------- | :--------------- | :----------------------------------------------------------------------------------- |
+| **`pull_request`**   | `pr-{PR_NUMBER}`       | None             | For deployment to ephemeral environments (e.g., Staging/Review Apps).                |
+| **`push` to `main`** | `{GIT_SHA}` (Full SHA) | `latest`         | For production builds. The SHA provides immutability; `latest` provides convenience. |
 
 ### 🛠️ Required Workflow Logic (Shell Script Optimization)
 
@@ -26,7 +26,7 @@ The following optimized shell logic should be used in the GitHub Actions step de
   run: |
     # Initialize LATEST_TAG as empty by default
     LATEST_TAG=""
-    
+
     # 1. Check if the trigger is a Pull Request
     if [[ "${{ github.event_name }}" == "pull_request" ]]; then
       # Tag pull requests with pr-{number}
@@ -61,20 +61,20 @@ This strategy would be used in the subsequent **Podman Build and Push** steps (p
   run: |
     # Construct the full GAR path
     GAR_PATH="${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-backend"
-    
+
     # Tag 1: Primary Tag (SHA or PR number)
     PRIMARY_TAG="${GAR_PATH}:${{ steps.tagger.outputs.image_tag }}"
-    
+
     # Podman Build
     podman build -t $PRIMARY_TAG ./backend -f ./backend/Dockerfile
-    
+
     # Tag 2 (Optional: only runs if LATEST_TAG is set)
     if [ -n "${{ steps.tagger.outputs.latest_tag }}" ]; then
       LATEST_TAG="${GAR_PATH}:${{ steps.tagger.outputs.latest_tag }}"
       podman tag $PRIMARY_TAG $LATEST_TAG
       podman push $LATEST_TAG
     fi
-    
+
     # Push the primary tag
     podman push $PRIMARY_TAG
 ```
