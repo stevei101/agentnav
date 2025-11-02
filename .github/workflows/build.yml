@@ -192,7 +192,9 @@ jobs:
     name: Deploy to Staging Environment
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.event_name == 'pull_request'
+    # DISABLED: Staging infrastructure disabled until production is stable
+    # Enable by setting ENABLE_STAGING_DEPLOYMENTS secret to 'true'
+    if: github.event_name == 'pull_request' && secrets.ENABLE_STAGING_DEPLOYMENTS == 'true'
     permissions:
       contents: read
       id-token: write

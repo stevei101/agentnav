@@ -102,8 +102,8 @@ variable "gemma_container_port" {
 }
 
 variable "enable_staging_environment" {
-  description = "Enable staging environment Cloud Run services"
+  description = "Enable staging environment Cloud Run services. DISABLED by default until production is stable."
   type        = bool
-  default     = true
+  default     = false  # Set to true only after production is working
 }
 
