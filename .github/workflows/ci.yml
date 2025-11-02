@@ -15,12 +15,20 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install frontend dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run ESLint
         run: bun run lint
@@ -29,9 +37,18 @@ jobs:
         run: bun run format:check
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Python dev dependencies
         run: |
@@ -58,58 +75,95 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install frontend dependencies
-        run: |
-          bun install
+        run: bun install --frozen-lockfile
 
       - name: Run frontend tests (Vitest)
-        run: |
-          bun run test -- --run
+        run: bun run test -- --run --reporter=verbose
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: coverage/
+          retention-days: 7
 
   backend-tests:
     name: Backend Tests (pytest + Firestore emulator)
     runs-on: ubuntu-latest
-    services: {}
+    services:
+      firestore:
+        image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+        ports:
+          - 8081:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Start Firestore emulator (container)
-        run: |
-          docker run -d --name firestore-emulator -p 8081:8080 gcr.io/google.com/cloudsdktool/cloud-sdk:emulators \
-            gcloud beta emulators firestore start --host-port=0.0.0.0:8080 --project=agentnav-dev
-      - name: Wait for emulator
-        run: |
-          for i in {1..20}; do
-            if nc -z localhost 8081; then
-              echo "Firestore emulator is up"; break
-            fi; sleep 1; done
-
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-backend-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-backend-
 
       - name: Install backend test dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pytest pytest-asyncio google-cloud-firestore
+          pip install pytest pytest-asyncio pytest-cov google-cloud-firestore
+
+      - name: Wait for Firestore emulator
+        run: |
+          echo "Waiting for Firestore emulator to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8081 2>/dev/null; then
+              echo "✅ Firestore emulator is ready"
+              break
+            fi
+            echo "Attempt $i/30: Firestore emulator not ready yet..."
+            sleep 2
+          done
 
       - name: Run backend tests
         env:
           FIRESTORE_EMULATOR_HOST: 'localhost:8081'
           FIRESTORE_PROJECT_ID: 'agentnav-dev'
         run: |
-          pytest -q backend/tests
+          pytest backend/tests -v --cov=backend --cov-report=xml --cov-report=term
 
-      - name: Stop Firestore emulator
+      - name: Upload coverage reports
         if: always()
-        run: docker rm -f firestore-emulator || true
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage.xml
+          retention-days: 7
 
   tfsec-scan:
     name: Terraform Security Scan (tfsec)
@@ -119,11 +173,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run TFSec
-        uses: aquasecurity/tfsec-action@v1.0.0
+        uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: terraform
           soft_fail: true
           format: default
+
+      - name: Upload TFSec results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfsec-results
+          path: tfsec-results.json
+          retention-days: 7
 
   osv-scanner:
     name: OSV Dependency Vulnerability Scan
@@ -133,9 +195,77 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run OSV-Scanner
-        uses: google/osv-scanner-action@v1.8.5
+        uses: google/osv-scanner-action@v1.9.0
         with:
           scan-args: |-
             --recursive
+            --skip-git
             .
         continue-on-error: true
+
+  docker-build-test:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [frontend, backend]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        if: matrix.service == 'frontend'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: agentnav-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build backend image
+        if: matrix.service == 'backend'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: agentnav-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-tests, backend-tests, tfsec-scan, osv-scanner, docker-build-test]
+    if: always()
+    steps:
+      - name: Check CI Results
+        run: |
+          echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests | ${{ needs.frontend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Tests | ${{ needs.backend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TFSec Scan | ${{ needs.tfsec-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OSV Scanner | ${{ needs.osv-scanner.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Build Test | ${{ needs.docker-build-test.result }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if critical jobs failed
+        if: |
+          needs.code-quality.result == 'failure' ||
+          needs.frontend-tests.result == 'failure' ||
+          needs.backend-tests.result == 'failure' ||
+          needs.docker-build-test.result == 'failure'
+        run: |
+          echo "❌ Critical CI jobs failed"
+          exit 1
+
+# Made with Bob
