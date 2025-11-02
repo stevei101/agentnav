@@ -53,7 +53,6 @@ describe("DocumentUpload Component", () => {
   });
 
   it("enables file input and allows file selection", async () => {
-    const user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     const browseButton = screen.getByText("Browse Files");
@@ -198,7 +197,6 @@ describe("DocumentUpload Component", () => {
   });
 
   it("handles drag and drop file upload", async () => {
-    const user = userEvent.setup();
     const { container } = render(
       <DocumentUpload onSessionStart={mockOnSessionStart} />
     );
@@ -208,8 +206,6 @@ describe("DocumentUpload Component", () => {
     ) as HTMLElement;
 
     if (uploadArea) {
-      const file = new File(["content"], "dropped.txt", { type: "text/plain" });
-
       const dragEvent = new DragEvent("dragenter", {
         dataTransfer: new DataTransfer(),
         bubbles: true,
@@ -221,7 +217,6 @@ describe("DocumentUpload Component", () => {
   });
 
   it("displays error message when file read fails", async () => {
-    const user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     // This would require mocking FileReader to fail
@@ -229,7 +224,6 @@ describe("DocumentUpload Component", () => {
   });
 
   it("shows loading state during processing", async () => {
-    const user = userEvent.setup();
     render(
       <DocumentUpload onSessionStart={mockOnSessionStart} isLoading={true} />
     );
