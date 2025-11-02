@@ -139,4 +139,4 @@ jobs:
             --recursive
             .
         continue-on-error: true
-          ./
+
