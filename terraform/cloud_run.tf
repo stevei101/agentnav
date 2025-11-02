@@ -236,7 +236,7 @@ resource "google_cloud_run_v2_service" "frontend_staging" {
 
     containers {
       name  = "frontend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-frontend:latest" # Placeholder - CI/CD deploys with pr-{number} tags during PR testing
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-frontend:latest" # Initial Terraform provisioning placeholder; CI/CD overrides with pr-{number} or commit SHA tags during deployments
 
       ports {
         container_port = var.frontend_container_port
@@ -288,7 +288,7 @@ resource "google_cloud_run_v2_service" "backend_staging" {
 
     containers {
       name  = "backend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-backend:latest" # Placeholder - CI/CD deploys with pr-{number} tags during PR testing
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/agentnav-backend:latest" # Initial Terraform provisioning placeholder; CI/CD overrides with pr-{number} or commit SHA tags during deployments
 
       ports {
         container_port = var.backend_container_port
