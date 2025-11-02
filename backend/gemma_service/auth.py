@@ -78,6 +78,15 @@ def verify_jwt_token(authorization: Optional[str] = Header(None)) -> bool:
             # For Cloud Run service-to-service, verify against GCP project
             gcp_project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT_ID")
             
+            # Get expected audience from environment variable
+            expected_audience = os.getenv("GEMMA_SERVICE_URL")
+            if REQUIRE_AUTH and not expected_audience:
+                logger.error("❌ GEMMA_SERVICE_URL environment variable not set; cannot verify JWT audience")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Server misconfiguration: GEMMA_SERVICE_URL not set for JWT audience validation."
+                )
+            
             # Verify JWT token with proper audience
             # For Workload Identity, the audience is the service URL
             # For Cloud Run, we verify the token issuer and audience
@@ -85,7 +94,7 @@ def verify_jwt_token(authorization: Optional[str] = Header(None)) -> bool:
                 token,
                 request=request,
                 verify=True,  # Enable verification in production
-                audience=None,  # In production, set to expected service URL
+                audience=expected_audience,  # Validate against expected service URL
                 issuer=f"https://accounts.google.com" if gcp_project_id else None
             )
             

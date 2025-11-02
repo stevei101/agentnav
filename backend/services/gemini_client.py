@@ -8,7 +8,8 @@ All direct calls to Gemini models should use this client for consistency and fea
 import os
 import logging
 import asyncio
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -71,7 +72,12 @@ def get_gemini_client(model_name: str = "gemini-1.5-flash"):
             logger.info(f"🔐 Using Application Default Credentials (Workload Identity) for GCP project: {gcp_project}")
             # GenAI SDK automatically uses Application Default Credentials when available
             # No explicit API key needed
-            genai.configure()
+            try:
+                genai.configure()
+            except Exception as config_error:
+                error_msg = f"Failed to configure GenAI with Application Default Credentials: {config_error}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from config_error
         else:
             # Local development - require API key
             api_key = os.getenv("GEMINI_API_KEY")

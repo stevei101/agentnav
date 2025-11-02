@@ -37,7 +37,6 @@ class ModelLoader:
             test_tensor = torch.tensor([1.0]).cuda()
             _ = test_tensor * 2  # Simple operation to verify GPU works
             del test_tensor
-            torch.cuda.empty_cache()
             
             # Get detailed GPU information
             device_count = torch.cuda.device_count()

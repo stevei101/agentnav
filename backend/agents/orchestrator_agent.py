@@ -9,6 +9,9 @@ import time
 
 logger = logging.getLogger(__name__)
 
+# Maximum content length for prompt templates (to avoid token limits)
+MAX_PROMPT_CONTENT_LENGTH = 3000
+
 
 class OrchestratorAgent(Agent):
     """
@@ -121,7 +124,7 @@ Determine:
                 analysis_response = await generate_content_with_prompt_template(
                     prompt_template_id="orchestrator_content_analysis",
                     template_variables={
-                        "content": document[:3000],  # Limit for prompt size
+                        "content": document[:MAX_PROMPT_CONTENT_LENGTH],
                         "content_length": len(document),
                         "line_count": len(document.split('\n'))
                     },
@@ -142,8 +145,8 @@ Analyze this content and determine:
 2. complexity_level: "simple", "moderate", or "complex"
 3. key_topics: List 3-5 main topics/features
 
-Content (first 3000 chars):
-{document[:3000]}
+Content (first {MAX_PROMPT_CONTENT_LENGTH} chars):
+{document[:MAX_PROMPT_CONTENT_LENGTH]}
 
 Provide your analysis:
 """

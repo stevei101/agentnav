@@ -74,19 +74,17 @@ async def healthz_check():
     # Check ADK System availability
     try:
         from agents import (
-            OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
+            OrchestratorAgent, A2AProtocol
         )
         
-        # Test agent instantiation (doesn't require full initialization)
-        a2a = A2AProtocol()
-        test_agent = OrchestratorAgent(a2a)
-        
-        if test_agent and hasattr(test_agent, 'name'):
+        # Lightweight check - just verify imports work
+        # Don't instantiate agents on every health check (expensive)
+        if OrchestratorAgent and A2AProtocol:
             adk_status = "operational"
             logger.debug("✅ ADK system check passed")
         else:
             adk_status = "degraded"
-            errors["adk"] = "Agent instantiation incomplete"
+            errors["adk"] = "Agent classes not available"
             
     except ImportError as e:
         adk_status = "unavailable"
@@ -460,7 +458,6 @@ async def get_agent_status():
                 }
         
         # Check Firestore connectivity if agents use it
-        firestore_status = "unknown"
         try:
             from services.firestore_client import get_firestore_client
             firestore_client = get_firestore_client()
