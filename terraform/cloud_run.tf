@@ -25,10 +25,24 @@ resource "google_cloud_run_v2_service" "frontend" {
         container_port = var.frontend_container_port
       }
 
+      env {
+        name  = "PORT"
+        value = tostring(var.frontend_container_port)
+      }
+
       resources {
         limits = {
           cpu    = "1"
           memory = "512Mi"
+        }
+      }
+
+      startup_probe {
+        timeout_seconds   = 240
+        period_seconds    = 10
+        failure_threshold = 3
+        tcp_socket {
+          port = var.frontend_container_port
         }
       }
     }
@@ -76,6 +90,11 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name  = "PORT"
+        value = tostring(var.backend_container_port)
+      }
+
+      env {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
@@ -114,6 +133,15 @@ resource "google_cloud_run_v2_service" "backend" {
         limits = {
           cpu    = "4"
           memory = "8Gi"
+        }
+      }
+
+      startup_probe {
+        timeout_seconds   = 240
+        period_seconds    = 10
+        failure_threshold = 3
+        tcp_socket {
+          port = var.backend_container_port
         }
       }
     }
@@ -161,6 +189,11 @@ resource "google_cloud_run_v2_service" "gemma" {
       }
 
       env {
+        name  = "PORT"
+        value = tostring(var.gemma_container_port)
+      }
+
+      env {
         name  = "MODEL_NAME"
         value = "google/gemma-7b-it"
       }
@@ -187,6 +220,15 @@ resource "google_cloud_run_v2_service" "gemma" {
           memory = "16Gi"
         }
         cpu_idle = false
+      }
+
+      startup_probe {
+        timeout_seconds   = 240
+        period_seconds    = 10
+        failure_threshold = 3
+        tcp_socket {
+          port = var.gemma_container_port
+        }
       }
     }
 

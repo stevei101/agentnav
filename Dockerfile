@@ -22,20 +22,22 @@ FROM nginx:alpine
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration (optional, nginx default works for SPA)
+# Create nginx configuration template
+# This template will be processed to replace $PORT with actual port from environment
 RUN echo 'server { \
-    listen 80; \
+    listen ${PORT}; \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
-}' > /etc/nginx/conf.d/default.conf
+}' > /etc/nginx/conf.d/default.conf.template
 
-# Expose port 80 (Cloud Run will set PORT env var, but nginx defaults to 80)
+# Expose port 80 (default, Cloud Run may override with PORT env var)
 EXPOSE 80
 
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Start nginx with environment variable substitution
+# Default PORT to 80 if not set, then replace ${PORT} in template
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-80} && envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
 
