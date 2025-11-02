@@ -1,0 +1,77 @@
+# Cloud Build configuration for Gemma GPU service
+# Used by Cloud Run "Connect Repo" feature for automatic deployments
+# This file should be in the repository root
+
+steps:
+  # Build the Gemma container image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-gemma'
+    args:
+      - 'build'
+      - '-f'
+      - 'backend/Dockerfile.gemma'
+      - '-t'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
+      - '-t'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:latest'
+      - './backend'
+    waitFor: ['-']
+
+  # Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-gemma'
+    args:
+      - 'push'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:latest'
+    waitFor: ['build-gemma']
+
+  # Deploy to Cloud Run with GPU
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-gemma'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--cpu'
+      - '4'
+      - '--memory'
+      - '16Gi'
+      - '--gpu-type'
+      - 'nvidia-l4'
+      - '--gpu-count'
+      - '1'
+      - '--port'
+      - '8080'
+      - '--timeout'
+      - '300s'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '2'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'MODEL_NAME=google/gemma-7b-it,USE_8BIT_QUANTIZATION=false'
+      - '--set-secrets'
+      - 'HUGGINGFACE_TOKEN=HUGGINGFACE_TOKEN:latest'
+      - '--service-account'
+      - '${_SERVICE_ACCOUNT}'
+    waitFor: ['push-gemma']
+
+# Store images in Artifact Registry
+images:
+  - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
+  - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'  # Faster builds with more resources
+  diskSizeGb: 100  # Larger disk for ML dependencies
+
