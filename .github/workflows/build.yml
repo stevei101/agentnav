@@ -65,7 +65,7 @@ jobs:
             
           # 3. Default (other branches)
           else
-            IMAGE_TAG="${{ github.sha::7 }}"
+            IMAGE_TAG=$(echo "${{ github.sha }}" | cut -c1-7)
           fi
 
           # Set outputs for subsequent build/push steps
@@ -199,8 +199,8 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
+            --gpu 1 \
             --gpu-type nvidia-l4 \
-            --gpu-count 1 \
             --memory 16Gi \
             --cpu 4 \
             --quiet
