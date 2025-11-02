@@ -201,9 +201,9 @@ Return a structured analysis of entities and their relationships.
         return entities
     
     async def _extract_document_entities(self, document: str) -> List[Dict[str, Any]]:
-        """Extract entities from document content using Gemini"""
+        """Extract entities from document content using Gemma"""
         try:
-            from services.gemma_service import generate_with_gemma
+            from services.gemma_service import reason_with_gemma
             
             prompt = f"""
 Analyze this document and extract key entities (concepts, topics, themes).
@@ -215,7 +215,7 @@ Document:
 Extract 5-10 key entities:
 """
             
-            response = await generate_with_gemma(
+            response = await reason_with_gemma(
                 prompt=prompt,
                 max_tokens=300,
                 temperature=0.3
@@ -285,7 +285,7 @@ Extract 5-10 key entities:
         if content_type == "codebase":
             return self._identify_code_relationships(document, entities)
         else:
-            return await self._identify_document_relationships(document, entities)
+            return await self._identify_document_relationships_with_embeddings(document, entities)
     
     def _identify_code_relationships(self, document: str, entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Identify relationships in code"""
@@ -385,6 +385,142 @@ Extract 5-10 key entities:
                 })
         
         return relationships[:15]  # Limit total relationships
+    
+    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        if len(vec1) != len(vec2):
+            return 0.0
+        
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        magnitude1 = sum(a * a for a in vec1) ** 0.5
+        magnitude2 = sum(b * b for b in vec2) ** 0.5
+        
+        if magnitude1 == 0 or magnitude2 == 0:
+            return 0.0
+        
+        return dot_product / (magnitude1 * magnitude2)
+    
+    async def _identify_document_relationships_with_embeddings(
+        self, document: str, entities: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Identify relationships in document content using semantic embeddings
+        
+        This method uses Gemma embeddings to calculate semantic similarity
+        between entities, providing more accurate relationship mapping than
+        simple co-occurrence analysis.
+        """
+        relationships = []
+        
+        try:
+            from services.gemma_service import embed_with_gemma
+            
+            # Generate embeddings for all entity labels
+            entity_labels = [entity["label"] for entity in entities]
+            
+            if not entity_labels:
+                return relationships
+            
+            self.logger.info(f"🔗 Generating embeddings for {len(entity_labels)} entities")
+            
+            # Get embeddings in batch
+            embeddings = await embed_with_gemma(entity_labels)
+            
+            # Store embeddings in entities
+            for entity, embedding in zip(entities, embeddings):
+                entity["embedding"] = embedding
+            
+            # Calculate semantic similarity between all pairs
+            similarity_threshold = 0.7  # Configurable threshold
+            
+            for i, entity1 in enumerate(entities):
+                for j, entity2 in enumerate(entities):
+                    if i >= j:  # Avoid duplicates and self-references
+                        continue
+                    
+                    # Calculate cosine similarity
+                    similarity = self._cosine_similarity(
+                        entity1["embedding"],
+                        entity2["embedding"]
+                    )
+                    
+                    # Create relationship if similarity exceeds threshold
+                    if similarity >= similarity_threshold:
+                        relationship_type = "strongly_related" if similarity >= 0.85 else "related"
+                        
+                        relationships.append({
+                            "from": entity1["id"],
+                            "to": entity2["id"],
+                            "type": relationship_type,
+                            "label": f"semantically related ({similarity:.2f})",
+                            "similarity": similarity,
+                            "confidence": "high" if similarity >= 0.85 else "medium"
+                        })
+            
+            # Use Gemma reasoning for complex relationship extraction
+            if len(entities) > 2:
+                relationships = await self._enhance_relationships_with_reasoning(
+                    document, entities, relationships
+                )
+            
+            # Sort by similarity (highest first) and limit
+            relationships.sort(key=lambda r: r.get("similarity", 0), reverse=True)
+            
+            self.logger.info(f"✅ Identified {len(relationships)} semantic relationships")
+            
+            return relationships[:15]  # Limit to top 15 relationships
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️  Error using embeddings for relationships: {e}")
+            self.logger.info("📋 Falling back to simple relationship extraction")
+            # Fallback to simple method
+            return await self._identify_document_relationships(document, entities)
+    
+    async def _enhance_relationships_with_reasoning(
+        self, document: str, entities: List[Dict[str, Any]], 
+        relationships: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Use Gemma reasoning to enhance relationship analysis
+        
+        This method asks Gemma to analyze specific entity relationships
+        in the context of the full document.
+        """
+        try:
+            from services.gemma_service import reason_with_gemma
+            
+            # Take top entities by importance
+            top_entities = [e["label"] for e in entities[:5]]
+            
+            prompt = f"""
+Analyze the relationships between these entities in the given context.
+For each pair, describe the relationship type (e.g., "supports", "contradicts", "builds on", "causes", "enables").
+
+Entities: {', '.join(top_entities)}
+
+Context:
+{document[:1500]}
+
+Provide relationship insights:
+"""
+            
+            response = await reason_with_gemma(
+                prompt=prompt,
+                max_tokens=400,
+                temperature=0.3
+            )
+            
+            # Parse reasoning to enhance existing relationships
+            for relationship in relationships:
+                # Add reasoning context
+                relationship["reasoning_context"] = response[:200]  # Store snippet
+            
+            self.logger.info("✅ Enhanced relationships with reasoning")
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️  Could not enhance with reasoning: {e}")
+        
+        return relationships
     
     def _enhance_with_summary_context(self, relationships: List[Dict[str, Any]], 
                                     summary_context: Dict[str, Any]) -> List[Dict[str, Any]]:
