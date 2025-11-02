@@ -238,6 +238,8 @@ class AgentWorkflow:
         self.agents: Dict[str, Agent] = {}
         self.dependencies: Dict[str, List[str]] = {}  # agent -> [prerequisite_agents]
         self.persistence_service = None  # Lazy initialization
+        self.session_service = None  # Lazy initialization
+        self.cache_service = None  # Lazy initialization
     
     def register_agent(self, agent: Agent):
         """Register an agent with the workflow"""
@@ -295,13 +297,19 @@ class AgentWorkflow:
     
     async def execute_sequential_workflow(self, session_context) -> "SessionContext":
         """
-        Execute the workflow sequentially using SessionContext (FR#005)
+        Execute the workflow sequentially using SessionContext (FR#005 + FR#029)
         
         This method implements the sequential workflow as specified in FR#005:
         1. Orchestrator analyzes and delegates
         2. Summarizer processes and updates SessionContext
         3. Linker processes and updates SessionContext
         4. Visualizer processes and updates SessionContext
+        
+        FR#029 additions:
+        - Creates session document in 'sessions/' collection
+        - Checks knowledge cache before processing
+        - Stores results in knowledge cache after completion
+        - Updates agent states in session document
         
         Each agent updates the SessionContext, which is persisted to Firestore
         after each step for fault tolerance.
@@ -321,7 +329,7 @@ class AgentWorkflow:
         if not isinstance(session_context, SessionContext):
             raise TypeError(f"session_context must be a SessionContext instance, got {type(session_context)}")
         
-        # Initialize persistence service if not already done
+        # Initialize services if not already done
         if self.persistence_service is None:
             try:
                 from services.context_persistence import get_persistence_service
@@ -329,8 +337,89 @@ class AgentWorkflow:
             except Exception as e:
                 logger.warning(f"⚠️  Could not initialize persistence service: {e}")
         
-        logger.info("🎬 Starting Sequential ADK Agent Workflow (FR#005)")
+        if self.session_service is None:
+            try:
+                from services.session_service import get_session_service
+                self.session_service = get_session_service()
+            except Exception as e:
+                logger.warning(f"⚠️  Could not initialize session service: {e}")
+        
+        if self.cache_service is None:
+            try:
+                from services.knowledge_cache_service import get_knowledge_cache_service
+                self.cache_service = get_knowledge_cache_service()
+            except Exception as e:
+                logger.warning(f"⚠️  Could not initialize cache service: {e}")
+        
+        logger.info("🎬 Starting Sequential ADK Agent Workflow (FR#005 + FR#029)")
+        
+        # FR#029: Create session document
+        if self.session_service:
+            await self.session_service.create_session(
+                session_id=session_context.session_id,
+                user_input=session_context.raw_input,
+                content_type=session_context.content_type,
+                metadata={"workflow_version": "FR#029"}
+            )
+        
+        # FR#029: Check knowledge cache before processing
+        if self.cache_service:
+            cached_result = await self.cache_service.check_cache(
+                content=session_context.raw_input,
+                content_type=session_context.content_type
+            )
+            
+            if cached_result:
+                logger.info("🎯 Using cached results, skipping agent execution")
+                
+                # Populate SessionContext from cache
+                session_context.summary_text = cached_result.get("summary")
+                session_context.key_entities = cached_result.get("key_entities", [])
+                
+                # Convert relationship dicts to EntityRelationship objects
+                from models.context_model import EntityRelationship
+                cached_relationships = cached_result.get("relationships", [])
+                session_context.relationships = [
+                    EntityRelationship(**rel) if isinstance(rel, dict) else rel
+                    for rel in cached_relationships
+                ]
+                
+                session_context.graph_json = cached_result.get("visualization_data")
+                session_context.workflow_status = "completed_from_cache"
+                
+                # Mark all agents as complete (from cache)
+                from models.context_model import STANDARD_AGENT_ORDER
+                for agent_name in STANDARD_AGENT_ORDER:
+                    session_context.mark_agent_complete(agent_name)
+                
+                # Increment cache hit count
+                content_hash = self.cache_service.generate_content_hash(
+                    session_context.raw_input,
+                    session_context.content_type
+                )
+                await self.cache_service.increment_hit_count(content_hash)
+                
+                # Update session with cache hit info
+                if self.session_service:
+                    await self.session_service.update_session(
+                        session_context.session_id,
+                        {
+                            "workflow_status": "completed_from_cache",
+                            "cache_hit": True
+                        }
+                    )
+                
+                return session_context
+        
+        # No cache hit - proceed with normal workflow execution
         session_context.workflow_status = "in_progress"
+        
+        # Update session status
+        if self.session_service:
+            await self.session_service.update_session(
+                session_context.session_id,
+                {"workflow_status": "in_progress"}
+            )
         
         # Define execution order for sequential workflow
         # Uses standard agent order from context_model
@@ -345,6 +434,7 @@ class AgentWorkflow:
             agent = self.agents[agent_name]
             
             try:
+                agent_start_time = time.time()
                 logger.info(f"🔄 Executing agent: {agent_name}")
                 session_context.set_current_agent(agent_name)
                 
@@ -358,12 +448,25 @@ class AgentWorkflow:
                 
                 # Execute agent
                 result = await agent.execute(context_dict)
+                agent_execution_time = time.time() - agent_start_time
                 
                 # Update SessionContext based on agent type and results
                 self._update_session_context_from_result(session_context, agent_name, result)
                 
                 # Mark agent as complete
                 session_context.mark_agent_complete(agent_name)
+                
+                # FR#029: Update agent state in session document
+                if self.session_service:
+                    await self.session_service.update_agent_state(
+                        session_id=session_context.session_id,
+                        agent_name=agent_name,
+                        state={
+                            "status": "completed",
+                            "execution_time": agent_execution_time,
+                            "result_summary": result.get("agent", agent_name)
+                        }
+                    )
                 
                 # Persist context to Firestore after each step
                 if self.persistence_service:
@@ -372,11 +475,24 @@ class AgentWorkflow:
                 logger.info(f"✅ Agent {agent_name} completed successfully")
                 
             except Exception as e:
+                agent_execution_time = time.time() - agent_start_time
                 logger.error(f"❌ Agent {agent_name} failed: {e}")
                 session_context.add_error(agent_name, str(e))
                 
                 # Continue with next agent even if one fails (graceful degradation)
                 session_context.mark_agent_complete(agent_name)
+                
+                # FR#029: Update agent state with error
+                if self.session_service:
+                    await self.session_service.update_agent_state(
+                        session_id=session_context.session_id,
+                        agent_name=agent_name,
+                        state={
+                            "status": "failed",
+                            "execution_time": agent_execution_time,
+                            "error": str(e)
+                        }
+                    )
                 
                 if self.persistence_service:
                     await self.persistence_service.save_context(session_context)
@@ -385,9 +501,30 @@ class AgentWorkflow:
         session_context.workflow_status = "completed" if session_context.is_complete() else "partially_completed"
         session_context.current_agent = None
         
+        # FR#029: Store results in knowledge cache
+        if self.cache_service and session_context.workflow_status == "completed":
+            await self.cache_service.store_cache(
+                content=session_context.raw_input,
+                content_type=session_context.content_type,
+                summary=session_context.summary_text or "",
+                visualization_data=session_context.graph_json or {},
+                key_entities=session_context.key_entities,
+                relationships=[rel.model_dump() for rel in session_context.relationships]
+            )
+        
         # Final persistence
         if self.persistence_service:
             await self.persistence_service.save_context(session_context)
+        
+        # FR#029: Update final session status
+        if self.session_service:
+            await self.session_service.update_session(
+                session_context.session_id,
+                {
+                    "workflow_status": session_context.workflow_status,
+                    "completed_at": time.time()
+                }
+            )
         
         logger.info(f"🏁 Sequential ADK Agent Workflow completed: {session_context.workflow_status}")
         
