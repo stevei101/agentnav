@@ -85,8 +85,10 @@ gcloud run deploy gemma-service \
   --min-instances 0 \
   --max-instances 2 \
   --allow-unauthenticated \
-  --set-env-vars "MODEL_NAME=google/gemma-7b-it"
+  --set-env-vars "MODEL_NAME=google/gemma-7b-it,USE_8BIT_QUANTIZATION=true"
 ```
+
+**Note:** 8-bit quantization is now enabled by default to reduce memory usage and prevent OOM errors.
 
 ## Service Configuration
 
@@ -99,12 +101,13 @@ gcloud run deploy gemma-service \
 
 ### Environment Variables
 
-| Variable                | Description                     | Default              |
-| ----------------------- | ------------------------------- | -------------------- |
-| `MODEL_NAME`            | Hugging Face model name         | `google/gemma-7b-it` |
-| `HUGGINGFACE_TOKEN`     | Optional: For private models    | -                    |
-| `USE_8BIT_QUANTIZATION` | Enable 8-bit quantization       | `false`              |
-| `PORT`                  | Service port (set by Cloud Run) | `8080`               |
+| Variable                | Description                     | Default              | Notes                            |
+| ----------------------- | ------------------------------- | -------------------- | -------------------------------- |
+| `MODEL_NAME`            | Hugging Face model name         | `google/gemma-7b-it` | -                                |
+| `HUGGINGFACE_TOKEN`     | Optional: For private models    | -                    | Stored in Secret Manager         |
+| `USE_8BIT_QUANTIZATION` | Enable 8-bit quantization       | `true`               | Enabled by default to reduce OOM |
+| `REQUIRE_AUTH`          | Enable Workload Identity auth   | `false`              | Set to `true` for production     |
+| `PORT`                  | Service port (set by Cloud Run) | `8080`               | Automatically set by Cloud Run   |
 
 ### Scaling Configuration
 
@@ -215,18 +218,27 @@ text = await generate_with_gemma(
 - **Verify GPU quota:** Check quotas in europe-west1
 - **Check Cloud Run configuration:** Ensure `--cpu gpu --gpu-type nvidia-l4` is set
 - **Check logs:** Look for CUDA/GPU initialization messages
+- **Verify startup probe:** Ensure startup probe is configured with sufficient timeout (300s)
+
+**Enhanced GPU Detection:** The service now performs a validation test to ensure the GPU is functional before accepting requests. Check logs for GPU detection status.
 
 ### Slow Startup
 
 - **Model download:** First startup downloads model (~13GB for Gemma 7B)
-- **Timeout:** Increase `--timeout` to 300s or higher
+- **Timeout:** Increase `--timeout` to 300s (already configured)
+- **Startup probe:** The service uses a startup probe with 300s timeout to accommodate model loading
 - **Warm instances:** Consider setting `--min-instances 1` for faster response
 
-### Out of Memory
+**Model Loading Time:** With 8-bit quantization enabled, initial model loading takes approximately 2-3 minutes. The health check endpoint will return 503 until the model is fully loaded.
 
-- **Use smaller model:** Switch to `google/gemma-2b-it`
-- **Enable quantization:** Set `USE_8BIT_QUANTIZATION=true`
-- **Increase memory:** Use 16Gi or higher
+### Out of Memory (OOM)
+
+- **Use 8-bit quantization:** Enabled by default (`USE_8BIT_QUANTIZATION=true`)
+- **Use smaller model:** Switch to `google/gemma-2b-it` if still experiencing OOM
+- **Increase memory:** Maximum is 16Gi on Cloud Run with GPU
+- **Check quantization:** Verify 8-bit quantization is working by checking logs for "Using 8-bit quantization" message
+
+**OOM Prevention:** The default configuration now uses 8-bit quantization, which reduces memory usage by approximately 50% compared to float16, significantly reducing OOM errors.
 
 ## Monitoring
 
@@ -248,7 +260,38 @@ gcloud run services logs read gemma-service --region europe-west1 --limit 50
 
 ## Security
 
-### Authentication (Production)
+### Workload Identity Authentication (Recommended)
+
+The Gemma service now supports **Workload Identity (WI)** authentication for secure service-to-service communication between the Backend and Gemma service on Cloud Run.
+
+**How It Works:**
+1. Backend service fetches an ID token from the metadata server
+2. ID token is automatically added to requests as `Authorization: Bearer <token>`
+3. Gemma service verifies the token (when `REQUIRE_AUTH=true`)
+4. Only authenticated requests from the Backend Service Account are allowed
+
+**Enable Authentication:**
+
+```bash
+# Deploy with authentication enabled
+gcloud run deploy gemma-service \
+  --set-env-vars "REQUIRE_AUTH=true" \
+  --no-allow-unauthenticated \
+  --service-account gemma-service@PROJECT_ID.iam.gserviceaccount.com
+```
+
+**Grant Backend Service Account Access:**
+
+```bash
+gcloud run services add-iam-policy-binding gemma-service \
+  --region=europe-west1 \
+  --member="serviceAccount:backend-service@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
+```
+
+**Local Development:** Authentication is automatically disabled when running locally (no `K_SERVICE` environment variable).
+
+### Authentication (Legacy/Public Access)
 
 For production, remove `--allow-unauthenticated` and set up authentication:
 

@@ -16,12 +16,14 @@ This service provides a FastAPI application that serves the Gemma open-source mo
 
 ## Features
 
-- ✅ Text generation with configurable parameters
-- ✅ Embedding generation
-- ✅ GPU detection and automatic fallback to CPU
-- ✅ Health check endpoint with GPU status
-- ✅ Cloud Run compatible (PORT env var, /healthz endpoint)
-- ✅ Optional 8-bit quantization for memory efficiency
+- ✅ **GPU Acceleration:** NVIDIA L4 GPU with robust detection and automatic CPU fallback
+- ✅ **8-bit Quantization:** Enabled by default to reduce memory usage by ~50%
+- ✅ **Workload Identity:** Secure service-to-service authentication
+- ✅ **Enhanced Health Checks:** Model readiness verification with detailed GPU status
+- ✅ **Startup Probes:** 300s timeout to accommodate model loading
+- ✅ **Text Generation:** Configurable parameters with context support
+- ✅ **Embedding Generation:** Batch processing support
+- ✅ **Cloud Run Compatible:** PORT env var, /healthz endpoint, proper error handling
 
 ## API Endpoints
 
@@ -190,11 +192,21 @@ GEMMA_SERVICE_URL=https://gemma-service-XXXXX.run.app
 GEMMA_SERVICE_TIMEOUT=60.0
 ```
 
+| Variable                | Default              | Description                              |
+| ----------------------- | -------------------- | ---------------------------------------- |
+| `MODEL_NAME`            | `google/gemma-7b-it` | Hugging Face model name                  |
+| `USE_8BIT_QUANTIZATION` | `true`               | Enable 8-bit quantization (recommended)  |
+| `HUGGINGFACE_TOKEN`     | -                    | Optional: For private models             |
+| `REQUIRE_AUTH`          | `false`              | Enable Workload Identity authentication  |
+| `PORT`                  | `8080`               | Service port (set by Cloud Run)          |
+
 ## Performance
 
-- **Model Loading:** ~2-5 minutes (first time, downloads ~13GB)
-- **Inference Time:** ~1-5 seconds per request (GPU)
-- **Memory Usage:** ~13GB for Gemma 7B, ~5GB for Gemma 2B
+- **Model Loading:** ~2-3 minutes with 8-bit quantization (first time, downloads ~13GB)
+- **Cold Start:** ~2-3 minutes (model download + loading)
+- **Warm Start:** ~1-2 seconds
+- **Inference Time:** ~500ms - 2s per request (GPU), ~5-10s (CPU fallback)
+- **Memory Usage:** ~8-10GB with 8-bit quantization, ~14-16GB without (Gemma 7B)
 
 ## Cost Considerations
 
@@ -206,18 +218,40 @@ GEMMA_SERVICE_TIMEOUT=60.0
 
 ### Model Not Loading
 
-- Check memory: Need 16Gi for Gemma 7B
-- Check logs: `gcloud run services logs read gemma-service --region europe-west1`
+- **Check logs:** `gcloud run services logs read gemma-service --region europe-west1 --limit 100`
+- **Look for:**
+  - `✅ GPU detected and verified` - GPU is working
+  - `✅ Using 8-bit quantization` - Quantization is enabled
+  - `✅ Model loaded successfully` - Model loading complete
+- **Check memory:** Need 16Gi for Gemma 7B
+- **Verify quantization:** Should see "Using 8-bit quantization" in logs
 
 ### GPU Not Detected
 
-- Verify GPU quota in europe-west1
-- Check Cloud Run config: `--cpu gpu --gpu-type nvidia-l4`
+- **Verify GPU quota:** Check quotas in europe-west1 region
+- **Check Cloud Run config:** Ensure `--cpu gpu --gpu-type nvidia-l4 --gpu-count 1`
+- **Check logs:** Look for CUDA initialization messages
+- **Fallback:** Service automatically falls back to CPU if GPU detection fails
+
+### Out of Memory (OOM)
+
+- **Enable 8-bit quantization:** `USE_8BIT_QUANTIZATION=true` (default)
+- **Verify quantization:** Check logs for confirmation
+- **Use smaller model:** Switch to `google/gemma-2b-it`
+- **Increase memory:** Maximum is 16Gi on Cloud Run with GPU
 
 ### Slow Startup
 
-- First startup downloads model (~13GB)
-- Subsequent starts are faster (~1-2 minutes)
+- **First startup:** Downloads model (~13GB) + loading (2-3 minutes)
+- **Subsequent starts:** Faster (~1-2 minutes) with cached model
+- **Startup probe:** Configured with 300s timeout to accommodate loading
+- **Health check:** Returns 503 until model is fully loaded
+
+### Authentication Errors (401/403)
+
+- **Verify IAM:** Backend service account needs `roles/run.invoker` on Gemma service
+- **Check REQUIRE_AUTH:** Should be `false` for public access or `true` with proper IAM
+- **Local development:** Authentication automatically disabled
 
 ## References
 
