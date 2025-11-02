@@ -11,6 +11,9 @@ github_branch = "main"
 # Enable Cloud Run "Connect Repo" automatic deployments
 enable_connect_repo = true
 
+# Enable staging environment (for deployment gates)
+enable_staging_environment = true
+
 # Optional: Override defaults
 # default_region = "us-central1"
 # frontend_region = "us-central1"
