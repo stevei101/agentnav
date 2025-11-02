@@ -150,6 +150,7 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
    - Backend service: FastAPI orchestrator with ADK agents (region: `europe-west1`).
    - Gemma GPU service: GPU-accelerated model serving with NVIDIA L4 GPU (region: `europe-west1`).
    - Environment variables (including secrets from Secret Manager) are injected during deployment.
+   - Cloud Run services use **Workload Identity (WI)** with their Service Accounts to automatically authenticate to Firestore and Secret Manager (no credentials in containers).
    - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
    - **Final Commands:**
      - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
