@@ -1,18 +1,19 @@
 import React, { useState } from "react";
 import { AgentName, AgentStatusValue } from "../types";
 import { AgentDashboard } from "./AgentDashboard";
+import { DocumentUpload } from "./DocumentUpload";
 import { BrainCircuitIcon } from "./icons";
 
 export const StreamingDashboard: React.FC = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [documentContent, setDocumentContent] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"dashboard" | "upload">(
-    "dashboard"
+    "upload"
   );
 
-  const handleNewSession = () => {
-    // Generate a new session ID
-    const newSessionId = `session-${Date.now()}`;
-    setCurrentSessionId(newSessionId);
+  const handleSessionStart = (sessionId: string, content: string) => {
+    setCurrentSessionId(sessionId);
+    setDocumentContent(content);
     setActiveView("dashboard");
   };
 
@@ -56,30 +57,21 @@ export const StreamingDashboard: React.FC = () => {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        {activeView === "dashboard" && (
+        {activeView === "dashboard" && currentSessionId && (
           <AgentDashboard
             sessionId={currentSessionId}
+            documentContent={documentContent}
+            contentType={documentContent ? "document" : undefined}
             onStreamStart={() => {
               // Optional: add custom handling when stream starts
             }}
           />
         )}
         {activeView === "upload" && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-            <h2 className="text-2xl text-white mb-4">Start New Analysis</h2>
-            <p className="text-gray-400 mb-6">
-              Upload a document or provide text to analyze with our multi-agent system
-            </p>
-            <button
-              onClick={handleNewSession}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Create New Session
-            </button>
-            {currentSessionId && (
-              <p className="text-xs text-gray-500 mt-4">Session: {currentSessionId}</p>
-            )}
-          </div>
+          <DocumentUpload
+            onSessionStart={handleSessionStart}
+            isLoading={false}
+          />
         )}
       </main>
     </div>

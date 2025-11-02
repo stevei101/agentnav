@@ -6,6 +6,8 @@ import { useAgentStream } from "../hooks/useAgentStream";
 
 interface AgentDashboardProps {
   sessionId: string | null;
+  documentContent?: string | null;
+  contentType?: "document" | "codebase";
   onStreamStart?: (sessionId: string) => void;
 }
 
@@ -17,6 +19,8 @@ const AGENT_TYPES: AgentName[] = [
 
 export const AgentDashboard: React.FC<AgentDashboardProps> = ({
   sessionId,
+  documentContent,
+  contentType = "document",
   onStreamStart,
 }) => {
   const [agents, setAgents] = useState<AgentState[]>(
@@ -37,6 +41,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     error,
     connect,
     disconnect,
+    send,
   } = useAgentStream({
     sessionId,
     onEvent: (event: AgentStreamEvent) => {
@@ -96,6 +101,20 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
   const startAnalysis = () => {
     if (sessionId) {
       connect();
+      
+      // Send document content after connection is established
+      // We'll use a small delay to ensure connection is ready
+      setTimeout(() => {
+        if (send && documentContent) {
+          send({
+            document: documentContent,
+            content_type: contentType,
+            include_metadata: true,
+            include_partial_results: true,
+          });
+        }
+      }, 100);
+      
       onStreamStart?.(sessionId);
     }
   };
