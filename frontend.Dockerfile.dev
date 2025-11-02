@@ -6,11 +6,11 @@
 FROM oven/bun:latest AS base
 WORKDIR /app
 
-# Install dependencies using Bun v2
+# Install dependencies using Bun v2 with frozen lockfile
 # Note: bun creates node_modules for compatibility with tools like vite
-# bun.lock is used automatically for reproducible builds
+# Frozen lockfile ensures consistent dependency versions
 COPY package.json bun.lock* ./
-RUN bun install
+RUN bun install --frozen-lockfile
 
 # Development stage
 FROM base AS development
