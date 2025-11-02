@@ -7,12 +7,14 @@ This guide explains how to set up the Cloud Run "Connect Repo" feature for autom
 The Cloud Run "Connect Repo" feature enables automatic deployments directly from your GitHub repository to Cloud Run services. This eliminates the need for complex GitHub Actions workflows for standard deployments.
 
 **What's Configured:**
+
 - ✅ Cloud Build triggers for Frontend and Backend services
 - ✅ Automatic build and deploy on push to `main` branch
 - ✅ Build configurations (`cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`)
 - ✅ IAM permissions for Cloud Build service account
 
 **What's NOT Configured (by design):**
+
 - ❌ Gemma GPU service (requires manual GPU configuration)
 - ❌ Initial GitHub repository connection (first-time setup)
 
@@ -52,6 +54,7 @@ terraform apply
 ```
 
 This will create:
+
 - `agentnav-frontend-deploy` trigger
 - `agentnav-backend-deploy` trigger
 
@@ -71,11 +74,13 @@ This will create:
 ### Build Configuration Files
 
 **`cloudbuild-frontend.yaml`:**
+
 - Builds frontend using `frontend.Dockerfile.dev`
 - Pushes to Artifact Registry
 - Deploys to `agentnav-frontend` service in `us-central1`
 
 **`cloudbuild-backend.yaml`:**
+
 - Builds backend using `backend/Dockerfile.dev`
 - Pushes to Artifact Registry
 - Deploys to `agentnav-backend` service in `europe-west1`
@@ -87,15 +92,15 @@ This will create:
 
 The triggers use Terraform substitutions:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `_SERVICE_NAME` | Cloud Run service name | `agentnav-frontend` |
-| `_REGION` | Deployment region | `us-central1` |
-| `_PROJECT_ID` | GCP Project ID | `your-project-id` |
-| `_ARTIFACT_REGION` | Artifact Registry location | `europe-west1` |
-| `_GAR_REPO` | Artifact Registry repository | `agentnav-containers` |
-| `_SERVICE_ACCOUNT` | Service account email | `agentnav-frontend@...` |
-| `_GEMMA_URL` | Gemma service URL (backend only) | `https://gemma-service-...` |
+| Variable           | Description                      | Example                     |
+| ------------------ | -------------------------------- | --------------------------- |
+| `_SERVICE_NAME`    | Cloud Run service name           | `agentnav-frontend`         |
+| `_REGION`          | Deployment region                | `us-central1`               |
+| `_PROJECT_ID`      | GCP Project ID                   | `your-project-id`           |
+| `_ARTIFACT_REGION` | Artifact Registry location       | `europe-west1`              |
+| `_GAR_REPO`        | Artifact Registry repository     | `agentnav-containers`       |
+| `_SERVICE_ACCOUNT` | Service account email            | `agentnav-frontend@...`     |
+| `_GEMMA_URL`       | Gemma service URL (backend only) | `https://gemma-service-...` |
 
 ---
 
@@ -138,20 +143,24 @@ gcloud builds triggers run agentnav-backend-deploy \
 ## Benefits
 
 ### ✅ Simplified CI/CD
+
 - No need for complex GitHub Actions workflows
 - Automatic deployments on every push
 - Native Google Cloud integration
 
 ### ✅ Reduced Complexity
+
 - No manual `gcloud` commands in CI/CD
 - No Podman setup in GitHub Actions
 - Automatic image tagging and deployment
 
 ### ✅ Cost Efficiency
+
 - Uses Cloud Build (included in GCP free tier)
 - No GitHub Actions minutes for standard deployments
 
 ### ✅ Security
+
 - Uses Cloud Build service account (IAM-managed)
 - Secrets accessed via Secret Manager
 - No API keys in GitHub Actions
@@ -161,7 +170,9 @@ gcloud builds triggers run agentnav-backend-deploy \
 ## Limitations
 
 ### Gemma GPU Service
+
 The Gemma GPU service is **NOT** included in automatic deployments because:
+
 1. GPU configuration requires post-apply script
 2. Terraform doesn't fully support GPU in Cloud Run v2
 3. Manual deployment ensures GPU is properly configured
@@ -175,6 +186,7 @@ The Gemma GPU service is **NOT** included in automatic deployments because:
 ### Trigger Not Firing
 
 **Check:**
+
 1. Is repository connected? Go to Cloud Build > Triggers
 2. Is trigger enabled? (should show as "Active")
 3. Are you pushing to the correct branch? (default: `main`)
@@ -183,6 +195,7 @@ The Gemma GPU service is **NOT** included in automatic deployments because:
 ### Build Fails
 
 **Common Issues:**
+
 1. **Dockerfile not found:** Ensure `frontend.Dockerfile.dev` or `backend/Dockerfile.dev` exists
 2. **Artifact Registry access:** Verify Cloud Build service account has `artifactregistry.writer` role
 3. **Secret access:** Verify Cloud Build service account has `secretmanager.secretAccessor` role
@@ -191,6 +204,7 @@ The Gemma GPU service is **NOT** included in automatic deployments because:
 ### Deployment Fails
 
 **Common Issues:**
+
 1. **Service doesn't exist:** Run `terraform apply` first to create Cloud Run services
 2. **Service account permissions:** Verify Cloud Build has `run.admin` role
 3. **Region mismatch:** Ensure trigger uses correct region for service
@@ -231,6 +245,7 @@ gcloud builds log BUILD_ID
 ## Integration with GitHub Actions
 
 You can still use GitHub Actions for:
+
 - **Gemma GPU service** deployment
 - **Terraform apply** operations
 - **Complex multi-step workflows**
@@ -250,4 +265,3 @@ The Cloud Build triggers handle **standard deployments**, while GitHub Actions c
 ---
 
 **Ready to enable automatic deployments! 🚀**
-

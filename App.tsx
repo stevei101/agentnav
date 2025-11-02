@@ -1,16 +1,40 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { AgentState, AgentName, AgentStatusValue, AnalysisResult } from './types';
-import { runAgenticNavigator, getAgentStatus, checkBackendHealth } from './services/backendService';
+import {
+  AgentState,
+  AgentName,
+  AgentStatusValue,
+  AnalysisResult,
+} from './types';
+import {
+  runAgenticNavigator,
+  getAgentStatus,
+  checkBackendHealth,
+} from './services/backendService';
 import { AgentCard } from './components/AgentCard';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { UploadIcon, BrainCircuitIcon } from './components/icons';
 
 const initialAgents: AgentState[] = [
-  { name: AgentName.ORCHESTRATOR, status: AgentStatusValue.IDLE, details: 'Ready to coordinate analysis' },
-  { name: AgentName.SUMMARIZER, status: AgentStatusValue.IDLE, details: 'Ready to create summaries' },
-  { name: AgentName.LINKER, status: AgentStatusValue.IDLE, details: 'Ready to map relationships' },
-  { name: AgentName.VISUALIZER, status: AgentStatusValue.IDLE, details: 'Ready to create visualizations' },
+  {
+    name: AgentName.ORCHESTRATOR,
+    status: AgentStatusValue.IDLE,
+    details: 'Ready to coordinate analysis',
+  },
+  {
+    name: AgentName.SUMMARIZER,
+    status: AgentStatusValue.IDLE,
+    details: 'Ready to create summaries',
+  },
+  {
+    name: AgentName.LINKER,
+    status: AgentStatusValue.IDLE,
+    details: 'Ready to map relationships',
+  },
+  {
+    name: AgentName.VISUALIZER,
+    status: AgentStatusValue.IDLE,
+    details: 'Ready to create visualizations',
+  },
 ];
 
 const App: React.FC = () => {
@@ -19,7 +43,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [backendStatus, setBackendStatus] = useState<'unknown' | 'healthy' | 'unhealthy'>('unknown');
+  const [backendStatus, setBackendStatus] = useState<
+    'unknown' | 'healthy' | 'unhealthy'
+  >('unknown');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,19 +54,21 @@ const App: React.FC = () => {
     const checkHealth = async () => {
       const isHealthy = await checkBackendHealth();
       setBackendStatus(isHealthy ? 'healthy' : 'unhealthy');
-      
+
       if (isHealthy) {
         // Update agent details based on backend status
         const agentStatus = await getAgentStatus();
         if (agentStatus.adk_system === 'operational') {
-          setAgents(prev => prev.map(agent => ({
-            ...agent,
-            details: `ADK Agent Ready (${agentStatus.total_agents} agents available)`
-          })));
+          setAgents(prev =>
+            prev.map(agent => ({
+              ...agent,
+              details: `ADK Agent Ready (${agentStatus.total_agents} agents available)`,
+            }))
+          );
         }
       }
     };
-    
+
     checkHealth();
   }, []);
 
@@ -48,7 +76,7 @@ const App: React.FC = () => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setDocumentText(e.target?.result as string);
       };
       reader.readAsText(file);
@@ -60,25 +88,40 @@ const App: React.FC = () => {
   };
 
   const simulateAgentActivity = () => {
-    const agentNames = [AgentName.ORCHESTRATOR, AgentName.SUMMARIZER, AgentName.LINKER, AgentName.VISUALIZER];
+    const agentNames = [
+      AgentName.ORCHESTRATOR,
+      AgentName.SUMMARIZER,
+      AgentName.LINKER,
+      AgentName.VISUALIZER,
+    ];
     let delay = 0;
 
     // More realistic agent simulation with ADK workflow
     agentNames.forEach((name, index) => {
-        setTimeout(() => {
-            let details = 'Analyzing document...';
-            if (name === AgentName.ORCHESTRATOR) details = 'Coordinating multi-agent workflow...';
-            else if (name === AgentName.SUMMARIZER) details = 'Creating comprehensive summary...';
-            else if (name === AgentName.LINKER) details = 'Mapping entity relationships...';
-            else if (name === AgentName.VISUALIZER) details = 'Generating interactive visualization...';
-            
-            setAgents(prev => prev.map(a => a.name === name ? { 
-                ...a, 
-                status: AgentStatusValue.PROCESSING, 
-                details 
-            } : a));
-        }, delay);
-        delay += 800; // Slightly longer delay for more realistic feel
+      setTimeout(() => {
+        let details = 'Analyzing document...';
+        if (name === AgentName.ORCHESTRATOR)
+          details = 'Coordinating multi-agent workflow...';
+        else if (name === AgentName.SUMMARIZER)
+          details = 'Creating comprehensive summary...';
+        else if (name === AgentName.LINKER)
+          details = 'Mapping entity relationships...';
+        else if (name === AgentName.VISUALIZER)
+          details = 'Generating interactive visualization...';
+
+        setAgents(prev =>
+          prev.map(a =>
+            a.name === name
+              ? {
+                  ...a,
+                  status: AgentStatusValue.PROCESSING,
+                  details,
+                }
+              : a
+          )
+        );
+      }, delay);
+      delay += 800; // Slightly longer delay for more realistic feel
     });
   };
 
@@ -88,45 +131,51 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setResult(null);
-    
+
     // Reset agents to processing state
-    setAgents(initialAgents.map(agent => ({ 
-        ...agent, 
-        status: AgentStatusValue.IDLE, 
-        details: 'Preparing for analysis...' 
-    })));
-    
+    setAgents(
+      initialAgents.map(agent => ({
+        ...agent,
+        status: AgentStatusValue.IDLE,
+        details: 'Preparing for analysis...',
+      }))
+    );
+
     simulateAgentActivity();
 
     try {
       console.log('🎬 Starting ADK Multi-Agent Analysis');
       const analysisResult = await runAgenticNavigator(documentText);
-      
+
       // Mark all agents as done
-      setAgents(prev => prev.map(agent => ({
-        ...agent,
-        status: AgentStatusValue.DONE,
-        details: `${agent.name} analysis complete`
-      })));
-      
+      setAgents(prev =>
+        prev.map(agent => ({
+          ...agent,
+          status: AgentStatusValue.DONE,
+          details: `${agent.name} analysis complete`,
+        }))
+      );
+
       setResult(analysisResult);
       console.log('✅ Analysis complete:', analysisResult);
     } catch (err) {
       console.error('❌ Analysis failed:', err);
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      const errorMessage =
+        err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(errorMessage);
-      
+
       // Mark agents as error state
-      setAgents(prev => prev.map(agent => ({
-        ...agent,
-        status: AgentStatusValue.ERROR,
-        details: 'Analysis failed'
-      })));
+      setAgents(prev =>
+        prev.map(agent => ({
+          ...agent,
+          status: AgentStatusValue.ERROR,
+          details: 'Analysis failed',
+        }))
+      );
     } finally {
       setIsLoading(false);
     }
   }, [documentText, isLoading]);
-
 
   return (
     <div className="min-h-screen bg-slate-900 font-sans flex flex-col">
@@ -138,18 +187,25 @@ const App: React.FC = () => {
               Agentic Navigator
             </h1>
           </div>
-          
+
           {/* Backend Status Indicator */}
           <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${
-              backendStatus === 'healthy' ? 'bg-green-400' :
-              backendStatus === 'unhealthy' ? 'bg-red-400' : 'bg-yellow-400'
-            }`}></div>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                backendStatus === 'healthy'
+                  ? 'bg-green-400'
+                  : backendStatus === 'unhealthy'
+                    ? 'bg-red-400'
+                    : 'bg-yellow-400'
+              }`}
+            ></div>
             <span className="text-sm text-slate-400">
-              ADK System: {
-                backendStatus === 'healthy' ? 'Ready' :
-                backendStatus === 'unhealthy' ? 'Offline' : 'Checking...'
-              }
+              ADK System:{' '}
+              {backendStatus === 'healthy'
+                ? 'Ready'
+                : backendStatus === 'unhealthy'
+                  ? 'Offline'
+                  : 'Checking...'}
             </span>
           </div>
         </div>
@@ -157,16 +213,17 @@ const App: React.FC = () => {
 
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
           {/* Left Panel: Input & Agents */}
           <aside className="lg:col-span-4 xl:col-span-3">
             <div className="sticky top-24 space-y-6">
               <div>
-                <h2 className="text-lg font-semibold mb-2 text-slate-300">Input Document</h2>
+                <h2 className="text-lg font-semibold mb-2 text-slate-300">
+                  Input Document
+                </h2>
                 <div className="bg-slate-800 rounded-lg p-4 space-y-4">
                   <textarea
                     value={documentText}
-                    onChange={(e) => setDocumentText(e.target.value)}
+                    onChange={e => setDocumentText(e.target.value)}
                     placeholder="Paste your document or code here..."
                     className="w-full h-48 bg-slate-900 border border-slate-700 rounded-md p-3 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none transition resize-none"
                     disabled={isLoading}
@@ -180,7 +237,13 @@ const App: React.FC = () => {
                       <UploadIcon className="w-5 h-5 mr-2" />
                       Upload File
                     </button>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".txt,.md,.js,.py,.html,.css,.json, .ts, .tsx"/>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".txt,.md,.js,.py,.html,.css,.json, .ts, .tsx"
+                    />
                   </div>
                   <button
                     onClick={handleSubmit}
@@ -191,25 +254,28 @@ const App: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
+
               <div>
-                <h2 className="text-lg font-semibold mb-2 text-slate-300">Agent Status</h2>
+                <h2 className="text-lg font-semibold mb-2 text-slate-300">
+                  Agent Status
+                </h2>
                 <div className="space-y-2">
                   {agents.map(agent => (
                     <AgentCard key={agent.name} agent={agent} />
                   ))}
                 </div>
               </div>
-
             </div>
           </aside>
-          
+
           {/* Right Panel: Results */}
           <section className="lg:col-span-8 xl:col-span-9 bg-slate-800/20 rounded-lg p-6 min-h-[60vh]">
             {isLoading && !result && (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <BrainCircuitIcon className="w-16 h-16 mb-4 animate-pulse text-sky-500" />
-                <p className="text-xl font-semibold">Agents are collaborating...</p>
+                <p className="text-xl font-semibold">
+                  Agents are collaborating...
+                </p>
                 <p>Analyzing document to extract insights.</p>
               </div>
             )}
@@ -220,16 +286,20 @@ const App: React.FC = () => {
               </div>
             )}
             {!isLoading && !result && !error && (
-                <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                  <div className="text-center p-8 border-2 border-dashed border-slate-700 rounded-lg">
-                      <h3 className="text-xl font-semibold text-slate-400">Welcome to Agentic Navigator</h3>
-                      <p className="mt-2 max-w-md">Provide a document or code snippet on the left and click "Run Navigator" to begin the multi-agent analysis.</p>
-                  </div>
+              <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                <div className="text-center p-8 border-2 border-dashed border-slate-700 rounded-lg">
+                  <h3 className="text-xl font-semibold text-slate-400">
+                    Welcome to Agentic Navigator
+                  </h3>
+                  <p className="mt-2 max-w-md">
+                    Provide a document or code snippet on the left and click
+                    "Run Navigator" to begin the multi-agent analysis.
+                  </p>
                 </div>
+              </div>
             )}
             {result && <ResultsDisplay result={result} />}
           </section>
-
         </div>
       </main>
     </div>

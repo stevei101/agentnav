@@ -8,34 +8,41 @@
 ### Feature Request #001 Updates
 
 #### 1. **Port Configuration (CRITICAL)**
+
 - ? Backend must use `PORT` environment variable (Cloud Run requirement)
 - ? Default to 8080 for local development
 - ? Frontend uses PORT env var (defaults to 80 for Nginx)
 
 #### 2. **Health Checks**
+
 - ? Backend must implement `/healthz` endpoint
 - ? Frontend should implement `/healthz` (optional but recommended)
 - ? Added to acceptance criteria
 
 #### 3. **Firestore Emulator Configuration**
+
 - ? Corrected Firestore emulator UI port: **4000** (not 8080)
 - ? Firestore API port: 8080 (internal network)
 - ? Added data persistence volume mount
 
 #### 4. **Cloud Run Compatibility Section**
+
 - ? Added comprehensive "Cloud Run Compatibility Requirements" section
 - ? 10 key requirements documented
 
 #### 5. **Environment Variables**
+
 - ? Added `PORT` environment variable
 - ? Added `HEALTH_CHECK_PATH` variable
 - ? Documented Cloud Run-specific variables
 
 #### 6. **Access Points**
+
 - ? Updated Firestore Emulator UI: `http://localhost:4000`
 - ? Added health check endpoint: `http://localhost:8080/healthz`
 
 #### 7. **Acceptance Criteria**
+
 - ? Added Cloud Run compatibility checks
 - ? Added health check endpoint requirement
 - ? Added startup probe requirement
@@ -45,6 +52,7 @@
 ### SYSTEM_INSTRUCTION.md Updates
 
 #### 1. **Backend Service Configuration**
+
 - ? Updated port configuration to use `PORT` environment variable
 - ? Added health check endpoint requirement (`/healthz`)
 - ? Added startup probe configuration (240s default)
@@ -52,10 +60,12 @@
 - ? Added `PORT` to environment variables list
 
 #### 2. **Frontend Service Configuration**
+
 - ? Updated port to use `PORT` environment variable
 - ? Added health check endpoint (optional)
 
 #### 3. **Deployment Commands**
+
 - ? Updated `gcloud run deploy` commands with correct flags:
   - `--port` flag specified
   - `--timeout` flag added
@@ -63,6 +73,7 @@
   - Proper environment variable injection
 
 #### 4. **Development Workflow**
+
 - ? Updated backend startup command to use PORT env var
 - ? Added `--host 0.0.0.0` for Cloud Run compatibility
 - ? Added Cloud Run compatibility notes section
@@ -88,17 +99,20 @@
 ## Impact on Development
 
 ### For Developers
+
 - Backend code must read `PORT` environment variable
 - Must implement `/healthz` endpoint in FastAPI
 - Local development environment matches Cloud Run behavior
 - Firestore emulator UI accessible on port 4000
 
 ### For CI/CD
+
 - Deployment commands updated with correct flags
 - Secret Manager integration documented
 - Timeout configurations aligned with Cloud Run defaults
 
 ### For Testing
+
 - Health check endpoints can be tested locally
 - Environment matches production more closely
 - Startup probes ensure services are ready

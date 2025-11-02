@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { GraphNode, GraphEdge } from '../types';
 import { SearchPlusIcon, SearchMinusIcon } from './icons';
@@ -17,14 +16,22 @@ const COLOR_PALETTE: { [key: string]: string } = {
 };
 
 const getGroupColor = (group?: string) => {
-    if (group && COLOR_PALETTE[group.toLowerCase()]) {
-        return COLOR_PALETTE[group.toLowerCase()];
-    }
-    return COLOR_PALETTE.default;
-}
+  if (group && COLOR_PALETTE[group.toLowerCase()]) {
+    return COLOR_PALETTE[group.toLowerCase()];
+  }
+  return COLOR_PALETTE.default;
+};
 
-export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges }) => {
-  const [viewBox, setViewBox] = useState({ x: -500, y: -500, width: 1000, height: 1000 });
+export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({
+  nodes,
+  edges,
+}) => {
+  const [viewBox, setViewBox] = useState({
+    x: -500,
+    y: -500,
+    width: 1000,
+    height: 1000,
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -52,13 +59,17 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
     setIsDragging(true);
     setStartPoint({ x: e.clientX, y: e.clientY });
   };
-  
+
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!isDragging) return;
     const dx = e.clientX - startPoint.x;
     const dy = e.clientY - startPoint.y;
     const scale = viewBox.width / (svgRef.current?.clientWidth || 1);
-    setViewBox(prev => ({ ...prev, x: prev.x - dx * scale, y: prev.y - dy * scale }));
+    setViewBox(prev => ({
+      ...prev,
+      x: prev.x - dx * scale,
+      y: prev.y - dy * scale,
+    }));
     setStartPoint({ x: e.clientX, y: e.clientY });
   };
 
@@ -94,25 +105,28 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
     const newWidth = viewBox.width * factor;
     const newHeight = viewBox.height * factor;
     setViewBox(prev => ({
-        width: newWidth,
-        height: newHeight,
-        x: prev.x + (prev.width - newWidth) / 2,
-        y: prev.y + (prev.height - newHeight) / 2,
+      width: newWidth,
+      height: newHeight,
+      x: prev.x + (prev.width - newWidth) / 2,
+      y: prev.y + (prev.height - newHeight) / 2,
     }));
-  }
+  };
 
   const connectedEdges = useMemo(() => {
-      if (!hoveredNode) return new Set();
-      const connections = new Set<string>();
-      edges.forEach(edge => {
-          if (edge.from === hoveredNode) connections.add(edge.to);
-          if (edge.to === hoveredNode) connections.add(edge.from);
-      });
-      return connections;
+    if (!hoveredNode) return new Set();
+    const connections = new Set<string>();
+    edges.forEach(edge => {
+      if (edge.from === hoveredNode) connections.add(edge.to);
+      if (edge.to === hoveredNode) connections.add(edge.from);
+    });
+    return connections;
   }, [hoveredNode, edges]);
 
   return (
-    <div className="relative w-full h-full cursor-grab active:cursor-grabbing" onMouseUp={handleMouseUp}>
+    <div
+      className="relative w-full h-full cursor-grab active:cursor-grabbing"
+      onMouseUp={handleMouseUp}
+    >
       <svg
         ref={svgRef}
         className="w-full h-full rounded-md bg-slate-900/50"
@@ -123,11 +137,18 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
         onMouseLeave={handleMouseUp}
       >
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker
+            id="arrowhead"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
             <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
           </marker>
         </defs>
-        
+
         {/* Edges */}
         <g>
           {edges.map((edge, i) => {
@@ -135,20 +156,23 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
             const toPos = nodePositions.get(edge.to);
             if (!fromPos || !toPos) return null;
 
-            const isHighlighted = hoveredNode === edge.from || hoveredNode === edge.to;
+            const isHighlighted =
+              hoveredNode === edge.from || hoveredNode === edge.to;
 
             return (
               <g key={`edge-${i}`}>
                 <line
-                  x1={fromPos.x} y1={fromPos.y}
-                  x2={toPos.x} y2={toPos.y}
+                  x1={fromPos.x}
+                  y1={fromPos.y}
+                  x2={toPos.x}
+                  y2={toPos.y}
                   stroke={isHighlighted ? '#f8fafc' : '#475569'}
                   strokeWidth={isHighlighted ? 2 : 1}
                   markerEnd="url(#arrowhead)"
                   className="transition-all"
                 />
                 {edge.label && (
-                   <text
+                  <text
                     x={(fromPos.x + toPos.x) / 2}
                     y={(fromPos.y + toPos.y) / 2}
                     fill={isHighlighted ? '#cbd5e1' : '#64748b'}
@@ -163,7 +187,7 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
             );
           })}
         </g>
-        
+
         {/* Nodes */}
         <g>
           {nodes.map(node => {
@@ -203,12 +227,20 @@ export const InteractiveGraph: React.FC<InteractiveGraphProps> = ({ nodes, edges
         </g>
       </svg>
       <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
-          <button onClick={() => zoom(0.8)} className="bg-slate-700/80 p-2 rounded-md hover:bg-slate-600 text-slate-300 transition" aria-label="Zoom in">
-              <SearchPlusIcon className="w-5 h-5"/>
-          </button>
-          <button onClick={() => zoom(1.25)} className="bg-slate-700/80 p-2 rounded-md hover:bg-slate-600 text-slate-300 transition" aria-label="Zoom out">
-              <SearchMinusIcon className="w-5 h-5"/>
-          </button>
+        <button
+          onClick={() => zoom(0.8)}
+          className="bg-slate-700/80 p-2 rounded-md hover:bg-slate-600 text-slate-300 transition"
+          aria-label="Zoom in"
+        >
+          <SearchPlusIcon className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => zoom(1.25)}
+          className="bg-slate-700/80 p-2 rounded-md hover:bg-slate-600 text-slate-300 transition"
+          aria-label="Zoom out"
+        >
+          <SearchMinusIcon className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

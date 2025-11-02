@@ -30,6 +30,7 @@ This service provides a FastAPI application that serves the Gemma open-source mo
 Health check endpoint (Cloud Run requirement).
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -47,6 +48,7 @@ Health check endpoint (Cloud Run requirement).
 Generate text from a prompt.
 
 **Request:**
+
 ```json
 {
   "prompt": "Explain quantum computing:",
@@ -58,6 +60,7 @@ Generate text from a prompt.
 ```
 
 **Response:**
+
 ```json
 {
   "text": "Quantum computing uses quantum mechanical phenomena...",
@@ -72,6 +75,7 @@ Generate text from a prompt.
 Generate embeddings for text.
 
 **Request:**
+
 ```json
 {
   "text": "Text to embed"
@@ -79,6 +83,7 @@ Generate embeddings for text.
 ```
 
 **Response:**
+
 ```json
 {
   "embeddings": [0.123, -0.456, ...],
@@ -178,14 +183,17 @@ GEMMA_SERVICE_TIMEOUT=60.0
 ## Troubleshooting
 
 ### Model Not Loading
+
 - Check memory: Need 16Gi for Gemma 7B
 - Check logs: `gcloud run services logs read gemma-service --region europe-west1`
 
 ### GPU Not Detected
+
 - Verify GPU quota in europe-west1
 - Check Cloud Run config: `--cpu gpu --gpu-type nvidia-l4`
 
 ### Slow Startup
+
 - First startup downloads model (~13GB)
 - Subsequent starts are faster (~1-2 minutes)
 
@@ -194,4 +202,3 @@ GEMMA_SERVICE_TIMEOUT=60.0
 - [Gemma Model Card](https://huggingface.co/google/gemma-7b-it)
 - [Cloud Run GPU Docs](https://cloud.google.com/run/docs/using/gpus)
 - [PyTorch CUDA Setup](https://pytorch.org/get-started/locally/)
-

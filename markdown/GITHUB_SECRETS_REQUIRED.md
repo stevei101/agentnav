@@ -12,11 +12,11 @@ Based on `docs/SYSTEM_INSTRUCTION.md`, here are **all GitHub secrets** needed fo
    - **How to get:** `gcloud config get-value project`
    - **Required for:** All GCP operations
 
-2. **`GCP_SA_KEY`** *(Legacy/Fallback - Optional if using WIF)*
+2. **`GCP_SA_KEY`** _(Legacy/Fallback - Optional if using WIF)_
    - **Description:** Google Cloud Service Account Key (JSON format)
    - **Purpose:** Legacy authentication method (Workload Identity Federation is preferred)
    - **When to use:** Fallback if WIF setup fails
-   - **How to create:** 
+   - **How to create:**
      ```bash
      gcloud iam service-accounts keys create sa-key.json \
        --iam-account=SERVICE_ACCOUNT@PROJECT_ID.iam.gserviceaccount.com
@@ -68,12 +68,12 @@ Based on `docs/SYSTEM_INSTRUCTION.md`, here are **all GitHub secrets** needed fo
 
 ### 📦 Additional Secrets (Optional/Dependent)
 
-9. **`FIRESTORE_CREDENTIALS`** *(Optional if using WIF)*
+9. **`FIRESTORE_CREDENTIALS`** _(Optional if using WIF)_
    - **Description:** Service account JSON for Firestore access
    - **When needed:** Only if not using WIF for Firestore access
    - **Note:** WIF is preferred method
 
-10. **`HUGGINGFACE_TOKEN`** *(Optional)*
+10. **`HUGGINGFACE_TOKEN`** _(Optional)_
     - **Description:** Hugging Face API token (for private Gemma model access)
     - **Required for:** Only if using private Gemma models
     - **Where to get:** [Hugging Face Settings](https://huggingface.co/settings/tokens)
@@ -83,18 +83,21 @@ Based on `docs/SYSTEM_INSTRUCTION.md`, here are **all GitHub secrets** needed fo
 ## 🚀 Setup Order
 
 ### Phase 1: Before Terraform (Set These First)
+
 1. ✅ `GCP_PROJECT_ID` - Must have a GCP project
 2. ✅ `TF_API_TOKEN` - Need Terraform Cloud account
 3. ✅ `TF_CLOUD_ORGANIZATION` - Create organization in Terraform Cloud
 4. ✅ `TF_WORKSPACE` - Create workspace in Terraform Cloud
 5. ✅ `GEMINI_API_KEY` - Get from AI Studio
-6. ✅ `GCP_SA_KEY` *(Optional)* - Only if not using WIF
+6. ✅ `GCP_SA_KEY` _(Optional)_ - Only if not using WIF
 
 ### Phase 2: After Terraform Apply (Outputs)
+
 7. ⏳ `WIF_PROVIDER` - From Terraform output
 8. ⏳ `WIF_SERVICE_ACCOUNT` - From Terraform output
 
 ### Phase 3: Optional/As Needed
+
 9. ⏳ `FIRESTORE_CREDENTIALS` - Only if not using WIF
 10. ⏳ `HUGGINGFACE_TOKEN` - Only if using private models
 
@@ -107,7 +110,7 @@ Based on `docs/SYSTEM_INSTRUCTION.md`, here are **all GitHub secrets** needed fo
 - [ ] Generate `TF_API_TOKEN` in Terraform Cloud
 - [ ] Create `TF_WORKSPACE` in Terraform Cloud
 - [ ] Get `GEMINI_API_KEY` from Google AI Studio
-- [ ] *(Optional)* Create service account and get `GCP_SA_KEY` JSON
+- [ ] _(Optional)_ Create service account and get `GCP_SA_KEY` JSON
 - [ ] Run `terraform apply` for Feature #007
 - [ ] Copy `WIF_PROVIDER` and `WIF_SERVICE_ACCOUNT` from Terraform outputs
 - [ ] Add all secrets to GitHub Repository Settings → Secrets and variables → Actions
@@ -126,6 +129,7 @@ Based on `docs/SYSTEM_INSTRUCTION.md`, here are **all GitHub secrets** needed fo
 ## ✅ Verification
 
 After setting secrets, verify they're accessible in GitHub Actions workflow:
+
 ```yaml
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -136,4 +140,3 @@ env:
 ---
 
 **Next Step:** Once you've set the Phase 1 secrets, I'll proceed with implementing the Terraform infrastructure code!
-

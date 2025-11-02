@@ -7,6 +7,7 @@ This PR implements **Feature #007: Core Infrastructure as Code (IaC) with Terraf
 This PR introduces complete Terraform infrastructure-as-code configuration for provisioning all Google Cloud resources required for the Agentic Navigator multi-agent system. It includes Workload Identity Federation for secure GitHub Actions authentication, service accounts with least-privilege IAM roles, Cloud Run service blueprints, Artifact Registry for container images, Firestore for persistent storage, and Secret Manager for secure key management.
 
 **Key Motivation:**
+
 - **Foundation for All Features:** Without this infrastructure, deployments of the multi-region, GPU-accelerated, multi-agent system are impossible
 - **Consistency & Reproducibility:** Ensures all infrastructure is version-controlled and consistently provisioned
 - **Security:** Implements Workload Identity Federation (WIF) for secure CI/CD without static keys
@@ -23,6 +24,7 @@ Previous features (local dev environment, GPU service, CI/CD) all depend on this
 ## Linked Issue(s)
 
 Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terraform
+
 - Issue: #7
 - Addresses the critical infrastructure foundation requirement
 
@@ -38,6 +40,7 @@ Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terrafor
 ## Test Configuration
 
 **Environment:**
+
 - **Branch:** `feature-7` (or `main`)
 - **Terraform Version:** >= 1.5.0
 - **Google Provider Version:** ~> 5.0
@@ -47,6 +50,7 @@ Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terrafor
 ## Testing Performed
 
 ### 1. Code Review & Validation
+
 - [x] All Terraform files reviewed for correctness
 - [x] Variable definitions validated
 - [x] Resource dependencies verified
@@ -54,12 +58,14 @@ Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terrafor
 - [x] API enablement configuration validated
 
 ### 2. Static Analysis
+
 - [x] Terraform syntax validated
 - [x] Resource naming conventions verified
 - [x] Output definitions reviewed
 - [x] Dependency relationships validated
 
 ### 3. Infrastructure Planning (Terraform Plan)
+
 - [x] `terraform init` successful
 - [x] `terraform validate` passes
 - [x] `terraform fmt` applied (code formatting)
@@ -67,6 +73,7 @@ Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terrafor
 - [ ] **`terraform apply`** (pending user setup of secrets)
 
 ### 4. Documentation Review
+
 - [x] README.md comprehensive and accurate
 - [x] API enablement documented
 - [x] WIF setup process documented
@@ -76,6 +83,7 @@ Implements Feature Request #007: Core Infrastructure as Code (IaC) with Terrafor
 ## Testing Instructions
 
 **Prerequisites:**
+
 1. Set GitHub secrets (see `markdown/GITHUB_SECRETS_REQUIRED.md`)
 2. Configure Terraform Cloud backend
 3. Create `terraform.tfvars` from example
@@ -117,6 +125,7 @@ gcloud iam workload-identity-pools list
 ```
 
 **Expected Results:**
+
 - All APIs enabled automatically
 - 4 service accounts created with appropriate IAM roles
 - WIF pool and provider configured for GitHub Actions
@@ -127,6 +136,7 @@ gcloud iam workload-identity-pools list
 - All outputs available for GitHub Secrets configuration
 
 **Note:** Full end-to-end testing requires:
+
 - GCP project with billing enabled
 - Terraform Cloud account and workspace
 - GitHub secrets configured
@@ -191,6 +201,7 @@ gcloud iam workload-identity-pools list
 ### New Files (19 files)
 
 **Core Terraform Configuration:**
+
 - `terraform/versions.tf` - Terraform and provider version requirements
 - `terraform/provider.tf` - Google Cloud provider configuration
 - `terraform/backend.tf` - Terraform Cloud remote backend
@@ -199,6 +210,7 @@ gcloud iam workload-identity-pools list
 - `terraform/outputs.tf` - Output values (WIF, service URLs, etc.)
 
 **Infrastructure Resources:**
+
 - `terraform/apis.tf` - **Automatic API enablement** (NEW - user requested)
 - `terraform/iam.tf` - IAM roles, service accounts, Workload Identity Federation
 - `terraform/artifact_registry.tf` - Artifact Registry repository
@@ -208,17 +220,20 @@ gcloud iam workload-identity-pools list
 - `terraform/cloud_build.tf` - **Cloud Build triggers for "Connect Repo"** (NEW - bonus feature)
 
 **Supporting Files:**
+
 - `terraform/.gitignore` - Git ignore rules for Terraform
 - `terraform/README.md` - Comprehensive documentation
 - `terraform/terraform.tfvars.example` - Configuration template
 - `terraform/scripts/post-apply-gpu-setup.sh` - GPU configuration helper
 
 **Cloud Build Configuration Files:**
+
 - `cloudbuild-frontend.yaml` - Frontend automatic deployment config
 - `cloudbuild-backend.yaml` - Backend automatic deployment config
 - `.cloudbuildignore` - Files excluded from Cloud Build
 
 **Documentation:**
+
 - `markdown/GITHUB_SECRETS_REQUIRED.md` - Complete secrets guide
 - `markdown/FEATURE_007_IMPLEMENTATION_STATUS.md` - Implementation status
 - `markdown/CONNECT_REPO_SETUP.md` - Connect Repo setup guide
@@ -232,12 +247,14 @@ gcloud iam workload-identity-pools list
 ## Key Features Implemented
 
 ### 1. Automatic API Enablement
+
 - ✅ **NEW:** Automatically enables all required GCP APIs via Terraform
 - ✅ APIs: Cloud Run, Artifact Registry, Firestore, Secret Manager, IAM, Resource Manager, **Cloud Build**
 - ✅ Proper dependency management (APIs enabled before resource creation)
 - ✅ Timeout configuration (10 minutes for API enablement)
 
 ### 2. Cloud Run "Connect Repo" (BONUS Feature!)
+
 - ✅ **Automatic deployments** from GitHub to Cloud Run
 - ✅ **Cloud Build triggers** configured for frontend and backend
 - ✅ **Build configurations** (`cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`)
@@ -246,12 +263,14 @@ gcloud iam workload-identity-pools list
 - ✅ **IAM permissions** properly configured for Cloud Build
 
 ### 3. Workload Identity Federation (WIF)
+
 - ✅ WIF pool and provider for GitHub Actions
 - ✅ OIDC configuration for GitHub
 - ✅ Service account binding with repository-specific access
 - ✅ Secure CI/CD authentication (no static keys)
 
 ### 4. Service Accounts & IAM
+
 - ✅ 4 service accounts with least-privilege roles:
   - Frontend Cloud Run service account
   - Backend Cloud Run service account
@@ -260,6 +279,7 @@ gcloud iam workload-identity-pools list
 - ✅ IAM role bindings for Firestore, Secret Manager, Artifact Registry, Cloud Run
 
 ### 5. Cloud Run Service Blueprints
+
 - ✅ **Frontend Service** (`us-central1`)
   - Port 80, 512Mi memory, 1 CPU
   - Public access, scaling 0-10 instances
@@ -277,16 +297,19 @@ gcloud iam workload-identity-pools list
   - Scaling 0-2 instances (cost control)
 
 ### 6. Infrastructure Services
+
 - ✅ **Artifact Registry** - Docker repository for container images
 - ✅ **Firestore** - Native mode database with point-in-time recovery
 - ✅ **Secret Manager** - Secrets for API keys (GEMINI_API_KEY, HUGGINGFACE_TOKEN, FIRESTORE_CREDENTIALS)
 
 ### 7. Terraform Cloud Integration
+
 - ✅ Remote backend configuration
 - ✅ State management in Terraform Cloud
 - ✅ Outputs for GitHub Secrets configuration
 
 ### 8. Cloud Run "Connect Repo" Integration (Bonus Feature!)
+
 - ✅ **Cloud Build triggers** for automatic deployments from GitHub
 - ✅ **Frontend & Backend:** Automatic build and deploy on push to main branch
 - ✅ **Cloud Build configurations** (`cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`)
@@ -319,15 +342,18 @@ From Feature Request #007:
 ## Dependencies
 
 **New Dependencies:**
+
 - None (Terraform uses standard Google provider)
 
 **Infrastructure Dependencies:**
+
 - GCP project with billing enabled
 - Terraform Cloud account (for remote state)
 - GitHub repository (for WIF configuration)
 - GPU quota in `europe-west1` (for Gemma service - user action required)
 
 **No Breaking Changes:**
+
 - This is a new feature (additive only)
 - No existing infrastructure modified
 - Compatible with all previous features
@@ -379,6 +405,7 @@ terraform apply
 ### Phase 3: Post-Apply Configuration
 
 1. **Configure GPU (Required):**
+
    ```bash
    cd terraform/scripts
    export GCP_PROJECT_ID=your-project-id
@@ -386,6 +413,7 @@ terraform apply
    ```
 
 2. **Add Secret Values:**
+
    ```bash
    echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets versions add GEMINI_API_KEY --data-file=-
    echo -n "YOUR_HF_TOKEN" | gcloud secrets versions add HUGGINGFACE_TOKEN --data-file=-
@@ -483,6 +511,7 @@ See `terraform/README.md` for detailed instructions.
 ## Screenshots / Examples
 
 **Terraform Plan Output (Example):**
+
 ```
 Plan: 20 to add, 0 to change, 0 to destroy.
 
@@ -496,6 +525,7 @@ Changes:
 ```
 
 **Output Values:**
+
 ```
 wif_provider = "projects/123456789/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
 wif_service_account_email = "github-actions@project-id.iam.gserviceaccount.com"
@@ -507,10 +537,10 @@ frontend_service_url = "https://agentnav-frontend-xxx.run.app"
 **Ready for review and deployment! 🚀**
 
 **Next Steps After Merge:**
+
 1. User sets GitHub secrets
 2. User runs `terraform apply`
 3. User connects GitHub repository (one-time, see `markdown/CONNECT_REPO_SETUP.md`)
 4. User configures GPU and secrets
 5. **Automatic deployments enabled** - push to `main` branch triggers deployment!
 6. CI/CD pipeline can use WIF for Gemma GPU service (or manual deployment)
-
