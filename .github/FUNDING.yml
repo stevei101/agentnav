@@ -1,0 +1,23 @@
+# GitHub Sponsors & Funding Configuration
+# These are supported funding model platforms for Agentic Navigator
+
+# GitHub Sponsors
+# Uncomment and add username once GitHub Sponsors is approved
+# github: [stevei101]
+
+# Open Collective (alternative transparent funding platform)
+# open_collective: agentnav
+
+# Buy Me a Coffee (backup option for non-GitHub users)
+# ko_fi: agenticnavigator
+
+# Patreon
+# patreon: agenticnavigator
+
+# Custom funding links
+# Uncomment when available:
+# custom: ["https://agentnav.lornu.com/sponsor", "https://opencollective.com/agentnav"]
+
+# Note: This file enables the "Sponsor" button on the GitHub repository.
+# Update this file as funding platforms are activated.
+# See docs/SUSTAINABILITY_PLAN.md for full funding strategy.
