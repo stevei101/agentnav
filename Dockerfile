@@ -8,9 +8,9 @@ WORKDIR /app
 # Copy dependency files
 COPY package.json bun.lock* ./
 
-# Install dependencies using Bun v2
-# Note: bun.lock is used automatically for reproducible builds
-RUN bun install
+# Install dependencies using Bun v2 with frozen lockfile for reproducibility
+# The lockfile ensures exact versions are installed in production
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
