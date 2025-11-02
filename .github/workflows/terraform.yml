@@ -1,9 +1,8 @@
-name: Terraform Infrastructure
+name: INFRA_VERIFICATION
 
 on:
   push:
-    branches:
-      - main
+    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
@@ -22,12 +21,12 @@ env:
 
 jobs:
   terraform:
-    name: Terraform
+    name: INFRA_VERIFICATION
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write  # Required for PR comments
-      id-token: write  # Required for Workload Identity Federation
+      pull-requests: write # Required for PR comments
+      id-token: write # Required for Workload Identity Federation
 
     steps:
       - name: Checkout code
@@ -136,4 +135,3 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
         run: terraform apply -auto-approve -input=false
-

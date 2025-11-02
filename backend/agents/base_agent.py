@@ -1,15 +1,30 @@
 """
 Base Agent - ADK-Compatible Agent Framework
 Implements Agent Development Kit (ADK) patterns and Agent2Agent (A2A) Protocol
+
+Updated for FR#027: Full A2A Protocol Integration with formal message schemas
+and security features.
 """
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+# Import new A2A Protocol components (FR#027)
+try:
+    from services.a2a_protocol import A2AProtocolService, create_status_message
+    from models.a2a_messages import (
+        A2AMessageBase,
+        AgentStatusMessage
+    )
+    HAS_ENHANCED_A2A = True
+except ImportError as e:
+    HAS_ENHANCED_A2A = False
+    logger.warning(f"⚠️  Enhanced A2A Protocol not available, using legacy implementation: {e}")
 
 
 class AgentState(Enum):
@@ -89,15 +104,27 @@ class Agent(ABC):
 
     All agents inherit from this base class and implement the process() method.
     Provides A2A Protocol integration and common agent capabilities.
+    
+    FR#027 Updates:
+    - Supports both legacy A2AProtocol and new A2AProtocolService
+    - Uses typed A2A messages with security and traceability
+    - Enhanced logging with structured metadata
     """
-
-    def __init__(self, name: str, a2a_protocol: A2AProtocol):
+    
+    def __init__(self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]):
         self.name = name
         self.state = AgentState.IDLE
         self.a2a = a2a_protocol
         self.execution_history: List[Dict[str, Any]] = []
         self.logger = logging.getLogger(f"agent.{name}")
-
+        
+        # Check if using enhanced A2A Protocol
+        self.using_enhanced_a2a = HAS_ENHANCED_A2A and isinstance(a2a_protocol, A2AProtocolService) if HAS_ENHANCED_A2A else False
+        
+        if self.using_enhanced_a2a:
+            self.logger.info(f"🔄 Agent '{name}' using Enhanced A2A Protocol (FR#027)")
+        else:
+            self.logger.info(f"🔄 Agent '{name}' using Legacy A2A Protocol")
     @abstractmethod
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -162,36 +189,96 @@ class Agent(ABC):
         for message in messages:
             self.logger.info(f"📥 Processing A2A message: {message.message_type} from {message.from_agent}")
             await self._handle_a2a_message(message)
-
-    async def _handle_a2a_message(self, message: A2AMessage):
-        """Handle incoming A2A message - can be overridden by subclasses"""
-        if message.message_type == "context_update":
-            self.logger.info(f"📋 Received context update from {message.from_agent}")
-        elif message.message_type == "dependency_complete":
-            self.logger.info(f"✅ Dependency {message.from_agent} completed")
+    
+    async def _handle_a2a_message(self, message: Union["A2AMessage", "A2AMessageBase"]):
+        """
+        Handle incoming A2A message - can be overridden by subclasses
+        
+        FR#027: Supports both legacy A2AMessage and new typed messages
+        """
+        # Extract message type (works for both formats)
+        if hasattr(message, 'message_type'):
+            msg_type = message.message_type
         else:
-            self.logger.warning(f"🤷 Unknown A2A message type: {message.message_type}")
-
+            msg_type = "unknown"
+        
+        # Extract from_agent (works for both formats)
+        if hasattr(message, 'from_agent'):
+            from_agent = message.from_agent
+        else:
+            from_agent = "unknown"
+        
+        # Handle common message types
+        if msg_type == "context_update":
+            self.logger.info(f"📋 Received context update from {from_agent}")
+        elif msg_type == "dependency_complete":
+            self.logger.info(f"✅ Dependency {from_agent} completed")
+        elif msg_type == "agent_status":
+            # Handle typed AgentStatusMessage (FR#027)
+            if hasattr(message, 'agent_status'):
+                status = message.agent_status
+                self.logger.info(f"📊 Agent {from_agent} status: {status}")
+            else:
+                self.logger.info(f"📊 Agent {from_agent} status update")
+        elif msg_type in ["summarization_completed", "relationship_mapped", "visualization_ready"]:
+            # Handle specialized typed messages (FR#027)
+            self.logger.info(f"📨 Received {msg_type} from {from_agent}")
+        else:
+            self.logger.warning(f"🤷 Unknown A2A message type: {msg_type}")
     async def _notify_completion(self, result: Dict[str, Any]):
-        """Notify other agents that this agent has completed"""
-        message = A2AMessage(
-            message_id=f"{self.name}_complete_{int(time.time())}",
-            from_agent=self.name,
-            to_agent="*",  # Broadcast to all agents
-            message_type="agent_complete",
-            data={"agent": self.name, "result_summary": self._summarize_result(result)}
-        )
+        """
+        Notify other agents that this agent has completed
+        
+        FR#027: Uses typed AgentStatusMessage when enhanced A2A is available
+        """
+        execution_time = result.get("processing_time", 0.0)
+        result_summary = self._summarize_result(result)
+        
+        if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
+            # Use typed AgentStatusMessage (FR#027)
+            message = create_status_message(
+                from_agent=self.name,
+                agent_status="completed",
+                correlation_id=getattr(self.a2a, 'correlation_id', 'unknown'),
+                processing_time_seconds=execution_time,
+                result_summary=result_summary
+            )
+        else:
+            # Legacy message format
+            message = A2AMessage(
+                message_id=f"{self.name}_complete_{int(time.time())}",
+                from_agent=self.name,
+                to_agent="*",  # Broadcast to all agents
+                message_type="agent_complete",
+                data={"agent": self.name, "result_summary": result_summary}
+            )
+        
         await self.a2a.send_message(message)
 
     async def _notify_error(self, error: str):
-        """Notify other agents of an error"""
-        message = A2AMessage(
-            message_id=f"{self.name}_error_{int(time.time())}",
-            from_agent=self.name,
-            to_agent="*",  # Broadcast to all agents
-            message_type="agent_error",
-            data={"agent": self.name, "error": error}
-        )
+        """
+        Notify other agents of an error
+        
+        FR#027: Uses typed AgentStatusMessage when enhanced A2A is available
+        """
+        if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
+            # Use typed AgentStatusMessage (FR#027)
+            message = create_status_message(
+                from_agent=self.name,
+                agent_status="failed",
+                correlation_id=getattr(self.a2a, 'correlation_id', 'unknown'),
+                error_message=error
+            )
+        else:
+            # Legacy message format
+            message = A2AMessage(
+                message_id=f"{self.name}_error_{int(time.time())}",
+                from_agent=self.name,
+                to_agent="*",  # Broadcast to all agents
+                message_type="agent_error",
+                data={"agent": self.name, "error": error}
+            )
+        
         await self.a2a.send_message(message)
 
     def _summarize_result(self, result: Dict[str, Any]) -> str:
@@ -231,10 +318,29 @@ class AgentWorkflow:
     """
     ADK Workflow Engine
     Orchestrates multiple agents with dependency management and A2A Protocol
+    
+    FR#027 Updates:
+    - Supports both legacy A2AProtocol and new A2AProtocolService
+    - Can be initialized with session_id for enhanced traceability
     """
 
-    def __init__(self):
-        self.a2a = A2AProtocol()
+    def __init__(self, session_id: Optional[str] = None, use_enhanced_a2a: bool = True):
+        """
+        Initialize AgentWorkflow
+        
+        Args:
+            session_id: Optional session ID for correlation tracking
+            use_enhanced_a2a: Whether to use enhanced A2A Protocol (FR#027)
+        """
+        # Choose A2A Protocol implementation
+        if use_enhanced_a2a and HAS_ENHANCED_A2A:
+            from services.a2a_protocol import A2AProtocolService
+            self.a2a = A2AProtocolService(session_id=session_id)
+            logger.info("🔄 Using Enhanced A2A Protocol Service (FR#027)")
+        else:
+            self.a2a = A2AProtocol()
+            logger.info("🔄 Using Legacy A2A Protocol")
+        
         self.agents: Dict[str, Agent] = {}
         self.dependencies: Dict[str, List[str]] = {}  # agent -> [prerequisite_agents]
         self.persistence_service = None  # Lazy initialization

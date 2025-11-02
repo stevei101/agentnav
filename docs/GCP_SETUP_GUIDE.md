@@ -1,4 +1,5 @@
 # Google Cloud Console & gcloud SDK Setup Guide
+
 ## For Agentic Navigator Hackathon Project
 
 This guide walks you through setting up Google Cloud Platform (GCP) and Firebase/Firestore for your hackathon project.
@@ -110,6 +111,7 @@ gcloud firestore databases create \
 ```
 
 **Available Locations:**
+
 - `us-central` (Iowa) - Multi-region
 - `us-east1` (South Carolina)
 - `europe-west1` (Belgium)
@@ -120,10 +122,12 @@ gcloud firestore databases create \
 ## Step 4: Create Firestore Collections (Optional)
 
 You can create collections via:
+
 - **Cloud Console:** [Firestore Data](https://console.cloud.google.com/firestore/data)
 - **gcloud SDK:** Not directly supported (use REST API or Cloud Console)
 
 **Recommended Collections** (based on your SYSTEM_INSTRUCTION.md):
+
 - `sessions/` - User session data
 - `knowledge_cache/` - Cached analysis results
 - `agent_context/` - Shared agent context
@@ -278,12 +282,12 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if request.time < timestamp.date(2025, 12, 31);
     }
-    
+
     // Production-ready rules (example)
     match /sessions/{sessionId} {
       allow read, write: if request.auth != null;
     }
-    
+
     match /knowledge_cache/{cacheId} {
       allow read: if true;
       allow write: if request.auth != null;
@@ -357,6 +361,7 @@ EOF
 ```
 
 **Replace:**
+
 - `YOUR_GEMINI_API_KEY_FROM_STEP_5` with your actual Gemini API key
 - `agentic-navigator` with your project ID
 
@@ -392,6 +397,7 @@ open http://localhost:4000
 ## Quick Reference Commands
 
 ### Project Management
+
 ```bash
 # Set active project
 gcloud config set project PROJECT_ID
@@ -404,6 +410,7 @@ gcloud projects list
 ```
 
 ### Firestore
+
 ```bash
 # List databases
 gcloud firestore databases list
@@ -416,6 +423,7 @@ gcloud firestore import gs://BUCKET_NAME/EXPORT_PATH
 ```
 
 ### Service Accounts
+
 ```bash
 # List service accounts
 gcloud iam service-accounts list
@@ -426,6 +434,7 @@ gcloud iam service-accounts keys create key.json \
 ```
 
 ### Secrets
+
 ```bash
 # List secrets
 gcloud secrets list
@@ -439,16 +448,19 @@ gcloud secrets versions access latest --secret=GEMINI_API_KEY
 ## Hackathon-Specific Tips
 
 ### 1. Free Tier Limits
+
 - **Firestore:** 50K reads/day, 20K writes/day (free tier)
 - **Cloud Run:** 2 million requests/month (free tier)
 - **Storage:** 1GB free storage
 
 ### 2. Cost Optimization
+
 - Use Firestore emulator for local development
 - Set up billing alerts in Cloud Console
 - Monitor usage in [Cloud Console Billing](https://console.cloud.google.com/billing)
 
 ### 3. Debugging
+
 ```bash
 # View Cloud Run logs
 gcloud run logs read --service=agentnav-backend --region=us-central1
@@ -461,6 +473,7 @@ gcloud services list --enabled | grep firestore
 ```
 
 ### 4. Quick Reset
+
 ```bash
 # If you need to start over
 gcloud projects delete agentic-navigator  # Careful!
@@ -472,12 +485,14 @@ gcloud projects undelete agentic-navigator  # Within 30 days
 ## Troubleshooting
 
 ### Issue: "API not enabled"
+
 ```bash
 # Enable the API
 gcloud services enable API_NAME.googleapis.com
 ```
 
 ### Issue: "Permission denied"
+
 ```bash
 # Check current user
 gcloud auth list
@@ -488,6 +503,7 @@ gcloud auth application-default login
 ```
 
 ### Issue: "Project not found"
+
 ```bash
 # Verify project exists
 gcloud projects list
@@ -497,6 +513,7 @@ gcloud config set project PROJECT_ID
 ```
 
 ### Issue: "Firestore emulator not starting"
+
 ```bash
 # Check if port is in use
 lsof -i :8080
