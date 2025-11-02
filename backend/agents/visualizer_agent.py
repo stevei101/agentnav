@@ -1,12 +1,15 @@
 """
-Visualizer Agent
+Visualizer Agent - ADK Implementation
 Uses Gemma GPU service for complex graph generation tasks
+Integrates with Linker and Summarizer agents via A2A Protocol
 """
 import os
 import json
 import re
 import logging
+import time
 from typing import Dict, Any, Optional
+from .base_agent import Agent, A2AMessage
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +29,24 @@ Return a JSON structure with:
 Focus on key concepts and their relationships."""
 
 
-class VisualizerAgent:
+class VisualizerAgent(Agent):
     """
-    Visualizer Agent that uses Gemma GPU service for complex visualization tasks.
+    Visualizer Agent using ADK and A2A Protocol
     
-    This agent generates knowledge graphs (Mind Maps for documents, 
-    Dependency Graphs for codebases) using the Gemma GPU-accelerated service.
+    Responsibilities:
+    - Generate knowledge graphs (Mind Maps for documents, Dependency Graphs for codebases) 
+    - Use data from Summarizer and Linker agents via A2A Protocol
+    - Enhance visualizations using Gemma GPU-accelerated service
+    - Render visualization-ready JSON
     """
     
-    def __init__(self, gemma_service_url: Optional[str] = None):
+    def __init__(self, a2a_protocol, gemma_service_url: Optional[str] = None, event_emitter=None):
+        super().__init__("visualizer", a2a_protocol)
         self.gemma_service_url = gemma_service_url or os.getenv("GEMMA_SERVICE_URL")
+        self.event_emitter = event_emitter
         self._prompt_template: Optional[str] = None
+        self._linked_data: Optional[Dict[str, Any]] = None
+        self._summary_data: Optional[Dict[str, Any]] = None
     
     def _get_prompt_template(self) -> str:
         """
@@ -77,7 +87,7 @@ class VisualizerAgent:
         
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Process content and generate visualization using Gemma GPU service.
+        Process content and generate visualization using ADK and A2A Protocol integration.
         
         Args:
             context: Contains 'document' (text content) and optionally 'content_type'
@@ -85,12 +95,104 @@ class VisualizerAgent:
         Returns:
             Visualization data with nodes and edges
         """
+        start_time = time.time()
         document = context.get("document", "")
         content_type = context.get("content_type", "document")  # 'document' or 'codebase'
         
         if not document:
             raise ValueError("Document content is required")
         
+        # Emit processing event
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent_name="Visualizer",
+                metadata={
+                    "sessionId": context.get("sessionId"),
+                    "contentType": content_type,
+                }
+            )
+        
+        self.logger.info(f"🎨 Visualizer creating {content_type} visualization")
+        
+        try:
+            # Check if we have data from other agents via A2A Protocol
+            await self._process_a2a_messages()
+            
+            # Use linked data if available from Linker Agent
+            if self._linked_data:
+                self.logger.info("📊 Using entity and relationship data from Linker Agent")
+                result = await self._create_visualization_from_linked_data(
+                    self._linked_data, content_type, document
+                )
+            else:
+                # Fallback to original implementation if no linked data
+                self.logger.info("⚙️ Fallback: Generating visualization directly with Gemma")
+                result = await self._create_visualization_with_gemma(document, content_type)
+            
+            # Emit completion event with metrics
+            if self.event_emitter:
+                duration = time.time() - start_time
+                await self.event_emitter.emit_agent_complete(
+                    agent_name="Visualizer",
+                    payload={
+                        "summary": f"Generated {len(result.get('nodes', []))} nodes",
+                        "visualization": {
+                            "nodes": result.get("nodes", []),
+                            "edges": result.get("edges", []),
+                        },
+                        "metrics": {
+                            "processingTime": duration,
+                            "tokensProcessed": len(document),
+                        },
+                    }
+                )
+            
+            return result
+            
+        except Exception as e:
+            # Emit error event
+            if self.event_emitter:
+                await self.event_emitter.emit_agent_error(
+                    agent_name="Visualizer",
+                    error_message=str(e)
+                )
+            raise
+    
+    async def _create_visualization_from_linked_data(self, linked_data: Dict[str, Any], 
+                                                   content_type: str, document: str) -> Dict[str, Any]:
+        """Create visualization using data from Linker Agent"""
+        
+        # Use the graph data prepared by Linker Agent
+        graph_data = linked_data.get("graph_data", {})
+        
+        if graph_data and graph_data.get("nodes") and graph_data.get("edges"):
+            # Enhance the visualization with additional processing
+            enhanced_graph = await self._enhance_visualization(graph_data, document, content_type)
+            
+            result = {
+                "type": enhanced_graph.get("type", "MIND_MAP"),
+                "title": enhanced_graph.get("title", f"{content_type.title()} Visualization"),
+                "nodes": enhanced_graph["nodes"],
+                "edges": enhanced_graph["edges"],
+                "generated_by": "adk_multi_agent",
+                "agent_collaboration": {
+                    "linker_entities": len(linked_data.get("entities", [])),
+                    "linker_relationships": len(linked_data.get("relationships", [])),
+                    "enhanced_by_visualizer": True
+                },
+                "timestamp": time.time()
+            }
+            
+            # Notify completion via A2A Protocol
+            await self._notify_visualization_complete(result)
+            
+            return result
+        else:
+            # Fallback if linked data is incomplete
+            return await self._create_visualization_with_gemma(document, content_type)
+    
+    async def _create_visualization_with_gemma(self, document: str, content_type: str) -> Dict[str, Any]:
+        """Original visualization method using Gemma directly"""
         # Determine visualization type
         viz_type = "MIND_MAP" if content_type == "document" else "DEPENDENCY_GRAPH"
         
@@ -128,7 +230,7 @@ class VisualizerAgent:
                     logger.warning("Could not parse JSON from Gemma response, using fallback")
                     return self._create_fallback_graph(document, viz_type)
             
-            return {
+            result = {
                 "type": viz_type,
                 "title": f"{viz_type} Visualization",
                 "nodes": graph_data.get("nodes", []),
@@ -136,10 +238,104 @@ class VisualizerAgent:
                 "generated_by": "gemma-gpu-service",
             }
             
+            # Notify completion via A2A Protocol
+            await self._notify_visualization_complete(result)
+            
+            return result
+            
         except Exception as e:
             logger.error(f"Error in Visualizer Agent: {e}")
             # Fallback to basic structure if Gemma service unavailable
-            return self._create_fallback_graph(document, viz_type)
+            fallback_result = self._create_fallback_graph(document, viz_type)
+            await self._notify_visualization_complete(fallback_result)
+            return fallback_result
+    
+    
+    async def _enhance_visualization(self, graph_data: Dict[str, Any], 
+                                   document: str, content_type: str) -> Dict[str, Any]:
+        """Enhance visualization using Gemma GPU service and summary context"""
+        try:
+            # Use summary data if available
+            summary_context = ""
+            if self._summary_data:
+                summary = self._summary_data.get("summary", "")
+                summary_context = f"\n\nSummary context: {summary[:500]}"
+            
+            enhancement_prompt = f"""
+Enhance this visualization graph with better node groupings and edge labels.
+
+Original graph has {len(graph_data.get('nodes', []))} nodes and {len(graph_data.get('edges', []))} edges.
+
+Content type: {content_type}
+{summary_context}
+
+Current nodes: {[node.get('label', 'Unknown') for node in graph_data.get('nodes', [])[:10]]}
+
+Suggest improvements to make the visualization clearer and more informative.
+Return enhanced node groups and edge labels.
+"""
+            
+            from services.gemma_service import generate_with_gemma
+            
+            enhancement_text = await generate_with_gemma(
+                prompt=enhancement_prompt,
+                max_tokens=400,
+                temperature=0.5
+            )
+            
+            # Apply enhancements (simplified implementation)
+            enhanced_graph = graph_data.copy()
+            
+            # Add metadata from enhancement
+            enhanced_graph["enhancement_applied"] = True
+            enhanced_graph["enhancement_context"] = enhancement_text[:200]
+            
+            return enhanced_graph
+            
+        except Exception as e:
+            self.logger.warning(f"Could not enhance visualization: {e}")
+            return graph_data
+    
+    async def _notify_visualization_complete(self, result: Dict[str, Any]):
+        """Notify that visualization is complete via A2A Protocol"""
+        message = A2AMessage(
+            message_id=f"visualizer_complete_{int(time.time())}",
+            from_agent=self.name,
+            to_agent="*",
+            message_type="visualization_complete",
+            data={
+                "visualization_type": result.get("type"),
+                "node_count": len(result.get("nodes", [])),
+                "edge_count": len(result.get("edges", [])),
+                "generated_by": result.get("generated_by"),
+                "ready_for_display": True
+            },
+            priority=2
+        )
+        await self.a2a.send_message(message)
+        
+        self.logger.info("📤 Sent visualization completion notification via A2A Protocol")
+    
+    async def _handle_a2a_message(self, message: A2AMessage):
+        """Handle incoming A2A messages specific to Visualizer"""
+        await super()._handle_a2a_message(message)
+        
+        if message.message_type == "context_update":
+            if message.from_agent == "linker":
+                self.logger.info("📥 Received linked data from Linker Agent")
+                self._linked_data = message.data
+                
+            elif message.from_agent == "summarizer":
+                self.logger.info("📥 Received summary data from Summarizer Agent")
+                self._summary_data = message.data
+        
+        elif message.message_type == "task_delegation":
+            task = message.data.get("task")
+            if task == "create_visualization":
+                self.logger.info(f"📥 Received visualization task from {message.from_agent}")
+                depends_on = message.data.get("depends_on", [])
+                if depends_on:
+                    self.logger.info(f"📋 Visualization depends on: {depends_on}")
     
     def _create_fallback_graph(self, document: str, viz_type: str) -> Dict[str, Any]:
         """
@@ -152,7 +348,7 @@ class VisualizerAgent:
         - edges: array of graph edges
         - generated_by: service identifier
         """
-        return {
+        result = {
             "type": viz_type,
             "title": f"{viz_type} Visualization",
             "nodes": [
@@ -160,5 +356,9 @@ class VisualizerAgent:
             ],
             "edges": [],
             "generated_by": "fallback",
+            "timestamp": time.time()
         }
+        
+        # Create a simple fallback structure
+        return result
 

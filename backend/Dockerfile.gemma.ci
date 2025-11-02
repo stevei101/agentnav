@@ -1,0 +1,35 @@
+# CI-friendly Gemma GPU Service Dockerfile (lightweight)
+# This Dockerfile is intended for CI/PR validation only. It uses a small base image
+# and installs a minimal set of dependencies so the build completes quickly on GitHub Actions.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Keep output visible in CI logs
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+ENV MODEL_NAME=google/gemma-7b-it
+
+# Install minimal system deps required for typical Python packages and builds
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install lightweight Python dependencies for CI validation
+COPY requirements-gemma.ci.txt .
+RUN pip install --no-cache-dir -r requirements-gemma.ci.txt
+
+# Copy Gemma service code into image
+COPY gemma_service/ ./gemma_service/
+
+EXPOSE 8080
+
+# Health check (lightweight)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/healthz || exit 1
+
+# Run the FastAPI app using Uvicorn (sufficient for CI smoke tests)
+CMD ["uvicorn", "gemma_service.main:app", "--host", "0.0.0.0", "--port", "8080"]
