@@ -15,20 +15,24 @@ Resolves all Terraform validation errors in the Infrastructure as Code configura
 ### Modified Files
 
 #### `terraform/data.tf`
+
 - ❌ **Removed** duplicate `data "google_project" "project"` declaration
 - ✅ Already defined in `cloud_build.tf` - prevents conflicting resource declarations
 - Added clarifying comment about existing declaration
 
 #### `terraform/iam.tf`
+
 - ❌ **Removed** unsupported `location = "global"` attribute
 - ✅ `google_iam_workload_identity_pool` does not support location in Google provider v5
 
 #### `terraform/outputs.tf`
+
 - ❌ **Fixed** `firestore_database_id` output attribute reference
 - ✅ Changed from `google_firestore_database.main.database_id` to `google_firestore_database.main.name`
 - Correctly references the database name attribute
 
 #### `terraform/secret_manager.tf`
+
 - ❌ **Updated** `replication` block syntax for all 3 secret resources:
   - `gemini_api_key`
   - `huggingface_token`
@@ -51,6 +55,7 @@ The Terraform configuration used syntax compatible with older Google provider ve
 ## ✅ Validation Results
 
 ### Before
+
 ```
 Error: Unsupported argument
   on secret_manager.tf line 11, in resource "google_secret_manager_secret" "gemini_api_key":
@@ -59,6 +64,7 @@ An argument named "automatic" is not expected here.
 ```
 
 ### After
+
 ```bash
 $ terraform validate
 Success! The configuration is valid.
@@ -69,6 +75,7 @@ Success! The configuration is valid.
 ## 🧪 Testing
 
 ### Validation
+
 ```bash
 cd terraform
 terraform init  # Already completed
@@ -76,6 +83,7 @@ terraform validate  # ✅ Passes
 ```
 
 ### Terraform Plan
+
 ```bash
 terraform plan  # Ready to apply
 ```

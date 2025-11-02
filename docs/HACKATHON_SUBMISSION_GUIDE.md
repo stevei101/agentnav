@@ -1,4 +1,5 @@
 # Cloud Run Hackathon Submission Guide
+
 ## For Agentic Navigator - AI Agents Category
 
 This guide helps you prepare your project for submission to the Cloud Run Hackathon.
@@ -10,6 +11,7 @@ This guide helps you prepare your project for submission to the Cloud Run Hackat
 Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
 
 ? **Requirements Met:**
+
 - ? Built with Google's Agent Development Kit (ADK)
 - ? Multi-agent architecture (Orchestrator, Summarizer, Linker, Visualizer)
 - ? Agents communicate via A2A Protocol
@@ -24,6 +26,7 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
 ### Required Items
 
 #### 1. Text Description
+
 - [ ] **Project Summary** (200-300 words)
   - What problem does it solve?
   - How does it work?
@@ -43,7 +46,9 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
   - FastAPI + Python (Backend)
 
 #### 2. Demonstration Video (3 minutes max)
+
 **Script Outline:**
+
 - [ ] **0:00-0:30** - Problem statement & solution overview
 - [ ] **0:30-1:30** - Live demo showing:
   - Document upload/input
@@ -58,6 +63,7 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
 - [ ] **2:30-3:00** - Wrap-up & impact
 
 **Recording Tips:**
+
 - Record in 1080p or higher
 - Show browser console for agent activity
 - Include Cloud Console screenshots
@@ -65,6 +71,7 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
 - Add captions/subtitles
 
 #### 3. Public Code Repository
+
 - [ ] **GitHub Repository** (public)
   - [ ] Clean, well-organized code
   - [ ] README.md with setup instructions
@@ -74,6 +81,7 @@ Your project **Agentic Navigator** fits perfectly in the **AI Agents Category**:
   - [ ] .gitignore properly configured
 
 **Repository Structure:**
+
 ```
 agentnav/
 ??? README.md (comprehensive)
@@ -96,13 +104,16 @@ agentnav/
 ```
 
 #### 4. Architecture Diagram
+
 **Create using:**
+
 - [Draw.io](https://app.diagrams.net/) (free)
 - [Lucidchart](https://www.lucidchart.com/)
 - [Miro](https://miro.com/)
 - [Cloud Architecture Icons](https://cloud.google.com/icons)
 
 **Must Include:**
+
 - [ ] User accessing frontend (React app)
 - [ ] Frontend Cloud Run service
 - [ ] Backend Cloud Run service (FastAPI)
@@ -116,6 +127,7 @@ agentnav/
 **Save as:** `docs/architecture-diagram.png` or `.svg`
 
 #### 5. Try it Out Link
+
 - [ ] **Deployed Frontend URL:** `https://agentnav-frontend-PROJECT_ID.run.app`
 - [ ] **Public API URL:** `https://agentnav-backend-PROJECT_ID.run.app`
 - [ ] **API Docs:** `https://agentnav-backend-PROJECT_ID.run.app/docs`
@@ -129,11 +141,13 @@ agentnav/
 ### Optional Google Cloud Contributions (+0.4 points max)
 
 #### ? Use Google AI Models (+0.2 points)
+
 - ? **Gemini 2.5 Pro** - Used for agent reasoning
 - ? **Gemini API** - Used for content analysis
 - ?? **Document:** Mention in submission text
 
 #### ? Multiple Cloud Run Services (+0.2 points)
+
 - ? **Frontend Service** - React app on Cloud Run
 - ? **Backend Service** - FastAPI + ADK agents on Cloud Run
 - ?? **Document:** Show both services in architecture diagram
@@ -141,17 +155,20 @@ agentnav/
 ### Optional Developer Contributions (+0.4 points max each)
 
 #### Blog Post/Video (+0.4 points)
+
 - [ ] Publish blog post about building Agentic Navigator
 - [ ] Include: "Created for Cloud Run Hackathon"
 - [ ] Platforms: Medium, Dev.to, YouTube, etc.
 - [ ] Link in submission
 
 **Suggested Topics:**
+
 - "Building Multi-Agent Systems with Google ADK on Cloud Run"
 - "How I Built an AI Agent Collaboration Platform"
 - "Deploying Agentic AI Apps to Cloud Run"
 
 #### Social Media Post (+0.4 points)
+
 - [ ] Post on X/Twitter, LinkedIn, Instagram, or Facebook
 - [ ] Include hashtag: `#CloudRunHackathon`
 - [ ] Tag: `@googlecloud`, `@GoogleAI`
@@ -165,8 +182,9 @@ agentnav/
 ### Technical Implementation (40%)
 
 **Focus Areas:**
+
 - ? **Clean Code:** Well-structured, commented, organized
-- ? **Cloud Run Best Practices:** 
+- ? **Cloud Run Best Practices:**
   - Uses PORT environment variable
   - Implements /healthz endpoint
   - Proper error handling
@@ -179,6 +197,7 @@ agentnav/
 - ? **User-Friendly:** Intuitive UI, clear feedback
 
 **Documentation:**
+
 - [ ] Code comments explaining complex logic
 - [ ] README with clear setup instructions
 - [ ] API documentation (FastAPI auto-generated)
@@ -187,17 +206,20 @@ agentnav/
 ### Demo & Presentation (40%)
 
 **Problem Statement:**
+
 - [ ] Clearly define: "Information overload - need intelligent analysis"
 - [ ] Explain: "Multi-agent collaboration mimics human teams"
 - [ ] Show: Real-world use cases (research papers, codebases, docs)
 
 **Solution Presentation:**
+
 - [ ] Show complete workflow in demo video
 - [ ] Explain Cloud Run deployment process
 - [ ] Highlight ADK/A2A usage
 - [ ] Show Firestore integration
 
 **Documentation:**
+
 - [ ] Architecture diagram
 - [ ] Setup guide
 - [ ] API documentation
@@ -206,12 +228,14 @@ agentnav/
 ### Innovation & Creativity (20%)
 
 **Novel Aspects:**
+
 - ? **Multi-Agent Collaboration:** Unique approach to document analysis
 - ? **A2A Protocol:** Real-time agent communication
 - ? **Knowledge Graph Visualization:** Interactive relationship mapping
 - ? **Session Persistence:** Context-aware analysis
 
 **Problem Significance:**
+
 - ?? **Document:** Information overload affects millions
 - ?? **Document:** Current solutions are single-agent or manual
 - ?? **Document:** Your solution scales to any document size
@@ -221,6 +245,7 @@ agentnav/
 ## ?? Pre-Submission Checklist
 
 ### Code Quality
+
 - [ ] All code is commented
 - [ ] No hardcoded secrets (use Secret Manager)
 - [ ] Environment variables documented
@@ -229,6 +254,7 @@ agentnav/
 - [ ] Tests written (if applicable)
 
 ### Deployment
+
 - [ ] Frontend deployed to Cloud Run
 - [ ] Backend deployed to Cloud Run
 - [ ] Both services accessible publicly
@@ -237,6 +263,7 @@ agentnav/
 - [ ] CORS configured correctly
 
 ### Documentation
+
 - [ ] README.md complete
 - [ ] Architecture diagram created
 - [ ] Setup guide written
@@ -244,6 +271,7 @@ agentnav/
 - [ ] Code comments added
 
 ### Submission Materials
+
 - [ ] Text description written
 - [ ] Demo video recorded (3 min max)
 - [ ] Architecture diagram saved
@@ -262,15 +290,17 @@ agentnav/
 # Agentic Navigator - Multi-Agent Knowledge Explorer
 
 ## Problem
-In today's information-saturated world, professionals struggle to analyze 
-complex documents, research papers, and codebases efficiently. Traditional 
-single-agent AI solutions lack the collaborative intelligence needed to 
+
+In today's information-saturated world, professionals struggle to analyze
+complex documents, research papers, and codebases efficiently. Traditional
+single-agent AI solutions lack the collaborative intelligence needed to
 break down and understand intricate relationships within content.
 
 ## Solution
-Agentic Navigator is a multi-agent AI system that simulates a team of 
-specialized agents working together to analyze and visualize complex 
-information. Using Google's Agent Development Kit (ADK) and the Agent2Agent 
+
+Agentic Navigator is a multi-agent AI system that simulates a team of
+specialized agents working together to analyze and visualize complex
+information. Using Google's Agent Development Kit (ADK) and the Agent2Agent
 (A2A) Protocol, our system coordinates four specialized agents:
 
 - **Orchestrator Agent**: Coordinates workflow and delegates tasks
@@ -279,6 +309,7 @@ information. Using Google's Agent Development Kit (ADK) and the Agent2Agent
 - **Visualizer Agent**: Creates interactive knowledge graphs
 
 ## Technology Stack
+
 - **Cloud Run**: Frontend (React) and Backend (FastAPI) services
 - **Google ADK**: Agent Development Kit for orchestration
 - **A2A Protocol**: Agent-to-Agent communication
@@ -288,6 +319,7 @@ information. Using Google's Agent Development Kit (ADK) and the Agent2Agent
 - **Terraform**: Infrastructure as code
 
 ## Features
+
 - Real-time multi-agent collaboration
 - Interactive knowledge graph visualization
 - Session persistence with Firestore
@@ -295,6 +327,7 @@ information. Using Google's Agent Development Kit (ADK) and the Agent2Agent
 - Cloud Run serverless deployment
 
 ## Deployment
+
 - Frontend: https://agentnav-frontend-PROJECT_ID.run.app
 - Backend API: https://agentnav-backend-PROJECT_ID.run.app
 - API Docs: https://agentnav-backend-PROJECT_ID.run.app/docs
@@ -305,27 +338,31 @@ information. Using Google's Agent Development Kit (ADK) and the Agent2Agent
 ## ?? Demo Video Script Template
 
 ### Introduction (0:00-0:30)
-"Hi, I'm [Your Name], and this is Agentic Navigator - a multi-agent AI 
-system built for the Cloud Run Hackathon. Let me show you how it solves 
+
+"Hi, I'm [Your Name], and this is Agentic Navigator - a multi-agent AI
+system built for the Cloud Run Hackathon. Let me show you how it solves
 the problem of information overload..."
 
 ### Live Demo (0:30-1:30)
-"Here's how it works: I paste a complex research paper [show input]. 
-Watch as our four AI agents collaborate in real-time [show agent status]. 
-The Orchestrator delegates tasks, the Summarizer creates a summary, the 
-Linker finds relationships, and the Visualizer creates this interactive 
-graph [show visualization]. All deployed on Cloud Run with zero server 
+
+"Here's how it works: I paste a complex research paper [show input].
+Watch as our four AI agents collaborate in real-time [show agent status].
+The Orchestrator delegates tasks, the Summarizer creates a summary, the
+Linker finds relationships, and the Visualizer creates this interactive
+graph [show visualization]. All deployed on Cloud Run with zero server
 management!"
 
 ### Technical Deep Dive (1:30-2:30)
-"Let me show you the architecture [show diagram]. We have a React frontend 
-and FastAPI backend, both on Cloud Run. The agents use Google's ADK and 
-communicate via A2A Protocol. Data persists in Firestore [show Firestore 
+
+"Let me show you the architecture [show diagram]. We have a React frontend
+and FastAPI backend, both on Cloud Run. The agents use Google's ADK and
+communicate via A2A Protocol. Data persists in Firestore [show Firestore
 console]. Everything scales automatically!"
 
 ### Wrap-up (2:30-3:00)
-"Agentic Navigator demonstrates how multi-agent AI can transform how we 
-understand complex information. Built entirely on Cloud Run, it's scalable, 
+
+"Agentic Navigator demonstrates how multi-agent AI can transform how we
+understand complex information. Built entirely on Cloud Run, it's scalable,
 serverless, and production-ready. Thank you!"
 
 ---
@@ -354,5 +391,6 @@ serverless, and production-ready. Thank you!"
 **Good luck with your submission! ??**
 
 For questions, refer to:
+
 - Full Rules: https://run.devpost.com/rules
 - Resources: https://run.devpost.com/resources

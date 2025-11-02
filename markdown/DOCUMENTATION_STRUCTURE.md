@@ -3,9 +3,11 @@
 ## Directory Purpose
 
 ### `docs/` - Published Documentation
+
 **Purpose:** Public-facing documentation for developers, reviewers, and hackathon judges.
 
 **Contents:**
+
 - Developer guides and tutorials
 - Setup instructions
 - Architecture documentation
@@ -16,6 +18,7 @@
 **Audience:** External developers, reviewers, judges, open source contributors
 
 **Examples:**
+
 - `GCP_SETUP_GUIDE.md` - How to set up Google Cloud
 - `local-development.md` - Developer setup guide
 - `ARCHITECTURE_DIAGRAM_GUIDE.md` - How to create diagrams
@@ -24,9 +27,11 @@
 ---
 
 ### `markdown/` - Internal Project Notes
+
 **Purpose:** Internal working documents, thoughts, strategy notes, project planning.
 
 **Contents:**
+
 - Brainstorming notes
 - Strategy documents
 - Meeting notes
@@ -38,6 +43,7 @@
 **Audience:** Team members, project maintainers
 
 **Examples:**
+
 - `cursor-agent-youtube-thoughts.md` - Hackathon video analysis
 - `aistudio_hackathon_insights.md` - Research notes
 - `ADK_QUICKSTART_NOTES.md` - Learning notes
@@ -48,6 +54,7 @@
 ## File Organization Rules
 
 ### Should be in `docs/`:
+
 - ? Guides that help others understand/use the project
 - ? Setup instructions
 - ? Architecture documentation
@@ -56,6 +63,7 @@
 - ? User-facing documentation
 
 ### Should be in `markdown/`:
+
 - ? Internal notes and thoughts
 - ? Strategy documents
 - ? Research notes
@@ -69,6 +77,7 @@
 ## Current Structure
 
 ### `docs/` (Published)
+
 - ARCHITECTURE_DIAGRAM_GUIDE.md ?
 - DUAL_CATEGORY_STRATEGY.md ?
 - GCP_SETUP_GUIDE.md ?
@@ -79,6 +88,7 @@
 - local-development.md ?
 
 ### `markdown/` (Internal)
+
 - ADK_QUICKSTART_NOTES.md ?
 - aistudio_hackathon_insights.md ?
 - CLOUD_RUN_UPDATES_SUMMARY.md ?
@@ -94,14 +104,17 @@
 ### When Adding New Files:
 
 **Ask:** "Would a developer/reviewer need this to understand or use the project?"
+
 - **Yes** ? `docs/`
 - **No** ? `markdown/`
 
 **Ask:** "Is this a polished, final document for external consumption?"
+
 - **Yes** ? `docs/`
 - **No** ? `markdown/`
 
 **Ask:** "Is this internal brainstorming or working notes?"
+
 - **Yes** ? `markdown/`
 - **No** ? `docs/`
 

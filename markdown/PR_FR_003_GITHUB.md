@@ -13,6 +13,7 @@ Implements externalized prompt management system for AI Studio compliance. All a
 ## 📝 What's Changed
 
 ### Added
+
 - ✨ `backend/services/firestore_client.py` - Firestore client service with emulator support
 - ✨ `backend/services/prompt_loader.py` - Prompt loading & caching service (5-minute TTL)
 - ✨ `backend/scripts/seed_prompts.py` - Idempotent prompt seeding script
@@ -20,6 +21,7 @@ Implements externalized prompt management system for AI Studio compliance. All a
 - 📋 `markdown/FR_003_IMPLEMENTATION_PLAN.md` - Implementation plan & design decisions
 
 ### Modified
+
 - 🔄 `backend/agents/visualizer_agent.py` - Uses externalized prompts with production-safe fallback
 - 📖 `docs/SYSTEM_INSTRUCTION.md` - Added `agent_prompts/` collection to Firestore schema
 
@@ -28,21 +30,26 @@ Implements externalized prompt management system for AI Studio compliance. All a
 ## 🎯 Key Features
 
 ### Live Prompt Iteration
+
 Prompts can be updated via Firestore console without code changes or redeploys:
+
 - Changes reflected within 5 minutes (cache TTL)
 - No downtime required
 - Version tracking included
 
 ### Production Safety
+
 - ✅ Development: Fallback to hard-coded prompts allowed
 - ❌ Production/Staging: Firestore prompt loading **enforced** (RuntimeError if unavailable)
 
 ### High Performance
+
 - ⚡ In-memory caching with 5-minute TTL
 - 📉 Reduces Firestore reads by ~99%
 - 🚀 Cache hit: < 1ms, Miss: < 500ms
 
 ### AI Studio Compliance
+
 Externalized prompts enable sharing via AI Studio Share App link for hackathon submission.
 
 ---
@@ -50,14 +57,16 @@ Externalized prompts enable sharing via AI Studio Share App link for hackathon s
 ## 🧪 Testing
 
 ### Test Coverage
+
 ✅ All imports working correctly  
 ✅ Firestore emulator integration tested  
 ✅ Cache behavior verified  
 ✅ Production safety enforced  
 ✅ Fallback mechanisms working  
-✅ Prompt formatting validated  
+✅ Prompt formatting validated
 
 ### Manual Testing
+
 ```bash
 # Run with Firestore emulator
 export FIRESTORE_EMULATOR_HOST="localhost:8081"
@@ -80,6 +89,7 @@ python test_prompt_loading.py  # Fails with RuntimeError
 ### New Collection: `agent_prompts/`
 
 **Document Structure:**
+
 ```json
 {
   "prompt_text": "Generate a {viz_type} visualization...",
@@ -94,6 +104,7 @@ python test_prompt_loading.py  # Fails with RuntimeError
 ```
 
 **Document IDs:**
+
 - `visualizer_graph_generation` ✅
 - `orchestrator_system_instruction` (placeholder)
 - `summarizer_system_instruction` (placeholder)
@@ -104,6 +115,7 @@ python test_prompt_loading.py  # Fails with RuntimeError
 ## 🚀 Local Development
 
 ### Setup
+
 ```bash
 # Start services (includes Firestore emulator)
 make up
@@ -117,6 +129,7 @@ curl http://localhost:8080/api/visualize
 ```
 
 ### Updating Prompts
+
 1. Edit in Firestore console
 2. Or re-run seed script
 3. Changes appear within 5 minutes
@@ -145,7 +158,7 @@ Based on reviewer feedback:
 ✅ **Firestore Client:** Emulator environment variable handling documented  
 ✅ **Prompt Template:** Delegates `.format()` to agent (keeps loader simple)  
 ✅ **Seeding Script:** Idempotent with existence checking  
-✅ **Production Safety:** Fallback disabled in prod/staging via RuntimeError  
+✅ **Production Safety:** Fallback disabled in prod/staging via RuntimeError
 
 ---
 
@@ -176,4 +189,3 @@ Based on reviewer feedback:
 ---
 
 **Ready for review! ✅**
-

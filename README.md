@@ -1,4 +1,3 @@
-
 # Agentic Navigator
 
 **A multi-agent knowledge explorer for complex documents and codebases.**
@@ -16,49 +15,54 @@ The core idea is to move beyond monolithic AI responses and leverage a cooperati
 
 The system consists of the following agents:
 
--   **Orchestrator Agent**: The team lead. It receives the user's input, determines the content type (natural language document or codebase), and delegates tasks to the other agents.
--   **Summarizer Agent**: Responsible for reading the entire content and generating a concise, comprehensive summary.
--   **Visualizer Agent (with Linker capabilities)**: This agent identifies key entities (concepts, functions, classes) and the relationships between them. It then structures this information into a graph format suitable for visualization.
+- **Orchestrator Agent**: The team lead. It receives the user's input, determines the content type (natural language document or codebase), and delegates tasks to the other agents.
+- **Summarizer Agent**: Responsible for reading the entire content and generating a concise, comprehensive summary.
+- **Visualizer Agent (with Linker capabilities)**: This agent identifies key entities (concepts, functions, classes) and the relationships between them. It then structures this information into a graph format suitable for visualization.
 
 ## Features
 
--   **Multi-Agent System**: Utilizes a prompt-based simulation of multiple AI agents collaborating on a single task.
--   **Content-Aware Analysis**: Intelligently distinguishes between documents and code to provide the most relevant type of analysis.
--   **Interactive Visualizations**:
-    -   Generates **Mind Maps** for documents to show relationships between key concepts.
-    -   Generates **Dependency Graphs** for codebases to visualize function calls, imports, and class interactions.
--   **Dynamic UI**: The web dashboard allows users to pan, zoom, and hover over the graph to explore connections in real-time.
--   **Real-time Status Updates**: The UI shows the status of each agent as it works, providing transparency into the analysis process.
+- **Multi-Agent System**: Utilizes a prompt-based simulation of multiple AI agents collaborating on a single task.
+- **Content-Aware Analysis**: Intelligently distinguishes between documents and code to provide the most relevant type of analysis.
+- **Interactive Visualizations**:
+  - Generates **Mind Maps** for documents to show relationships between key concepts.
+  - Generates **Dependency Graphs** for codebases to visualize function calls, imports, and class interactions.
+- **Dynamic UI**: The web dashboard allows users to pan, zoom, and hover over the graph to explore connections in real-time.
+- **Real-time Status Updates**: The UI shows the status of each agent as it works, providing transparency into the analysis process.
 
 ## ?? Built With
 
 **Languages & Frameworks**
-- ?? **Python** ? core backend logic, FastAPI orchestrator  
-- ?? **React + TypeScript** ? responsive web dashboard for visualization  
+
+- ?? **Python** ? core backend logic, FastAPI orchestrator
+- ?? **React + TypeScript** ? responsive web dashboard for visualization
 - ?? **Tailwind CSS** ? modern UI styling (via CDN)
 
 **AI & ML**
-- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation  
-- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization  
+
+- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation
+- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization
 - ?? **Recharts** ? interactive data visualization library
 
 **Cloud Infrastructure**
-- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard  
-- ??? **Google Firestore** ? session memory and persistent agent state  
-- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1  
-- ?? **Google Artifact Registry (GAR)** ? container image storage  
+
+- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard
+- ??? **Google Firestore** ? session memory and persistent agent state
+- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1
+- ?? **Google Artifact Registry (GAR)** ? container image storage
 - ?? **Google Secret Manager** ? secure credential storage
 
 **Developer Tools & DevOps**
-- ?? **Podman** ? containerization for reproducible deployments  
-- ?? **Vite** ? fast frontend build tool and dev server  
-- ?? **uv** ? fast Python package management  
-- ?? **GitHub Actions** ? automated testing and Cloud Run deployment  
-- ??? **Terraform Cloud** ? infrastructure as code provisioning  
+
+- ?? **Podman** ? containerization for reproducible deployments
+- ?? **Vite** ? fast frontend build tool and dev server
+- ?? **uv** ? fast Python package management
+- ?? **GitHub Actions** ? automated testing and Cloud Run deployment
+- ??? **Terraform Cloud** ? infrastructure as code provisioning
 - ?? **Workload Identity Federation (WIF)** ? secure GitHub Actions authentication
 
 **Other Utilities**
-- ?? **Markdown** ? documentation and knowledge representation  
+
+- ?? **Markdown** ? documentation and knowledge representation
 - ?? **OpenAPI / FastAPI Docs** ? API endpoints and interface documentation
 
 ### Hackathon Requirements Met
@@ -132,6 +136,7 @@ make help
 ### Access Points
 
 Once services are running:
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080
 - **API Documentation**: http://localhost:8080/docs
@@ -168,6 +173,7 @@ For detailed local development instructions, troubleshooting, and advanced usage
 ## Hackathon Documentation
 
 ### ?? Setup & Submission Guides
+
 - **[Dual Category Strategy](docs/DUAL_CATEGORY_STRATEGY.md)** - Targeting both AI Agents + GPU categories
 - **[GPU Setup Guide](docs/GPU_SETUP_GUIDE.md)** - Adding Gemma model with NVIDIA L4 GPU
 - **[Quick Reference](docs/HACKATHON_QUICK_REFERENCE.md)** - Quick checklist and key points
@@ -177,6 +183,7 @@ For detailed local development instructions, troubleshooting, and advanced usage
 - **[Setup Checklist](docs/HACKATHON_SETUP_CHECKLIST.md)** - Pre-hackathon setup checklist
 
 ### ?? Submission Checklist
+
 - [ ] Text description written
 - [ ] Demo video recorded (3 min max)
 - [ ] Architecture diagram created
@@ -287,33 +294,41 @@ agentnav/
 
 ## Contributing
 
-1. Clone the repository
-2. Set up your local environment: `make setup`
-3. Create a feature branch
-4. Make your changes
-5. Test locally: `make test`
-6. Submit a pull request
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- How to set up your development environment
+- Our development workflow
+- Code style guidelines
+- How to submit pull requests
+
+Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
+For security vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ## Troubleshooting
 
 ### Common Issues
 
 **Podman machine not running (macOS)**
+
 ```bash
 podman machine start
 ```
 
 **Port already in use**
+
 - Edit `docker-compose.yml` to change port mappings, or
 - Stop the service using the port: `lsof -ti:3000 | xargs kill`
 
 **Container build fails**
+
 ```bash
 make clean
 make build
 ```
 
 **Environment variables not loading**
+
 - Ensure `.env` file exists: `cp .env.example .env`
 - Add your `GEMINI_API_KEY` to `.env`
 - Restart services: `make restart`
@@ -322,11 +337,14 @@ For more troubleshooting, see [docs/local-development.md](docs/local-development
 
 ## License
 
-[Add your license here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+By contributing to this project, you agree that your contributions will be licensed under the Apache License 2.0.
 
 ## Acknowledgments
 
 Built for the [Google Cloud Run Hackathon](https://run.devpost.com/) using:
+
 - Google Cloud Run (Serverless)
 - Google Gemini API (for agent reasoning)
 - Gemma Model on NVIDIA L4 GPU (for GPU acceleration)
