@@ -13,6 +13,7 @@ Implements a complete Podman-based local development environment that enables de
 ## ?? Problem Statement
 
 Previously, developers had to:
+
 - Spend 2-4 hours manually configuring their local environment
 - Deal with "works on my machine" issues due to inconsistent setups
 - Manually install bun, uv, Python, Node.js, and configure all dependencies
@@ -65,6 +66,7 @@ This PR introduces a **Podman-based containerized development environment** that
 ## ?? Files Changed
 
 ### New Files
+
 ```
 frontend.Dockerfile.dev              # Frontend development container
 backend/Dockerfile.dev               # Backend development container
@@ -80,6 +82,7 @@ docs/local-development.md            # Developer guide
 ```
 
 ### Modified Files
+
 ```
 README.md                            # Added local development section
 ```
@@ -91,6 +94,7 @@ README.md                            # Added local development section
 ### 1. Makefile Commands (Podman-Native)
 
 **Quick Start:**
+
 ```bash
 make setup          # One-command setup (handles everything!)
 make up             # Start all services
@@ -99,6 +103,7 @@ make logs           # Follow all logs
 ```
 
 **Service Management:**
+
 ```bash
 make restart        # Restart all services
 make ps             # Show running containers
@@ -107,6 +112,7 @@ make clean          # Remove everything
 ```
 
 **Development:**
+
 ```bash
 make test           # Run all tests
 make test-frontend  # Run frontend tests
@@ -116,6 +122,7 @@ make validate       # Validate environment
 ```
 
 **Logs:**
+
 ```bash
 make logs-frontend   # Frontend logs only
 make logs-backend    # Backend logs only
@@ -125,11 +132,13 @@ make logs-firestore  # Firestore emulator logs
 ### 2. Docker Compose Configuration
 
 **Services:**
+
 - `agentnav-frontend` - React dev server (port 3000, hot-reload)
 - `agentnav-backend` - FastAPI dev server (port 8080, auto-reload)
 - `firestore-emulator` - Firestore emulator (port 8081 API, port 9090:9150 UI mapping - UI may not be available)
 
 **Features:**
+
 - Volume mounts for live code reloading
 - Health checks for service dependencies
 - Environment variable management via `.env`
@@ -150,6 +159,7 @@ make logs-firestore  # Firestore emulator logs
 ### Manual Testing Steps
 
 1. **Fresh Setup:**
+
    ```bash
    git clone <repo-url>
    cd agentnav
@@ -157,6 +167,7 @@ make logs-firestore  # Firestore emulator logs
    ```
 
 2. **Verify Services:**
+
    ```bash
    make health
    # Should show all services healthy
@@ -192,6 +203,7 @@ make logs-firestore  # Firestore emulator logs
 ## ?? Screenshots / Examples
 
 ### Quick Start Demo
+
 ```bash
 $ make setup
 ?? Setting up Agentic Navigator local development environment...
@@ -211,6 +223,7 @@ $ make setup
 ```
 
 ### Health Check Output
+
 ```bash
 $ make health
 ?? Checking service health...
@@ -293,12 +306,14 @@ Firestore Emulator:
 ## ?? Benefits
 
 ### For Developers
+
 - ? **10x faster setup** - From 2-4 hours to < 10 minutes
 - ?? **Consistent environment** - No more "works on my machine"
 - ?? **Hot-reload** - See changes instantly
 - ?? **Better documentation** - Clear setup guides
 
 ### For Project
+
 - ? **Cloud Run aligned** - Local matches production
 - ? **Production-ready** - Proper error handling and health checks
 - ? **Maintainable** - Well-documented and organized
@@ -319,6 +334,7 @@ Firestore Emulator:
 ## ?? Reviewers
 
 Please review:
+
 - [ ] Dockerfiles for best practices
 - [ ] Makefile commands for correctness
 - [ ] Docker Compose configuration

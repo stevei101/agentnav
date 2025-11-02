@@ -8,7 +8,7 @@ services:
     environment:
       - ENVIRONMENT=test
       - FIRESTORE_PROJECT_ID=agentnav-test
-    command: ["pytest", "-v", "--tb=short"]
+    command: ['pytest', '-v', '--tb=short']
 
   firestore-emulator:
     extends:
@@ -16,4 +16,3 @@ services:
       service: firestore-emulator
     environment:
       - FIRESTORE_PROJECT_ID=agentnav-test
-

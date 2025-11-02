@@ -35,6 +35,7 @@ git checkout -b feature/your-feature-name
 ```
 
 Use descriptive branch names:
+
 - `feature/` for new features
 - `fix/` for bug fixes
 - `docs/` for documentation updates
@@ -76,6 +77,7 @@ Follow these commit message guidelines:
 - Reference issues and pull requests liberally after the first line
 
 Example:
+
 ```
 Add GPU acceleration for Gemma model inference
 
@@ -108,12 +110,14 @@ git push origin feature/your-feature-name
 ### Code Style
 
 **Frontend (TypeScript/React):**
+
 - Use TypeScript for type safety
 - Follow the existing code style
 - Use functional components with hooks
 - Run `bun run lint` and `bun run format` before committing
 
 **Backend (Python):**
+
 - Follow PEP 8 style guide
 - Use type hints
 - Run `black`, `isort`, and `ruff` before committing
@@ -194,6 +198,7 @@ Please report security vulnerabilities to the maintainers privately. See [docs/S
 ## Questions?
 
 If you have questions about contributing, feel free to:
+
 - Open an issue with the `question` label
 - Check existing documentation in the `docs/` directory
 - Review closed issues for similar questions

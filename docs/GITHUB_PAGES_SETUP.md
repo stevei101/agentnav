@@ -46,7 +46,7 @@ name: Deploy Documentation to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
@@ -108,45 +108,65 @@ GitHub Pages can automatically render Markdown files. However, for a custom land
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agentic Navigator Documentation</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-        }
-        h1 { color: #1a202c; }
-        a { color: #3182ce; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .doc-list { list-style: none; padding: 0; }
-        .doc-list li { margin: 1rem 0; }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #1a202c;
+      }
+      a {
+        color: #3182ce;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .doc-list {
+        list-style: none;
+        padding: 0;
+      }
+      .doc-list li {
+        margin: 1rem 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Agentic Navigator Documentation</h1>
     <p>Multi-agent knowledge explorer for complex documents and codebases.</p>
-    
+
     <h2>Quick Links</h2>
     <ul class="doc-list">
-        <li><a href="https://github.com/stevei101/agentnav">GitHub Repository</a></li>
-        <li><a href="local-development.html">Local Development Guide</a></li>
-        <li><a href="GCP_SETUP_GUIDE.html">GCP Setup Guide</a></li>
-        <li><a href="GPU_SETUP_GUIDE.html">GPU Setup Guide</a></li>
-        <li><a href="HACKATHON_SUBMISSION_GUIDE.html">Hackathon Submission Guide</a></li>
+      <li>
+        <a href="https://github.com/stevei101/agentnav">GitHub Repository</a>
+      </li>
+      <li><a href="local-development.html">Local Development Guide</a></li>
+      <li><a href="GCP_SETUP_GUIDE.html">GCP Setup Guide</a></li>
+      <li><a href="GPU_SETUP_GUIDE.html">GPU Setup Guide</a></li>
+      <li>
+        <a href="HACKATHON_SUBMISSION_GUIDE.html">Hackathon Submission Guide</a>
+      </li>
     </ul>
-    
+
     <h2>Architecture</h2>
     <ul class="doc-list">
-        <li><a href="SYSTEM_INSTRUCTION.html">System Architecture</a></li>
-        <li><a href="DUAL_CATEGORY_STRATEGY.html">Multi-Agent Strategy</a></li>
-        <li><a href="ARCHITECTURE_DIAGRAM_GUIDE.html">Architecture Diagram Guide</a></li>
+      <li><a href="SYSTEM_INSTRUCTION.html">System Architecture</a></li>
+      <li><a href="DUAL_CATEGORY_STRATEGY.html">Multi-Agent Strategy</a></li>
+      <li>
+        <a href="ARCHITECTURE_DIAGRAM_GUIDE.html">Architecture Diagram Guide</a>
+      </li>
     </ul>
-</body>
+  </body>
 </html>
 ```
 
@@ -157,6 +177,7 @@ If you want to use a custom domain (e.g., `docs.agentnav.com`):
 1. **Add CNAME File**
 
 Create `docs/CNAME` with your domain:
+
 ```
 docs.agentnav.com
 ```
@@ -200,6 +221,7 @@ markdown: kramdown
 2. **Disable Jekyll (if using plain HTML/Markdown):**
 
 Create `docs/.nojekyll` (empty file):
+
 ```bash
 touch docs/.nojekyll
 ```

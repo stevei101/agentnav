@@ -4,10 +4,10 @@
 
 We release patches for security vulnerabilities. The following versions are currently being supported with security updates:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | :white_check_mark: |
-| < Latest| :x:                |
+| Version  | Supported          |
+| -------- | ------------------ |
+| Latest   | :white_check_mark: |
+| < Latest | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -84,11 +84,13 @@ When contributing to or using Agentic Navigator, please follow these security be
 ### GitHub Secret Scanning
 
 This repository has GitHub Secret Scanning enabled to detect accidentally committed secrets in:
+
 - Current code
 - Pull requests
 - Historical commits
 
 If a secret is detected, it will be flagged and should be:
+
 1. Rotated immediately
 2. Removed from git history if possible
 3. Added to `.gitignore` to prevent future commits
@@ -115,6 +117,7 @@ We follow a **coordinated disclosure** approach:
 5. **Public Disclosure**: After the patch is released, we publish a security advisory
 
 We request that you:
+
 - Give us a reasonable amount of time to fix the issue before public disclosure
 - Do not exploit the vulnerability beyond what is necessary to demonstrate it
 - Do not access, modify, or delete data belonging to others
@@ -123,6 +126,7 @@ We request that you:
 ## Security Updates
 
 Security updates will be:
+
 - Released as soon as possible after a vulnerability is confirmed
 - Announced through GitHub Security Advisories
 - Included in release notes with appropriate credit
@@ -139,6 +143,7 @@ Subscribe to repository notifications to stay informed about security updates.
 ## Questions?
 
 If you have questions about security that don't involve reporting a vulnerability, please:
+
 - Open a GitHub issue with the `security` label
 - Refer to our [Contributing Guide](CONTRIBUTING.md)
 

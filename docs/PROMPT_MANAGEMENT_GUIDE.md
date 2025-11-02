@@ -1,4 +1,5 @@
 # Prompt Management Guide
+
 ## Agentic Navigator - Externalized Prompt Management
 
 **Feature:** FR #003 - Externalized Prompt Management via Firestore & AI Studio Compliance  
@@ -71,6 +72,7 @@ Agentic Navigator uses **externalized prompt management** to store all agent sys
 ```
 
 **Document IDs:**
+
 - `visualizer_graph_generation` - Visualizer Agent prompt
 - `orchestrator_system_instruction` - Orchestrator Agent prompt
 - `summarizer_system_instruction` - Summarizer Agent prompt
@@ -306,6 +308,7 @@ gcloud firestore documents get agent_prompts/visualizer_graph_generation \
 **Symptoms:** Fallback prompt used in development
 
 **Diagnosis:**
+
 ```bash
 # Check logs
 make logs-backend
@@ -315,6 +318,7 @@ make logs-backend
 ```
 
 **Solutions:**
+
 1. Verify Firestore emulator running: `make ps`
 2. Check environment variables: `echo $FIRESTORE_EMULATOR_HOST`
 3. Re-seed prompts: `python scripts/seed_prompts.py`
@@ -324,11 +328,13 @@ make logs-backend
 **Symptoms:** RuntimeError in production/staging
 
 **Error Message:**
+
 ```
 CRITICAL: Failed to load prompt from Firestore in production environment
 ```
 
 **Solutions:**
+
 1. Verify Firestore project ID correct
 2. Check service account permissions
 3. Ensure prompts are seeded in production
@@ -339,6 +345,7 @@ CRITICAL: Failed to load prompt from Firestore in production environment
 **Symptoms:** Prompt changes not reflected after 5 minutes
 
 **Solutions:**
+
 1. Wait longer (TTL may not have expired)
 2. Force reload: `loader.reload_prompt(prompt_id)`
 3. Clear all cache: `loader.clear_cache()`
@@ -369,11 +376,11 @@ formatted = prompt.format(
 class VisualizerAgent:
     def __init__(self):
         self._prompt_template = None
-    
+
     def _get_prompt_template(self):
         if self._prompt_template:
             return self._prompt_template
-        
+
         try:
             from services.prompt_loader import get_prompt
             self._prompt_template = get_prompt("visualizer_graph_generation")
@@ -410,4 +417,3 @@ class VisualizerAgent:
 
 **Last Updated:** November 1, 2025  
 **Maintained By:** Agentic Navigator Team
-
