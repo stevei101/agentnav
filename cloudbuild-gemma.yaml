@@ -22,8 +22,7 @@ steps:
     id: 'push-gemma'
     args:
       - 'push'
-      - '--all-tags'
-      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
     waitFor: ['build-gemma']
 
   # Deploy to Cloud Run with GPU
