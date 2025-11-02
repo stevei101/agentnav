@@ -42,3 +42,43 @@ __pycache__/
 *.pyd
 .Python
 *.so
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python package management
+*.egg-info/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# uv (Python package manager)
+.uv/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# Podman/Docker
+*.pid
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# Build artifacts
+build/
+*.egg
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
