@@ -3,7 +3,7 @@ Linker Agent - ADK Implementation
 Identifies key entities and their relationships for visualization
 """
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from .base_agent import Agent, A2AMessage
 import time
 import re
@@ -20,11 +20,13 @@ class LinkerAgent(Agent):
     - Map relationships between entities
     - Communicate findings via A2A Protocol
     - Prepare data structure for visualization
+    - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
+        self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -69,6 +71,7 @@ Return a structured analysis of entities and their relationships.
         """
         Linker processing: identify entities and relationships
         """
+        start_time = time.time()
         document = context.get("document", "")
         content_type = context.get("content_type", "document")
         shared_context = context.get("shared_context", {})
@@ -76,35 +79,75 @@ Return a structured analysis of entities and their relationships.
         if not document:
             raise ValueError("Document content is required for relationship analysis")
         
+        # Emit processing event
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent_name="Linker",
+                metadata={
+                    "sessionId": context.get("sessionId"),
+                    "contentType": content_type,
+                }
+            )
+        
         self.logger.info(f"🔗 Linker analyzing {content_type} relationships")
         
-        # Extract entities based on content type
-        entities = await self._extract_entities(document, content_type)
-        
-        # Identify relationships between entities
-        relationships = await self._identify_relationships(document, content_type, entities)
-        
-        # Use summary from shared context if available
-        summary_context = shared_context.get("summarizer_result", {})
-        if summary_context:
-            self.logger.info("📋 Using summary context for enhanced relationship analysis")
-            relationships = self._enhance_with_summary_context(relationships, summary_context)
-        
-        # Prepare visualization data structure
-        graph_data = self._prepare_graph_data(entities, relationships, content_type)
-        
-        # Notify other agents via A2A Protocol
-        await self._notify_linking_complete(entities, relationships, graph_data)
-        
-        return {
-            "agent": "linker",
-            "entities": entities,
-            "relationships": relationships,
-            "graph_data": graph_data,
-            "content_type": content_type,
-            "processing_complete": True,
-            "timestamp": time.time()
-        }
+        try:
+            # Extract entities based on content type
+            entities = await self._extract_entities(document, content_type)
+            
+            # Identify relationships between entities
+            relationships = await self._identify_relationships(document, content_type, entities)
+            
+            # Use summary from shared context if available
+            summary_context = shared_context.get("summarizer_result", {})
+            if summary_context:
+                self.logger.info("📋 Using summary context for enhanced relationship analysis")
+                relationships = self._enhance_with_summary_context(relationships, summary_context)
+            
+            # Prepare visualization data structure
+            graph_data = self._prepare_graph_data(entities, relationships, content_type)
+            
+            # Notify other agents via A2A Protocol
+            await self._notify_linking_complete(entities, relationships, graph_data)
+            
+            result = {
+                "agent": "linker",
+                "entities": entities,
+                "relationships": relationships,
+                "graph_data": graph_data,
+                "content_type": content_type,
+                "processing_complete": True,
+                "timestamp": time.time()
+            }
+            
+            # Emit completion event with metrics
+            if self.event_emitter:
+                duration = time.time() - start_time
+                await self.event_emitter.emit_agent_complete(
+                    agent_name="Linker",
+                    payload={
+                        "summary": f"Identified {len(entities)} entities and {len(relationships)} relationships",
+                        "entities": entities,
+                        "relationships": relationships,
+                        "metrics": {
+                            "processingTime": duration,
+                            "entitiesFound": len(entities),
+                            "relationshipsFound": len(relationships),
+                            "tokensProcessed": len(document),
+                        },
+                    }
+                )
+            
+            return result
+            
+        except Exception as e:
+            # Emit error event
+            if self.event_emitter:
+                await self.event_emitter.emit_agent_error(
+                    agent_name="Linker",
+                    error_message=str(e)
+                )
+            raise
     
     async def _extract_entities(self, document: str, content_type: str) -> List[Dict[str, Any]]:
         """Extract key entities from the content"""

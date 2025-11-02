@@ -40,9 +40,10 @@ class VisualizerAgent(Agent):
     - Render visualization-ready JSON
     """
     
-    def __init__(self, a2a_protocol, gemma_service_url: Optional[str] = None):
+    def __init__(self, a2a_protocol, gemma_service_url: Optional[str] = None, event_emitter=None):
         super().__init__("visualizer", a2a_protocol)
         self.gemma_service_url = gemma_service_url or os.getenv("GEMMA_SERVICE_URL")
+        self.event_emitter = event_emitter
         self._prompt_template: Optional[str] = None
         self._linked_data: Optional[Dict[str, Any]] = None
         self._summary_data: Optional[Dict[str, Any]] = None
@@ -94,27 +95,68 @@ class VisualizerAgent(Agent):
         Returns:
             Visualization data with nodes and edges
         """
+        start_time = time.time()
         document = context.get("document", "")
         content_type = context.get("content_type", "document")  # 'document' or 'codebase'
         
         if not document:
             raise ValueError("Document content is required")
         
-        self.logger.info(f"🎨 Visualizer creating {content_type} visualization")
-        
-        # Check if we have data from other agents via A2A Protocol
-        await self._process_a2a_messages()
-        
-        # Use linked data if available from Linker Agent
-        if self._linked_data:
-            self.logger.info("📊 Using entity and relationship data from Linker Agent")
-            return await self._create_visualization_from_linked_data(
-                self._linked_data, content_type, document
+        # Emit processing event
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent_name="Visualizer",
+                metadata={
+                    "sessionId": context.get("sessionId"),
+                    "contentType": content_type,
+                }
             )
         
-        # Fallback to original implementation if no linked data
-        self.logger.info("⚙️ Fallback: Generating visualization directly with Gemma")
-        return await self._create_visualization_with_gemma(document, content_type)
+        self.logger.info(f"🎨 Visualizer creating {content_type} visualization")
+        
+        try:
+            # Check if we have data from other agents via A2A Protocol
+            await self._process_a2a_messages()
+            
+            # Use linked data if available from Linker Agent
+            if self._linked_data:
+                self.logger.info("📊 Using entity and relationship data from Linker Agent")
+                result = await self._create_visualization_from_linked_data(
+                    self._linked_data, content_type, document
+                )
+            else:
+                # Fallback to original implementation if no linked data
+                self.logger.info("⚙️ Fallback: Generating visualization directly with Gemma")
+                result = await self._create_visualization_with_gemma(document, content_type)
+            
+            # Emit completion event with metrics
+            if self.event_emitter:
+                duration = time.time() - start_time
+                await self.event_emitter.emit_agent_complete(
+                    agent_name="Visualizer",
+                    payload={
+                        "summary": f"Generated {len(result.get('nodes', []))} nodes",
+                        "visualization": {
+                            "nodes": result.get("nodes", []),
+                            "edges": result.get("edges", []),
+                        },
+                        "metrics": {
+                            "processingTime": duration,
+                            "tokensProcessed": len(document),
+                        },
+                    }
+                )
+            
+            return result
+            
+        except Exception as e:
+            # Emit error event
+            if self.event_emitter:
+                await self.event_emitter.emit_agent_error(
+                    agent_name="Visualizer",
+                    error_message=str(e)
+                )
+            raise
     
     async def _create_visualization_from_linked_data(self, linked_data: Dict[str, Any], 
                                                    content_type: str, document: str) -> Dict[str, Any]:
