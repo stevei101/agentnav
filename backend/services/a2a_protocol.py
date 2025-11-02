@@ -273,6 +273,11 @@ class A2AProtocolService:
             message: The A2A message
             additional_data: Additional event data
         """
+        # Helper to safely extract enum values
+        def get_enum_value(field, enum_type):
+            """Extract enum value safely"""
+            return field.value if isinstance(field, enum_type) else field
+        
         # Build structured log entry
         log_entry = {
             "event_type": event_type,
@@ -284,8 +289,8 @@ class A2AProtocolService:
                 "message_type": message.message_type,
                 "from_agent": message.from_agent,
                 "to_agent": message.to_agent,
-                "priority": message.priority.value if isinstance(message.priority, A2AMessagePriority) else message.priority,
-                "status": message.status.value if isinstance(message.status, A2AMessageStatus) else message.status,
+                "priority": get_enum_value(message.priority, A2AMessagePriority),
+                "status": get_enum_value(message.status, A2AMessageStatus),
             },
             "trace_context": {
                 "correlation_id": message.trace.correlation_id if hasattr(message, 'trace') else None,

@@ -192,48 +192,9 @@ class A2AMessageBase(BaseModel):
             return False
         return (time.time() - self.timestamp) > self.ttl_seconds
     
-    def generate_signature(self, secret_key: str) -> str:
-        """
-        Generate HMAC signature for the message
-        
-        Args:
-            secret_key: Secret key for HMAC (in production, derived from Service Account credentials)
-            
-        Returns:
-            Hexadecimal signature string
-        """
-        # Create canonical message representation
-        canonical = json.dumps({
-            "message_id": self.message_id,
-            "from_agent": self.from_agent,
-            "to_agent": self.to_agent,
-            "timestamp": self.timestamp,
-            "data": self.data
-        }, sort_keys=True)
-        
-        # Generate HMAC-SHA256 signature
-        signature = hashlib.pbkdf2_hmac(
-            'sha256',
-            canonical.encode('utf-8'),
-            secret_key.encode('utf-8'),
-            iterations=100000
-        )
-        
-        return signature.hex()
-    
-    def verify_signature(self, secret_key: str, signature: str) -> bool:
-        """
-        Verify message signature
-        
-        Args:
-            secret_key: Secret key for HMAC verification
-            signature: Signature to verify
-            
-        Returns:
-            True if signature is valid, False otherwise
-        """
-        expected_signature = self.generate_signature(secret_key)
-        return signature == expected_signature
+    # Note: Signature generation and verification is handled by
+    # services.a2a_security.A2ASecurityService for better separation of concerns
+    # and to avoid code duplication.
     
     class Config:
         json_schema_extra = {

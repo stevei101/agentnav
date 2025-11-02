@@ -134,15 +134,19 @@ class A2ASecurityService:
             return accounts
         
         # Default trusted accounts for development
-        # In production, this should be more restrictive
+        # In production, this should be configured via environment variable
+        # or Secret Manager to ensure proper security
         default_accounts = [
             f"backend@{self.identity.project_id}.iam.gserviceaccount.com",
             f"frontend@{self.identity.project_id}.iam.gserviceaccount.com",
             f"gemma-service@{self.identity.project_id}.iam.gserviceaccount.com",
-            "dev-service-account@development.iam.gserviceaccount.com",  # Dev mode
         ]
         
-        logger.warning(f"⚠️  Using default trusted accounts (development mode)")
+        # Only add dev account in actual development environment
+        if os.getenv("ENVIRONMENT", "production") == "development":
+            default_accounts.append("dev-service-account@development.iam.gserviceaccount.com")
+        
+        logger.warning(f"⚠️  Using default trusted accounts (should configure via TRUSTED_SERVICE_ACCOUNTS)")
         return default_accounts
     
     def _get_signing_key(self) -> str:
@@ -179,6 +183,11 @@ class A2ASecurityService:
             
         Returns:
             Hexadecimal signature string
+            
+        Note:
+            Uses HMAC-SHA256 directly for better performance.
+            PBKDF2 is optional and can be enabled via environment variable
+            for enhanced security at the cost of performance.
         """
         # Create canonical representation
         canonical = json.dumps({
@@ -190,13 +199,26 @@ class A2ASecurityService:
             "data": message_dict.get("data", {})
         }, sort_keys=True)
         
-        # Generate HMAC signature
-        signature = hashlib.pbkdf2_hmac(
-            'sha256',
-            canonical.encode('utf-8'),
-            self._secret_key.encode('utf-8'),
-            iterations=100000
-        )
+        # Check if enhanced security mode is enabled
+        use_pbkdf2 = os.getenv("A2A_USE_PBKDF2", "false").lower() == "true"
+        
+        if use_pbkdf2:
+            # Enhanced security with PBKDF2 (slower but more secure)
+            iterations = int(os.getenv("A2A_PBKDF2_ITERATIONS", "100000"))
+            signature = hashlib.pbkdf2_hmac(
+                'sha256',
+                canonical.encode('utf-8'),
+                self._secret_key.encode('utf-8'),
+                iterations=iterations
+            )
+        else:
+            # Standard HMAC-SHA256 (faster, suitable for high throughput)
+            import hmac
+            signature = hmac.new(
+                self._secret_key.encode('utf-8'),
+                canonical.encode('utf-8'),
+                hashlib.sha256
+            ).digest()
         
         return signature.hex()
     
