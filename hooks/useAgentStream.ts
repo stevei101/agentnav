@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   AgentStreamEvent,
   AgentEventType,
-  AgentStatusValue,
   AgentName,
 } from "../types";
 
@@ -20,7 +19,7 @@ interface UseAgentStreamReturn {
   error: Error | null;
   connect: () => void;
   disconnect: () => void;
-  send: (message: any) => void;
+  send: (message: unknown) => void;
 }
 
 export const useAgentStream = ({
@@ -148,7 +147,7 @@ export const useAgentStream = ({
     reconnectAttemptsRef.current = 0;
   }, []);
 
-  const send = useCallback((message: any) => {
+  const send = useCallback((message: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {

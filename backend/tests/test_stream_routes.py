@@ -12,8 +12,16 @@ Tests cover:
 import pytest
 import asyncio
 import json
+import sys
+import os
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
+
+# Add workspace root to Python path for backend.* imports
+# Tests run from workspace root with: pytest -q backend/tests
+workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if workspace_root not in sys.path:
+    sys.path.insert(0, workspace_root)
 
 # Note: Real WebSocket tests with TestClient are limited.
 # For full WebSocket testing, consider using websockets library directly.

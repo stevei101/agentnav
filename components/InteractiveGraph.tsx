@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { GraphNode, GraphEdge } from '../types';
 import { SearchPlusIcon, SearchMinusIcon } from './icons';
 

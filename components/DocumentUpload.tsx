@@ -100,9 +100,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         })
         .join("\n\n");
 
-      // Determine content type based on document type
-      const contentType =
-        documentType === "codebase" ? "codebase" : "document";
+      // Determine content type based on document type (used in onSessionStart callback)
+      // const contentType =
+      //   documentType === "codebase" ? "codebase" : "document";
 
       // Generate session ID
       const sessionId = `session-${Date.now()}`;
@@ -135,8 +135,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       description: "Source code, scripts, configs",
     },
   };
-
-  const config = documentTypeConfig[documentType];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -269,17 +267,17 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           </p>
           <div className="grid grid-cols-3 gap-2">
             <div className="text-xs">
-              <div className="text-blue-400 mb-1">①</div>
+              <div className="text-blue-400 mb-1">?</div>
               <p className="text-gray-300">Summarizer Agent</p>
               <p className="text-gray-500 text-xs">Key themes</p>
             </div>
             <div className="text-xs">
-              <div className="text-purple-400 mb-1">②</div>
+              <div className="text-purple-400 mb-1">?</div>
               <p className="text-gray-300">Linker Agent</p>
               <p className="text-gray-500 text-xs">Relationships</p>
             </div>
             <div className="text-xs">
-              <div className="text-orange-400 mb-1">③</div>
+              <div className="text-orange-400 mb-1">?</div>
               <p className="text-gray-300">Visualizer Agent</p>
               <p className="text-gray-500 text-xs">Knowledge graph</p>
             </div>

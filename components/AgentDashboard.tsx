@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { AgentCard } from "./AgentCard";
 import { AgentState, AgentStatusValue, AgentName, AgentStreamEvent } from "../types";
 import { Activity, Zap, RotateCcw } from "lucide-react";
