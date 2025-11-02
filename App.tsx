@@ -97,7 +97,7 @@ const App: React.FC = () => {
     let delay = 0;
 
     // More realistic agent simulation with ADK workflow
-    agentNames.forEach((name, index) => {
+    agentNames.forEach((name) => {
       setTimeout(() => {
         let details = 'Analyzing document...';
         if (name === AgentName.ORCHESTRATOR)
@@ -293,7 +293,7 @@ const App: React.FC = () => {
                   </h3>
                   <p className="mt-2 max-w-md">
                     Provide a document or code snippet on the left and click
-                    "Run Navigator" to begin the multi-agent analysis.
+                    &quot;Run Navigator&quot; to begin the multi-agent analysis.
                   </p>
                 </div>
               </div>

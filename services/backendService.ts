@@ -3,7 +3,7 @@ import { AnalysisResult, VisualizationType } from '../types';
 // Backend API URL - can be configured via environment variable
 // Use window for browser environment compatibility
 const BACKEND_API_URL =
-  (typeof window !== 'undefined' && (window as any).VITE_API_URL) ||
+  (typeof window !== 'undefined' && (window as { VITE_API_URL?: string }).VITE_API_URL) ||
   'http://localhost:8080';
 
 interface AnalyzeRequest {
@@ -21,7 +21,7 @@ interface AnalyzeResponse {
       label: string;
       group: string;
       type?: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }>;
     edges: Array<{
       from: string;
@@ -32,8 +32,8 @@ interface AnalyzeResponse {
     }>;
   };
   agent_workflow: {
-    orchestration: any;
-    agent_status: any;
+    orchestration: Record<string, unknown>;
+    agent_status: Record<string, unknown>;
     total_agents: number;
     successful_agents: number;
   };

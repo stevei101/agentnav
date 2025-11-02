@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { AgentName, AgentStatusValue } from "../types";
 import { AgentDashboard } from "./AgentDashboard";
 import { DocumentUpload } from "./DocumentUpload";
 import { BrainCircuitIcon } from "./icons";

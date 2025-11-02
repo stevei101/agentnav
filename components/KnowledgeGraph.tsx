@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Network } from "lucide-react";
-import type { AgentState, AgentStatusValue } from "../types";
+import type { AgentState } from "../types";
 
 interface KnowledgeGraphProps {
   agents: AgentState[];
