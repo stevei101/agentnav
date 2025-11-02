@@ -265,17 +265,17 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           </p>
           <div className="grid grid-cols-3 gap-2">
             <div className="text-xs">
-              <div className="text-blue-400 mb-1">?</div>
+              <div className="text-blue-400 mb-1">①</div>
               <p className="text-gray-300">Summarizer Agent</p>
               <p className="text-gray-500 text-xs">Key themes</p>
             </div>
             <div className="text-xs">
-              <div className="text-purple-400 mb-1">?</div>
+              <div className="text-purple-400 mb-1">②</div>
               <p className="text-gray-300">Linker Agent</p>
               <p className="text-gray-500 text-xs">Relationships</p>
             </div>
             <div className="text-xs">
-              <div className="text-orange-400 mb-1">?</div>
+              <div className="text-orange-400 mb-1">③</div>
               <p className="text-gray-300">Visualizer Agent</p>
               <p className="text-gray-500 text-xs">Knowledge graph</p>
             </div>

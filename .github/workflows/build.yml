@@ -204,18 +204,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const comment = `## 🚀 Staging Deployment Complete
+            const comment = `## 🚀 Staging Deployment Complete (Frontend)
 
-            **Staging Environment:**
-            Both frontend and backend services have been deployed to the staging environment.
+            **Frontend Staging URL:** ${{ steps.deploy-frontend-staging.outputs.url }}
 
-            **Frontend URL:** ${{ steps.deploy-frontend-staging.outputs.url }}
-            
-            **Backend URL:** Check [Cloud Run Console](https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}) for agentnav-backend-staging
+            **Backend Staging:** The backend service has also been deployed. Check the [Cloud Run Console](https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}) for \`agentnav-backend-staging\` details.
 
             **Image Tags:** \`pr-${{ github.event.pull_request.number }}\`
 
-            The staging deployment has completed successfully and is ready for testing!`;
+            The staging frontend deployment has completed successfully and is ready for testing!`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
