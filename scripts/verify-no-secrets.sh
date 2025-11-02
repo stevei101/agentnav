@@ -21,17 +21,15 @@ NC='\033[0m' # No Color
 FAILED=0
 
 echo "1. Checking for .env files in Git history..."
-ENV_COUNT=$(git log --all --pretty=format:"%H" | while read sha; do 
-    git ls-tree -r $sha | grep "\.env$" || true
-done | wc -l)
-
-if [ "$ENV_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}✓ PASS: No .env files found in Git history${NC}"
-else
+# More efficient approach using git log's built-in filtering
+if git log --all --name-only --pretty=format: -- '.env' | grep -q '^.env$'; then
+    ENV_COUNT=$(git log --all --name-only --pretty=format: -- '.env' | grep -c '^.env$')
     echo -e "${RED}✗ FAIL: Found $ENV_COUNT .env file(s) in Git history${NC}"
     FAILED=1
     echo "   Run the following to see details:"
     echo "   git log --all --full-history -- .env"
+else
+    echo -e "${GREEN}✓ PASS: No .env files found in Git history${NC}"
 fi
 
 echo ""
@@ -64,17 +62,20 @@ echo "4. Checking for other sensitive file patterns..."
 SENSITIVE_FILES=(.env.local .env.production .env.development .env.test)
 FOUND_SENSITIVE=0
 
-for pattern in "${SENSITIVE_FILES[@]}"; do
-    COUNT=$(git log --all --pretty=format:"%H" | while read sha; do 
-        git ls-tree -r $sha | grep "$pattern$" || true
-    done | wc -l)
-    
-    if [ "$COUNT" -gt 0 ]; then
-        echo -e "${RED}✗ Found $pattern in Git history ($COUNT occurrences)${NC}"
-        FOUND_SENSITIVE=1
-        FAILED=1
-    fi
-done
+# More efficient approach: combine all patterns into a single grep
+PATTERNS=$(printf "|%s" "${SENSITIVE_FILES[@]}")
+PATTERNS="${PATTERNS:1}$"  # Remove leading pipe and add end anchor
+
+if git log --all --name-only --pretty=format: | grep -qE "$PATTERNS"; then
+    for pattern in "${SENSITIVE_FILES[@]}"; do
+        if git log --all --name-only --pretty=format: -- "$pattern" | grep -q "^${pattern}$"; then
+            COUNT=$(git log --all --name-only --pretty=format: -- "$pattern" | grep -c "^${pattern}$")
+            echo -e "${RED}✗ Found $pattern in Git history ($COUNT occurrences)${NC}"
+            FOUND_SENSITIVE=1
+            FAILED=1
+        fi
+    done
+fi
 
 if [ "$FOUND_SENSITIVE" -eq 0 ]; then
     echo -e "${GREEN}✓ PASS: No sensitive environment files found in history${NC}"
