@@ -77,6 +77,14 @@ async def verify_token(
             detail="Invalid authentication token"
         )
     
+    # TODO: Implement full JWT verification
+    # - Verify JWT signature using public key from Google
+    # - Validate token expiration (exp claim)
+    # - Verify issuer (iss claim)
+    # - Verify audience (aud claim)
+    # - Extract and validate service account email
+    # Consider using: google-auth library or jwt.decode with proper validation
+    
     logger.debug("Token verification passed")
     return True
 

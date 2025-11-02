@@ -74,7 +74,6 @@ class ModelLoader:
             
             # Load tokenizer
             hf_token = os.getenv("HUGGINGFACE_TOKEN")
-            logger.info(f"   HuggingFace token: {'configured' if hf_token else 'not configured'}")
             
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name,
@@ -110,7 +109,6 @@ class ModelLoader:
             
             # Load model with error handling
             try:
-                logger.info(f"   Loading with config: {model_kwargs}")
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.model_name,
                     **model_kwargs,
