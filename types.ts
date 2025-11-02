@@ -1,4 +1,3 @@
-
 export enum AgentName {
   ORCHESTRATOR = 'Orchestrator',
   SUMMARIZER = 'Summarizer',
@@ -21,20 +20,20 @@ export interface AgentState {
 
 // New types for interactive graph visualization
 export enum VisualizationType {
-    MIND_MAP = 'MIND_MAP',
-    DEPENDENCY_GRAPH = 'DEPENDENCY_GRAPH',
+  MIND_MAP = 'MIND_MAP',
+  DEPENDENCY_GRAPH = 'DEPENDENCY_GRAPH',
 }
 
 export interface GraphNode {
-    id: string; // Unique identifier for the node
-    label: string; // Display text for the node
-    group?: string; // For coloring or grouping nodes (e.g., 'function', 'class', 'concept')
+  id: string; // Unique identifier for the node
+  label: string; // Display text for the node
+  group?: string; // For coloring or grouping nodes (e.g., 'function', 'class', 'concept')
 }
 
 export interface GraphEdge {
-    from: string; // ID of the source node
-    to: string; // ID of the target node
-    label?: string; // Optional label for the edge/relationship
+  from: string; // ID of the source node
+  to: string; // ID of the target node
+  label?: string; // Optional label for the edge/relationship
 }
 
 export interface AnalysisResult {

@@ -6,39 +6,85 @@
 # Documentation
 *.md
 docs/
-FEATURE_REQUEST*.md
-SYSTEM_INSTRUCTION.md
-CURSOR_RESPONSE*.md
+README.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+LICENSE
+NOTICE
 
 # Environment
 .env
 .env.local
 .env.*.local
+.env.example
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store
 
 # Dependencies
 node_modules/
 backend/.venv/
+.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+*.so
+bun.lock
+package-lock.json
+uv.lock
 
 # Build artifacts
 dist/
+dist-ssr/
 build/
 *.log
+*.egg-info/
+.cache/
+.pytest_cache/
 
 # CI/CD
 .github/
-cloudbuild.yaml
+cloudbuild*.yaml
+.cloudbuildignore
+
+# Test files
+*.test.ts
+*.test.tsx
+*.test.py
+tests/
+__tests__/
+vitest.config.ts
+vitest.setup.ts
+
+# Linting and formatting config
+.eslintrc.json
+.prettierrc.json
+.pre-commit-config.yaml
 
 # Docker
 Dockerfile*
-docker-compose*.yml
 .dockerignore
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+
+# Scripts
+scripts/
+
+# Temporary files
+*.tmp
+*.temp
+*.pid
 

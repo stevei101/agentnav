@@ -2,7 +2,9 @@ import { AnalysisResult, VisualizationType } from '../types';
 
 // Backend API URL - can be configured via environment variable
 // Use window for browser environment compatibility
-const BACKEND_API_URL = (typeof window !== 'undefined' && (window as any).VITE_API_URL) || 'http://localhost:8080';
+const BACKEND_API_URL =
+  (typeof window !== 'undefined' && (window as any).VITE_API_URL) ||
+  'http://localhost:8080';
 
 interface AnalyzeRequest {
   document: string;
@@ -43,15 +45,17 @@ interface AnalyzeResponse {
  * Run Agentic Navigator analysis using the backend ADK multi-agent system
  * This replaces direct Gemini API calls with backend orchestration
  */
-export const runAgenticNavigator = async (documentText: string): Promise<AnalysisResult> => {
+export const runAgenticNavigator = async (
+  documentText: string
+): Promise<AnalysisResult> => {
   const request: AnalyzeRequest = {
     document: documentText,
-    content_type: undefined // Let the backend auto-detect
+    content_type: undefined, // Let the backend auto-detect
   };
 
   try {
-    console.log("🎬 Starting ADK Multi-Agent Analysis via backend API");
-    
+    console.log('🎬 Starting ADK Multi-Agent Analysis via backend API');
+
     const response = await fetch(`${BACKEND_API_URL}/api/analyze`, {
       method: 'POST',
       headers: {
@@ -68,9 +72,13 @@ export const runAgenticNavigator = async (documentText: string): Promise<Analysi
     }
 
     const data: AnalyzeResponse = await response.json();
-    
-    console.log(`✅ ADK Analysis completed in ${data.processing_time.toFixed(2)}s`);
-    console.log(`📊 Agent workflow: ${data.agent_workflow.successful_agents}/${data.agent_workflow.total_agents} agents successful`);
+
+    console.log(
+      `✅ ADK Analysis completed in ${data.processing_time.toFixed(2)}s`
+    );
+    console.log(
+      `📊 Agent workflow: ${data.agent_workflow.successful_agents}/${data.agent_workflow.total_agents} agents successful`
+    );
 
     // Convert backend response to frontend AnalysisResult format
     const result: AnalysisResult = {
@@ -85,21 +93,29 @@ export const runAgenticNavigator = async (documentText: string): Promise<Analysi
 
     return result;
   } catch (error) {
-    console.error("Error calling backend API:", error);
-    
+    console.error('Error calling backend API:', error);
+
     // If backend is unavailable, fall back to legacy Gemini service
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.warn("🔄 Backend unavailable, falling back to legacy Gemini service");
+      console.warn(
+        '🔄 Backend unavailable, falling back to legacy Gemini service'
+      );
       try {
-        const { runAgenticNavigator: legacyRunner } = await import('./geminiService');
+        const { runAgenticNavigator: legacyRunner } = await import(
+          './geminiService'
+        );
         return await legacyRunner(documentText);
       } catch (legacyError) {
-        console.error("Legacy fallback also failed:", legacyError);
-        throw new Error("Both backend API and legacy Gemini service are unavailable. Please check your connection and try again.");
+        console.error('Legacy fallback also failed:', legacyError);
+        throw new Error(
+          'Both backend API and legacy Gemini service are unavailable. Please check your connection and try again.'
+        );
       }
     }
-    
-    throw new Error(`Failed to get analysis from Agentic Navigator: ${error.message}`);
+
+    throw new Error(
+      `Failed to get analysis from Agentic Navigator: ${error.message}`
+    );
   }
 };
 
@@ -109,19 +125,19 @@ export const runAgenticNavigator = async (documentText: string): Promise<Analysi
 export const getAgentStatus = async () => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/api/agents/status`);
-    
+
     if (!response.ok) {
       throw new Error(`Status check failed: ${response.statusText}`);
     }
-    
+
     return await response.json();
   } catch (error) {
-    console.error("Error getting agent status:", error);
+    console.error('Error getting agent status:', error);
     return {
       total_agents: 0,
       agents: {},
-      adk_system: "unavailable",
-      error: error.message
+      adk_system: 'unavailable',
+      error: error.message,
     };
   }
 };
@@ -134,7 +150,7 @@ export const checkBackendHealth = async (): Promise<boolean> => {
     const response = await fetch(`${BACKEND_API_URL}/healthz`);
     return response.ok;
   } catch (error) {
-    console.error("Backend health check failed:", error);
+    console.error('Backend health check failed:', error);
     return false;
   }
 };
