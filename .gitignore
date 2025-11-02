@@ -83,11 +83,16 @@ build/
 *.temp
 .cache/
 
-# Development notes and tracking
-markdown/
-ideas/
-metadata.json
+# Temporary notes and scratch files (per FR#050)
+notes.md
+scratchpad.*
+scratch_*
+*_SUMMARY.md
+PR_*.md
+FR*_COMPLETION_SUMMARY.md
+FR*_README.md
+FR*_IMPLEMENTATION_SUMMARY.md
+PROJECT_COMPLETION_SUMMARY.md
+REVIEW_ANALYSIS_COMPLETE.md
+CI_WORKFLOW_FIX.md
 
-# Local development
-docker-compose*.yml
-entrypoint.sh

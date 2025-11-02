@@ -45,3 +45,15 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published in downstream modules
+
+## Minimum Viable Commit (MVC) Checklist:
+
+Please review the [PR Discipline Guide](docs/CONTRIBUTION_GUIDE_PR_DISCIPLINE.md) before submitting.
+
+- [ ] I have removed all temporary files (notes.md, scratchpad.*, *_SUMMARY.md, etc.)
+- [ ] I have removed all local IDE configuration files (.vscode/, .idea/, etc.)
+- [ ] I have verified that all committed files are consumed by the application, CI/CD, or IaC
+- [ ] I have run `make ci` and all checks pass
+- [ ] I have updated .dockerignore if needed to exclude unnecessary files from build context
+- [ ] All documentation changes are in the `docs/` folder (not in root)
+- [ ] No build artifacts or dependencies are committed (dist/, node_modules/, __pycache__/, etc.)
