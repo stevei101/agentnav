@@ -52,11 +52,18 @@ jobs:
         id: image
         shell: bash
         run: |
+          set -euo pipefail
+          
           LATEST_TAG=""
-
+          
           # 1. Check for Pull Request trigger
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            IMAGE_TAG="pr-${{ github.event.pull_request.number }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            if [[ -z "${PR_NUMBER}" ]]; then
+              echo "❌ Error: Pull request number is missing"
+              exit 1
+            fi
+            IMAGE_TAG="pr-${PR_NUMBER}"
             
           # 2. Check for Push to 'main' branch
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -65,67 +72,114 @@ jobs:
             
           # 3. Default (other branches)
           else
-            IMAGE_TAG=$(echo "${{ github.sha }}" | cut -c1-7)
+            IMAGE_TAG="${{ github.sha::7 }}"
+          fi
+
+          # Validate IMAGE_TAG is set
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: IMAGE_TAG is empty"
+            exit 1
           fi
 
           # Set outputs for subsequent build/push steps
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT || true
-
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          fi
+          
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          [ -n "${LATEST_TAG}" ] && echo "Latest tag: ${LATEST_TAG}" || true
+          [[ -n "${LATEST_TAG}" ]] && echo "Latest tag: ${LATEST_TAG}"
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
         run: |
+          set -euo pipefail
+          
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
-
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+          
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+          
+          echo "🔨 Building frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker build \
-            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
             -f Dockerfile \
             .
 
           # Tag as latest if on main branch
-          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
-            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
           fi
-
-          # Push all tags
-          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
-
-          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+          
+          # Push primary tag
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+          
+          # Push latest tag if set
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker push ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+          
+          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
       - name: Build and push backend
         if: matrix.service == 'backend'
         run: |
+          set -euo pipefail
+          
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
-
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+          
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+          
+          echo "🔨 Building backend image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker build \
-            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
             -f backend/Dockerfile \
             ./backend
 
           # Tag as latest if on main branch
-          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
-            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
           fi
-
-          # Push all tags
-          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
-          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }} || true
-
-          echo "✅ Backend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+          
+          # Push primary tag
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+          
+          # Push latest tag if set
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker push ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+          
+          echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
       - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
         timeout-minutes: 20
         run: |
+          set -euo pipefail
+          
           # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
+          echo "   Commit SHA: ${{ github.sha }}"
+          echo "   Project: ${GCP_PROJECT_ID}"
+          echo "   Artifact Registry: ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}"
 
           # Submit Cloud Build job and wait for completion
           gcloud builds submit \
@@ -162,25 +216,47 @@ jobs:
       - name: Deploy frontend to Cloud Run
         if: matrix.service == 'frontend'
         run: |
+          set -euo pipefail
+          
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest"
+          
+          echo "🚀 Deploying frontend to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: us-central1"
+          
           gcloud run deploy agentnav-frontend \
-            --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest \
+            --image ${IMAGE} \
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
             --allow-unauthenticated \
             --quiet
+          
+          echo "✅ Frontend deployment completed"
 
       - name: Deploy backend to Cloud Run
         if: matrix.service == 'backend'
         run: |
+          set -euo pipefail
+          
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest"
+          SERVICE_ACCOUNT="agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+          
+          echo "🚀 Deploying backend to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: europe-west1"
+          echo "   Service Account: ${SERVICE_ACCOUNT}"
+          
           gcloud run deploy agentnav-backend \
-            --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest \
+            --image ${IMAGE} \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
             --allow-unauthenticated \
-            --service-account agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
+            --service-account ${SERVICE_ACCOUNT} \
             --quiet
+          
+          echo "✅ Backend deployment completed"
 
       - name: Get service URLs
         if: matrix.service == 'frontend'
