@@ -101,3 +101,15 @@ variable "gemma_container_port" {
   default     = 8080
 }
 
+variable "agentnav_model_type" {
+  description = "Model type for reasoning tasks: 'gemini' (cloud) or 'gemma' (local GPU). Controls AGENTNAV_MODEL_TYPE env var."
+  type        = string
+  default     = "gemini"
+  
+  validation {
+    condition     = contains(["gemini", "gemma"], var.agentnav_model_type)
+    error_message = "agentnav_model_type must be either 'gemini' or 'gemma'."
+  }
+}
+
+
