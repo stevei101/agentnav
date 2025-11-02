@@ -85,6 +85,12 @@ resource "google_project_iam_member" "github_actions_storage_admin" {
   member  = "serviceAccount:${local.github_actions_sa_email}"
 }
 
+resource "google_project_iam_member" "github_actions_cloudbuild_builder" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.submit"
+  member  = "serviceAccount:${local.github_actions_sa_email}"
+}
+
 # Workload Identity Federation Setup
 # Note: These resources are managed outside of Terraform (manually created)
 # They need to be imported into Terraform state if we want to manage them with Terraform
