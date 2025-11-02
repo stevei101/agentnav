@@ -35,6 +35,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
+        id: auth
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
@@ -48,6 +49,7 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Format Check
         id: fmt
@@ -57,10 +59,7 @@ jobs:
       - name: Terraform Init
         id: init
         working-directory: terraform
-        run: |
-          terraform init \
-            -backend-config="organization=${TF_CLOUD_ORGANIZATION}" \
-            -backend-config="workspaces.name=${TF_WORKSPACE}"
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
@@ -84,9 +83,6 @@ jobs:
         with:
           working_directory: terraform
           soft_fail: true
-          format: default
-          output_format: json
-          output_file_path: terraform/tfsec-results.json
         continue-on-error: true
 
       - name: Terraform Plan
@@ -94,7 +90,6 @@ jobs:
         if: github.event_name == 'pull_request'
         working-directory: terraform
         run: terraform plan -no-color -input=false
-        continue-on-error: true
 
       - name: Comment PR
         uses: actions/github-script@v7
@@ -136,10 +131,6 @@ jobs:
           echo "TFLint: ${{ steps.tflint.outcome }}"
           echo "TFSec: ${{ steps.tfsec.outcome }}"
           exit 1
-
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

@@ -1,13 +1,14 @@
 # Workload Identity Federation Outputs (for GitHub Secrets)
-output "wif_provider" {
-  description = "Workload Identity Federation Provider resource name"
-  value       = google_iam_workload_identity_pool_provider.github_actions.name
-  sensitive   = false
-}
+# TODO: Uncomment when WIF resources are imported into Terraform state
+# output "wif_provider" {
+#   description = "Workload Identity Federation Provider resource name"
+#   value       = google_iam_workload_identity_pool_provider.github_actions.name
+#   sensitive   = false
+# }
 
 output "wif_service_account_email" {
   description = "Service account email used by Workload Identity Federation"
-  value       = google_service_account.github_actions.email
+  value       = local.github_actions_sa_email
   sensitive   = false
 }
 
@@ -20,6 +21,7 @@ output "artifact_registry_repository" {
 output "artifact_registry_url" {
   description = "Artifact Registry repository URL"
   value       = "${google_artifact_registry_repository.main.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}"
+  sensitive   = true
 }
 
 # Cloud Run Service URLs
@@ -41,7 +43,7 @@ output "gemma_service_url" {
 # Firestore Outputs
 output "firestore_database_id" {
   description = "Firestore database ID"
-  value       = google_firestore_database.main.database_id
+  value       = google_firestore_database.main.name
 }
 
 # Secret Manager Outputs
@@ -58,6 +60,7 @@ output "secrets" {
 output "project_id" {
   description = "GCP Project ID"
   value       = var.project_id
+  sensitive   = true
 }
 
 output "project_number" {

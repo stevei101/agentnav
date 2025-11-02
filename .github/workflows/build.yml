@@ -1,0 +1,228 @@
+name: Build and Deploy Containers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: europe-west1
+  ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+
+jobs:
+  build-and-push:
+    name: Build and Push Containers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+
+    strategy:
+      matrix:
+        service: [frontend, backend, gemma]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Determine Image Tags based on Event
+        id: image
+        shell: bash
+        run: |
+          LATEST_TAG=""
+          
+          # 1. Check for Pull Request trigger
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            IMAGE_TAG="pr-${{ github.event.pull_request.number }}"
+            
+          # 2. Check for Push to 'main' branch
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            IMAGE_TAG="${{ github.sha }}"
+            LATEST_TAG="latest"
+            
+          # 3. Default (other branches)
+          else
+            IMAGE_TAG="${{ github.sha::7 }}"
+          fi
+
+          # Set outputs for subsequent build/push steps
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Service: ${{ matrix.service }}"
+          echo "Image tag: ${IMAGE_TAG}"
+          [ -n "${LATEST_TAG}" ] && echo "Latest tag: ${LATEST_TAG}"
+
+      - name: Build and push frontend
+        if: matrix.service == 'frontend'
+        run: |
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
+          
+          docker build \
+            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+            -f Dockerfile \
+            .
+          
+          # Tag as latest if on main branch
+          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
+            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          fi
+          
+          # Push all tags
+          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
+          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          
+          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+
+      - name: Build and push backend
+        if: matrix.service == 'backend'
+        run: |
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
+          
+          docker build \
+            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+            -f backend/Dockerfile \
+            ./backend
+          
+          # Tag as latest if on main branch
+          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
+            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          fi
+          
+          # Push all tags
+          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
+          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          
+          echo "✅ Backend image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+
+      - name: Build and push gemma
+        if: matrix.service == 'gemma'
+        run: |
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-service"
+          
+          docker build \
+            -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+            -f backend/Dockerfile.gemma \
+            ./backend
+          
+          # Tag as latest if on main branch
+          if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
+            docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          fi
+          
+          # Push all tags
+          docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
+          [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          
+          echo "✅ Gemma image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      matrix:
+        service: [frontend, backend, gemma]
+      fail-fast: false
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy frontend to Cloud Run
+        if: matrix.service == 'frontend'
+        run: |
+          gcloud run deploy agentnav-frontend \
+            --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Deploy backend to Cloud Run
+        if: matrix.service == 'backend'
+        run: |
+          gcloud run deploy agentnav-backend \
+            --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
+            --quiet
+
+      - name: Deploy gemma to Cloud Run
+        if: matrix.service == 'gemma'
+        run: |
+          gcloud run deploy gemma-service \
+            --image ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-service:latest \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
+            --gpu-type nvidia-l4 \
+            --gpu-count 1 \
+            --memory 16Gi \
+            --cpu 4 \
+            --quiet
+
+      - name: Get service URLs
+        if: matrix.service == 'frontend'
+        run: |
+          echo "Frontend URL:"
+          gcloud run services describe agentnav-frontend \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"
+          
+          echo "Backend URL:"
+          gcloud run services describe agentnav-backend \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"
+          
+          echo "Gemma URL:"
+          gcloud run services describe gemma-service \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"
+
