@@ -48,6 +48,11 @@ fi
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
     echo "📝 Creating .env file from template..."
+    if [ ! -f .env.example ]; then
+        echo "❌ .env.example template file not found!"
+        echo "   Please create .env.example or copy it from the repository before running this script."
+        exit 1
+    fi
     cp .env.example .env
     echo "⚠️  Please edit .env file and add your GEMINI_API_KEY"
     # Only prompt interactively if running in a terminal (not in CI/CD)

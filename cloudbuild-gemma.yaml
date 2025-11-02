@@ -22,8 +22,7 @@ steps:
     id: 'push-gemma'
     args:
       - 'push'
-      - '--all-tags'
-      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service'
+      - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
     waitFor: ['build-gemma']
 
   # Deploy to Cloud Run with GPU
@@ -72,6 +71,5 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'  # Faster builds with more resources
-  diskSizeGb: 100  # Larger disk for ML dependencies
-
+  machineType: 'E2_HIGHCPU_8' # Faster builds with more resources
+  diskSizeGb: 100 # Larger disk for ML dependencies
