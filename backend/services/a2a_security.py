@@ -447,11 +447,51 @@ class A2ASecurityService:
             "data": event_data
         }
         
+        # Sanitize event data for logging (remove sensitive fields)
+        sanitized_data = self._sanitize_for_logging(event_data)
+        
         # In production, send to Cloud Logging
-        logger.warning(f"🔒 SECURITY EVENT: {event_type} - {json.dumps(event_data)}")
+        logger.warning(f"🔒 SECURITY EVENT: {event_type} - {json.dumps(sanitized_data)}")
         
         # TODO: Store in Firestore security_audit collection
         # TODO: Trigger alerts for critical events
+    
+    def _sanitize_for_logging(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Remove sensitive fields from data before logging
+        
+        Args:
+            data: Data to sanitize
+            
+        Returns:
+            Sanitized data safe for logging
+        """
+        # List of sensitive field names to redact
+        sensitive_fields = [
+            'secret', 'password', 'token', 'key', 'signature',
+            'credential', 'auth', 'api_key'
+        ]
+        
+        sanitized = {}
+        for key, value in data.items():
+            # Check if key contains sensitive terms
+            is_sensitive = any(term in key.lower() for term in sensitive_fields)
+            
+            if is_sensitive:
+                sanitized[key] = "[REDACTED]"
+            elif isinstance(value, dict):
+                # Recursively sanitize nested dicts
+                sanitized[key] = self._sanitize_for_logging(value)
+            elif isinstance(value, list):
+                # Sanitize lists of dicts
+                sanitized[key] = [
+                    self._sanitize_for_logging(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            else:
+                sanitized[key] = value
+        
+        return sanitized
 
 
 # Singleton instance
