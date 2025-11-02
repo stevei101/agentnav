@@ -25,7 +25,8 @@ We consolidated the CI checks into three primary, high-level checks. Each of the
 
 - The repository keeps the granular jobs for useful logs and debugging. These jobs continue to run in their current workflows.
 - The new composite jobs (named `CODE_QUALITY`, `SECURITY_AUDIT`, and `INFRA_VERIFICATION`) depend on their underlying granular jobs using the `needs:` relationship in GitHub Actions. The composite job will only succeed if all required upstream jobs succeed, producing a single high-level status.
-- Operational workflows such as `Build and Deploy Containers` and `Build Gemma Debug` remain as non-mandatory operational workflows and should not be set as required checks for merging to `main`.
+- Operational workflows such as `Build and Deploy Containers` remain as non-mandatory operational workflows and should not be set as required checks for merging to `main`.
+- **Note**: As of FR#150, the `Build Gemma Debug` workflow no longer runs on pull requests. It can be manually triggered via `workflow_dispatch` or runs automatically on pushes to `main` when Gemma-related files change.
 
 ## Branch protection: recommended configuration
 
@@ -35,7 +36,7 @@ Update the Branch Protection rules for `main` to require the following checks (n
 - `SECURITY_AUDIT`
 - `INFRA_VERIFICATION`
 
-Do NOT set the operational jobs as required (for example `Build and Push Containers`, `Build Gemma (debug)`).
+Do NOT set the operational jobs as required (for example `Build and Push Containers`). The `Build Gemma (debug)` workflow no longer runs on pull requests as of FR#150.
 
 ### UI steps
 1. Go to the repository on GitHub > Settings > Branches > Branch protection rules.
