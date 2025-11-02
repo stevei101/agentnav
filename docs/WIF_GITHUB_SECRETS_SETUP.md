@@ -32,16 +32,19 @@ terraform output wif_service_account_email
 If you know your configuration values, construct manually:
 
 **WIF_PROVIDER** (Full Resource Name):
+
 ```
 projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID
 ```
 
 Where:
+
 - `PROJECT_NUMBER` = Your GCP project number (found in console or via `gcloud projects describe PROJECT_ID`)
 - `POOL_ID` = `github-actions-pool` (default) or value in `terraform/variables.tf`
 - `PROVIDER_ID` = `github-provider` (default) or value in `terraform/variables.tf`
 
 **WIF_SERVICE_ACCOUNT**:
+
 ```
 github-actions@PROJECT_ID.iam.gserviceaccount.com
 ```
@@ -53,17 +56,17 @@ Where `PROJECT_ID` is your GCP project ID.
 If you see this error in GitHub Actions:
 
 ```
-Error: failed to generate Google Cloud federated token for //iam.googleapis.com/***: 
+Error: failed to generate Google Cloud federated token for //iam.googleapis.com/***:
 {"error":"invalid_request","error_description":"Invalid value for \"audience\"..."}
 ```
 
-This means `WIF_PROVIDER` is incorrectly formatted. 
+This means `WIF_PROVIDER` is incorrectly formatted.
 
 ### ✅ Correct Format
 
 ```yaml
 # Example (with project number 123456789012)
-WIF_PROVIDER: "projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+WIF_PROVIDER: 'projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
 ```
 
 ### ❌ Wrong Formats
@@ -132,6 +135,7 @@ Check the workflow logs - the "Authenticate to Google Cloud" step should pass wi
 ### Still Getting Errors?
 
 1. **Verify the pool and provider exist:**
+
    ```bash
    gcloud iam workload-identity-pools list
    gcloud iam workload-identity-pools providers list \
@@ -140,6 +144,7 @@ Check the workflow logs - the "Authenticate to Google Cloud" step should pass wi
    ```
 
 2. **Check the provider name:**
+
    ```bash
    gcloud iam workload-identity-pools providers describe github-provider \
      --workload-identity-pool=github-actions-pool \
@@ -148,11 +153,13 @@ Check the workflow logs - the "Authenticate to Google Cloud" step should pass wi
    ```
 
 3. **Verify the service account binding:**
+
    ```bash
    gcloud iam service-accounts get-iam-policy github-actions@PROJECT_ID.iam.gserviceaccount.com
    ```
-   
+
    Should show:
+
    ```
    members:
    - principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/stevei101/agentnav
@@ -166,9 +173,9 @@ Check the workflow logs - the "Authenticate to Google Cloud" step should pass wi
 
 ## 🔗 Quick Reference
 
-| Secret Name | Expected Format | Example |
-|------------|-----------------|---------|
-| `WIF_PROVIDER` | `projects/{projectNumber}/locations/global/workloadIdentityPools/{poolId}/providers/{providerId}` | `projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider` |
-| `WIF_SERVICE_ACCOUNT` | `{saId}@{projectId}.iam.gserviceaccount.com` | `github-actions@agentnav-dev.iam.gserviceaccount.com` |
+| Secret Name           | Expected Format                                                                                   | Example                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `WIF_PROVIDER`        | `projects/{projectNumber}/locations/global/workloadIdentityPools/{poolId}/providers/{providerId}` | `projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider` |
+| `WIF_SERVICE_ACCOUNT` | `{saId}@{projectId}.iam.gserviceaccount.com`                                                      | `github-actions@agentnav-dev.iam.gserviceaccount.com`                                                        |
 
 **Remember:** `WIF_PROVIDER` uses **project NUMBER**, not project ID!

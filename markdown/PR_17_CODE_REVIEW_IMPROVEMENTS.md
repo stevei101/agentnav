@@ -15,10 +15,12 @@ Implements actionable improvements from Gemini code review feedback while preser
 ### 1. GitHub Actions Workflow Enhancements
 
 #### Remove continue-on-error from Terraform Plan
+
 **Change:** Removed `continue-on-error: true` from the terraform plan step  
 **Benefit:** Plan failures now fail immediately instead of silently continuing
 
 **Before:**
+
 ```yaml
 - name: Terraform Plan
   run: terraform plan -no-color -input=false
@@ -30,6 +32,7 @@ Implements actionable improvements from Gemini code review feedback while preser
 ```
 
 **After:**
+
 ```yaml
 - name: Terraform Plan
   run: terraform plan -no-color -input=false
@@ -42,10 +45,12 @@ Implements actionable improvements from Gemini code review feedback while preser
 ### 2. Container Port Variables
 
 #### Replace Hardcoded Values with Variables
+
 **Change:** Added three new variables for container ports  
 **Benefit:** Increased flexibility and easier configuration management
 
 **New Variables Added:**
+
 ```hcl
 variable "frontend_container_port" {
   description = "Container port for frontend Cloud Run service"
@@ -67,6 +72,7 @@ variable "gemma_container_port" {
 ```
 
 **Usage in cloud_run.tf:**
+
 ```hcl
 ports {
   container_port = var.frontend_container_port
@@ -91,26 +97,32 @@ All Terraform files automatically formatted with `terraform fmt` for consistency
 ## 🔍 Review Topics NOT Implemented (By Design)
 
 ### Manual GPU Configuration
+
 **Status:** Intentionally left as-is  
 **Reason:** This is a Google Terraform provider limitation. The review correctly identifies this as requiring manual `gcloud` commands until the provider supports GPU attributes. Implementing a workaround would add complexity and fragility.
 
 ### Publicly Exposed Services
+
 **Status:** Intentionally left as-is  
 **Reason:** This aligns with Cloud Run best practices for public-facing web applications. Production security hardening (IAP, VPC controls) is a separate concern for future enhancement.
 
 ### Network/VPC Configuration
+
 **Status:** Intentionally left as-is  
 **Reason:** Current `connector = null` is intentional. VPC connector would be added if/when internal-only traffic is required.
 
 ### Monitoring/Logging Resources
+
 **Status:** Intentionally left as-is  
 **Reason:** Addressed by Cloud Run's built-in monitoring and Cloud Logging. Explicit dashboards/alerts are out of scope for initial IaC setup.
 
 ### Concurrency Control
+
 **Status:** Intentionally left as-is  
 **Reason:** Terraform Cloud manages concurrency. Additional GitHub Actions concurrency would be redundant.
 
 ### Plan Caching
+
 **Status:** Intentionally left as-is  
 **Reason:** Terraform Cloud automatically caches plans. GitHub Actions caching would add complexity without benefit.
 
@@ -119,6 +131,7 @@ All Terraform files automatically formatted with `terraform fmt` for consistency
 ## 📋 Testing
 
 ### Validation
+
 ```bash
 ✓ terraform fmt: All files formatted correctly
 ✓ terraform validate: Success! The configuration is valid.
@@ -126,6 +139,7 @@ All Terraform files automatically formatted with `terraform fmt` for consistency
 ```
 
 ### Backward Compatibility
+
 - ✅ All default values match previous hardcoded values (80, 8080)
 - ✅ No breaking changes to existing resources
 - ✅ Existing functionality preserved
@@ -135,6 +149,7 @@ All Terraform files automatically formatted with `terraform fmt` for consistency
 ## 📝 Files Changed
 
 ### Modified Files
+
 ```
 .github/workflows/terraform.yml
 terraform/cloud_run.tf
@@ -154,7 +169,7 @@ terraform/secret_manager.tf (formatting only)
 **Functionality:** ✅ Zero breaking changes  
 **Reliability:** ✅ Improved (removed silent plan failures)  
 **Flexibility:** ✅ Enhanced (configurable ports)  
-**Maintainability:** ✅ Improved (consistent formatting, variables)  
+**Maintainability:** ✅ Improved (consistent formatting, variables)
 
 ---
 

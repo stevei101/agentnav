@@ -72,5 +72,5 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'  # Faster builds with more resources
-  diskSizeGb: 100  # Larger disk for ML dependencies
+  machineType: 'E2_HIGHCPU_8' # Faster builds with more resources
+  diskSizeGb: 100 # Larger disk for ML dependencies

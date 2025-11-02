@@ -30,6 +30,7 @@ This service provides a FastAPI application that serves the Gemma open-source mo
 Health check endpoint (Cloud Run requirement).
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -42,14 +43,16 @@ Health check endpoint (Cloud Run requirement).
 }
 ```
 
-### `POST /generate`
+### `POST /reason`
 
-Generate text from a prompt.
+Generate text with optional context for enhanced reasoning.
 
 **Request:**
+
 ```json
 {
   "prompt": "Explain quantum computing:",
+  "context": "For a beginner audience",
   "max_tokens": 500,
   "temperature": 0.7,
   "top_p": 0.9,
@@ -58,6 +61,7 @@ Generate text from a prompt.
 ```
 
 **Response:**
+
 ```json
 {
   "text": "Quantum computing uses quantum mechanical phenomena...",
@@ -67,21 +71,31 @@ Generate text from a prompt.
 }
 ```
 
-### `POST /embeddings`
+### `POST /embed`
 
-Generate embeddings for text.
+Generate embeddings for a batch of text strings.
 
 **Request:**
+
 ```json
 {
-  "text": "Text to embed"
+  "texts": [
+    "Text to embed 1",
+    "Text to embed 2",
+    "Text to embed 3"
+  ]
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "embeddings": [0.123, -0.456, ...],
+  "embeddings": [
+    [0.123, -0.456, ..., 0.789],
+    [0.234, -0.567, ..., 0.890],
+    [0.345, -0.678, ..., 0.901]
+  ],
   "dimension": 4096,
   "model": "google/gemma-7b-it"
 }
@@ -117,10 +131,15 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 # Health check
 curl http://localhost:8080/healthz
 
-# Generate text
-curl -X POST http://localhost:8080/generate \
+# Generate text with context
+curl -X POST http://localhost:8080/reason \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello, world!", "max_tokens": 50}'
+  -d '{"prompt": "Hello, world!", "context": "Friendly greeting", "max_tokens": 50}'
+
+# Generate embeddings (batch)
+curl -X POST http://localhost:8080/embed \
+  -H "Content-Type: application/json" \
+  -d '{"texts": ["Hello world", "Machine learning"]}'
 ```
 
 ## Deployment
@@ -144,11 +163,19 @@ podman build -f Dockerfile.gemma -t gemma-service:latest .
 ### From Backend Service
 
 ```python
-from services.gemma_service import generate_with_gemma
+from services.gemma_client import embed_with_gemma, reason_with_gemma
 
-# Generate text
-text = await generate_with_gemma(
+# Generate embeddings (batch)
+embeddings = await embed_with_gemma([
+    "First text",
+    "Second text",
+    "Third text"
+])
+
+# Generate reasoning with context
+text = await reason_with_gemma(
     prompt="Analyze this code: ...",
+    context="Focus on performance",
     max_tokens=500,
     temperature=0.7
 )
@@ -178,14 +205,17 @@ GEMMA_SERVICE_TIMEOUT=60.0
 ## Troubleshooting
 
 ### Model Not Loading
+
 - Check memory: Need 16Gi for Gemma 7B
 - Check logs: `gcloud run services logs read gemma-service --region europe-west1`
 
 ### GPU Not Detected
+
 - Verify GPU quota in europe-west1
 - Check Cloud Run config: `--cpu gpu --gpu-type nvidia-l4`
 
 ### Slow Startup
+
 - First startup downloads model (~13GB)
 - Subsequent starts are faster (~1-2 minutes)
 
@@ -194,4 +224,3 @@ GEMMA_SERVICE_TIMEOUT=60.0
 - [Gemma Model Card](https://huggingface.co/google/gemma-7b-it)
 - [Cloud Run GPU Docs](https://cloud.google.com/run/docs/using/gpus)
 - [PyTorch CUDA Setup](https://pytorch.org/get-started/locally/)
-

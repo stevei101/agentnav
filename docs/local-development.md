@@ -3,9 +3,11 @@
 ## ADK Quickstart Process
 
 This local development environment follows the **Google ADK Quickstart** philosophy:
+
 > **"No heavy cloud setups. No complex DevOps. Just clone, code, run—and see your agent live in minutes"**
 
 The containerized setup enables you to:
+
 - ✅ **Focus on agent logic** - not environment configuration
 - ✅ **Iterate quickly** - changes reflect immediately with hot-reload
 - ✅ **Match production** - local environment mirrors Cloud Run deployment
@@ -36,11 +38,13 @@ make setup
 ```
 
 The `make setup` command will:
+
 - Check/start Podman machine (macOS)
 - Create `.env` file from template
 - Build and start all services
 
 Then simply:
+
 ```bash
 make logs    # View logs
 make down    # Stop services
@@ -183,9 +187,10 @@ podman-compose down -v
 See `.env.example` for all available environment variables.
 
 **Required:**
+
 - `GEMINI_API_KEY` - Your Google Gemini API key
 
 **Optional:**
+
 - `FIRESTORE_PROJECT_ID` - Firestore project ID (default: `agentnav-dev`)
 - `ENVIRONMENT` - Environment name (default: `development`)
-

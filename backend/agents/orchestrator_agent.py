@@ -134,7 +134,73 @@ Determine:
         }
     
     async def _delegate_to_agents(self, content_analysis: Dict[str, Any], document: str):
-        """Send delegation messages to specialized agents via A2A Protocol"""
+        """
+        Send delegation messages to specialized agents via A2A Protocol
+        
+        FR#027: Uses typed TaskDelegationMessage when enhanced A2A is available
+        """
+        # Check if using enhanced A2A Protocol
+        if self.using_enhanced_a2a:
+            await self._delegate_with_typed_messages(content_analysis, document)
+        else:
+            await self._delegate_with_legacy_messages(content_analysis, document)
+    
+    async def _delegate_with_typed_messages(self, content_analysis: Dict[str, Any], document: str):
+        """Send typed delegation messages (FR#027)"""
+        from services.a2a_protocol import create_task_delegation_message
+        
+        correlation_id = getattr(self.a2a, 'correlation_id', 'unknown')
+        
+        # Message to Summarizer Agent
+        summarizer_message = create_task_delegation_message(
+            from_agent=self.name,
+            to_agent="summarizer",
+            task_name="create_summary",
+            task_parameters={
+                "content": document,
+                "content_type": content_analysis["content_type"]
+            },
+            expected_output="comprehensive_summary",
+            correlation_id=correlation_id
+        )
+        await self.a2a.send_message(summarizer_message)
+        
+        # Message to Linker Agent
+        linker_message = create_task_delegation_message(
+            from_agent=self.name,
+            to_agent="linker",
+            task_name="identify_relationships",
+            task_parameters={
+                "content": document,
+                "content_type": content_analysis["content_type"],
+                "key_topics": content_analysis["key_topics"]
+            },
+            expected_output="entity_relationships",
+            correlation_id=correlation_id
+        )
+        await self.a2a.send_message(linker_message)
+        
+        # Message to Visualizer Agent
+        visualizer_message = create_task_delegation_message(
+            from_agent=self.name,
+            to_agent="visualizer",
+            task_name="create_visualization",
+            task_parameters={
+                "content": document,
+                "content_type": content_analysis["content_type"],
+                "complexity_level": content_analysis["complexity_level"]
+            },
+            expected_output="interactive_graph",
+            correlation_id=correlation_id,
+            depends_on=["summarizer", "linker"]
+        )
+        await self.a2a.send_message(visualizer_message)
+        
+        self.logger.info("📨 Sent typed delegation messages to all specialized agents (FR#027)")
+    
+    async def _delegate_with_legacy_messages(self, content_analysis: Dict[str, Any], document: str):
+        """Send legacy delegation messages (backward compatibility)"""
+        from .base_agent import A2AMessage
         
         # Message to Summarizer Agent
         summarizer_message = A2AMessage(

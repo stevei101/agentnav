@@ -13,6 +13,7 @@ Implements a complete Podman-based local development environment enabling develo
 ## ?? What's Changed
 
 ### Added
+
 - ? Development Dockerfiles (`frontend.Dockerfile.dev`, `backend/Dockerfile.dev`)
 - ? Docker Compose files (`docker-compose.yml`, `docker-compose.test.yml`, `docker-compose.demo.yml`)
 - ? Makefile with Podman-native commands
@@ -22,6 +23,7 @@ Implements a complete Podman-based local development environment enabling develo
 - ? Developer documentation (`docs/local-development.md`)
 
 ### Modified
+
 - ? Updated `README.md` with local development quick start
 
 ---
@@ -29,11 +31,13 @@ Implements a complete Podman-based local development environment enabling develo
 ## ?? Key Features
 
 ### One-Command Setup
+
 ```bash
 make setup  # Handles Podman machine, .env, build & start
 ```
 
 ### Comprehensive Makefile
+
 - `make up/down` - Start/stop services
 - `make logs` - View logs (all or per-service)
 - `make test` - Run tests
@@ -41,11 +45,13 @@ make setup  # Handles Podman machine, .env, build & start
 - `make clean` - Complete cleanup
 
 ### Services Included
+
 - **Frontend** (React + TypeScript + Vite) - Port 3000, hot-reload
-- **Backend** (FastAPI + Python) - Port 8080, auto-reload  
+- **Backend** (FastAPI + Python) - Port 8080, auto-reload
 - **Firestore Emulator** - Port 8081 (API only, UI port mapping may not be available)
 
 ### Cloud Run Alignment
+
 - ? PORT environment variable support
 - ? `/healthz` health check endpoints
 - ? Stateless design
@@ -56,6 +62,7 @@ make setup  # Handles Podman machine, .env, build & start
 ## ?? Testing
 
 ### Manual Testing
+
 ```bash
 # Fresh setup
 make setup
@@ -71,6 +78,7 @@ make clean
 ```
 
 ### Expected Results
+
 - ? All services start successfully
 - ? Health checks pass
 - ? Hot-reload works

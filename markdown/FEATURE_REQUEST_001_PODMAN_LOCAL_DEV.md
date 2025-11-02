@@ -17,6 +17,7 @@ Currently, developers working on **Agentic Navigator** face significant friction
 - **Dependencies:** Multiple environment variables, service account configurations, and API keys
 
 **The Problem:**
+
 - Developers spend 2-4 hours manually configuring their local environment
 - Inconsistent setups lead to "works on my machine" issues
 - New team members struggle to onboard and contribute quickly
@@ -24,6 +25,7 @@ Currently, developers working on **Agentic Navigator** face significant friction
 - No standardized way to demo the application locally with all services running
 
 **I'm always frustrated when** I need to:
+
 - Manually install bun, uv, Python, Node.js, and configure all dependencies
 - Set up Firestore emulator separately and configure authentication
 - Manually manage environment variables and secrets
@@ -37,6 +39,7 @@ Currently, developers working on **Agentic Navigator** face significant friction
 **Create a Podman-based local development environment** with the following components:
 
 ### 1. **Dockerfile for Frontend (Development)**
+
 - Multi-stage build for optimal development experience
 - Includes bun runtime and development dependencies
 - Hot-reload support for Vite development server
@@ -44,6 +47,7 @@ Currently, developers working on **Agentic Navigator** face significant friction
 - Compatible with Podman (uses standard Dockerfile format)
 
 ### 2. **Dockerfile for Backend (Development)**
+
 - Python 3.11+ base image with uv pre-installed
 - FastAPI development server with hot-reload
 - Includes ADK dependencies and agent configurations
@@ -52,9 +56,11 @@ Currently, developers working on **Agentic Navigator** face significant friction
 - Compatible with Podman (uses standard Dockerfile format)
 
 ### 3. **podman-compose.yml for Complete Local Stack**
+
 A comprehensive `podman-compose.yml` file that orchestrates:
 
 **Services:**
+
 - `agentnav-frontend` - React development server with hot-reload
 - `agentnav-backend` - FastAPI backend with auto-reload
 - `firestore-emulator` - Google Firestore emulator for local data persistence
@@ -62,6 +68,7 @@ A comprehensive `podman-compose.yml` file that orchestrates:
 - `nginx` (optional) - Reverse proxy for unified local domain access
 
 **Features:**
+
 - Volume mounts for live code reloading (no rebuild needed for code changes)
 - Environment variable management via `.env` file
 - Network isolation between services
@@ -69,18 +76,21 @@ A comprehensive `podman-compose.yml` file that orchestrates:
 - Port mapping for easy local access
 
 ### 4. **podman-compose.test.yml**
+
 - Lightweight configuration for running test suites
 - Includes test databases and mock services
 - Configurable via environment variables
 - Supports parallel test execution
 
 ### 5. **podman-compose.demo.yml**
+
 - Production-like configuration for demo purposes
 - Includes all services configured with demo data
 - Optimized for presentation and stability
 - Includes sample data seeds
 
 ### 6. **Supporting Files**
+
 - `.env.example` - Template for environment variables
 - `.dockerignore` - Optimize build context (Podman-compatible)
 - `Makefile` - Simplified commands for common operations (recommended)
@@ -91,6 +101,7 @@ A comprehensive `podman-compose.yml` file that orchestrates:
 **Expected Developer Experience:**
 
 **Option 1: Using Makefile (Recommended)**
+
 ```bash
 # Clone repository
 git clone <repo-url>
@@ -113,6 +124,7 @@ make help
 ```
 
 **Option 2: Using podman-compose directly**
+
 ```bash
 # Clone repository
 git clone <repo-url>
@@ -141,6 +153,7 @@ podman-compose down
 **Note:** podman-compose uses Docker Compose V2 syntax and is compatible with docker-compose.yml format. Developers can use either 'podman-compose' or 'docker-compose' commands. The Makefile automatically detects which is available.
 
 **Access Points:**
+
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:8080`
 - API Docs: `http://localhost:8080/docs`
@@ -151,22 +164,27 @@ podman-compose down
 ## Describe alternatives you've considered
 
 ### Alternative 1: **Manual Setup Scripts**
+
 - **Pros:** Simple bash scripts, no Docker dependency
 - **Cons:** Platform-specific issues (macOS vs Linux vs Windows), doesn't solve dependency conflicts, still requires manual configuration
 
 ### Alternative 2: **Vagrant with Virtual Machines**
+
 - **Pros:** Full OS isolation, consistent environment
 - **Cons:** Heavy resource usage, slower startup, complex configuration, overkill for this use case
 
 ### Alternative 3: **Cloud-Based Development (Cloud Shell / Codespaces)**
+
 - **Pros:** Always consistent, no local setup
 - **Cons:** Internet dependency, latency, potential costs, less control over environment
 
 ### Alternative 4: **Kubernetes Local (minikube / kind)**
+
 - **Pros:** Matches production environment closely
 - **Cons:** Overkill for local development, complex setup, slower than Podman Compose
 
 ### **Why Podman Compose is Best:**
+
 - ? Fast startup and teardown
 - ? Cross-platform compatibility (macOS, Linux, Windows via WSL2)
 - ? Lightweight resource usage (rootless containers)
@@ -182,6 +200,7 @@ podman-compose down
 ## Additional context
 
 ### Current State
+
 - Project uses **Podman** for production container builds (as per SYSTEM_INSTRUCTION.md)
 - Cloud Build workflow exists for CI/CD (`cloudbuild.yaml`)
 - Frontend is a React + TypeScript + Vite application
@@ -191,12 +210,14 @@ podman-compose down
 ### Technical Requirements
 
 **Frontend Dockerfile:**
+
 - Base: `node:20-alpine` or `oven/bun:latest`
 - Development dependencies: Vite, TypeScript, React
 - Hot-reload via volume mounts
 - Port: 5173
 
 **Backend Dockerfile:**
+
 - Base: `python:3.11-slim` or `uvicornorg/uvicorn-gunicorn:python3.11`
 - Python dependencies: FastAPI, uvicorn, Google ADK, Firestore client
 - Development dependencies: pytest, black, mypy
@@ -204,6 +225,7 @@ podman-compose down
 - Port: 8080
 
 **Firestore Emulator:**
+
 - Use `gcr.io/google.com/cloudsdktool/cloud-sdk:emulators` image
 - Configure via environment variables
 - Persistent data via volume mount
@@ -232,17 +254,20 @@ VITE_GEMINI_API_KEY=your-api-key-here
 ### Success Criteria
 
 ? **Development Setup:**
+
 - New developer can go from `git clone` to running application in < 10 minutes
 - Single command (`make setup`) handles Podman machine, environment setup, build, and start
 - Alternative: `podman-compose up` (preferred) or `docker-compose up` starts all services
 - Code changes reflect immediately without container rebuild
 
 ? **Testing Setup:**
+
 - Tests can run in isolated containers
 - Test database is automatically provisioned and cleaned
 - CI/CD can use same Podman Compose configuration
 
 ? **Demo Setup:**
+
 - Demo environment runs with realistic sample data
 - All services are stable and properly configured
 - Can be used for stakeholder presentations

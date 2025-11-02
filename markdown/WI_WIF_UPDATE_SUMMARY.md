@@ -11,6 +11,7 @@ Based on expert review clarifying the distinction between **Workload Identity (W
 ### 1. `docs/SYSTEM_INSTRUCTION.md`
 
 **Changes:**
+
 - ? Added comprehensive **"Identity & Authentication Architecture"** section
 - ? Clarified distinction between WIF (CI/CD) and WI (Cloud Run services)
 - ? Updated infrastructure table to mention both mechanisms
@@ -19,6 +20,7 @@ Based on expert review clarifying the distinction between **Workload Identity (W
 - ? Added deployment section note about WI for Cloud Run services
 
 **New Section Added:**
+
 - Complete explanation of Workload Identity Federation (WIF) for GitHub Actions
 - Complete explanation of Workload Identity (WI) for Cloud Run services
 - Summary table comparing both mechanisms
@@ -28,6 +30,7 @@ Based on expert review clarifying the distinction between **Workload Identity (W
 ### 2. `.github/agents/agentnav-gh-copilot-agent.md`
 
 **Changes:**
+
 - ? Updated infrastructure table entry from "GCP IAM & WIF" to "GCP IAM & Identity"
 - ? Added description explaining both WIF and WI mechanisms
 
@@ -36,12 +39,14 @@ Based on expert review clarifying the distinction between **Workload Identity (W
 ## ?? Key Clarifications
 
 ### Workload Identity Federation (WIF)
+
 - **Purpose:** CI/CD authentication (GitHub Actions ? GCP)
 - **Where Used:** GitHub Actions runner
 - **Setup:** Terraform (FR#007)
 - **Benefits:** No static credentials, temporary access, modern best practice
 
 ### Workload Identity (WI)
+
 - **Purpose:** Runtime authentication (Cloud Run service ? other GCP services)
 - **Where Used:** Running Cloud Run containers
 - **Setup:** Terraform (Service Account IAM roles)
@@ -51,22 +56,24 @@ Based on expert review clarifying the distinction between **Workload Identity (W
 
 ## ?? Summary Table
 
-| Identity Mechanism | Where Used | Purpose | Setup Method |
-| :--- | :--- | :--- | :--- |
-| **Workload Identity Federation (WIF)** | GitHub Actions Runner | CI/CD authentication (deploy, push containers) | Terraform (FR#007) |
-| **Workload Identity (WI)** | Cloud Run Services | Runtime authentication (Firestore, Secret Manager) | Terraform (Service Account IAM roles) |
+| Identity Mechanism                     | Where Used            | Purpose                                            | Setup Method                          |
+| :------------------------------------- | :-------------------- | :------------------------------------------------- | :------------------------------------ |
+| **Workload Identity Federation (WIF)** | GitHub Actions Runner | CI/CD authentication (deploy, push containers)     | Terraform (FR#007)                    |
+| **Workload Identity (WI)**             | Cloud Run Services    | Runtime authentication (Firestore, Secret Manager) | Terraform (Service Account IAM roles) |
 
 ---
 
 ## ?? Documentation Structure
 
 ### New Section in SYSTEM_INSTRUCTION.md:
+
 1. **Identity & Authentication Architecture**
    - 1. Workload Identity Federation (WIF) - For CI/CD
    - 2. Workload Identity (WI) - For Cloud Run Services
    - Identity Summary Table
 
 ### Updated Sections:
+
 - Summary paragraph (mentions both WIF and WI)
 - Infrastructure table (clarifies both mechanisms)
 - CI/CD Workflow (clarifies WIF usage)
