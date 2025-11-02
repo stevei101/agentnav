@@ -65,7 +65,7 @@ jobs:
             
           # 3. Default (other branches)
           else
-            IMAGE_TAG="${{ github.sha::7 }}"
+            IMAGE_TAG=$(echo "${{ github.sha }}" | cut -c1-7)
           fi
 
           # Set outputs for subsequent build/push steps
