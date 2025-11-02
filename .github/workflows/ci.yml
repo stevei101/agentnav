@@ -139,3 +139,25 @@ jobs:
             --recursive
             .
         continue-on-error: true
+
+  secret-verification:
+    name: Secret History Verification (FR#095)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for verification
+
+      - name: Run secret verification script
+        run: |
+          chmod +x ./scripts/verify-no-secrets.sh
+          ./scripts/verify-no-secrets.sh
+
+      - name: Verify .gitignore contains .env pattern
+        run: |
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "ERROR: .env pattern not found in .gitignore"
+            exit 1
+          fi
+          echo "✓ .gitignore properly configured"
