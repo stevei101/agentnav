@@ -4,7 +4,7 @@ Creates concise, comprehensive summaries of content
 """
 import hashlib
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .base_agent import Agent, A2AMessage
 import time
 
@@ -19,11 +19,13 @@ class SummarizerAgent(Agent):
     - Read entire content and generate concise summaries
     - Store intermediate results in Firestore
     - Communicate findings via A2A Protocol
+    - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("summarizer", a2a_protocol)
         self._prompt_template = None
+        self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -76,6 +78,14 @@ Create a comprehensive summary that captures the essence and key information.
         
         self.logger.info(f"📝 Summarizer analyzing {content_type} content")
         
+        # Emit processing event for FR#020
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent="summarizer",
+                step=2,
+                partial_results={"status": "generating summary"}
+            )
+        
         # Generate summary using Gemini
         summary = await self._generate_summary(document, content_type)
         
@@ -87,6 +97,18 @@ Create a comprehensive summary that captures the essence and key information.
         
         # Notify other agents via A2A Protocol
         await self._notify_summary_complete(summary, insights)
+        
+        # Emit complete event for FR#020
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_complete(
+                agent="summarizer",
+                step=2,
+                summary=summary,
+                metrics={
+                    "summary_length_words": len(summary.split()),
+                    "insights_count": len(insights)
+                }
+            )
         
         return {
             "agent": "summarizer",

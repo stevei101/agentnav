@@ -3,7 +3,7 @@ Orchestrator Agent - ADK Implementation
 Team lead that determines content type and delegates tasks to specialized agents
 """
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .base_agent import Agent, A2AMessage
 import time
 
@@ -19,11 +19,13 @@ class OrchestratorAgent(Agent):
     - Determine content type (document vs codebase)
     - Delegate tasks to specialized agents via A2A Protocol
     - Coordinate the overall analysis workflow
+    - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("orchestrator", a2a_protocol)
         self._prompt_template = None
+        self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -67,6 +69,14 @@ Determine:
         
         self.logger.info("🎯 Orchestrator analyzing content and planning workflow")
         
+        # Emit processing event for FR#020
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent="orchestrator",
+                step=1,
+                partial_results={"status": "analyzing content"}
+            )
+        
         # Step 1: Analyze content type and characteristics
         content_analysis = await self._analyze_content(document)
         
@@ -75,6 +85,18 @@ Determine:
         
         # Step 3: Set up workflow coordination
         workflow_plan = self._create_workflow_plan(content_analysis)
+        
+        # Emit complete event for FR#020
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_complete(
+                agent="orchestrator",
+                step=1,
+                metrics={
+                    "content_type": content_analysis["content_type"],
+                    "complexity": content_analysis["complexity_level"],
+                    "topics_identified": len(content_analysis["key_topics"])
+                }
+            )
         
         return {
             "agent": "orchestrator",

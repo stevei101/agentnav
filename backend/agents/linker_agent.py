@@ -3,7 +3,7 @@ Linker Agent - ADK Implementation
 Identifies key entities and their relationships for visualization
 """
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from .base_agent import Agent, A2AMessage
 import time
 import re
@@ -20,11 +20,13 @@ class LinkerAgent(Agent):
     - Map relationships between entities
     - Communicate findings via A2A Protocol
     - Prepare data structure for visualization
+    - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
+        self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
