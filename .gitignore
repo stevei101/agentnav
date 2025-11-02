@@ -73,6 +73,8 @@ pip-delete-this-directory.txt
 htmlcov/
 .pytest_cache/
 coverage.xml
+coverage/
+.nyc_output/
 
 # Build artifacts
 build/
