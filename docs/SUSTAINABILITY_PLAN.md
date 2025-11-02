@@ -90,7 +90,7 @@ Based on the current Terraform configuration and Cloud Run deployment architectu
 1. GitHub account in good standing (✅ Verified)
 2. Stripe or PayPal account for payouts
 3. Two-factor authentication enabled
-4. Public repository (✅ Planned for FR#040)
+4. Public repository (🔄 Planned for FR#040)
 5. Complete profile with description and goals
 
 **Setup Process:**
@@ -370,7 +370,7 @@ Based on feasibility, timeline, and expected return:
 **Tasks:**
 
 - [x] Create SUSTAINABILITY_PLAN.md
-- [ ] Create .github/FUNDING.yml
+- [x] Create .github/FUNDING.yml
 - [ ] Set up GitHub Sponsors profile
 - [ ] Apply for Google Cloud credits
 - [ ] Update README.md with sustainability section
@@ -821,13 +821,15 @@ With a proactive, multi-channel approach to sustainability, the project can secu
 - Network egress: 100GB/month
 - CI/CD builds: 20 builds/month
 
-**Pricing References (as of 2025):**
+**Pricing References (as of November 2025):**
 
 - Cloud Run (CPU): $0.00002400/vCPU-second
 - Cloud Run (Memory): $0.00000250/GiB-second
 - Cloud Run (GPU L4): ~$1.50-2.00/hour
 - Firestore: $0.06 per 100K reads, $0.18 per 100K writes
 - GAR Storage: $0.10/GiB/month
+
+**Note:** Cloud pricing changes frequently. Always verify current pricing at https://cloud.google.com/pricing before making budget decisions.
 
 ---
 
