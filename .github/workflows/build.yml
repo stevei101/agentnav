@@ -199,7 +199,7 @@ jobs:
           environment-url: ${{ steps.deploy-backend-staging.outputs.url }}
 
       - name: Comment PR with staging URLs
-        if: matrix.service == 'frontend'
+        if: matrix.service == 'frontend' && success()
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
