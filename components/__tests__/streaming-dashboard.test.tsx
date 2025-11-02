@@ -15,9 +15,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // Import components
-import { DocumentUpload } from "../components/DocumentUpload";
-import { AgentDashboard } from "../components/AgentDashboard";
-import { useAgentStream } from "../hooks/useAgentStream";
+import { DocumentUpload } from "../DocumentUpload";
+import { AgentDashboard } from "../AgentDashboard";
+import { useAgentStream } from "../../hooks/useAgentStream";
 
 describe("DocumentUpload Component", () => {
   const mockOnSessionStart = vi.fn();
