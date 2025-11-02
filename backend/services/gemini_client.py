@@ -9,19 +9,21 @@ import os
 import logging
 import asyncio
 from typing import Optional, Dict, Any, List
+logger = logging.getLogger(__name__)
+
 try:
     import google.generativeai as genai
     from google.generativeai.types import HarmCategory, HarmBlockThreshold
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
-    logger = logging.getLogger(__name__)
     logger.warning("google-genai package not installed. Install with: pip install google-genai")
 
-logger = logging.getLogger(__name__)
-
 # Global client instance (lazy initialization)
-_gemini_client: Optional[genai.GenerativeModel] = None
+if GENAI_AVAILABLE:
+    _gemini_client: Optional[genai.GenerativeModel] = None
+else:
+    _gemini_client = None
 
 
 def get_gemini_client(model_name: str = "gemini-1.5-flash"):
@@ -40,24 +42,6 @@ def get_gemini_client(model_name: str = "gemini-1.5-flash"):
     Raises:
         ValueError: If API key is missing in local development
         RuntimeError: If client initialization fails or package not installed
-    """
-    if not GENAI_AVAILABLE:
-        raise RuntimeError("google-genai package is not installed. Install with: pip install google-genai")
-    """
-    Get or create Gemini client instance
-    
-    This function initializes the Google GenAI client with proper authentication.
-    It uses Workload Identity (WI) in deployed environments or API key for local development.
-    
-    Args:
-        model_name: Name of the Gemini model to use (default: "gemini-1.5-flash")
-        
-    Returns:
-        GenerativeModel instance configured for Gemini
-        
-    Raises:
-        ValueError: If API key is missing in local development
-        RuntimeError: If client initialization fails
         
     Authentication Methods (in priority order):
     1. Workload Identity (WI) - Automatic in Cloud Run (GCP environment)
@@ -68,6 +52,9 @@ def get_gemini_client(model_name: str = "gemini-1.5-flash"):
         In Cloud Run, Workload Identity automatically provides credentials.
         No explicit API key needed when running in GCP environment.
     """
+    if not GENAI_AVAILABLE:
+        raise RuntimeError("google-genai package is not installed. Install with: pip install google-genai")
+    
     global _gemini_client
     
     # Reuse existing client if already initialized
