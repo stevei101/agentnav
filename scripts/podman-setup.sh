@@ -5,6 +5,15 @@ set -e
 
 echo "🚀 Setting up Agentic Navigator local development environment..."
 
+# Port configuration (override via environment variables if needed)
+# Defaults align with system instruction and project config:
+# - Frontend (Vite dev server): 5173
+# - Backend (FastAPI): 8080
+# - Firestore Emulator UI: 4000
+FRONTEND_PORT=${FRONTEND_PORT:-5173}
+BACKEND_PORT=${BACKEND_PORT:-8080}
+FIRESTORE_UI_PORT=${FIRESTORE_UI_PORT:-4000}
+
 # Check if Podman is installed
 if ! command -v podman &> /dev/null; then
     echo "❌ Podman is not installed. Please install Podman first."
@@ -70,10 +79,10 @@ $COMPOSE_CMD up -d --build
 echo "✅ Setup complete!"
 echo ""
 echo "📍 Access points:"
-echo "   - Frontend: http://localhost:3000"
-echo "   - Backend API: http://localhost:8080"
-echo "   - API Docs: http://localhost:8080/docs"
-echo "   - Firestore Emulator: http://localhost:8081"
+echo "   - Frontend: http://localhost:${FRONTEND_PORT}"
+echo "   - Backend API: http://localhost:${BACKEND_PORT}"
+echo "   - API Docs: http://localhost:${BACKEND_PORT}/docs"
+echo "   - Firestore Emulator UI: http://localhost:${FIRESTORE_UI_PORT}"
 echo ""
 echo "📊 View logs: $COMPOSE_CMD logs -f"
 echo "🛑 Stop services: $COMPOSE_CMD down"
