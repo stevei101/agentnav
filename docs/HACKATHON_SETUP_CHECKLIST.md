@@ -62,7 +62,7 @@ make health   # Check service health
 ```
 
 ### 10. Verify
-- [ ] Frontend accessible: http://localhost:5173
+- [ ] Frontend accessible: http://localhost:3000
 - [ ] Backend accessible: http://localhost:8080
 - [ ] Firestore UI accessible: http://localhost:4000
 - [ ] Health check works: http://localhost:8080/healthz
