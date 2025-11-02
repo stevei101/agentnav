@@ -119,6 +119,19 @@ Key principles:
 - Optimize `.dockerignore` and `.gitignore` to minimize build context
 - Run `make ci` before requesting review
 
+### Quality Gates and Status Checks
+
+All Pull Requests to the `main` branch must pass **three consolidated status checks**:
+
+📖 **[Contribution Quality Gates](docs/CONTRIBUTION_QUALITY_GATES.md)**
+
+The three mandatory checks are:
+1. **CODE_QUALITY** - Code integrity, style, type safety, and 70% code coverage
+2. **SECURITY_AUDIT** - IaC security and dependency vulnerability scanning
+3. **INFRA_VERIFICATION** - Terraform plan validation for IaC changes
+
+If any check fails, refer to the troubleshooting guide in the documentation.
+
 ### Code Style
 
 **Frontend (TypeScript/React):**
