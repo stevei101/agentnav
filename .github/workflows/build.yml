@@ -119,7 +119,7 @@ jobs:
 
       - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
-        timeout-minutes: 30
+        timeout-minutes: 120
         run: |
           # Use Cloud Build for Gemma due to disk space and GPU requirements
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
@@ -134,7 +134,7 @@ jobs:
           set +e
           gcloud builds submit \
             --config=cloudbuild-gemma.yaml \
-            --timeout=30m \
+            --timeout=120m \
             --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
           
           BUILD_EXIT_CODE=$?
