@@ -45,10 +45,10 @@ gcloud run deploy ${SERVICE_NAME} \
     --image ${IMAGE_PATH} \
     --region ${REGION} \
     --platform managed \
-    --cpu gpu \
+    --cpu 4 \
     --memory 16Gi \
+    --gpu 1 \
     --gpu-type nvidia-l4 \
-    --gpu-count 1 \
     --port 8080 \
     --timeout 300s \
     --min-instances 0 \
