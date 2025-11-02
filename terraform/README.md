@@ -5,6 +5,7 @@ This directory contains Terraform configuration for provisioning all Google Clou
 ## Overview
 
 This Terraform configuration provisions:
+
 - **Workload Identity Federation (WIF)** for secure GitHub Actions → GCP authentication
 - **Service Accounts** with least-privilege IAM roles
 - **Artifact Registry** for container image storage
@@ -39,6 +40,7 @@ gcloud services enable \
 ### 2. Configure Terraform Cloud Backend
 
 Edit `backend.tf` or use environment variables:
+
 ```bash
 export TF_CLOUD_ORGANIZATION="your-org-name"
 export TF_WORKSPACE="agentnav-production"
@@ -95,6 +97,7 @@ echo -n "YOUR_HF_TOKEN" | gcloud secrets versions add HUGGINGFACE_TOKEN --data-f
 ### Workload Identity Federation Outputs
 
 After `terraform apply`, you'll get WIF outputs that need to be added as GitHub Secrets:
+
 - `wif_provider` → GitHub Secret: `WIF_PROVIDER`
 - `wif_service_account_email` → GitHub Secret: `WIF_SERVICE_ACCOUNT`
 
@@ -116,6 +119,7 @@ After `terraform apply`, you'll get WIF outputs that need to be added as GitHub 
 ## Outputs
 
 After applying, Terraform outputs:
+
 - WIF provider and service account (for GitHub Secrets)
 - Service URLs for all Cloud Run services
 - Artifact Registry repository info
@@ -124,6 +128,7 @@ After applying, Terraform outputs:
 ## CI/CD Integration
 
 This infrastructure is designed to work with GitHub Actions workflows:
+
 1. Terraform provisions infrastructure
 2. GitHub Actions uses WIF to authenticate
 3. CI/CD builds images and pushes to Artifact Registry
@@ -134,18 +139,23 @@ See `docs/SYSTEM_INSTRUCTION.md` for full CI/CD workflow.
 ## Troubleshooting
 
 ### GPU Quota Issues
+
 Ensure NVIDIA L4 GPU quota is approved in `europe-west1` region:
+
 ```bash
 gcloud compute project-info describe --project=PROJECT_ID
 ```
 
 ### WIF Not Working
+
 Verify the GitHub repository in `variables.tf` matches your actual repository:
+
 ```hcl
 github_repository = "stevei101/agentnav"
 ```
 
 ### Secret Access Denied
+
 Ensure service accounts have `secretmanager.secretAccessor` role (configured in `iam.tf`).
 
 ## Security Best Practices
@@ -154,4 +164,3 @@ Ensure service accounts have `secretmanager.secretAccessor` role (configured in 
 - ✅ Service accounts use least-privilege IAM roles
 - ✅ WIF used for GitHub Actions (no static keys)
 - ✅ Secrets only accessible to required services
-
