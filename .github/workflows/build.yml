@@ -48,22 +48,35 @@ jobs:
         run: |
           gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
 
-      - name: Set image tag
+      - name: Determine Image Tags based on Event
         id: image
+        shell: bash
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          LATEST_TAG=""
+          
+          # 1. Check for Pull Request trigger
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             IMAGE_TAG="pr-${{ github.event.pull_request.number }}"
-          else
+            
+          # 2. Check for Push to 'main' branch
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             IMAGE_TAG="${{ github.sha }}"
             LATEST_TAG="latest"
+            
+          # 3. Default (other branches)
+          else
+            IMAGE_TAG="${{ github.sha::7 }}"
           fi
-          
+
+          # Set outputs for subsequent build/push steps
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "latest_tag=${LATEST_TAG:-}" >> $GITHUB_OUTPUT
+          [ -n "${LATEST_TAG}" ] && echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
           
-          echo "Building for service: ${{ matrix.service }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          [ -n "${LATEST_TAG}" ] && echo "Also tagging as: ${LATEST_TAG}"
+          [ -n "${LATEST_TAG}" ] && echo "Latest tag: ${LATEST_TAG}"
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
