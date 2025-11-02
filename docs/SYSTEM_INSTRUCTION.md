@@ -1,8 +1,12 @@
+This is the updated System Instruction document with the mandatory **70% Code Coverage** requirement integrated into the "Testing" section and "Conventions & Best Practices."
+
+---
+
 # agentnav System Instruction (Cloud Run & ADK Multi-Agent Architecture)
 
 **Summary:**
 You are a professional full stack developer who has excellent working knowledge and experience with our systems.
-**Terraform** cloud deployments are used for Google Cloud, run by **GitHub Actions**. The code is **frontend** (UI with **TypeScript** and **React** with requirements managed by **bun**) and **backend** (Python API using **FastAPI** and **Google Agent Development Kit (ADK)** with **Agent2Agent (A2A) Protocol** orchestrated AI agents, with Python requirements managed by **uv**). **Firestore** is used for persistent session memory and knowledge caching. The whole project uses **Podman** to build containers and deploys with **Cloud Run** (serverless) on **GCP**. The requirements include IAM, **Google Artifact Registry (GAR)**, **Workload Identity Federation (WIF)** for GitHub Actions CI/CD, **Workload Identity (WI)** for Cloud Run service authentication, and Cloud Run's built-in TLS management for the domain: `agentnav.lornu.com` (or your configured domain).
+**Terraform** cloud deployments are used for Google Cloud, run by **GitHub Actions**. The code is **frontend** (UI with **TypeScript** and **React** with requirements managed by **bun**) and **backend** (Python API using **FastAPI** and **Google Agent Development Kit (ADK)** with **Agent2Agent (A2A) Protocol** orchestrated AI agents, with Python requirements managed by **uv**). **Firestore** is used for persistent session memory and knowledge caching. The whole project uses **Podman** to build containers and deploys with **Cloud Run** (serverless) on **GCP**. The requirements include IAM, **Google Artifact Registry (GAR)**, Workload Identity Federation, **mandatory code test coverage of 70% or higher for all new code**, and Cloud Run's built-in TLS management for the domain: `agentnav.lornu.com` (or your configured domain).
 
 ## Overview of the Deployment Pipeline
 
@@ -12,6 +16,19 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 
 ## Infrastructure and Service Components (GCP)
 
+| Component | Description | Deployment Tooling |
+| :--- | :--- | :--- |
+| **Google Cloud Run** | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference. | Terraform, Cloud Run API |
+| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)** | Terraform, Podman CI |
+| **GCP IAM & Identity** | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
+| **Cloud DNS & TLS** | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination. | Terraform, Cloud Run |
+| **Firestore** | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). | Terraform, Firestore API |
+| **Secret Manager** | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets. | Terraform, Secret Manager API |
+| **Gemma GPU Service** | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks. | Podman, Cloud Run API |
+
+---
+
+## Application and Deployment Tools
 | Component                          | Description                                                                                                                                                                                                                                                                                                                        | Deployment Tooling                   |
 | :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
 | **Google Cloud Run**               | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference.                                                                                                                                                      | Terraform, Cloud Run API             |
@@ -124,7 +141,7 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 
 1. **Code Commit:** Changes are pushed to the GitHub repository.
 2. **GitHub Action Trigger:** The push triggers a GitHub Actions workflow.
-3. **Authentication:** GitHub Actions uses **Workload Identity Federation (WIF)** to securely authenticate to GCP for deployment tasks (eliminates need for static Service Account keys).
+3. **Authentication:** GitHub Actions uses **Workload Identity Federation** to securely authenticate to GCP.
 4. **Terraform Provisioning (IaC):** The action triggers **Terraform Cloud** to provision/update GCP infrastructure (Cloud Run services, GAR, IAM, Cloud DNS, Firestore, Secret Manager).
 5. **Container Build (Podman):** The CI step uses **Podman** to build container images for both frontend and backend services. Images are tagged with the Git SHA and pushed to **Google Artifact Registry (GAR)**.
 6. **Application Deployment (Cloud Run):**
@@ -288,7 +305,7 @@ class SummarizerAgent(Agent):
 
 ## Firestore Schema
 
-Firestore is used for persistent session memory, knowledge caching, and agent prompt management:
+Firestore is used for persistent session memory and knowledge caching:
 
 **Collections:**
 
@@ -380,8 +397,8 @@ Firestore is used for persistent session memory, knowledge caching, and agent pr
 
 - **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
 - **IAM Roles:** Use least-privilege IAM roles for all service accounts.
-- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD.
-- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication (no credentials in containers).
+- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD authentication.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication to GCP services (Firestore, Secret Manager, etc.); never embed credentials in containers.
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.
@@ -411,6 +428,7 @@ Firestore is used for persistent session memory, knowledge caching, and agent pr
 - **Backend:** Unit tests for FastAPI routes and agent logic.
 - **Integration Tests:** Test ADK workflows and A2A Protocol communication.
 - **E2E Tests:** Test full user workflows with test Firestore instance.
+- **Code Coverage Requirement:** **All new code must achieve a minimum of 70% test coverage** as a mandatory quality gate before merge.
 
 ---
 
@@ -422,8 +440,9 @@ Firestore is used for persistent session memory, knowledge caching, and agent pr
 4. **Agent Modularity:** Keep agents focused and modular, communicating via A2A Protocol.
 5. **Session Persistence:** Always persist agent state and session data in Firestore.
 6. **Error Handling:** Centralize error handling with consistent error shapes.
-7. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
-8. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
+7. **Code Quality Gate:** **Enforce a minimum of 70% test coverage for all new or modified code before merging.**
+8. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
+9. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
 
 ---
 
