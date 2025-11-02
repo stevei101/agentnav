@@ -177,7 +177,7 @@ resource "google_cloud_run_v2_service" "gemma" {
 
       env {
         name  = "USE_8BIT_QUANTIZATION"
-        value = "false"
+        value = "true"
       }
 
       # GPU Configuration
@@ -187,6 +187,30 @@ resource "google_cloud_run_v2_service" "gemma" {
           memory = "16Gi"
         }
         cpu_idle = false
+      }
+
+      # Startup probe - Allow up to 300s for model loading
+      startup_probe {
+        http_get {
+          path = "/healthz"
+          port = var.gemma_container_port
+        }
+        initial_delay_seconds = 10
+        timeout_seconds       = 10
+        period_seconds        = 10
+        failure_threshold     = 30 # 30 * 10s = 300s max startup time
+      }
+
+      # Liveness probe - Check if service is still healthy
+      liveness_probe {
+        http_get {
+          path = "/healthz"
+          port = var.gemma_container_port
+        }
+        initial_delay_seconds = 30
+        timeout_seconds       = 10
+        period_seconds        = 30
+        failure_threshold     = 3
       }
     }
 

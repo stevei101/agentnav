@@ -40,6 +40,7 @@ ENV MODEL_NAME=google/gemma-7b-it
 EXPOSE 8080
 
 # Health check (Cloud Run uses this)
+# Allow 300s for model loading (startup probe handles this)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:${PORT}/healthz || exit 1
 
