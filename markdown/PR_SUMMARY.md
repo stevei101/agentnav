@@ -26,7 +26,7 @@ This PR resolves Gemma GPU service build issues by migrating builds from GitHub 
 
 ## Linked Issue(s)
 
-Addresses disk space constraints in FEATURE_REQUEST_002_GPU_GEMMA_SERVICE.md
+Addresses disk space constraints as described in [docs/GPU_SETUP_GUIDE.md](docs/GPU_SETUP_GUIDE.md)
 
 ## Type of change
 
