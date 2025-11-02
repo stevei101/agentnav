@@ -7,6 +7,7 @@ import hashlib
 import logging
 import time
 from typing import Optional, Dict, Any
+from google.cloud.firestore import Increment
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,6 @@ class KnowledgeCacheService:
             doc_ref = client.get_document(self._collection_name, content_hash)
 
             # Increment hit count atomically
-            from google.cloud.firestore import Increment
             doc_ref.update({"hit_count": Increment(1)})
 
             logger.debug(f"📊 Incremented hit count for {content_hash[:16]}...")

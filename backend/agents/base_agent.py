@@ -432,9 +432,9 @@ class AgentWorkflow:
                 continue
 
             agent = self.agents[agent_name]
+            agent_start_time = time.time()  # Initialize before try block
 
             try:
-                agent_start_time = time.time()
                 logger.info(f"🔄 Executing agent: {agent_name}")
                 session_context.set_current_agent(agent_name)
 
