@@ -1,4 +1,4 @@
-name: Terraform Infrastructure
+name: INFRA_VERIFICATION
 
 on:
   push:
@@ -22,7 +22,7 @@ env:
 
 jobs:
   terraform:
-    name: Terraform
+    name: INFRA_VERIFICATION
     runs-on: ubuntu-latest
     permissions:
       contents: read
