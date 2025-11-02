@@ -122,20 +122,17 @@ jobs:
 
       - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
+        timeout-minutes: 20
         run: |
           # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
           
           # Submit Cloud Build job and wait for completion
-          BUILD_ID=$(gcloud builds submit \
+          gcloud builds submit \
             --config=cloudbuild-gemma.yaml \
-            --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
-            --format="value(id)")
+            --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
           
-          echo "✅ Cloud Build triggered for Gemma service: ${BUILD_ID}"
-          
-          # Monitor build progress
-          gcloud builds log --stream ${BUILD_ID}
+          echo "✅ Gemma Cloud Build completed successfully"
 
   deploy:
     name: Deploy to Cloud Run
