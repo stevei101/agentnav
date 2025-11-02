@@ -5,6 +5,7 @@
 **Short Answer:** No, Cursor Agent cannot run directly in GitHub Actions.
 
 **Why:**
+
 - Cursor Agent is tightly integrated with the Cursor IDE desktop application
 - It requires the Cursor IDE interface and local file system access
 - It's designed for interactive, local development workflows
@@ -21,12 +22,14 @@ However, you can achieve similar "AI-powered issue detection and fixing" in GitH
 You already have a GitHub Copilot agent configured! (`agentnav-gh-copilot-agent.md`)
 
 **GitHub Copilot Chat** can be used in GitHub Actions workflows to:
+
 - Review code changes
 - Suggest fixes
 - Generate PR descriptions
 - Analyze test failures
 
 **Example Workflow:**
+
 ```yaml
 name: AI Code Review
 
@@ -42,7 +45,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run GitHub Copilot Chat Analysis
         uses: github/copilot-action@v1
         with:
@@ -61,6 +64,7 @@ jobs:
 ### Option 2: Custom AI-Powered CI/CD Script
 
 Create a custom script that uses AI APIs (Gemini, OpenAI, etc.) to:
+
 - Analyze test failures
 - Suggest fixes
 - Create PR comments
@@ -78,33 +82,34 @@ from google import genai
 def analyze_test_failure(test_output: str) -> dict:
     """Use Gemini API to analyze test failures and suggest fixes."""
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-    
+
     prompt = f"""
     Analyze this test failure and suggest fixes:
-    
+
     {test_output}
-    
+
     Consider:
     - Cloud Run compatibility (PORT env var, health checks)
     - ADK/A2A Protocol best practices
     - FastAPI error handling
     - TypeScript/React type safety
-    
+
     Return JSON with:
     - error_type: classification
     - suggested_fix: code fix
     - explanation: why this fix works
     """
-    
+
     response = client.models.generate_content(
         model="gemini-pro",
         contents=prompt
     )
-    
+
     return json.loads(response.text)
 ```
 
 **GitHub Actions Workflow:**
+
 ```yaml
 name: AI-Assisted CI
 
@@ -118,13 +123,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run Tests
         id: test
         run: |
           make test || echo "::set-output name=failed::true"
         continue-on-error: true
-      
+
       - name: AI Analysis on Failure
         if: steps.test.outputs.failed == 'true'
         env:
@@ -140,18 +145,20 @@ jobs:
 ### Option 3: Automated Issue Triage & Fixing
 
 Create a GitHub Actions workflow that:
+
 1. Detects failures
 2. Uses AI to analyze the issue
 3. Creates a GitHub issue with AI-generated analysis
 4. Optionally: Creates a PR with suggested fixes
 
 **Example:**
+
 ```yaml
 name: AI Issue Triage
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ['CI']
     types: [completed]
 
 jobs:
@@ -160,11 +167,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Get Failure Logs
         run: |
           gh run view ${{ github.event.workflow_run.id }} --log > failure.log
-      
+
       - name: AI Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -191,6 +198,7 @@ Your `agentnav-gh-copilot-agent.md` already has comprehensive system instruction
 ### 2. **Create AI-Powered CI/CD Helper**
 
 Create a Python script that:
+
 - Analyzes test failures
 - Checks Cloud Run compatibility
 - Validates ADK/A2A Protocol usage
@@ -210,17 +218,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Run Tests
         id: test
         run: make test || echo "failed=true" >> $GITHUB_OUTPUT
         continue-on-error: true
-      
+
       - name: AI Failure Analysis
         if: steps.test.outputs.failed == 'true'
         env:
@@ -260,6 +268,7 @@ jobs:
 ---
 
 Would you like me to:
+
 1. Create the `scripts/ci_ai_assistant.py` script?
 2. Create a GitHub Actions workflow that uses AI for failure analysis?
 3. Enhance your existing GitHub Copilot agent configuration?

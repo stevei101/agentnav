@@ -13,6 +13,7 @@ Fixes `make install-dev` command failing due to broken Python virtual environmen
 ## 🐛 Problem Statement
 
 When running `make install-dev`, the command failed with:
+
 ```
 error: Broken virtual environment `/Users/stevenirvin/Documents/GitHub/agentnav/backend/.venv`: `pyvenv.cfg` is missing
 make: *** [install-dev] Error 2
@@ -27,6 +28,7 @@ make: *** [install-dev] Error 2
 ## ✅ Solution
 
 Modified the `install-dev` target in `Makefile` to:
+
 1. Check if `.venv` directory exists and is valid
 2. Automatically create virtual environment using `uv venv` if missing
 3. Proceed with dependency installation
@@ -38,9 +40,11 @@ This ensures `make install-dev` works reliably on first run and subsequent runs.
 ## 📝 What's Changed
 
 ### Modified
+
 - ✅ `Makefile` - Updated `install-dev` target to auto-create venv if needed
 
 ### Changed Code
+
 ```368:377:Makefile
 	@if command -v uv >/dev/null 2>&1; then \
 		cd backend && \
@@ -55,6 +59,7 @@ This ensures `make install-dev` works reliably on first run and subsequent runs.
 ```
 
 **Key Changes:**
+
 - Combined all `cd backend` operations into a single shell session
 - Added check for `.venv` directory existence
 - Auto-create venv if missing before installation
@@ -65,6 +70,7 @@ This ensures `make install-dev` works reliably on first run and subsequent runs.
 ## ✅ Testing
 
 ### Manual Testing
+
 ```bash
 # Test 1: Fresh installation (no .venv)
 rm -rf backend/.venv
@@ -83,6 +89,7 @@ deactivate
 ```
 
 ### Test Results
+
 - ✅ Fresh installation works
 - ✅ Existing venv detection works
 - ✅ All backend packages install correctly
@@ -123,11 +130,13 @@ deactivate
 ## 📝 Migration Guide
 
 **For developers with existing `.venv`:**
+
 - No action needed
 - Next `make install-dev` will work as before
 - Existing venv will be preserved
 
 **For fresh setups:**
+
 - Run `make install-dev` as usual
 - Virtual environment will be created automatically
 - No manual `uv venv` required
@@ -135,4 +144,3 @@ deactivate
 ---
 
 **Ready for review! ✅**
-

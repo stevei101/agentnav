@@ -3,7 +3,7 @@
 ## 🔍 Error Message
 
 ```
-Error: google-github-actions/auth failed with: failed to generate Google Cloud federated token for //iam.googleapis.com/***: 
+Error: google-github-actions/auth failed with: failed to generate Google Cloud federated token for //iam.googleapis.com/***:
 {"error":"invalid_request","error_description":"Invalid value for \"audience\". This value should be the full resource name of the Identity Provider."}
 ```
 
@@ -12,6 +12,7 @@ Error: google-github-actions/auth failed with: failed to generate Google Cloud f
 The Terraform configuration is **CORRECT**. The error indicates that the GitHub secret `WIF_PROVIDER` is incorrectly formatted.
 
 **Current Terraform Setup:**
+
 ```terraform
 # terraform/outputs.tf - This is correct ✅
 output "wif_provider" {
@@ -31,6 +32,7 @@ resource "google_iam_workload_identity_pool_provider" "github_actions" {
 ```
 
 The `.name` attribute returns the **full resource name** in the correct format:
+
 ```
 projects/{projectNumber}/locations/global/workloadIdentityPools/{poolId}/providers/{providerId}
 ```
@@ -42,16 +44,19 @@ projects/{projectNumber}/locations/global/workloadIdentityPools/{poolId}/provide
 Since Terraform state is in Terraform Cloud, get the value from there:
 
 **Option A: From Terraform Cloud UI**
+
 1. Go to your Terraform Cloud workspace
 2. Navigate to **"Outputs"** tab
 3. Copy the value for `wif_provider`
 
 **Option B: From Terraform Cloud CLI**
+
 ```bash
 terraform cloud output wif_provider
 ```
 
 **Option C: From GCP Console**
+
 ```bash
 gcloud iam workload-identity-pools providers describe github-provider \
   --workload-identity-pool=github-actions-pool \
@@ -69,11 +74,13 @@ gcloud iam workload-identity-pools providers describe github-provider \
 ### Step 3: Verify Format
 
 The value should look like:
+
 ```
 projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider
 ```
 
 **Critical points:**
+
 - ✅ Starts with `projects/`
 - ✅ Uses **project NUMBER** (not project ID like `agentnav-dev`)
 - ✅ Includes `/providers/` segment
@@ -82,27 +89,35 @@ projects/123456789012/locations/global/workloadIdentityPools/github-actions-pool
 ## ❌ Common Mistakes
 
 ### Wrong Format 1: Missing segments
+
 ```
 ❌ projects/123456789012/.../workloadIdentityPools/github-actions-pool
 ```
+
 Missing `/providers/github-provider`
 
 ### Wrong Format 2: Using project ID instead of number
+
 ```
 ❌ projects/agentnav-dev/locations/global/...
 ```
+
 Should use project number: `projects/123456789012/locations/global/...`
 
 ### Wrong Format 3: Just the provider ID
+
 ```
 ❌ github-provider
 ```
+
 Needs the full resource name
 
 ### Wrong Format 4: Using gcloud resource path
+
 ```
 ❌ //iam.googleapis.com/projects/.../providers/github-provider
 ```
+
 The `//iam.googleapis.com` prefix is not needed for `workload_identity_provider`
 
 ## 🔍 Verification Steps
@@ -110,6 +125,7 @@ The `//iam.googleapis.com` prefix is not needed for `workload_identity_provider`
 After setting the correct secret:
 
 1. **Trigger workflow:**
+
    ```bash
    # Make any change to terraform/ directory
    git commit --allow-empty -m "test WIF auth"
@@ -153,6 +169,7 @@ After setting the correct secret:
 **The Terraform configuration is correct. The issue is with the GitHub secret value.**
 
 The secret `WIF_PROVIDER` must exactly match the output of:
+
 ```bash
 terraform output wif_provider
 ```

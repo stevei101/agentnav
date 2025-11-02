@@ -3,6 +3,7 @@
 ## ?? Analysis: Actual vs. Documented
 
 ### ? **Accurately Listed:**
+
 - ? Python + FastAPI
 - ? React + TypeScript
 - ? Tailwind CSS (via CDN)
@@ -13,6 +14,7 @@
 - ? GitHub Actions
 
 ### ? **Incorrectly Listed (Not Actually Implemented):**
+
 - ? **ADK (Google Agent Development Kit)** - Documented but not implemented (TODO comment in `requirements.txt`)
 - ? **Agent2Agent (A2A) Protocol** - Documented but not implemented in code
 - ? **Model Context Protocol (MCP)** - No matches found in codebase
@@ -23,6 +25,7 @@
 - ? **Bun** - Mentioned in docs but `package.json` shows standard npm/yarn setup
 
 ### ?? **Missing from Document:**
+
 - ?? **Vite** - Actually used for frontend bundling
 - ?? **uv** - Python package manager (mentioned in docs)
 - ?? **Recharts** - Visualization library (in `package.json`)
@@ -40,32 +43,37 @@
 ## ?? Built With
 
 **Languages & Frameworks**
-- ?? **Python** ? core backend logic, FastAPI orchestrator  
-- ?? **React + TypeScript** ? responsive web dashboard for visualization  
+
+- ?? **Python** ? core backend logic, FastAPI orchestrator
+- ?? **React + TypeScript** ? responsive web dashboard for visualization
 - ?? **Tailwind CSS** ? modern UI styling (via CDN)
 
 **AI & ML**
-- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation  
-- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization  
+
+- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation
+- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization
 - ?? **Recharts** ? interactive data visualization library
 
 **Cloud Infrastructure**
-- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard  
-- ??? **Google Firestore** ? session memory and persistent agent state  
-- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1  
-- ?? **Google Artifact Registry (GAR)** ? container image storage  
+
+- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard
+- ??? **Google Firestore** ? session memory and persistent agent state
+- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1
+- ?? **Google Artifact Registry (GAR)** ? container image storage
 - ?? **Google Secret Manager** ? secure credential storage
 
 **Developer Tools & DevOps**
-- ?? **Podman** ? containerization for reproducible deployments  
-- ?? **Vite** ? fast frontend build tool and dev server  
-- ?? **uv** ? fast Python package management  
-- ?? **GitHub Actions** ? automated testing and Cloud Run deployment  
-- ??? **Terraform Cloud** ? infrastructure as code provisioning  
+
+- ?? **Podman** ? containerization for reproducible deployments
+- ?? **Vite** ? fast frontend build tool and dev server
+- ?? **uv** ? fast Python package management
+- ?? **GitHub Actions** ? automated testing and Cloud Run deployment
+- ??? **Terraform Cloud** ? infrastructure as code provisioning
 - ?? **Workload Identity Federation (WIF)** ? secure GitHub Actions authentication
 
 **Other Utilities**
-- ?? **Markdown** ? documentation and knowledge representation  
+
+- ?? **Markdown** ? documentation and knowledge representation
 - ?? **OpenAPI / FastAPI Docs** ? API endpoints and interface documentation
 ```
 
@@ -77,27 +85,31 @@
 ## ?? Built With
 
 **Languages & Frameworks**
-- ?? **Python** ? core backend logic, FastAPI orchestrator  
-- ?? **React + TypeScript** ? responsive web dashboard for visualization  
+
+- ?? **Python** ? core backend logic, FastAPI orchestrator
+- ?? **React + TypeScript** ? responsive web dashboard for visualization
 - ?? **Tailwind CSS** ? modern UI styling
 
 **AI & Agent Frameworks**
-- ?? **Google Agent Development Kit (ADK)** ? multi-agent architecture *(planned)*
-- ?? **Agent2Agent (A2A) Protocol** ? agent-to-agent communication *(planned)*
-- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation  
-- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization  
+
+- ?? **Google Agent Development Kit (ADK)** ? multi-agent architecture _(planned)_
+- ?? **Agent2Agent (A2A) Protocol** ? agent-to-agent communication _(planned)_
+- ?? **Google Gemini 1.5 Pro** ? reasoning, summarization, and JSON generation
+- ?? **Gemma** ? GPU-accelerated open-source model for embeddings and visualization
 
 **Cloud Infrastructure**
-- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard  
-- ??? **Google Firestore** ? session memory and persistent agent state  
-- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1  
-- ?? **Google Artifact Registry (GAR)** ? container image storage  
+
+- ?? **Google Cloud Run** ? fully serverless hosting for orchestrator and web dashboard
+- ??? **Google Firestore** ? session memory and persistent agent state
+- ?? **Google Cloud GPUs (NVIDIA L4)** ? model inference acceleration in europe-west1
+- ?? **Google Artifact Registry (GAR)** ? container image storage
 
 **Developer Tools & APIs**
-- ?? **Podman** ? containerization for reproducible deployments  
-- ?? **Vite** ? fast frontend build tool  
-- ?? **uv** ? fast Python package management  
-- ?? **GitHub Actions** ? automated testing and Cloud Run deployment  
+
+- ?? **Podman** ? containerization for reproducible deployments
+- ?? **Vite** ? fast frontend build tool
+- ?? **uv** ? fast Python package management
+- ?? **GitHub Actions** ? automated testing and Cloud Run deployment
 - ?? **OpenAPI / FastAPI Docs** ? API endpoints and interface documentation
 ```
 
@@ -106,13 +118,15 @@
 ## ?? Key Recommendations
 
 ### For Hackathon Submission (Use Option 1):
+
 1. ? **Remove unverified items** (ADK, A2A, MCP, Gemini CLI, Cloud Storage)
 2. ? **Change Docker ? Podman** (accurate to your implementation)
 3. ? **Add missing tools** (Vite, uv, Recharts, GAR, Terraform Cloud)
 4. ? **Keep it factual** - Judges will verify your claims
 
 ### For Future Planning (Use Option 2):
-- Clearly mark *(planned)* items
+
+- Clearly mark _(planned)_ items
 - Show your vision while being honest about current state
 
 ---
@@ -139,6 +153,7 @@
 ## ?? Strategy Note
 
 **For Hackathon Judges:**
+
 - Accuracy matters more than impressive lists
 - Show what you've actually built
 - Mention planned features separately if needed
@@ -146,6 +161,7 @@
 
 **Recommended Approach:**
 Use **Option 1** (Accurate Current State) for the hackathon submission. This demonstrates:
+
 - ? Honest, accurate representation
 - ? Proper technology choices (Podman over Docker)
 - ? Complete toolchain (Vite, uv, etc.)
