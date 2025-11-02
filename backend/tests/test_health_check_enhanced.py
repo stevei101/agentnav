@@ -3,7 +3,7 @@ Tests for enhanced Gemma service health check endpoint
 Tests model readiness and GPU status validation
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
+from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
 
