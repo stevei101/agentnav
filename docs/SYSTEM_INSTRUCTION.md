@@ -20,7 +20,7 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 | :--- | :--- | :--- |
 | **Google Cloud Run** | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference. | Terraform, Cloud Run API |
 | **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)** | Terraform, Podman CI |
-| **GCP IAM & WIF** | **Workload Identity Federation (WIF)** allows the GitHub Actions runner to securely assume a GCP Service Account without using static keys. | Terraform, GitHub Actions |
+| **GCP IAM & Identity** | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
 | **Cloud DNS & TLS** | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination. | Terraform, Cloud Run |
 | **Firestore** | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). | Terraform, Firestore API |
 | **Secret Manager** | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets. | Terraform, Secret Manager API |
