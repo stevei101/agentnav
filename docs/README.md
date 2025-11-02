@@ -47,7 +47,3 @@ If you're reviewing this project:
 - **System Architecture** ? `SYSTEM_INSTRUCTION.md`
 - **Submission Materials** ? `HACKATHON_SUBMISSION_GUIDE.md`
 - **Quick Overview** ? `HACKATHON_QUICK_REFERENCE.md`
-
-## Note
-
-For internal project notes, brainstorming, and working documents, see the `markdown/` directory.

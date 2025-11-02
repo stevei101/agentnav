@@ -107,6 +107,18 @@ git push origin feature/your-feature-name
 
 ## Contribution Guidelines
 
+### PR Discipline and Minimum Viable Commit
+
+**Before submitting a Pull Request**, please read our comprehensive guide on **PR Discipline and Minimum Viable Commit (MVC)** principles:
+
+📖 **[Contribution Guide: PR Discipline](docs/CONTRIBUTION_GUIDE_PR_DISCIPLINE.md)**
+
+Key principles:
+- Only commit files that are **consumed** by the application, CI/CD, or IaC
+- Remove temporary notes, scratch files, and local configuration
+- Optimize `.dockerignore` and `.gitignore` to minimize build context
+- Run `make ci` before requesting review
+
 ### Code Style
 
 **Frontend (TypeScript/React):**
