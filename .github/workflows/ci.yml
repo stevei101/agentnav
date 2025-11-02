@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
 
 jobs:
   code-quality:
