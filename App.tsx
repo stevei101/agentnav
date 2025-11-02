@@ -1,16 +1,16 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { AgentState, AgentName, AgentStatusValue, AnalysisResult } from './types';
-import { runAgenticNavigator } from './services/geminiService';
+import { runAgenticNavigator, getAgentStatus, checkBackendHealth } from './services/backendService';
 import { AgentCard } from './components/AgentCard';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { UploadIcon, BrainCircuitIcon } from './components/icons';
 
 const initialAgents: AgentState[] = [
-  { name: AgentName.ORCHESTRATOR, status: AgentStatusValue.IDLE, details: 'Awaiting instructions' },
-  { name: AgentName.SUMMARIZER, status: AgentStatusValue.IDLE, details: 'Ready to summarize' },
-  { name: AgentName.LINKER, status: AgentStatusValue.IDLE, details: 'Ready to find connections' },
-  { name: AgentName.VISUALIZER, status: AgentStatusValue.IDLE, details: 'Ready to visualize data' },
+  { name: AgentName.ORCHESTRATOR, status: AgentStatusValue.IDLE, details: 'Ready to coordinate analysis' },
+  { name: AgentName.SUMMARIZER, status: AgentStatusValue.IDLE, details: 'Ready to create summaries' },
+  { name: AgentName.LINKER, status: AgentStatusValue.IDLE, details: 'Ready to map relationships' },
+  { name: AgentName.VISUALIZER, status: AgentStatusValue.IDLE, details: 'Ready to create visualizations' },
 ];
 
 const App: React.FC = () => {
@@ -19,8 +19,30 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [backendStatus, setBackendStatus] = useState<'unknown' | 'healthy' | 'unhealthy'>('unknown');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check backend health on component mount
+  useEffect(() => {
+    const checkHealth = async () => {
+      const isHealthy = await checkBackendHealth();
+      setBackendStatus(isHealthy ? 'healthy' : 'unhealthy');
+      
+      if (isHealthy) {
+        // Update agent details based on backend status
+        const agentStatus = await getAgentStatus();
+        if (agentStatus.adk_system === 'operational') {
+          setAgents(prev => prev.map(agent => ({
+            ...agent,
+            details: `ADK Agent Ready (${agentStatus.total_agents} agents available)`
+          })));
+        }
+      }
+    };
+    
+    checkHealth();
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,11 +63,22 @@ const App: React.FC = () => {
     const agentNames = [AgentName.ORCHESTRATOR, AgentName.SUMMARIZER, AgentName.LINKER, AgentName.VISUALIZER];
     let delay = 0;
 
+    // More realistic agent simulation with ADK workflow
     agentNames.forEach((name, index) => {
         setTimeout(() => {
-            setAgents(prev => prev.map(a => a.name === name ? { ...a, status: AgentStatusValue.PROCESSING, details: 'Analyzing document...' } : a));
+            let details = 'Analyzing document...';
+            if (name === AgentName.ORCHESTRATOR) details = 'Coordinating multi-agent workflow...';
+            else if (name === AgentName.SUMMARIZER) details = 'Creating comprehensive summary...';
+            else if (name === AgentName.LINKER) details = 'Mapping entity relationships...';
+            else if (name === AgentName.VISUALIZER) details = 'Generating interactive visualization...';
+            
+            setAgents(prev => prev.map(a => a.name === name ? { 
+                ...a, 
+                status: AgentStatusValue.PROCESSING, 
+                details 
+            } : a));
         }, delay);
-        delay += 500;
+        delay += 800; // Slightly longer delay for more realistic feel
     });
   };
 
@@ -55,18 +88,40 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setResult(null);
-    setAgents(initialAgents);
+    
+    // Reset agents to processing state
+    setAgents(initialAgents.map(agent => ({ 
+        ...agent, 
+        status: AgentStatusValue.IDLE, 
+        details: 'Preparing for analysis...' 
+    })));
     
     simulateAgentActivity();
 
     try {
+      console.log('🎬 Starting ADK Multi-Agent Analysis');
       const analysisResult = await runAgenticNavigator(documentText);
+      
+      // Mark all agents as done
+      setAgents(prev => prev.map(agent => ({
+        ...agent,
+        status: AgentStatusValue.DONE,
+        details: `${agent.name} analysis complete`
+      })));
+      
       setResult(analysisResult);
-      setAgents(prev => prev.map(a => ({ ...a, status: AgentStatusValue.DONE, details: 'Analysis complete' })));
+      console.log('✅ Analysis complete:', analysisResult);
     } catch (err) {
+      console.error('❌ Analysis failed:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(errorMessage);
-      setAgents(prev => prev.map(a => ({ ...a, status: AgentStatusValue.ERROR, details: 'Failed' })));
+      
+      // Mark agents as error state
+      setAgents(prev => prev.map(agent => ({
+        ...agent,
+        status: AgentStatusValue.ERROR,
+        details: 'Analysis failed'
+      })));
     } finally {
       setIsLoading(false);
     }
@@ -76,11 +131,27 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 font-sans flex flex-col">
       <header className="bg-slate-900/80 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center">
-          <BrainCircuitIcon className="w-8 h-8 text-sky-400" />
-          <h1 className="text-2xl font-bold ml-3 bg-gradient-to-r from-sky-400 to-indigo-400 text-transparent bg-clip-text">
-            Agentic Navigator
-          </h1>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <BrainCircuitIcon className="w-8 h-8 text-sky-400" />
+            <h1 className="text-2xl font-bold ml-3 bg-gradient-to-r from-sky-400 to-indigo-400 text-transparent bg-clip-text">
+              Agentic Navigator
+            </h1>
+          </div>
+          
+          {/* Backend Status Indicator */}
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${
+              backendStatus === 'healthy' ? 'bg-green-400' :
+              backendStatus === 'unhealthy' ? 'bg-red-400' : 'bg-yellow-400'
+            }`}></div>
+            <span className="text-sm text-slate-400">
+              ADK System: {
+                backendStatus === 'healthy' ? 'Ready' :
+                backendStatus === 'unhealthy' ? 'Offline' : 'Checking...'
+              }
+            </span>
+          </div>
         </div>
       </header>
 
