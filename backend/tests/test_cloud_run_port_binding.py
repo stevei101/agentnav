@@ -13,8 +13,7 @@ defined provided by the PORT=8080 environment variable"
 """
 import pytest
 import os
-import asyncio
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 import sys
 
 # Mock torch/transformers before imports

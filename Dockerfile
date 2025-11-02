@@ -19,6 +19,9 @@ RUN bun run build
 # Production stage with nginx
 FROM nginx:alpine
 
+# Install gettext for envsubst utility
+RUN apk add --no-cache gettext
+
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
