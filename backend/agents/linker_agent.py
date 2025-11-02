@@ -23,10 +23,11 @@ class LinkerAgent(Agent):
     - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None, model_type: str = "gemini"):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
+        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -244,10 +245,11 @@ Return a structured analysis of entities and their relationships.
         return entities
     
     async def _extract_document_entities(self, document: str) -> List[Dict[str, Any]]:
-        """Extract entities from document content using Gemma"""
+        """Extract entities from document content using Gemini/Gemma"""
         try:
-            from services.gemma_service import reason_with_gemma
-            
+            # Use standardized Gemini client for cloud-based or local reasoning
+            from services.gemini_client import reason_with_gemini
+
             prompt = f"""
 Analyze this document and extract key entities (concepts, topics, themes).
 Return them as a simple list, one per line.
@@ -257,11 +259,12 @@ Document:
 
 Extract 5-10 key entities:
 """
-            
-            response = await reason_with_gemma(
+
+            response = await reason_with_gemini(
                 prompt=prompt,
                 max_tokens=300,
-                temperature=0.3
+                temperature=0.3,
+                model_type=self.model_type
             )
             
             # Parse response into entities
@@ -524,13 +527,13 @@ Extract 5-10 key entities:
         relationships: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        Use Gemma reasoning to enhance relationship analysis
+        Use reasoning to enhance relationship analysis (Gemini or Gemma based on model_type)
         
-        This method asks Gemma to analyze specific entity relationships
+        This method asks the selected model to analyze specific entity relationships
         in the context of the full document.
         """
         try:
-            from services.gemma_service import reason_with_gemma
+            from services.gemini_client import reason_with_gemini
             
             # Take top entities by importance
             top_entities = [e["label"] for e in entities[:5]]
@@ -547,10 +550,11 @@ Context:
 Provide relationship insights:
 """
             
-            response = await reason_with_gemma(
+            response = await reason_with_gemini(
                 prompt=prompt,
                 max_tokens=400,
-                temperature=0.3
+                temperature=0.3,
+                model_type=self.model_type
             )
             
             # Parse reasoning to enhance existing relationships
@@ -558,7 +562,7 @@ Provide relationship insights:
                 # Add reasoning context
                 relationship["reasoning_context"] = response[:200]  # Store snippet
             
-            self.logger.info("✅ Enhanced relationships with reasoning")
+            self.logger.info(f"✅ Enhanced relationships with reasoning (model_type={self.model_type})")
             
         except Exception as e:
             self.logger.warning(f"⚠️  Could not enhance with reasoning: {e}")

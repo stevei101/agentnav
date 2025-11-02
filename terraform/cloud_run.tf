@@ -110,6 +110,11 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "true"
       }
 
+      env {
+        name  = "AGENTNAV_MODEL_TYPE"
+        value = var.agentnav_model_type
+      }
+
       resources {
         limits = {
           cpu    = "4"
