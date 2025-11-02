@@ -3,13 +3,9 @@ Tests for Workload Identity authentication in GemmaServiceClient
 Tests ID token fetching and authentication headers
 """
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch
 import sys
 import os
-
-# Mock dependencies before importing
-sys.modules['torch'] = MagicMock()
-sys.modules['transformers'] = MagicMock()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
