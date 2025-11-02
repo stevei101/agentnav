@@ -24,9 +24,9 @@ This document describes the comprehensive improvements made to the CI/CD infrast
 - **Benefit**: Faster builds with layer caching across runs
 
 ### 4. **Gemma Service Build Failures**
-- **Issue**: Gemma GPU service builds failed when quotas unavailable
-- **Solution**: Added graceful failure handling with informative messages
-- **Benefit**: CI doesn't fail when GPU resources are unavailable
+- **Issue**: Gemma GPU service builds failed when quotas unavailable in Cloud Build
+- **Solution**: Switched to GitHub Actions with CI-friendly Dockerfile (Dockerfile.gemma.ci)
+- **Benefit**: Faster, more reliable builds in CI; Cloud Build reserved for production GPU deployments
 
 ### 5. **Test Coverage Reporting**
 - **Issue**: No visibility into test coverage
@@ -145,25 +145,25 @@ podman build -t agentnav-frontend -f Dockerfile .
 podman build -t agentnav-backend -f backend/Dockerfile ./backend
 ```
 
-#### 3. Graceful Gemma Build Handling
+#### 3. Gemma Build in GitHub Actions
 ```yaml
-- name: Build and push gemma with Cloud Build
-  run: |
-    if [ ! -f "cloudbuild-gemma.yaml" ]; then
-      echo "⚠️ cloudbuild-gemma.yaml not found, skipping Gemma build"
-      exit 0
-    fi
-    
-    set +e
-    gcloud builds submit ...
-    BUILD_EXIT_CODE=$?
-    set -e
-    
-    if [ $BUILD_EXIT_CODE -ne 0 ]; then
-      echo "⚠️ Gemma Cloud Build failed - expected if GPU quotas unavailable"
-      exit 0
-    fi
+- name: Build and push gemma (CI-friendly)
+  if: matrix.service == 'gemma'
+  timeout-minutes: 120
+  uses: docker/build-push-action@v5
+  with:
+    context: ./backend
+    file: ./backend/Dockerfile.gemma.ci
+    push: true
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
 ```
+
+**Key Changes:**
+- Uses lightweight `Dockerfile.gemma.ci` for CI builds
+- Builds directly in GitHub Actions (no Cloud Build dependency)
+- Cloud Build commented out, reserved for production GPU deployments
+- Faster builds with GitHub Actions cache
 
 #### 4. Enhanced Cloud Run Deployments
 ```yaml
@@ -310,6 +310,16 @@ make build
 podman logs <container-name>
 ```
 
+**Gemma build issues:**
+```bash
+# CI uses Dockerfile.gemma.ci (lightweight)
+# For local testing:
+podman build -f backend/Dockerfile.gemma.ci -t gemma-ci:test ./backend
+
+# Production GPU build (requires GPU):
+podman build -f backend/Dockerfile.gemma -t gemma:prod ./backend
+```
+
 **Gemma build failures:**
 ```bash
 # Check GPU quota in GCP
@@ -364,8 +374,11 @@ podman logs <container-name>
 - ✅ Implemented Docker Buildx with layer caching
 - ✅ Added coverage reporting and artifacts
 - ✅ Created CI summary dashboard
-- ✅ Enhanced Gemma build error handling
+- ✅ Switched Gemma builds to GitHub Actions (CI-friendly Dockerfile)
+- ✅ Temporarily disabled Cloud Build for Gemma (reserved for production)
 - ✅ Updated all GitHub Actions to latest versions
-- ✅ Added Docker build testing job
+- ✅ Added container build testing job
 - ✅ Improved Cloud Run deployment configuration
 - ✅ Added service URL summary in deployments
+- ✅ Clarified Podman (local) vs Docker (CI) usage
+- ✅ Increased Gemma build timeout to 120 minutes
