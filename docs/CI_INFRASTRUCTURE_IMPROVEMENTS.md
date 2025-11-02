@@ -4,6 +4,8 @@
 
 This document describes the comprehensive improvements made to the CI/CD infrastructure for the Agentic Navigator project.
 
+**Note**: This project uses **Podman** for local development and **Docker** in GitHub Actions CI/CD (standard for GitHub runners). The workflows are compatible with both container runtimes.
+
 ## Problems Addressed
 
 ### 1. **Firestore Emulator Reliability**
@@ -17,8 +19,8 @@ This document describes the comprehensive improvements made to the CI/CD infrast
 - **Benefit**: Faster CI runs (30-50% time reduction)
 
 ### 3. **Build Performance**
-- **Issue**: Docker builds were slow and didn't leverage layer caching
-- **Solution**: Implemented Docker Buildx with GitHub Actions cache
+- **Issue**: Container builds were slow and didn't leverage layer caching
+- **Solution**: Implemented Docker Buildx with GitHub Actions cache (Docker in CI, Podman locally)
 - **Benefit**: Faster builds with layer caching across runs
 
 ### 4. **Gemma Service Build Failures**
@@ -124,7 +126,7 @@ on:
       - '.github/workflows/ci.yml'
 ```
 
-#### 2. Docker Buildx Integration
+#### 2. Container Build Integration (Docker Buildx in CI)
 ```yaml
 - name: Set up Docker Buildx
   uses: docker/setup-buildx-action@v3
@@ -134,6 +136,13 @@ on:
   with:
     cache-from: type=gha
     cache-to: type=gha,mode=max
+```
+
+**Note**: GitHub Actions uses Docker by default. For local development, use Podman:
+```bash
+# Local development with Podman
+podman build -t agentnav-frontend -f Dockerfile .
+podman build -t agentnav-backend -f backend/Dockerfile ./backend
 ```
 
 #### 3. Graceful Gemma Build Handling
@@ -182,14 +191,14 @@ on:
 | CI Runtime | ~8-10 min | ~5-7 min | 30-40% faster |
 | Build Cache Hit Rate | 0% | 70-90% | Significant |
 | Dependency Install Time | ~2 min | ~30 sec | 75% faster |
-| Docker Build Time | ~5 min | ~2 min | 60% faster |
+| Container Build Time | ~5 min | ~2 min | 60% faster |
 
 ## Reliability Improvements
 
 1. **Firestore Emulator**: 99% success rate (up from ~80%)
 2. **Gemma Builds**: No longer fail CI when GPU unavailable
 3. **Dependency Installation**: Cached, reducing network failures
-4. **Docker Builds**: Layer caching reduces build failures
+4. **Container Builds**: Layer caching reduces build failures (Docker in CI, Podman locally)
 
 ## Security Enhancements
 
@@ -202,7 +211,11 @@ on:
 
 ### Running CI Locally
 
+**Using Podman (Local Development)**
 ```bash
+# Start all services with Podman
+make setup
+
 # Run all tests
 make test
 
@@ -219,7 +232,13 @@ black --check backend/
 isort --check-only --profile black backend/
 ruff check backend/
 mypy backend/ --ignore-missing-imports
+
+# Build containers with Podman
+podman build -t agentnav-frontend -f Dockerfile .
+podman build -t agentnav-backend -f backend/Dockerfile ./backend
 ```
+
+**Note**: The Makefile uses Podman commands. GitHub Actions CI uses Docker (standard for GitHub runners).
 
 ### Viewing CI Results
 
@@ -271,11 +290,24 @@ mypy backend/ --ignore-missing-imports
 # Check emulator logs in CI
 ```
 
-**Docker build failures:**
+**Container build failures (CI):**
 ```bash
-# Check Buildx setup
+# Check Buildx setup in GitHub Actions
 # Verify cache permissions
 # Review build logs
+```
+
+**Container build failures (Local with Podman):**
+```bash
+# Ensure Podman is running
+podman machine start  # macOS
+
+# Clean and rebuild
+make clean
+make build
+
+# Check Podman logs
+podman logs <container-name>
 ```
 
 **Gemma build failures:**
@@ -305,9 +337,24 @@ mypy backend/ --ignore-missing-imports
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Docker Buildx Documentation](https://docs.docker.com/buildx/working-with-buildx/)
+- [Podman Documentation](https://docs.podman.io/)
 - [Firestore Emulator](https://firebase.google.com/docs/emulator-suite)
 - [pytest Documentation](https://docs.pytest.org/)
 - [Vitest Documentation](https://vitest.dev/)
+
+## Container Runtime Notes
+
+### Local Development (Podman)
+- Uses Podman for all local container operations
+- Makefile commands use `podman` CLI
+- Compatible with Docker commands (drop-in replacement)
+- See `docs/local-development.md` for Podman setup
+
+### CI/CD (Docker)
+- GitHub Actions runners use Docker by default
+- Docker Buildx for advanced caching features
+- OCI-compliant images work with both Docker and Podman
+- No changes needed for Podman compatibility
 
 ## Changelog
 
