@@ -211,7 +211,6 @@ Please report security vulnerabilities to the maintainers privately. See [docs/S
 
 If you have questions about contributing, feel free to:
 
-- Use the **@agentnav-copilot-agent** in GitHub issues/PRs for instant guidance (see [docs/COPILOT_AGENT_GUIDE.md](docs/COPILOT_AGENT_GUIDE.md))
 - Open an issue with the `question` label
 - Check existing documentation in the `docs/` directory
 - Review closed issues for similar questions
