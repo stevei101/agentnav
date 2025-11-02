@@ -44,14 +44,16 @@ jobs:
           set -x
           docker version
           echo "Building CI-friendly image using backend/Dockerfile.gemma.ci"
-          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma.ci -t gemma-ci:pr-${{ github.event.number }} ./backend
+          # Use run number for consistent tagging across all trigger types
+          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma.ci -t gemma-ci:debug-${{ github.run_number }} ./backend
 
       - name: Build Gemma production image - debug alternate
         if: failure()
         run: |
           set -x
           echo "Attempting to build production GPU image (backend/Dockerfile.gemma) with repo root as context"
-          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma -t gemma:pr-${{ github.event.number }} .
+          # Use run number for consistent tagging across all trigger types
+          docker build --progress=plain --no-cache -f backend/Dockerfile.gemma -t gemma:debug-${{ github.run_number }} .
 
       - name: Finish
         if: success()
