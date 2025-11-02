@@ -6,8 +6,6 @@
 
 # Detect Podman
 PODMAN := $(shell command -v podman 2> /dev/null)
-# Note: PODMAN_COMPOSE not currently used - all operations use native podman commands
-# Kept for potential future compose-based operations (e.g., demo target)
 
 # Load environment variables from .env file
 ifneq (,$(wildcard .env))
@@ -307,17 +305,12 @@ test-frontend: check-podman podman-start
 			bun test; \
 	fi
 
-# Start demo environment (using podman-compose if available, otherwise same as up)
+# Start demo environment (same as regular environment - docker-compose removed)
 demo: check-podman podman-start
 	@echo "🎬 Starting demo environment..."
-	@if [ -n "$(PODMAN_COMPOSE)" ] && [ -f docker-compose.demo.yml ]; then \
-		$(PODMAN_COMPOSE) -f docker-compose.demo.yml up -d; \
-	else \
-		echo "⚠️  podman-compose or docker-compose.demo.yml not found, starting regular environment..."; \
-		$(MAKE) up; \
-	fi
+	@$(MAKE) up
 	@echo "✅ Demo environment started."
-	@echo "📍 Access: http://localhost:5173"
+	@echo "📍 Access: http://localhost:3000"
 
 # Validate environment and services
 validate: check-env
