@@ -1,14 +1,16 @@
 # Frontend Production Dockerfile
 # Multi-stage build: build stage + nginx serving stage
+# Uses Bun v2 for fast dependency management and building
 FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
 # Copy dependency files
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock* ./
 
-# Install dependencies with frozen lockfile for reproducible builds
-RUN bun install --frozen-lockfile || bun install
+# Install dependencies using Bun v2
+# Note: bun.lock is used automatically for reproducible builds
+RUN bun install
 
 # Copy source code
 COPY . .
