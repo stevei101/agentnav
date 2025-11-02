@@ -40,6 +40,17 @@ output "gemma_service_url" {
   value       = google_cloud_run_v2_service.gemma.uri
 }
 
+# Staging Environment Outputs
+output "frontend_staging_service_url" {
+  description = "Staging Frontend Cloud Run service URL"
+  value       = var.enable_staging_environment ? google_cloud_run_v2_service.frontend_staging[0].uri : null
+}
+
+output "backend_staging_service_url" {
+  description = "Staging Backend Cloud Run service URL"
+  value       = var.enable_staging_environment ? google_cloud_run_v2_service.backend_staging[0].uri : null
+}
+
 # Firestore Outputs
 output "firestore_database_id" {
   description = "Firestore database ID"
