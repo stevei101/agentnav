@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AgentCard } from "./AgentCard";
-import { AgentState, AgentStatusValue, AgentName } from "../types";
+import { AgentState, AgentStatusValue, AgentName, AgentStreamEvent } from "../types";
 import { Activity, Zap, RotateCcw } from "lucide-react";
+import { useAgentStream } from "../hooks/useAgentStream";
 
 interface AgentDashboardProps {
   sessionId: string | null;
@@ -29,62 +30,25 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     }))
   );
 
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [wsMessages, setWsMessages] = useState<number>(0);
-  const [connectionStatus, setConnectionStatus] = useState<
-    "idle" | "connecting" | "connected" | "error"
-  >("idle");
+  const {
+    events,
+    isConnected,
+    isConnecting,
+    error,
+    connect,
+    disconnect,
+  } = useAgentStream({
+    sessionId,
+    onEvent: (event: AgentStreamEvent) => {
+      handleStreamEvent(event);
+    },
+    onError: (err: Error) => {
+      console.error("Stream error:", err);
+    },
+    autoConnect: false, // Manual control
+  });
 
-  const initializeWebSocket = useCallback(() => {
-    if (!sessionId) {
-      setConnectionStatus("error");
-      return;
-    }
-
-    setConnectionStatus("connecting");
-
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/api/v1/navigate/stream?session_id=${sessionId}`;
-
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        setConnectionStatus("connected");
-        setIsStreaming(true);
-        onStreamStart?.(sessionId);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          // Handle stream event and update agents
-          handleStreamEvent(data);
-          setWsMessages((prev) => prev + 1);
-        } catch (err) {
-          console.error("Failed to parse WebSocket message:", err);
-        }
-      };
-
-      ws.onerror = () => {
-        setConnectionStatus("error");
-        setIsStreaming(false);
-      };
-
-      ws.onclose = () => {
-        setConnectionStatus("idle");
-        setIsStreaming(false);
-      };
-
-      return ws;
-    } catch (err) {
-      console.error("WebSocket initialization failed:", err);
-      setConnectionStatus("error");
-      setIsStreaming(false);
-    }
-  }, [sessionId, onStreamStart]);
-
-  const handleStreamEvent = (event: any) => {
+  const handleStreamEvent = (event: AgentStreamEvent) => {
     // Map backend event format to agent state
     const agentName = event.agent as AgentName;
     const statusMap: Record<string, AgentStatusValue> = {
@@ -109,15 +73,11 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             }
             if (event.payload.metrics) {
               updatedAgent.metrics = event.payload.metrics;
-              if (
-                event.payload.metrics.duration !== undefined &&
-                event.payload.metrics.processingTime !== undefined
-              ) {
+              // Calculate progress based on processing time if available
+              if (event.payload.metrics.processingTime !== undefined) {
                 updatedAgent.progress = Math.min(
                   100,
-                  (event.payload.metrics.processingTime /
-                    event.payload.metrics.duration) *
-                    100
+                  Math.floor((event.payload.metrics.processingTime / 1000) * 10)
                 );
               }
             }
@@ -135,14 +95,13 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
 
   const startAnalysis = () => {
     if (sessionId) {
-      initializeWebSocket();
+      connect();
+      onStreamStart?.(sessionId);
     }
   };
 
   const resetAnalysis = () => {
-    setIsStreaming(false);
-    setWsMessages(0);
-    setConnectionStatus("idle");
+    disconnect();
     setAgents((prev) =>
       prev.map((agent) => ({
         ...agent,
@@ -165,22 +124,30 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             <p className="text-gray-400">
               {sessionId ? `Session: ${sessionId}` : "No active session"}
             </p>
-            {connectionStatus !== "idle" && (
+            {!isConnecting && !isConnected && error && (
               <p className="text-sm mt-2">
                 Status:{" "}
-                <span
-                  className={`font-semibold ${
-                    connectionStatus === "connected"
-                      ? "text-green-400"
-                      : connectionStatus === "error"
-                        ? "text-red-400"
-                        : "text-yellow-400"
-                  }`}
-                >
-                  {connectionStatus}
+                <span className="font-semibold text-red-400">
+                  error
                 </span>
-                {wsMessages > 0 && (
-                  <span className="text-gray-400"> ({wsMessages} events)</span>
+              </p>
+            )}
+            {isConnecting && (
+              <p className="text-sm mt-2">
+                Status:{" "}
+                <span className="font-semibold text-yellow-400">
+                  connecting
+                </span>
+              </p>
+            )}
+            {isConnected && (
+              <p className="text-sm mt-2">
+                Status:{" "}
+                <span className="font-semibold text-green-400">
+                  connected
+                </span>
+                {events.length > 0 && (
+                  <span className="text-gray-400"> ({events.length} events)</span>
                 )}
               </p>
             )}
@@ -188,7 +155,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
           <div className="flex gap-3">
             <button
               onClick={startAnalysis}
-              disabled={isStreaming || !sessionId}
+              disabled={isConnected || isConnecting || !sessionId}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 transition-colors flex items-center gap-2"
             >
               <Zap className="w-5 h-5" />
@@ -196,7 +163,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             </button>
             <button
               onClick={resetAnalysis}
-              disabled={!isStreaming && agents.every((a) => a.status === AgentStatusValue.IDLE)}
+              disabled={!isConnected && agents.every((a) => a.status === AgentStatusValue.IDLE)}
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-700 disabled:text-gray-500 transition-colors"
             >
               <RotateCcw className="w-5 h-5" />
@@ -221,11 +188,13 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-gray-800 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Status</p>
-            <p className="text-white capitalize">{connectionStatus}</p>
+            <p className="text-white capitalize">
+              {isConnected ? "connected" : isConnecting ? "connecting" : error ? "error" : "idle"}
+            </p>
           </div>
           <div className="bg-gray-800 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Events Received</p>
-            <p className="text-white">{wsMessages}</p>
+            <p className="text-white">{events.length}</p>
           </div>
           <div className="bg-gray-800 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Agents</p>
