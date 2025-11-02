@@ -3,7 +3,7 @@ Linker Agent - ADK Implementation
 Identifies key entities and their relationships for visualization
 """
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from .base_agent import Agent, A2AMessage
 import time
 import re
@@ -20,11 +20,13 @@ class LinkerAgent(Agent):
     - Map relationships between entities
     - Communicate findings via A2A Protocol
     - Prepare data structure for visualization
+    - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
+        self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -69,6 +71,7 @@ Return a structured analysis of entities and their relationships.
         """
         Linker processing: identify entities and relationships
         """
+        start_time = time.time()
         document = context.get("document", "")
         content_type = context.get("content_type", "document")
         shared_context = context.get("shared_context", {})
@@ -76,35 +79,75 @@ Return a structured analysis of entities and their relationships.
         if not document:
             raise ValueError("Document content is required for relationship analysis")
         
+        # Emit processing event
+        if self.event_emitter:
+            await self.event_emitter.emit_agent_processing(
+                agent_name="Linker",
+                metadata={
+                    "sessionId": context.get("sessionId"),
+                    "contentType": content_type,
+                }
+            )
+        
         self.logger.info(f"🔗 Linker analyzing {content_type} relationships")
         
-        # Extract entities based on content type
-        entities = await self._extract_entities(document, content_type)
-        
-        # Identify relationships between entities
-        relationships = await self._identify_relationships(document, content_type, entities)
-        
-        # Use summary from shared context if available
-        summary_context = shared_context.get("summarizer_result", {})
-        if summary_context:
-            self.logger.info("📋 Using summary context for enhanced relationship analysis")
-            relationships = self._enhance_with_summary_context(relationships, summary_context)
-        
-        # Prepare visualization data structure
-        graph_data = self._prepare_graph_data(entities, relationships, content_type)
-        
-        # Notify other agents via A2A Protocol
-        await self._notify_linking_complete(entities, relationships, graph_data)
-        
-        return {
-            "agent": "linker",
-            "entities": entities,
-            "relationships": relationships,
-            "graph_data": graph_data,
-            "content_type": content_type,
-            "processing_complete": True,
-            "timestamp": time.time()
-        }
+        try:
+            # Extract entities based on content type
+            entities = await self._extract_entities(document, content_type)
+            
+            # Identify relationships between entities
+            relationships = await self._identify_relationships(document, content_type, entities)
+            
+            # Use summary from shared context if available
+            summary_context = shared_context.get("summarizer_result", {})
+            if summary_context:
+                self.logger.info("📋 Using summary context for enhanced relationship analysis")
+                relationships = self._enhance_with_summary_context(relationships, summary_context)
+            
+            # Prepare visualization data structure
+            graph_data = self._prepare_graph_data(entities, relationships, content_type)
+            
+            # Notify other agents via A2A Protocol
+            await self._notify_linking_complete(entities, relationships, graph_data)
+            
+            result = {
+                "agent": "linker",
+                "entities": entities,
+                "relationships": relationships,
+                "graph_data": graph_data,
+                "content_type": content_type,
+                "processing_complete": True,
+                "timestamp": time.time()
+            }
+            
+            # Emit completion event with metrics
+            if self.event_emitter:
+                duration = time.time() - start_time
+                await self.event_emitter.emit_agent_complete(
+                    agent_name="Linker",
+                    payload={
+                        "summary": f"Identified {len(entities)} entities and {len(relationships)} relationships",
+                        "entities": entities,
+                        "relationships": relationships,
+                        "metrics": {
+                            "processingTime": duration,
+                            "entitiesFound": len(entities),
+                            "relationshipsFound": len(relationships),
+                            "tokensProcessed": len(document),
+                        },
+                    }
+                )
+            
+            return result
+            
+        except Exception as e:
+            # Emit error event
+            if self.event_emitter:
+                await self.event_emitter.emit_agent_error(
+                    agent_name="Linker",
+                    error_message=str(e)
+                )
+            raise
     
     async def _extract_entities(self, document: str, content_type: str) -> List[Dict[str, Any]]:
         """Extract key entities from the content"""
@@ -201,9 +244,9 @@ Return a structured analysis of entities and their relationships.
         return entities
     
     async def _extract_document_entities(self, document: str) -> List[Dict[str, Any]]:
-        """Extract entities from document content using Gemini"""
+        """Extract entities from document content using Gemma"""
         try:
-            from services.gemma_service import generate_with_gemma
+            from services.gemma_service import reason_with_gemma
             
             prompt = f"""
 Analyze this document and extract key entities (concepts, topics, themes).
@@ -215,7 +258,7 @@ Document:
 Extract 5-10 key entities:
 """
             
-            response = await generate_with_gemma(
+            response = await reason_with_gemma(
                 prompt=prompt,
                 max_tokens=300,
                 temperature=0.3
@@ -285,7 +328,7 @@ Extract 5-10 key entities:
         if content_type == "codebase":
             return self._identify_code_relationships(document, entities)
         else:
-            return await self._identify_document_relationships(document, entities)
+            return await self._identify_document_relationships_with_embeddings(document, entities)
     
     def _identify_code_relationships(self, document: str, entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Identify relationships in code"""
@@ -385,6 +428,142 @@ Extract 5-10 key entities:
                 })
         
         return relationships[:15]  # Limit total relationships
+    
+    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        if len(vec1) != len(vec2):
+            return 0.0
+        
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        magnitude1 = sum(a * a for a in vec1) ** 0.5
+        magnitude2 = sum(b * b for b in vec2) ** 0.5
+        
+        if magnitude1 == 0 or magnitude2 == 0:
+            return 0.0
+        
+        return dot_product / (magnitude1 * magnitude2)
+    
+    async def _identify_document_relationships_with_embeddings(
+        self, document: str, entities: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Identify relationships in document content using semantic embeddings
+        
+        This method uses Gemma embeddings to calculate semantic similarity
+        between entities, providing more accurate relationship mapping than
+        simple co-occurrence analysis.
+        """
+        relationships = []
+        
+        try:
+            from services.gemma_service import embed_with_gemma
+            
+            # Generate embeddings for all entity labels
+            entity_labels = [entity["label"] for entity in entities]
+            
+            if not entity_labels:
+                return relationships
+            
+            self.logger.info(f"🔗 Generating embeddings for {len(entity_labels)} entities")
+            
+            # Get embeddings in batch
+            embeddings = await embed_with_gemma(entity_labels)
+            
+            # Store embeddings in entities
+            for entity, embedding in zip(entities, embeddings):
+                entity["embedding"] = embedding
+            
+            # Calculate semantic similarity between all pairs
+            similarity_threshold = 0.7  # Configurable threshold
+            
+            for i, entity1 in enumerate(entities):
+                for j, entity2 in enumerate(entities):
+                    if i >= j:  # Avoid duplicates and self-references
+                        continue
+                    
+                    # Calculate cosine similarity
+                    similarity = self._cosine_similarity(
+                        entity1["embedding"],
+                        entity2["embedding"]
+                    )
+                    
+                    # Create relationship if similarity exceeds threshold
+                    if similarity >= similarity_threshold:
+                        relationship_type = "strongly_related" if similarity >= 0.85 else "related"
+                        
+                        relationships.append({
+                            "from": entity1["id"],
+                            "to": entity2["id"],
+                            "type": relationship_type,
+                            "label": f"semantically related ({similarity:.2f})",
+                            "similarity": similarity,
+                            "confidence": "high" if similarity >= 0.85 else "medium"
+                        })
+            
+            # Use Gemma reasoning for complex relationship extraction
+            if len(entities) > 2:
+                relationships = await self._enhance_relationships_with_reasoning(
+                    document, entities, relationships
+                )
+            
+            # Sort by similarity (highest first) and limit
+            relationships.sort(key=lambda r: r.get("similarity", 0), reverse=True)
+            
+            self.logger.info(f"✅ Identified {len(relationships)} semantic relationships")
+            
+            return relationships[:15]  # Limit to top 15 relationships
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️  Error using embeddings for relationships: {e}")
+            self.logger.info("📋 Falling back to simple relationship extraction")
+            # Fallback to simple method
+            return await self._identify_document_relationships(document, entities)
+    
+    async def _enhance_relationships_with_reasoning(
+        self, document: str, entities: List[Dict[str, Any]], 
+        relationships: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Use Gemma reasoning to enhance relationship analysis
+        
+        This method asks Gemma to analyze specific entity relationships
+        in the context of the full document.
+        """
+        try:
+            from services.gemma_service import reason_with_gemma
+            
+            # Take top entities by importance
+            top_entities = [e["label"] for e in entities[:5]]
+            
+            prompt = f"""
+Analyze the relationships between these entities in the given context.
+For each pair, describe the relationship type (e.g., "supports", "contradicts", "builds on", "causes", "enables").
+
+Entities: {', '.join(top_entities)}
+
+Context:
+{document[:1500]}
+
+Provide relationship insights:
+"""
+            
+            response = await reason_with_gemma(
+                prompt=prompt,
+                max_tokens=400,
+                temperature=0.3
+            )
+            
+            # Parse reasoning to enhance existing relationships
+            for relationship in relationships:
+                # Add reasoning context
+                relationship["reasoning_context"] = response[:200]  # Store snippet
+            
+            self.logger.info("✅ Enhanced relationships with reasoning")
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️  Could not enhance with reasoning: {e}")
+        
+        return relationships
     
     def _enhance_with_summary_context(self, relationships: List[Dict[str, Any]], 
                                     summary_context: Dict[str, Any]) -> List[Dict[str, Any]]:
