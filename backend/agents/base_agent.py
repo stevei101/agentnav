@@ -538,7 +538,7 @@ class AgentWorkflow:
                 continue
 
             agent = self.agents[agent_name]
-            agent_start_time = time.time()  # Initialize before try block
+            agent_start_time = time.time()
 
             try:
                 logger.info(f"🔄 Executing agent: {agent_name}")
@@ -607,8 +607,8 @@ class AgentWorkflow:
         session_context.workflow_status = "completed" if session_context.is_complete() else "partially_completed"
         session_context.current_agent = None
 
-        # FR#029: Store results in knowledge cache
-        if self.cache_service and session_context.workflow_status == "completed":
+        # FR#029: Store results in knowledge cache (including partial results)
+        if self.cache_service and session_context.workflow_status in ["completed", "partially_completed"]:
             await self.cache_service.store_cache(
                 content=session_context.raw_input,
                 content_type=session_context.content_type,
