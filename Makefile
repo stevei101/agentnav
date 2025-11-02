@@ -2,12 +2,10 @@
 # Uses Podman commands directly (no docker-compose dependency)
 # Aligned with Cloud Run best practices
 
-.PHONY: help setup up down logs logs-frontend logs-backend logs-firestore build clean test test-frontend test-backend demo teardown restart ps podman-start validate health check-env install-dev lint format shell-frontend shell-backend
+.PHONY: help setup up down logs logs-frontend logs-backend logs-firestore build clean test test-frontend test-backend demo teardown restart ps podman-start validate health check-env install-dev lint format shell-frontend shell-backend ci
 
 # Detect Podman
 PODMAN := $(shell command -v podman 2> /dev/null)
-# Note: PODMAN_COMPOSE not currently used - all operations use native podman commands
-# Kept for potential future compose-based operations (e.g., demo target)
 
 # Load environment variables from .env file
 ifneq (,$(wildcard .env))
@@ -48,6 +46,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-frontend  Run frontend tests"
 	@echo "  make test-backend   Run backend tests"
+	@echo "  make ci             Run full CI check (lint + test)"
 	@echo ""
 	@echo "🎬 Demo & Validation:"
 	@echo "  make demo           Start demo environment"
@@ -307,17 +306,12 @@ test-frontend: check-podman podman-start
 			bun test; \
 	fi
 
-# Start demo environment (using podman-compose if available, otherwise same as up)
+# Start demo environment (same as regular environment - docker-compose removed)
 demo: check-podman podman-start
 	@echo "🎬 Starting demo environment..."
-	@if [ -n "$(PODMAN_COMPOSE)" ] && [ -f docker-compose.demo.yml ]; then \
-		$(PODMAN_COMPOSE) -f docker-compose.demo.yml up -d; \
-	else \
-		echo "⚠️  podman-compose or docker-compose.demo.yml not found, starting regular environment..."; \
-		$(MAKE) up; \
-	fi
+	@$(MAKE) up
 	@echo "✅ Demo environment started."
-	@echo "📍 Access: http://localhost:5173"
+	@echo "📍 Access: http://localhost:3000"
 
 # Validate environment and services
 validate: check-env
@@ -407,3 +401,16 @@ shell-backend: check-podman
 	@podman exec -it $(BACKEND_CONTAINER) /bin/sh || \
 	podman exec -it $(BACKEND_CONTAINER) /bin/bash || \
 	echo "❌ Could not open shell in backend container"
+
+# CI: Run full integration check (lint, format check, test)
+# This is the target to run before merging a PR
+ci: lint test
+	@echo ""
+	@echo "✅ All CI checks passed!"
+	@echo ""
+	@echo "📋 Checklist completed:"
+	@echo "  ✓ Code linting"
+	@echo "  ✓ Frontend tests"
+	@echo "  ✓ Backend tests"
+	@echo ""
+	@echo "🚀 Ready for review and merge!"

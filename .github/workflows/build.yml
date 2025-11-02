@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for Workload Identity Federation
+      id-token: write # Required for Workload Identity Federation
 
     strategy:
       matrix:
@@ -111,7 +111,7 @@ jobs:
             -t ${IMAGE_NAME}:${IMAGE_TAG} \
             -f Dockerfile \
             .
-          
+
           # Tag as latest if on main branch
           LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
           if [[ -n "${LATEST_TAG}" ]]; then
@@ -149,7 +149,7 @@ jobs:
             -t ${IMAGE_NAME}:${IMAGE_TAG} \
             -f backend/Dockerfile \
             ./backend
-          
+
           # Tag as latest if on main branch
           LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
           if [[ -n "${LATEST_TAG}" ]]; then
@@ -169,43 +169,24 @@ jobs:
           
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
-      - name: Build and push gemma
+      - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
+        timeout-minutes: 20
         run: |
           set -euo pipefail
           
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-service"
-          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-          
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Error: image_tag output is missing"
-            exit 1
-          fi
-          
-          echo "🔨 Building Gemma image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker build \
-            -t ${IMAGE_NAME}:${IMAGE_TAG} \
-            -f backend/Dockerfile.gemma \
-            ./backend
-          
-          # Tag as latest if on main branch
-          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-          
-          # Push primary tag
-          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker push ${IMAGE_NAME}:${IMAGE_TAG}
-          
-          # Push latest tag if set
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker push ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-          
-          echo "✅ Gemma image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+          # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
+          echo "🚀 Triggering Cloud Build for Gemma GPU service..."
+          echo "   Commit SHA: ${{ github.sha }}"
+          echo "   Project: ${GCP_PROJECT_ID}"
+          echo "   Artifact Registry: ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}"
+
+          # Submit Cloud Build job and wait for completion
+          gcloud builds submit \
+            --config=cloudbuild-gemma.yaml \
+            --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+
+          echo "✅ Gemma Cloud Build completed successfully"
 
   deploy:
     name: Deploy to Cloud Run
@@ -218,7 +199,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [frontend, backend, gemma]
+        service: [frontend, backend]
       fail-fast: false
 
     steps:
@@ -277,36 +258,6 @@ jobs:
           
           echo "✅ Backend deployment completed"
 
-      - name: Deploy gemma to Cloud Run
-        if: matrix.service == 'gemma'
-        run: |
-          set -euo pipefail
-          
-          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-service:latest"
-          SERVICE_ACCOUNT="agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-          
-          echo "🚀 Deploying Gemma GPU service to Cloud Run..."
-          echo "   Image: ${IMAGE}"
-          echo "   Region: europe-west1"
-          echo "   GPU: nvidia-l4 (1 GPU)"
-          echo "   Memory: 16Gi"
-          echo "   Service Account: ${SERVICE_ACCOUNT}"
-          
-          gcloud run deploy gemma-service \
-            --image ${IMAGE} \
-            --region europe-west1 \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --service-account ${SERVICE_ACCOUNT} \
-            --gpu-type nvidia-l4 \
-            --gpu-count 1 \
-            --memory 16Gi \
-            --cpu 4 \
-            --quiet
-          
-          echo "✅ Gemma deployment completed"
-
       - name: Get service URLs
         if: matrix.service == 'frontend'
         run: |
@@ -315,16 +266,15 @@ jobs:
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-          
+
           echo "Backend URL:"
           gcloud run services describe agentnav-backend \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-          
+
           echo "Gemma URL:"
           gcloud run services describe gemma-service \
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-
