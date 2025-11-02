@@ -35,6 +35,11 @@ output "backend_service_url" {
   value       = google_cloud_run_v2_service.backend.uri
 }
 
+output "backend_model_type" {
+  description = "Model type for backend reasoning tasks (AGENTNAV_MODEL_TYPE)"
+  value       = var.agentnav_model_type
+}
+
 output "gemma_service_url" {
   description = "Gemma GPU Cloud Run service URL"
   value       = google_cloud_run_v2_service.gemma.uri
