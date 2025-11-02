@@ -99,12 +99,12 @@ gcloud run deploy gemma-service \
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MODEL_NAME` | Hugging Face model name | `google/gemma-7b-it` |
-| `HUGGINGFACE_TOKEN` | Optional: For private models | - |
-| `USE_8BIT_QUANTIZATION` | Enable 8-bit quantization | `false` |
-| `PORT` | Service port (set by Cloud Run) | `8080` |
+| Variable                | Description                     | Default              |
+| ----------------------- | ------------------------------- | -------------------- |
+| `MODEL_NAME`            | Hugging Face model name         | `google/gemma-7b-it` |
+| `HUGGINGFACE_TOKEN`     | Optional: For private models    | -                    |
+| `USE_8BIT_QUANTIZATION` | Enable 8-bit quantization       | `false`              |
+| `PORT`                  | Service port (set by Cloud Run) | `8080`               |
 
 ### Scaling Configuration
 
@@ -131,6 +131,7 @@ curl ${SERVICE_URL}/healthz
 ```
 
 Expected response:
+
 ```json
 {
   "status": "healthy",

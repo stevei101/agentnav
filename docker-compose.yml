@@ -10,7 +10,7 @@ services:
       target: development
     container_name: agentnav-frontend
     ports:
-      - "3000:5173"
+      - '3000:5173'
     volumes:
       # Note: Monorepo structure - frontend files are in root directory
       # Mounting root (.:/app) is intentional for this project structure
@@ -27,7 +27,15 @@ services:
     depends_on:
       - agentnav-backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:5173',
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -40,7 +48,7 @@ services:
       # Note: Single-stage build (no target needed)
     container_name: agentnav-backend
     ports:
-      - "8080:8080"
+      - '8080:8080'
     volumes:
       - ./backend:/app
       - backend-venv:/app/.venv
@@ -58,7 +66,15 @@ services:
       firestore-emulator:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:8080/healthz',
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -68,8 +84,8 @@ services:
     image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
     container_name: firestore-emulator
     ports:
-      - "8081:8080"  # API port
-      - "9090:9150"  # UI port (if available)
+      - '8081:8080' # API port
+      - '9090:9150' # UI port (if available)
     volumes:
       - firestore-data:/firestore
     command: >
@@ -81,7 +97,15 @@ services:
     networks:
       - agentnav-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:8080',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -94,4 +118,3 @@ volumes:
 networks:
   agentnav-network:
     driver: bridge
-

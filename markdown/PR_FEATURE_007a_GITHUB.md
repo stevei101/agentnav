@@ -14,6 +14,7 @@ This PR introduces a comprehensive GitHub Actions workflow (`.github/workflows/t
 - **Workload Identity Federation** for secure authentication
 
 **Key Motivation:**
+
 - **Complete Automation:** Enables fully automated infrastructure provisioning without manual `terraform apply` commands
 - **Security & Quality:** Automated security scanning and linting catch issues before deployment
 - **PR Visibility:** Terraform plan output is automatically posted to PRs for review
@@ -29,6 +30,7 @@ Feature #007 established the Terraform infrastructure-as-code configuration. Thi
 ## Linked Issue(s)
 
 Completes Feature Request #007: Core Infrastructure as Code (IaC) with Terraform
+
 - Builds upon PR #9 (Feature #007 Terraform implementation)
 - Adds CI/CD automation layer for Terraform operations
 
@@ -44,6 +46,7 @@ Completes Feature Request #007: Core Infrastructure as Code (IaC) with Terraform
 ## Test Configuration
 
 **Environment:**
+
 - **Branch:** `feature-7`
 - **Target Branch:** `main`
 - **Workflow File:** `.github/workflows/terraform.yml`
@@ -54,24 +57,28 @@ Completes Feature Request #007: Core Infrastructure as Code (IaC) with Terraform
 ## Testing Performed
 
 ### 1. Workflow Syntax Validation
+
 - [x] YAML syntax validated
 - [x] GitHub Actions workflow structure verified
 - [x] All action versions checked for latest releases
 - [x] Permissions configured correctly (id-token: write for WIF)
 
 ### 2. Workflow Logic Review
+
 - [x] Trigger conditions verified (push to main, PR to main)
 - [x] Path filters confirmed (only runs when `terraform/**` changes)
 - [x] Step dependencies validated
 - [x] Conditional logic verified (PR vs push behavior)
 
 ### 3. Integration Points Verified
+
 - [x] Terraform Cloud backend configuration
 - [x] Workload Identity Federation authentication
 - [x] Required GitHub secrets documented
 - [x] Error handling and failure paths
 
 ### 4. Documentation Review
+
 - [x] Workflow file includes clear comments
 - [x] All steps have descriptive names
 - [x] Error handling uses `continue-on-error` appropriately
@@ -80,6 +87,7 @@ Completes Feature Request #007: Core Infrastructure as Code (IaC) with Terraform
 ## Testing Instructions
 
 **Prerequisites:**
+
 1. GitHub secrets configured (see `markdown/GITHUB_SECRETS_REQUIRED.md`):
    - `GCP_PROJECT_ID`
    - `TF_CLOUD_ORGANIZATION`
@@ -112,12 +120,14 @@ git push origin test-terraform-workflow
 ```
 
 **Expected Results:**
+
 - **On PR:** Workflow runs validation, linting, security scan, and plan
 - **PR Comment:** Plan output posted as comment with all check results
 - **On Merge:** Terraform apply runs automatically
 - **Failure Handling:** Workflow fails if validation/linting/security issues found
 
 **Note:** Full end-to-end testing requires:
+
 - Terraform Cloud workspace configured
 - WIF properly set up
 - GitHub secrets configured
@@ -178,6 +188,7 @@ git push origin test-terraform-workflow
 ### New Files (1 file)
 
 **GitHub Actions Workflow:**
+
 - `.github/workflows/terraform.yml` - Complete Terraform CI/CD workflow with validation, linting, security scanning, and automated deployment
 
 ### Modified Files
@@ -189,12 +200,14 @@ git push origin test-terraform-workflow
 ## Key Features Implemented
 
 ### 1. Automated Terraform Validation
+
 - ✅ **Format Check** - Ensures code is properly formatted
 - ✅ **Validation** - `terraform validate` catches syntax errors
 - ✅ **Init** - Initializes Terraform with remote backend
 - ✅ **Plan** - Shows what changes will be made (PR only)
 
 ### 2. Security & Quality Scanning
+
 - ✅ **TFLint** - Terraform linter for best practices and code quality
   - Detects common mistakes
   - Enforces style guidelines
@@ -207,22 +220,26 @@ git push origin test-terraform-workflow
   - Checks for compliance issues
 
 ### 3. Automated Deployment
+
 - ✅ **PR Workflow** - Runs validation, linting, and plan on pull requests
 - ✅ **Main Branch** - Automatically applies changes on merge to `main`
 - ✅ **Path Filtering** - Only triggers when `terraform/**` files change
 - ✅ **Auto-approve** - Uses `-auto-approve` flag for automated deployments
 
 ### 4. PR Integration
+
 - ✅ **Automatic Comments** - Posts Terraform plan output to PR
 - ✅ **Status Indicators** - Shows results of all checks (format, validate, lint, security)
 - ✅ **Plan Output** - Displays full Terraform plan in collapsible section
 
 ### 5. Secure Authentication
+
 - ✅ **Workload Identity Federation** - No static service account keys
 - ✅ **OIDC Token** - Uses `id-token: write` permission
 - ✅ **Least Privilege** - Only necessary permissions granted
 
 ### 6. Error Handling
+
 - ✅ **Soft Failures** - Validation steps use `continue-on-error` to show all results
 - ✅ **Failure Checks** - Explicit validation result checking
 - ✅ **Clear Errors** - Detailed error messages for troubleshooting
@@ -232,6 +249,7 @@ git push origin test-terraform-workflow
 ## Workflow Execution Flow
 
 ### On Pull Request:
+
 1. ✅ Checkout code
 2. ✅ Authenticate via WIF
 3. ✅ Setup Cloud SDK
@@ -246,6 +264,7 @@ git push origin test-terraform-workflow
 12. ✅ Check validation results (fail if issues found)
 
 ### On Merge to Main:
+
 1. ✅ All validation steps above
 2. ✅ Apply changes (`terraform apply -auto-approve`)
 
@@ -256,6 +275,7 @@ git push origin test-terraform-workflow
 This workflow requires the following GitHub secrets (already documented in `markdown/GITHUB_SECRETS_REQUIRED.md`):
 
 **Required:**
+
 - `GCP_PROJECT_ID` - Google Cloud Project ID
 - `TF_CLOUD_ORGANIZATION` - Terraform Cloud organization name
 - `TF_WORKSPACE` - Terraform Cloud workspace name
@@ -263,6 +283,7 @@ This workflow requires the following GitHub secrets (already documented in `mark
 - `WIF_SERVICE_ACCOUNT` - WIF service account email
 
 **Optional:**
+
 - `GITHUB_TOKEN` - Automatically provided by GitHub Actions (for PR comments)
 
 ---
@@ -270,11 +291,13 @@ This workflow requires the following GitHub secrets (already documented in `mark
 ## Integration with Existing Features
 
 ### Feature #007 (Terraform IaC)
+
 - **Complements:** This workflow automates the Terraform operations defined in Feature #007
 - **Enhances:** Adds CI/CD automation layer for infrastructure changes
 - **Dependencies:** Requires Terraform configuration from Feature #007 to be merged first
 
 ### Cloud Build "Connect Repo"
+
 - **Complements:** Cloud Build handles application deployments (frontend/backend)
 - **This Workflow:** Handles infrastructure changes (Cloud Run services, IAM, etc.)
 - **Together:** Complete CI/CD pipeline for both infrastructure and applications
@@ -304,6 +327,7 @@ This workflow requires the following GitHub secrets (already documented in `mark
    - Terraform configuration must exist in `terraform/` directory
 
 2. **GitHub Secrets Configured:**
+
    ```bash
    # Verify secrets are set
    gh secret list
@@ -398,6 +422,7 @@ gh pr merge 9 --squash --delete-branch
 ## Screenshots / Examples
 
 **Workflow Execution (Example):**
+
 ```
 Run TFLint
 ✅ Passed - No linting issues found
@@ -412,6 +437,7 @@ Terraform Plan
 ```
 
 **PR Comment (Example):**
+
 ```
 #### Terraform Format and Style ✅ `success`
 #### Terraform Initialization ✅ `success`
@@ -430,6 +456,7 @@ Terraform Plan
 **Ready for review and merge! 🚀**
 
 **Next Steps After Merge:**
+
 1. Verify workflow runs on first Terraform change
 2. Confirm PR comments work correctly
 3. Test automated apply on merge to main
@@ -438,4 +465,3 @@ Terraform Plan
 ---
 
 **This PR completes the CI/CD automation layer for Feature #007!** ✨
-

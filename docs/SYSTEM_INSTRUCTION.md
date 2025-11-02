@@ -29,33 +29,110 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 ---
 
 ## Application and Deployment Tools
+| Component                          | Description                                                                                                                                                                                                                                                                                                                        | Deployment Tooling                   |
+| :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
+| **Google Cloud Run**               | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference.                                                                                                                                                      | Terraform, Cloud Run API             |
+| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)**                                                                                                                                                                                                                               | Terraform, Podman CI                 |
+| **GCP IAM & Identity**             | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
+| **Cloud DNS & TLS**                | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination.                                                                                                                                                                                        | Terraform, Cloud Run                 |
+| **Firestore**                      | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod).                                                                                                                                                                        | Terraform, Firestore API             |
+| **Secret Manager**                 | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets.                                                                                                                                                                                                                         | Terraform, Secret Manager API        |
+| **Gemma GPU Service**              | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks.                                                                                                                                                    | Podman, Cloud Run API                |
+
+---
+
+## Identity & Authentication Architecture
+
+The project uses **two distinct identity mechanisms** for different purposes:
+
+### 1. Workload Identity Federation (WIF) - For CI/CD
+
+**Purpose:** Secure authentication for GitHub Actions to access GCP during deployment.
+
+**Where Used:** GitHub Actions runner (CI/CD pipeline)
+
+**How It Works:**
+
+- GitHub Actions uses WIF to impersonate a GCP Service Account (the "Deployment Service Account")
+- Eliminates need for static, long-lived Service Account JSON keys stored as GitHub Secrets
+- Access is temporary, tied to GitHub Action runtime, and revocable
+- Required IAM roles: `roles/run.admin` (deploy Cloud Run), `roles/artifactregistry.writer` (push containers)
+
+**Setup:** Configured via Terraform in FR#007 (Terraform Infrastructure)
+
+**Benefits:**
+
+- No static credentials in GitHub Secrets
+- Improved security posture
+- Temporary, scoped access
+- Modern best practice for CI/CD
+
+### 2. Workload Identity (WI) - For Cloud Run Services
+
+**Purpose:** Secure authentication for running Cloud Run services to access other GCP services.
+
+**Where Used:** Running Cloud Run containers (backend, frontend, gemma-service)
+
+**How It Works:**
+
+- Each Cloud Run service has a built-in Service Account (defaults to Compute Engine default Service Account, or custom Service Account)
+- By granting this Service Account minimum necessary IAM roles, the running code automatically authenticates
+- No API keys, Service Account JSON files, or credential files needed in the container
+- Fully managed by GCP
+
+**Required IAM Roles:**
+
+- Backend Service Account:
+  - `roles/datastore.user` (Firestore read/write)
+  - `roles/secretmanager.secretAccessor` (Secret Manager access)
+- Gemma Service Account:
+  - `roles/secretmanager.secretAccessor` (if accessing Secret Manager)
+  - Custom IAM policy for A2A communication (if restricting to backend Service Account only)
+
+**Benefits:**
+
+- No credentials in container images
+- Automatic authentication
+- Least-privilege access via IAM roles
+- Standard Cloud Run best practice
+
+### Identity Summary Table
+
+| Identity Mechanism                     | Where Used            | Purpose                                            | Setup Method                          |
+| :------------------------------------- | :-------------------- | :------------------------------------------------- | :------------------------------------ |
+| **Workload Identity Federation (WIF)** | GitHub Actions Runner | CI/CD authentication (deploy, push containers)     | Terraform (FR#007)                    |
+| **Workload Identity (WI)**             | Cloud Run Services    | Runtime authentication (Firestore, Secret Manager) | Terraform (Service Account IAM roles) |
+
+**Both are necessary** and represent modern GCP security best practices.
+
+---
 
 ### 1. Application Components
 
-| Component | Technology Stack | Dependency Management | Best Practices |
-| :--- | :--- | :--- | :--- |
-| **Frontend (UI)** | **TypeScript**, **React**, **Vite**, **Tailwind CSS** | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run. |
-| **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini** | **uv** (for fast Python package installation/resolution) | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
-| **Gemma GPU Service** | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image) | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU. |
+| Component                | Technology Stack                                                               | Dependency Management                                           | Best Practices                                                                                                                                                                     |
+| :----------------------- | :----------------------------------------------------------------------------- | :-------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend (UI)**        | **TypeScript**, **React**, **Vite**, **Tailwind CSS**                          | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run.                                                                   |
+| **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini**          | **uv** (for fast Python package installation/resolution)        | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
+| **Gemma GPU Service**    | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image)                                    | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU.                          |
 
 ### 2. Multi-Agent Architecture
 
 The system employs a **multi-agent architecture** using Google's **Agent Development Kit (ADK)** and the **Agent2Agent (A2A) Protocol**:
 
-| Agent | Role | Responsibilities |
-| :--- | :--- | :--- |
-| **Orchestrator Agent** | Team lead | Receives user input, determines content type (document vs codebase), delegates tasks to specialized agents via A2A Protocol. |
-| **Summarizer Agent** | Content analyst | Reads entire content and generates concise, comprehensive summaries. Stores intermediate results in Firestore. |
-| **Linker Agent** | Relationship mapper | Identifies key entities (concepts, functions, classes) and their relationships. Communicates findings via A2A Protocol. |
-| **Visualizer Agent** | Graph generator | Structures relationship data into graph format (Mind Maps for documents, Dependency Graphs for codebases). Renders visualization-ready JSON. |
+| Agent                  | Role                | Responsibilities                                                                                                                             |
+| :--------------------- | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orchestrator Agent** | Team lead           | Receives user input, determines content type (document vs codebase), delegates tasks to specialized agents via A2A Protocol.                 |
+| **Summarizer Agent**   | Content analyst     | Reads entire content and generates concise, comprehensive summaries. Stores intermediate results in Firestore.                               |
+| **Linker Agent**       | Relationship mapper | Identifies key entities (concepts, functions, classes) and their relationships. Communicates findings via A2A Protocol.                      |
+| **Visualizer Agent**   | Graph generator     | Structures relationship data into graph format (Mind Maps for documents, Dependency Graphs for codebases). Renders visualization-ready JSON. |
 
 ### 3. Deployment Tools
 
-| Tool | Primary Function |
-| :--- | :--- |
-| **Podman** | Used for building OCI-compliant container images (Frontend, Backend). Images are pushed to GAR. |
-| **Cloud Run** | **Serverless container platform** that automatically scales, manages TLS, and provides GPU support in `europe-west1` region for AI inference workloads. |
-| **Google ADK** | The **Agent Development Kit** provides structured workflows, agent lifecycle management, and integration with Gemini models. |
+| Tool             | Primary Function                                                                                                                                                   |
+| :--------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Podman**       | Used for building OCI-compliant container images (Frontend, Backend). Images are pushed to GAR.                                                                    |
+| **Cloud Run**    | **Serverless container platform** that automatically scales, manages TLS, and provides GPU support in `europe-west1` region for AI inference workloads.            |
+| **Google ADK**   | The **Agent Development Kit** provides structured workflows, agent lifecycle management, and integration with Gemini models.                                       |
 | **A2A Protocol** | The **Agent2Agent Protocol** enables seamless communication and knowledge sharing between agents, ensuring consistent message passing and context synchronization. |
 
 ---
@@ -83,25 +160,25 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 
 ## Code Organization and Secrets
 
-* **Scripts:** Always placed in folder `scripts/`.
-* **Terraform:** Always placed in folder `terraform/`.
-* **Frontend:** React application located in `frontend/` or root directory (if monorepo structure).
-* **Backend:** FastAPI application located in `backend/` directory.
-* **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
-* **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
-* **Service Clients:** HTTP clients for external services located in `backend/services/`.
+- **Scripts:** Always placed in folder `scripts/`.
+- **Terraform:** Always placed in folder `terraform/`.
+- **Frontend:** React application located in `frontend/` or root directory (if monorepo structure).
+- **Backend:** FastAPI application located in `backend/` directory.
+- **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
+- **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
+- **Service Clients:** HTTP clients for external services located in `backend/services/`.
 
 **GitHub Secrets List:**
 
-* `GCP_PROJECT_ID` - Google Cloud Project ID
-* `GCP_SA_KEY` - Google Cloud Service Account Key in json format (maintained for legacy/fallback, but **WIF is preferred**)
-* `GEMINI_API_KEY` - API key for Google Gemini models
-* `FIRESTORE_CREDENTIALS` - Service account JSON for Firestore access (or use WIF)
-* `TF_API_TOKEN` - API Token for Terraform Cloud
-* `TF_CLOUD_ORGANIZATION` - Organization Name for Terraform Cloud
-* `TF_WORKSPACE` - Workspace Name for Terraform Cloud
-* `WIF_PROVIDER` - Name of Workload Identity Federation Provider
-* `WIF_SERVICE_ACCOUNT` - Email of Workload Identity Federation Service Account
+- `GCP_PROJECT_ID` - Google Cloud Project ID
+- `GCP_SA_KEY` - Google Cloud Service Account Key in json format (maintained for legacy/fallback, but **WIF is preferred**)
+- `GEMINI_API_KEY` - API key for Google Gemini models
+- `FIRESTORE_CREDENTIALS` - Service account JSON for Firestore access (or use WIF)
+- `TF_API_TOKEN` - API Token for Terraform Cloud
+- `TF_CLOUD_ORGANIZATION` - Organization Name for Terraform Cloud
+- `TF_WORKSPACE` - Workspace Name for Terraform Cloud
+- `WIF_PROVIDER` - Name of Workload Identity Federation Provider
+- `WIF_SERVICE_ACCOUNT` - Email of Workload Identity Federation Service Account
 
 ---
 
@@ -212,14 +289,14 @@ class SummarizerAgent(Agent):
     async def process(self, context: dict) -> dict:
         # Agent logic here
         result = await self.summarize(context['document'])
-        
+
         # Share via A2A Protocol
         await self.a2a.send_message({
             'agent': 'visualizer',
             'type': 'summary_complete',
             'data': result
         })
-        
+
         return result
 ```
 
@@ -236,16 +313,22 @@ Firestore is used for persistent session memory and knowledge caching:
   - `created_at`, `updated_at`
   - `user_input`
   - `agent_states` (map of agent name ? state)
-  
 - `knowledge_cache/` - Cached analysis results
   - `content_hash` (document ID)
   - `summary`, `visualization_data`
   - `created_at`, `expires_at`
-  
 - `agent_context/` - Shared agent context
   - `session_id` (document ID)
   - `context_data` (map)
   - `last_updated_by` (agent name)
+- `agent_prompts/` - **Agent prompt configurations** (externalized for AI Studio compliance)
+  - Document IDs: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
+  - `prompt_text` (string) - The actual prompt template
+  - `created_at`, `updated_at` (timestamp)
+  - `version` (integer) - Prompt version number
+  - `metadata` (map) - Additional metadata
+    - `agent_name` - Name of the agent
+    - `prompt_type` - Type/use case of the prompt
 
 ---
 
@@ -331,6 +414,7 @@ Firestore is used for persistent session memory and knowledge caching:
 4. **ADK Testing:** Use ADK's local testing utilities for agent development.
 
 **Cloud Run Compatibility Notes:**
+
 - Backend must read `PORT` environment variable (Cloud Run sets this automatically)
 - Implement `/healthz` endpoint for health checks
 - Use `0.0.0.0` as host binding (not `127.0.0.1`) for Cloud Run compatibility

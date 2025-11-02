@@ -1,4 +1,5 @@
 # Feature #007 Implementation Status
+
 ## Infrastructure as Code (IaC) with Terraform
 
 **Status:** 🟢 Core Implementation Complete  
@@ -26,6 +27,7 @@
 ### 3. Infrastructure Components
 
 #### IAM & Security (`iam.tf`)
+
 - ✅ Service accounts for all Cloud Run services
 - ✅ GitHub Actions service account for CI/CD
 - ✅ Workload Identity Federation (WIF) pool and provider
@@ -33,22 +35,26 @@
 - ✅ WIF binding to GitHub repository
 
 #### Artifact Registry (`artifact_registry.tf`)
+
 - ✅ Docker repository for container images
 - ✅ IAM bindings for GitHub Actions push access
 - ✅ Located in `europe-west1` (matches Gemma service region)
 
 #### Firestore (`firestore.tf`)
+
 - ✅ Native mode Firestore database
 - ✅ Point-in-time recovery enabled
 - ✅ Located in backend region
 
 #### Secret Manager (`secret_manager.tf`)
+
 - ✅ `GEMINI_API_KEY` secret
 - ✅ `HUGGINGFACE_TOKEN` secret (optional)
 - ✅ `FIRESTORE_CREDENTIALS` secret (optional)
 - ✅ IAM bindings for Cloud Run services
 
 #### Cloud Run Services (`cloud_run.tf`)
+
 - ✅ **Frontend Service** (`us-central1`)
   - Port 80, 512Mi memory, 1 CPU
   - Public access configured
@@ -105,13 +111,14 @@ Set these secrets in GitHub before running Terraform:
 - [ ] `TF_CLOUD_ORGANIZATION` - Terraform Cloud org name
 - [ ] `TF_WORKSPACE` - Terraform Cloud workspace name
 - [ ] `GEMINI_API_KEY` - Get from Google AI Studio
-- [ ] `GCP_SA_KEY` - *(Optional)* Legacy fallback
+- [ ] `GCP_SA_KEY` - _(Optional)_ Legacy fallback
 
 ### Phase 2: Terraform Setup
 
 1. **Note:** APIs are automatically enabled by Terraform (see `apis.tf`)
 
 2. **Configure Terraform:**
+
    ```bash
    cd terraform
    cp terraform.tfvars.example terraform.tfvars
@@ -119,6 +126,7 @@ Set these secrets in GitHub before running Terraform:
    ```
 
 3. **Initialize and Apply:**
+
    ```bash
    terraform init
    terraform plan
@@ -126,25 +134,27 @@ Set these secrets in GitHub before running Terraform:
    ```
 
 4. **Connect GitHub Repository (first time only):**
+
    ```bash
    # This may require manual setup in Cloud Console:
    # 1. Go to Cloud Build > Triggers
    # 2. Click "Connect Repository"
    # 3. Select GitHub and authorize
    # 4. Select your repository
-   # 
+   #
    # Or use gcloud:
    gcloud builds triggers connect github \
      --repo-name=agentnav \
      --repo-owner=stevei101 \
      --region=global
    ```
-   
+
    **Note:** After connecting, Terraform triggers will work automatically!
 
 ### Phase 3: Post-Apply Configuration
 
 1. **Configure GPU for Gemma Service:**
+
    ```bash
    cd terraform/scripts
    export GCP_PROJECT_ID=your-project-id
@@ -152,6 +162,7 @@ Set these secrets in GitHub before running Terraform:
    ```
 
 2. **Add Secret Values:**
+
    ```bash
    echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets versions add GEMINI_API_KEY --data-file=-
    echo -n "YOUR_HF_TOKEN" | gcloud secrets versions add HUGGINGFACE_TOKEN --data-file=-
@@ -227,6 +238,7 @@ From Feature Request #007:
 ## 📊 Files Created
 
 ### Terraform Files (11 files)
+
 - `terraform/versions.tf`
 - `terraform/provider.tf`
 - `terraform/backend.tf`
@@ -240,12 +252,14 @@ From Feature Request #007:
 - `terraform/cloud_run.tf`
 
 ### Supporting Files (4 files)
+
 - `terraform/.gitignore`
 - `terraform/README.md`
 - `terraform/terraform.tfvars.example`
 - `terraform/scripts/post-apply-gpu-setup.sh`
 
 ### Documentation (2 files)
+
 - `markdown/GITHUB_SECRETS_REQUIRED.md`
 - `markdown/FEATURE_007_IMPLEMENTATION_STATUS.md`
 
@@ -274,4 +288,3 @@ From Feature Request #007:
 - Infrastructure is designed to work seamlessly with CI/CD pipeline
 
 **Status:** Ready for user setup and deployment! 🚀
-

@@ -6,8 +6,8 @@ Based on [terraform/variables.tf](terraform/variables.tf), only **ONE** variable
 
 ### Required Variable (No Default)
 
-| Variable | Type | Description | Value |
-|----------|------|-------------|-------|
+| Variable     | Type     | Description             | Value                      |
+| ------------ | -------- | ----------------------- | -------------------------- |
 | `project_id` | `string` | Google Cloud Project ID | `linear-archway-476722-v0` |
 
 ### Optional Variables (Have Defaults - Can Override)
@@ -15,31 +15,37 @@ Based on [terraform/variables.tf](terraform/variables.tf), only **ONE** variable
 All other variables have sensible defaults and can be left as-is or customized:
 
 **Region Configuration:**
+
 - `default_region`: `"us-central1"`
 - `frontend_region`: `"us-central1"`
 - `backend_region`: `"europe-west1"`
 - `gemma_region`: `"europe-west1"`
 
 **Repository Configuration:**
+
 - `github_repository`: `"stevei101/agentnav"`
 - `github_branch`: `"main"`
 - `enable_connect_repo`: `true`
 
 **Identity & Security:**
+
 - `workload_identity_pool_id`: `"github-actions-pool"`
 - `workload_identity_provider_id`: `"github-provider"`
 
 **Services Configuration:**
+
 - `artifact_registry_location`: `"europe-west1"`
 - `artifact_registry_repository_id`: `"agentnav-containers"`
 - `firestore_database_id`: `"agentnav-db"`
 
 **Container Ports (NEW - Just Added):**
+
 - `frontend_container_port`: `80`
 - `backend_container_port`: `8080`
 - `gemma_container_port`: `8080`
 
 **Other:**
+
 - `environment`: `"prod"`
 - `domain_name`: `""` (empty - optional)
 
@@ -83,6 +89,7 @@ EOF
 ### Method 3: Environment Variables
 
 In Terraform Cloud UI → Variables → Add variable:
+
 - **Key:** `TF_VAR_project_id` (or use HCL mode and add as regular `project_id`)
 - **Value:** `linear-archway-476722-v0`
 
@@ -109,6 +116,7 @@ After setting the variable:
 ## 📝 Summary
 
 **Minimum Required Setup:**
+
 ```hcl
 project_id = "linear-archway-476722-v0"
 ```
@@ -116,6 +124,7 @@ project_id = "linear-archway-476722-v0"
 That's it! All other variables have sensible defaults.
 
 **Recommended Setup (for clarity):**
+
 ```hcl
 project_id = "linear-archway-476722-v0"
 github_repository = "stevei101/agentnav"
@@ -123,4 +132,3 @@ environment = "prod"
 ```
 
 All other defaults are fine for standard deployment.
-
