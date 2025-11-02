@@ -1,448 +1,456 @@
-## Agentic Navigator — Copilot / AI Agent Instructions
+# agentnav System Instruction (Cloud Run & ADK Multi-Agent Architecture)
 
-This file provides focused, actionable knowledge for AI coding agents to be productive in this repository.
-Keep guidance short and concrete: commands, file locations, patterns, and gotchas.
+**Summary:**
+You are a professional full stack developer who has excellent working knowledge and experience with our systems.
+**Terraform** cloud deployments are used for Google Cloud, run by **GitHub Actions**. The code is **frontend** (UI with **TypeScript** and **React** with requirements managed by **bun**) and **backend** (Python API using **FastAPI** and **Google Agent Development Kit (ADK)** with **Agent2Agent (A2A) Protocol** orchestrated AI agents, with Python requirements managed by **uv**). **Firestore** is used for persistent session memory and knowledge caching. The whole project uses **Podman** to build containers and deploys with **Cloud Run** (serverless) on **GCP**. The requirements include IAM, **Google Artifact Registry (GAR)**, **Workload Identity Federation (WIF)** for GitHub Actions CI/CD, **Workload Identity (WI)** for Cloud Run service authentication, and Cloud Run's built-in TLS management for the domain: `agentnav.lornu.com` (or your configured domain).
+
+## Overview of the Deployment Pipeline
+
+Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) state management and execution, triggered by **GitHub Actions**. It targets **Google Cloud Run** for serverless application deployment, using **Podman** for container builds and **Cloud Run** for managed container orchestration. The system uses the **Google Agent Development Kit (ADK)** with the **Agent2Agent (A2A) Protocol** to coordinate multiple specialized AI agents, backed by **Firestore** for persistent session memory.
 
 ---
 
-## 1. Quick Context (Big Picture)
+## Infrastructure and Service Components (GCP)
 
-### Architecture Overview
-- **Frontend**: React 19 + TypeScript SPA using Vite (monorepo structure in root directory)
-  - Entry point: `index.tsx` → `App.tsx`
-  - Components: `components/` (AgentCard, InteractiveGraph, ResultsDisplay, icons)
-  - Services: `services/geminiService.ts` (API client with Gemini integration)
-  - Types: `types.ts` (shared TypeScript interfaces)
+| Component | Description | Deployment Tooling |
+| :--- | :--- | :--- |
+| **Google Cloud Run** | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference. | Terraform, Cloud Run API |
+| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)** | Terraform, Podman CI |
+| **GCP IAM & Identity** | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
+| **Cloud DNS & TLS** | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination. | Terraform, Cloud Run |
+| **Firestore** | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). | Terraform, Firestore API |
+| **Secret Manager** | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets. | Terraform, Secret Manager API |
+| **Gemma GPU Service** | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks. | Podman, Cloud Run API |
+
+---
+
+## Identity & Authentication Architecture
+
+The project uses **two distinct identity mechanisms** for different purposes:
+
+### 1. Workload Identity Federation (WIF) - For CI/CD
+
+**Purpose:** Secure authentication for GitHub Actions to access GCP during deployment.
+
+**Where Used:** GitHub Actions runner (CI/CD pipeline)
+
+**How It Works:**
+- GitHub Actions uses WIF to impersonate a GCP Service Account (the "Deployment Service Account")
+- Eliminates need for static, long-lived Service Account JSON keys stored as GitHub Secrets
+- Access is temporary, tied to GitHub Action runtime, and revocable
+- Required IAM roles: `roles/run.admin` (deploy Cloud Run), `roles/artifactregistry.writer` (push containers)
+
+**Setup:** Configured via Terraform in FR#007 (Terraform Infrastructure)
+
+**Benefits:**
+- No static credentials in GitHub Secrets
+- Improved security posture
+- Temporary, scoped access
+- Modern best practice for CI/CD
+
+### 2. Workload Identity (WI) - For Cloud Run Services
+
+**Purpose:** Secure authentication for running Cloud Run services to access other GCP services.
+
+**Where Used:** Running Cloud Run containers (backend, frontend, gemma-service)
+
+**How It Works:**
+- Each Cloud Run service has a built-in Service Account (defaults to Compute Engine default Service Account, or custom Service Account)
+- By granting this Service Account minimum necessary IAM roles, the running code automatically authenticates
+- No API keys, Service Account JSON files, or credential files needed in the container
+- Fully managed by GCP
+
+**Required IAM Roles:**
+- Backend Service Account:
+  - `roles/datastore.user` (Firestore read/write)
+  - `roles/secretmanager.secretAccessor` (Secret Manager access)
+- Gemma Service Account:
+  - `roles/secretmanager.secretAccessor` (if accessing Secret Manager)
+  - Custom IAM policy for A2A communication (if restricting to backend Service Account only)
+
+**Benefits:**
+- No credentials in container images
+- Automatic authentication
+- Least-privilege access via IAM roles
+- Standard Cloud Run best practice
+
+### Identity Summary Table
+
+| Identity Mechanism | Where Used | Purpose | Setup Method |
+| :--- | :--- | :--- | :--- |
+| **Workload Identity Federation (WIF)** | GitHub Actions Runner | CI/CD authentication (deploy, push containers) | Terraform (FR#007) |
+| **Workload Identity (WI)** | Cloud Run Services | Runtime authentication (Firestore, Secret Manager) | Terraform (Service Account IAM roles) |
+
+**Both are necessary** and represent modern GCP security best practices.
+
+---
+
+### 1. Application Components
+
+| Component | Technology Stack | Dependency Management | Best Practices |
+| :--- | :--- | :--- | :--- |
+| **Frontend (UI)** | **TypeScript**, **React**, **Vite**, **Tailwind CSS** | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run. |
+| **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini** | **uv** (for fast Python package installation/resolution) | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
+| **Gemma GPU Service** | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image) | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU. |
+
+### 2. Multi-Agent Architecture
+
+The system employs a **multi-agent architecture** using Google's **Agent Development Kit (ADK)** and the **Agent2Agent (A2A) Protocol**:
+
+| Agent | Role | Responsibilities |
+| :--- | :--- | :--- |
+| **Orchestrator Agent** | Team lead | Receives user input, determines content type (document vs codebase), delegates tasks to specialized agents via A2A Protocol. |
+| **Summarizer Agent** | Content analyst | Reads entire content and generates concise, comprehensive summaries. Stores intermediate results in Firestore. |
+| **Linker Agent** | Relationship mapper | Identifies key entities (concepts, functions, classes) and their relationships. Communicates findings via A2A Protocol. |
+| **Visualizer Agent** | Graph generator | Structures relationship data into graph format (Mind Maps for documents, Dependency Graphs for codebases). Renders visualization-ready JSON. |
+
+### 3. Deployment Tools
+
+| Tool | Primary Function |
+| :--- | :--- |
+| **Podman** | Used for building OCI-compliant container images (Frontend, Backend). Images are pushed to GAR. |
+| **Cloud Run** | **Serverless container platform** that automatically scales, manages TLS, and provides GPU support in `europe-west1` region for AI inference workloads. |
+| **Google ADK** | The **Agent Development Kit** provides structured workflows, agent lifecycle management, and integration with Gemini models. |
+| **A2A Protocol** | The **Agent2Agent Protocol** enables seamless communication and knowledge sharing between agents, ensuring consistent message passing and context synchronization. |
+
+---
+
+## The CI/CD Workflow (Cloud Run & GitHub Actions)
+
+1. **Code Commit:** Changes are pushed to the GitHub repository.
+2. **GitHub Action Trigger:** The push triggers a GitHub Actions workflow.
+3. **Authentication:** GitHub Actions uses **Workload Identity Federation (WIF)** to securely authenticate to GCP for deployment tasks (eliminates need for static Service Account keys).
+4. **Terraform Provisioning (IaC):** The action triggers **Terraform Cloud** to provision/update GCP infrastructure (Cloud Run services, GAR, IAM, Cloud DNS, Firestore, Secret Manager).
+5. **Container Build (Podman):** The CI step uses **Podman** to build container images for both frontend and backend services. Images are tagged with the Git SHA and pushed to **Google Artifact Registry (GAR)**.
+6. **Application Deployment (Cloud Run):**
+   - The CI/CD step uses `gcloud` CLI to deploy frontend, backend, and Gemma GPU services to Cloud Run.
+   - Frontend service: Serves static React assets via Nginx (region: `us-central1`).
+   - Backend service: FastAPI orchestrator with ADK agents (region: `europe-west1`).
+   - Gemma GPU service: GPU-accelerated model serving with NVIDIA L4 GPU (region: `europe-west1`).
+   - Environment variables (including secrets from Secret Manager) are injected during deployment.
+   - Cloud Run services use **Workload Identity (WI)** with their Service Accounts to automatically authenticate to Firestore and Secret Manager (no credentials in containers).
+   - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
+   - **Final Commands:**
+     - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
+     - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$GEMINI_API_KEY,GEMMA_SERVICE_URL=$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
+     - `gcloud run deploy gemma-service --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 --port 8080 --timeout 300s`
+
+---
+
+## Code Organization and Secrets
+
+* **Scripts:** Always placed in folder `scripts/`.
+* **Terraform:** Always placed in folder `terraform/`.
+* **Frontend:** React application located in `frontend/` or root directory (if monorepo structure).
+* **Backend:** FastAPI application located in `backend/` directory.
+* **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
+* **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
+* **Service Clients:** HTTP clients for external services located in `backend/services/`.
+
+**GitHub Secrets List:**
+
+* `GCP_PROJECT_ID` - Google Cloud Project ID
+* `GCP_SA_KEY` - Google Cloud Service Account Key in json format (maintained for legacy/fallback, but **WIF is preferred**)
+* `GEMINI_API_KEY` - API key for Google Gemini models
+* `FIRESTORE_CREDENTIALS` - Service account JSON for Firestore access (or use WIF)
+* `TF_API_TOKEN` - API Token for Terraform Cloud
+* `TF_CLOUD_ORGANIZATION` - Organization Name for Terraform Cloud
+* `TF_WORKSPACE` - Workspace Name for Terraform Cloud
+* `WIF_PROVIDER` - Name of Workload Identity Federation Provider
+* `WIF_SERVICE_ACCOUNT` - Email of Workload Identity Federation Service Account
+
+---
+
+## Cloud Run Configuration
+
+### Frontend Service Configuration
+
+- **Region:** `us-central1` (for low latency)
+- **CPU:** 1 vCPU
+- **Memory:** 512Mi
+- **Max Instances:** 10 (or as needed)
+- **Min Instances:** 0 (serverless scaling)
+- **Concurrency:** 80 requests per instance
+- **Container Port:** **Must use PORT environment variable** (Cloud Run sets this automatically, defaults to 80 for Nginx)
+- **Health Check:** Implement `/healthz` endpoint (optional but recommended)
+- **Environment Variables:** None required (static frontend)
+
+### Backend Service Configuration
+
+- **Region:** `europe-west1` (for GPU availability)
+- **CPU:** Standard CPU (GPU handled by separate Gemma service)
+- **Memory:** 8Gi
+- **Max Instances:** 10
+- **Min Instances:** 0 (can scale to zero)
+- **Concurrency:** 80 requests per instance
+- **Container Port:** **Must use PORT environment variable** (Cloud Run sets this automatically, defaults to 8080)
+- **Health Check:** Implement `/healthz` endpoint (Cloud Run requirement)
+- **Startup Probe:** Configure startup timeout (Cloud Run default: 240s)
+- **Request Timeout:** 300s (Cloud Run default, configurable)
+- **Environment Variables:**
+  - `PORT` (set automatically by Cloud Run, but must be handled in code)
+  - `GEMINI_API_KEY` (from Secret Manager)
+  - `GEMMA_SERVICE_URL` (URL of Gemma GPU service)
+  - `FIRESTORE_PROJECT_ID`
+  - `FIRESTORE_DATABASE_ID`
+  - `ADK_AGENT_CONFIG_PATH`
+  - `A2A_PROTOCOL_ENABLED=true`
+
+### Gemma GPU Service Configuration
+
+- **Region:** `europe-west1` (GPU availability)
+- **CPU:** GPU-enabled (NVIDIA L4)
+- **GPU Type:** `nvidia-l4`
+- **GPU Count:** 1
+- **Memory:** 16Gi (for Gemma 7B) or 8Gi (for Gemma 2B)
+- **Max Instances:** 2 (GPU instances are expensive)
+- **Min Instances:** 0 (can scale to zero)
+- **Concurrency:** 1 request per instance (GPU workloads)
+- **Container Port:** 8080
+- **Health Check:** `/healthz` endpoint (returns GPU status)
+- **Startup Timeout:** 300s (for model loading)
+- **Request Timeout:** 300s
+- **Environment Variables:**
+  - `PORT` (set automatically by Cloud Run)
+  - `MODEL_NAME` (default: `google/gemma-7b-it`)
+  - `HUGGINGFACE_TOKEN` (optional, from Secret Manager)
+  - `USE_8BIT_QUANTIZATION` (optional, for memory efficiency)
+
+### GPU Configuration
+
+Cloud Run GPU support is available in specific regions (`europe-west1`, `us-central1`, `asia-northeast1`). The Gemma GPU service uses NVIDIA L4 GPUs in `europe-west1` region.
+
+**Deploy Gemma GPU Service:**
+
+```bash
+gcloud run deploy gemma-service \
+  --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest \
+  --region europe-west1 \
+  --platform managed \
+  --cpu gpu \
+  --memory 16Gi \
+  --gpu-type nvidia-l4 \
+  --gpu-count 1 \
+  --port 8080 \
+  --timeout 300s \
+  --min-instances 0 \
+  --max-instances 2
+```
+
+See [docs/GPU_SETUP_GUIDE.md](../docs/GPU_SETUP_GUIDE.md) for detailed deployment instructions.
+
+---
+
+## ADK and A2A Protocol Integration
+
+### Agent Development Kit (ADK)
+
+The backend uses Google's **Agent Development Kit (ADK)** to structure multi-agent workflows:
+
+- **Agent Definitions:** Define each agent's role, capabilities, and prompt templates in `backend/agents/`.
+- **Workflow Orchestration:** Use ADK's workflow engine to coordinate agent execution.
+- **Model Integration:** ADK integrates with Gemini/Gemma models for agent reasoning.
+
+### Agent2Agent (A2A) Protocol
+
+The **A2A Protocol** enables agent communication:
+
+- **Message Passing:** Agents communicate via structured A2A Protocol messages.
+- **Context Sharing:** Shared context is stored in Firestore and synchronized via A2A Protocol.
+- **State Management:** Agent states are persisted in Firestore for session continuity.
+
+**Example A2A Protocol Handler:**
+
+```python
+from google.adk import Agent, A2AProtocol
+
+class SummarizerAgent(Agent):
+    async def process(self, context: dict) -> dict:
+        # Agent logic here
+        result = await self.summarize(context['document'])
+        
+        # Share via A2A Protocol
+        await self.a2a.send_message({
+            'agent': 'visualizer',
+            'type': 'summary_complete',
+            'data': result
+        })
+        
+        return result
+```
+
+---
+
+## Firestore Schema
+
+Firestore is used for persistent session memory, knowledge caching, and agent prompt management:
+
+**Collections:**
+
+- `sessions/` - User session data
+  - `session_id` (document ID)
+  - `created_at`, `updated_at`
+  - `user_input`
+  - `agent_states` (map of agent name → state)
   
-- **Backend**: FastAPI service in `backend/` directory
-  - Entry: `backend/main.py`
-  - Agents: `backend/agents/` (visualizer_agent.py)
-  - Services: `backend/services/` (gemma_service.py, firestore_client.py, prompt_loader.py)
-  - Gemma GPU Service: `backend/gemma_service/` (separate FastAPI app for GPU inference)
+- `knowledge_cache/` - Cached analysis results
+  - `content_hash` (document ID)
+  - `summary`, `visualization_data`
+  - `created_at`, `expires_at`
   
-- **Infrastructure**: Podman-based containers for local development
-  - Orchestration: `Makefile` (primary) and `docker-compose.yml`
-  - Firestore emulator for local persistence
-  - Cloud deployment: Google Cloud Run with GPU support (europe-west1)
-
-### Tech Stack
-- **Frontend**: React 19.2, TypeScript 5.8, Vite 6.2, Recharts 3.3, @google/genai 1.28
-- **Backend**: FastAPI, Python 3.11+, httpx, pydantic, google-cloud-firestore
-- **AI Models**: Google Gemini 2.5 Pro (reasoning), Gemma 7B (GPU-accelerated inference)
-- **Dev Tools**: Vitest (frontend tests), pytest (backend tests), ESLint, Prettier
-- **Deployment**: Cloud Run, Artifact Registry, Secret Manager, Terraform Cloud
-
----
-
-## 2. How to Run (Developer Workflows)
-
-### Quick Start
-```bash
-# Setup everything (recommended for first run)
-make setup
-
-# View logs
-make logs
-
-# Stop services
-make down
-
-# See all commands
-make help
-```
-
-### Running Services Individually
-**Frontend** (port 3000, internally 5173):
-```bash
-npm run dev           # Start dev server with hot-reload
-npm run build         # Production build
-npm run test          # Run Vitest tests
-npm run lint          # Run ESLint
-npm run format        # Run Prettier
-```
-
-**Backend** (port 8080):
-```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8080
-
-# Or using Makefile from root:
-make logs-backend     # View backend logs
-make shell-backend    # Open shell in backend container
-```
-
-**Backend Tests**:
-```bash
-cd backend
-pytest                # Run all tests
-pytest -v             # Verbose output
-pytest tests/test_firestore_client.py  # Specific test file
-```
-
-### Environment Setup
-1. Copy `.env.example` to `.env`
-2. Add your `GEMINI_API_KEY` (required)
-3. Configure optional vars:
-   - `FIRESTORE_PROJECT_ID` (default: agentnav-dev)
-   - `GEMMA_SERVICE_URL` (for GPU service integration)
-   - `ENVIRONMENT` (development/staging/production)
-
-### Access Points
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8080
-- API Documentation: http://localhost:8080/docs
-- Firestore Emulator: http://localhost:8081
+- `agent_context/` - Shared agent context
+  - `session_id` (document ID)
+  - `context_data` (map)
+  - `last_updated_by` (agent name)
+  
+- `agent_prompts/` - **Agent prompt configurations** (externalized for AI Studio compliance)
+  - Document IDs: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
+  - `prompt_text` (string) - The actual prompt template
+  - `created_at`, `updated_at` (timestamp)
+  - `version` (integer) - Prompt version number
+  - `metadata` (map) - Additional metadata
+    - `agent_name` - Name of the agent
+    - `prompt_type` - Type/use case of the prompt
 
 ---
 
-## 3. Integration / Runtime Conventions
+## Error Handling & Validation
 
-### Security Pattern (CRITICAL)
-**DO NOT expose API keys in frontend code.**
-- ❌ Bad: `window.GEMINI_API_KEY` or `VITE_GEMINI_API_KEY` in browser
-- ✅ Good: Frontend → Backend API → Backend calls external services
-- Legacy code in `services/geminiService.ts` has frontend API calls—migrate to backend endpoints
-- `vite.config.ts` intentionally omits API key exposure for security
+### Frontend Error Handling
 
-### Backend Endpoints
-**Main API** (`backend/main.py`):
-- `GET /healthz` — Cloud Run health check (recommended)
-- `GET /health` — Deprecated health check (use /healthz)
-- `GET /api/docs` — API documentation
-- `POST /api/generate` — Text generation via Gemma GPU service
-  - Requires: `GEMMA_SERVICE_URL` environment variable
-  - Request: `{"prompt": str, "max_tokens": int, "temperature": float}`
-  - Response: `{"generated_text": str, "service_used": "gemma-gpu-service"}`
-- `POST /api/visualize` — Graph generation via Visualizer Agent
-  - Request: `{"document": str, "content_type": "document"|"codebase"}`
-  - Returns: `{type, title, nodes, edges, generated_by}`
+- **Early Validation:** Validate user input before API calls.
+- **Error Boundaries:** Use React Error Boundaries for graceful error handling.
+- **API Error Parsing:** Parse backend errors into user-friendly messages.
+- **Error Shape:** Expect `{ code: string, message: string, details?: object }` from backend.
 
-**Gemma GPU Service** (`backend/gemma_service/main.py`):
-- Separate FastAPI app deployed on Cloud Run with NVIDIA L4 GPU
-- Serves Gemma 7B model for text generation
-- Endpoints: `/generate`, `/embeddings`, `/healthz`
+### Backend Error Handling
 
-### CORS Configuration
-Backend allows local dev origins (see `backend/main.py`):
-- `http://localhost:3000`
-- `http://localhost:5173`
+- **FastAPI Error Handlers:** Use `@app.exception_handler` for centralized error mapping.
+- **ADK Error Handling:** Handle agent failures gracefully and propagate via A2A Protocol.
+- **Firestore Error Handling:** Retry logic for transient Firestore errors.
+- **Validation:** Use Pydantic models for request/response validation.
 
 ---
 
-## 4. Agent & Response Contract (CRITICAL)
+## Performance & Scalability
 
-### Frontend-Backend Contract
-**Function**: `runAgenticNavigator(documentText)` in `services/geminiService.ts`
+### Frontend Optimization
 
-**Request**: Plain text document or code
+- **Code Splitting:** Use Vite's automatic code splitting.
+- **Asset Optimization:** Minimize and compress static assets.
+- **Caching:** Leverage Cloud Run's CDN caching for static assets.
+- **Lazy Loading:** Lazy load visualization components.
 
-**Response**: Must be a single JSON object matching `analysisSchema`:
-```typescript
-{
-  summary: string,           // Comprehensive summary
-  visualization: {
-    type: 'MIND_MAP' | 'DEPENDENCY_GRAPH',  // Mind map for docs, dependency graph for code
-    title: string,
-    nodes: Array<{
-      id: string,            // Unique identifier (e.g., "concept_1", "function_A")
-      label: string,         // Display name
-      group?: string         // Optional styling group
-    }>,
-    edges: Array<{
-      from: string,          // Source node ID (must match a node.id)
-      to: string,            // Target node ID (must match a node.id)
-      label?: string         // Optional relationship label
-    }>
-  }
-}
-```
+### Backend Optimization
 
-**Example Valid Nodes/Edges**:
-```json
-{
-  "nodes": [
-    {"id": "concept_1", "label": "Core Concept", "group": "Core"},
-    {"id": "concept_2", "label": "Related Idea", "group": "Supporting"}
-  ],
-  "edges": [
-    {"from": "concept_1", "to": "concept_2", "label": "relates_to"}
-  ]
-}
-```
+- **GPU Acceleration:** Use GPU-enabled Cloud Run instances for model inference.
+- **Connection Pooling:** Reuse Firestore connections across requests.
+- **Caching:** Cache analysis results in Firestore to avoid redundant processing.
+- **Async Processing:** Use FastAPI's async capabilities for non-blocking I/O.
+- **Gemma Service Integration:** Call Gemma GPU service for complex tasks; cache results to reduce GPU calls.
 
-**Important**:
-- All `from` and `to` in edges MUST reference valid node `id` values
-- Return raw JSON (no markdown code fences like ```json)
-- Frontend strips code fences as fallback, but avoid them
-- Model used: `gemini-2.5-pro` with `responseMimeType: "application/json"`
+### Gemma GPU Service Optimization
 
-### TypeScript Types (`types.ts`)
-- `AgentName`: ORCHESTRATOR | SUMMARIZER | LINKER | VISUALIZER
-- `AgentStatusValue`: IDLE | PROCESSING | DONE | ERROR
-- `VisualizationType`: MIND_MAP | DEPENDENCY_GRAPH
-- `GraphNode`: {id, label, group?}
-- `GraphEdge`: {from, to, label?}
-- `AnalysisResult`: {summary, visualization}
+- **Model Quantization:** Use 8-bit quantization for memory efficiency if needed.
+- **Scale to Zero:** Set `min-instances=0` to save costs when idle.
+- **Caching:** Implement result caching to reduce redundant GPU inference.
+- **Batch Processing:** Consider batching requests when possible.
+
+### Firestore Optimization
+
+- **Indexes:** Create composite indexes for common query patterns.
+- **Batching:** Batch Firestore writes for efficiency.
+- **TTL Policies:** Set expiration on cached knowledge entries.
 
 ---
 
-## 5. Common Patterns & Gotchas
+## Monitoring & Observability
 
-### Security
-- Never commit API keys to git
-- Use `.env` file (gitignored) for local development
-- In production, use Secret Manager (see `.env.example` comments)
-- Frontend should call `/api/visualize` backend endpoint, not Gemini API directly
-
-### Agent Simulation
-- `App.tsx` has `initialAgents` state for UI visualization
-- Agent progress is simulated visually (`simulateAgentActivity()`)
-- Real work happens in the Gemini API prompt and backend agents
-- Agents: Orchestrator → Summarizer → Linker → Visualizer (shown in UI)
-
-### Gemma GPU Service Integration
-- Backend expects `GEMMA_SERVICE_URL` env var to call GPU service
-- If missing, `/api/generate` and `/api/visualize` return 503 errors
-- Gemma service runs separately (on Cloud Run with GPU in production)
-- Local development: typically mocked or GPU service disabled
-
-### Prompt Management
-- Visualizer agent loads prompts from Firestore (`backend/services/prompt_loader.py`)
-- Fallback prompt available for development (`visualizer_agent.py`)
-- Production/staging: Firestore prompts are required (no fallback)
-
-### Schema Changes
-When modifying the analysis schema:
-1. Update `services/geminiService.ts` (frontend expectations)
-2. Update `types.ts` (TypeScript types)
-3. Update backend validation in `backend/agents/visualizer_agent.py`
-4. Keep changes backward compatible (add optional fields, don't rename required ones)
-5. Update tests: `components/__tests__/` and `backend/tests/`
+- **Cloud Logging:** All services log to Cloud Logging.
+- **Cloud Monitoring:** Monitor Cloud Run metrics (latency, error rate, request count).
+- **Firestore Metrics:** Monitor Firestore read/write operations.
+- **ADK Metrics:** Track agent execution times and success rates.
+- **Custom Metrics:** Export agent-specific metrics via Cloud Monitoring API.
 
 ---
 
-## 6. Files to Inspect First (High ROI)
+## Security Best Practices
 
-### Essential Documentation
-- `README.md` — Project overview, features, deployment info
-- `docs/local-development.md` — Detailed setup, troubleshooting, workflow guide
-- `docs/SYSTEM_INSTRUCTION.md` — Full system architecture and deployment
-
-### Frontend Core Files
-- `App.tsx` — Main app component, agent state management, UI flow
-- `services/geminiService.ts` — API client, prompt engineering, schema definition
-- `types.ts` — TypeScript type definitions
-- `components/AgentCard.tsx` — Agent status UI
-- `components/InteractiveGraph.tsx` — Graph visualization (Recharts)
-- `components/ResultsDisplay.tsx` — Summary and graph display
-
-### Backend Core Files
-- `backend/main.py` — FastAPI app, endpoint definitions, CORS
-- `backend/agents/visualizer_agent.py` — Graph generation agent
-- `backend/services/gemma_service.py` — HTTP client for Gemma GPU service
-- `backend/services/firestore_client.py` — Firestore integration
-- `backend/services/prompt_loader.py` — Dynamic prompt loading
-- `backend/pyproject.toml` — Python dependencies
-
-### Gemma GPU Service
-- `backend/gemma_service/main.py` — FastAPI app for GPU inference
-- `backend/gemma_service/model_loader.py` — Gemma model loading
-- `backend/gemma_service/inference.py` — Text generation logic
-
-### Configuration Files
-- `.env.example` — Environment variables template
-- `package.json` — Frontend dependencies and scripts
-- `vite.config.ts` — Vite configuration (note: no API key exposure)
-- `docker-compose.yml` — Local development stack
-- `Makefile` — Development commands (Podman-based)
+- **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
+- **IAM Roles:** Use least-privilege IAM roles for all service accounts.
+- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication (no credentials in containers).
+- **API Authentication:** Implement authentication for backend API (API keys or OAuth).
+- **Input Validation:** Validate and sanitize all user inputs.
+- **Rate Limiting:** Implement rate limiting on Cloud Run services.
 
 ---
 
-## 7. Development Practices
+## Development Workflow
+
+### Local Development
+
+1. **Frontend:** `cd frontend && bun install && bun run dev`
+2. **Backend:** `cd backend && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt && PORT=8080 uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --reload`
+3. **Firestore Emulator:** Use Firestore emulator for local development (port 8080 for API, port 4000 for UI).
+4. **ADK Testing:** Use ADK's local testing utilities for agent development.
+
+**Cloud Run Compatibility Notes:**
+- Backend must read `PORT` environment variable (Cloud Run sets this automatically)
+- Implement `/healthz` endpoint for health checks
+- Use `0.0.0.0` as host binding (not `127.0.0.1`) for Cloud Run compatibility
+- Logs must go to stdout/stderr (Cloud Run captures these automatically)
+- Handle SIGTERM gracefully for clean shutdowns
 
 ### Testing
-**Frontend (Vitest)**:
-```bash
-npm run test                                    # Run all tests
-npm run test -- --watch                         # Watch mode
-npm run test -- components/__tests__/AgentCard.test.tsx  # Specific test
-```
-- Test files: `components/__tests__/*.test.tsx`
-- Setup: `vitest.config.ts`, `vitest.setup.ts`
-- Uses: @testing-library/react, @testing-library/jest-dom
 
-**Backend (pytest)**:
-```bash
-cd backend
-pytest                                          # Run all tests
-pytest -v                                       # Verbose
-pytest --cov                                    # Coverage report
-```
-- Test files: `backend/tests/test_*.py`
-- Dependencies in `pyproject.toml` under `[project.optional-dependencies.dev]`
-
-### Linting & Formatting
-**Frontend**:
-```bash
-npm run lint          # ESLint (config: .eslintrc.json)
-npm run format        # Prettier (config: .prettierrc.json)
-npm run format:check  # Check formatting without fixing
-```
-- ESLint rules: TypeScript, React, React Hooks
-- Prettier: 2 spaces, semicolons, single quotes
-
-**Backend**:
-```bash
-cd backend
-black .               # Format Python code (if installed)
-mypy .                # Type checking (if installed)
-```
-
-### Pre-commit Hooks
-- Configured in `.pre-commit-config.yaml`
-- Runs linters and formatters before git commits
-
-### Making Changes
-1. Create feature branch from main
-2. Make minimal, focused changes
-3. Test locally (`make test`)
-4. Lint and format code
-5. Commit and push
-6. Open pull request
+- **Frontend:** Unit tests with Jest + React Testing Library.
+- **Backend:** Unit tests for FastAPI routes and agent logic.
+- **Integration Tests:** Test ADK workflows and A2A Protocol communication.
+- **E2E Tests:** Test full user workflows with test Firestore instance.
 
 ---
 
-## 8. When in Doubt — Useful Checks
+## Conventions & Best Practices
 
-### Service Health Checks
-```bash
-# Start all services
-make setup
-
-# Check health endpoints
-curl http://localhost:8080/healthz              # Backend health
-curl http://localhost:8080/docs                 # API docs
-curl http://localhost:3000                      # Frontend (HTML)
-
-# View logs
-make logs                                       # All services
-make logs-frontend                              # Frontend only
-make logs-backend                               # Backend only
-make logs-firestore                             # Firestore emulator
-
-# Check running containers
-make ps
-```
-
-### Testing Full Stack
-1. Start services: `make setup`
-2. Open browser: http://localhost:3000
-3. Paste a sample document or code
-4. Click "Run Navigator"
-5. Verify:
-   - Agents show progress (IDLE → PROCESSING → DONE)
-   - Summary appears
-   - Graph renders with nodes and edges
-6. Check logs: `make logs` for errors
-
-### Debugging Backend Issues
-```bash
-# Enter backend container
-make shell-backend
-
-# Check Python environment
-python --version
-pip list
-
-# Test imports
-python -c "from services.gemma_service import generate_with_gemma"
-
-# Check environment variables
-echo $GEMINI_API_KEY
-echo $GEMMA_SERVICE_URL
-echo $FIRESTORE_EMULATOR_HOST
-```
-
-### Common Issues
-
-**Port conflicts**:
-```bash
-# Check what's using port 3000 or 8080
-lsof -i :3000
-lsof -i :8080
-
-# Kill process
-kill -9 <PID>
-```
-
-**Podman machine not running (macOS)**:
-```bash
-podman machine start
-make podman-start  # Or use Makefile
-```
-
-**Container build fails**:
-```bash
-make clean         # Remove all containers/volumes
-make build         # Rebuild
-```
-
-**Environment variables not loading**:
-```bash
-# Verify .env file exists
-cat .env
-
-# Restart services to pick up changes
-make restart
-```
-
-**Firestore connection issues**:
-- Check `FIRESTORE_EMULATOR_HOST=firestore-emulator:8080` in backend env
-- Verify Firestore container is healthy: `make ps`
-- Check emulator logs: `make logs-firestore`
+1. **RORO Pattern:** Use Receive an Object, Return an Object (RORO) pattern for functions, APIs, and DTOs.
+2. **Centralized Configuration:** Use environment variables and Terraform for configuration.
+3. **Immutable Infrastructure:** All infrastructure changes via Terraform.
+4. **Agent Modularity:** Keep agents focused and modular, communicating via A2A Protocol.
+5. **Session Persistence:** Always persist agent state and session data in Firestore.
+6. **Error Handling:** Centralize error handling with consistent error shapes.
+7. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
+8. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
 
 ---
 
-## 9. Deployment (Production)
+## Migration Notes
 
-### Cloud Run Services
-1. **Frontend**: Static SPA served on us-central1
-2. **Backend**: FastAPI app on europe-west1 (near GPU service)
-3. **Gemma GPU Service**: Gemma 7B on europe-west1 with NVIDIA L4 GPU
+This system instruction reflects the target architecture for **agentnav**. Current implementation may differ:
 
-### Infrastructure as Code
-- **Terraform**: `terraform/` directory
-- **Cloud Build**: `cloudbuild.yaml`, `cloudbuild-frontend.yaml`, `cloudbuild-backend.yaml`
-- **GitHub Actions**: Automated deployment via Workload Identity Federation
+- **Current State:** Frontend-only React app calling Gemini API directly.
+- **Target State:** Full multi-agent architecture with FastAPI backend, ADK, A2A Protocol, Firestore, and Cloud Run deployment.
 
-### Key Environment Variables (Production)
-- `GEMINI_API_KEY` — From Secret Manager
-- `GEMMA_SERVICE_URL` — Gemma GPU service URL
-- `FIRESTORE_PROJECT_ID` — Production project ID
-- `ENVIRONMENT=production` — Enforces strict settings
+**Migration Path:**
 
-### Deployment Docs
-- `docs/SYSTEM_INSTRUCTION.md` — Full deployment guide
-- `docs/GCP_SETUP_GUIDE.md` — GCP project setup
-- `docs/GPU_SETUP_GUIDE.md` — Gemma GPU service setup
-- `docs/WIF_GITHUB_SECRETS_SETUP.md` — GitHub Actions authentication
+1. Set up Terraform infrastructure (Cloud Run, GAR, Firestore, Secret Manager).
+2. Implement FastAPI backend with ADK agent definitions.
+3. Integrate A2A Protocol for agent communication.
+4. Migrate frontend to call backend API instead of direct Gemini calls.
+5. Implement Firestore session persistence.
+6. Configure Cloud Run with GPU support for backend.
+7. Set up GitHub Actions CI/CD pipeline.
 
 ---
 
-## 10. Additional Resources
+## Examples Summary
 
-### Project Documentation
-- `docs/HACKATHON_SUBMISSION_GUIDE.md` — Hackathon requirements
-- `docs/ARCHITECTURE_DIAGRAM_GUIDE.md` — Architecture diagrams
-- `docs/PROMPT_MANAGEMENT_GUIDE.md` — Firestore prompt management
-- `docs/TESTING_STRATEGY.md` — Testing approach
-
-### External Links
-- Google Gemini API: https://ai.google.dev/
-- FastAPI Docs: https://fastapi.tiangolo.com/
-- Vite Docs: https://vitejs.dev/
-- Podman Docs: https://podman.io/
+- **React Component:** Pure functional, named export, guard early, RORO props.
+- **FastAPI Route:** `@app.post("/analyze")`, Pydantic DTOs, async handlers, return JSON.
+- **ADK Agent:** Inherit from `Agent` base class, implement `process()` method, use A2A Protocol for communication.
+- **Firestore Operation:** Use async Firestore client, batch operations, handle errors gracefully.
+- **Terraform Resource:** Use `google_cloud_run_service`, `google_artifact_registry_repository`, `google_firestore_database`.
 
 ---
 
-**If anything is unclear or you need more examples (e.g., sample JSON outputs, specific command sequences), ask for clarification and I'll provide detailed guidance.**
+**This system instruction serves as the definitive guide for developing, deploying, and maintaining the Agentic Navigator multi-agent knowledge exploration system.**

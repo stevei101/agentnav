@@ -76,11 +76,6 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name  = "PORT"
-        value = tostring(var.backend_container_port)
-      }
-
-      env {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
@@ -166,11 +161,6 @@ resource "google_cloud_run_v2_service" "gemma" {
       }
 
       env {
-        name  = "PORT"
-        value = tostring(var.gemma_container_port)
-      }
-
-      env {
         name  = "MODEL_NAME"
         value = "google/gemma-7b-it"
       }
@@ -198,14 +188,6 @@ resource "google_cloud_run_v2_service" "gemma" {
         }
         cpu_idle = false
       }
-    }
-
-    # GPU Configuration (v2 API)
-    vpc_access {
-      # VPC connector not currently configured (connector = null)
-      # If GPU services need VPC access in the future, configure a VPC connector here
-      connector = null
-      egress    = "ALL_TRAFFIC"
     }
 
     timeout = "300s"
