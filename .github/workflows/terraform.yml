@@ -21,8 +21,8 @@ env:
   TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
 
 jobs:
-  terraform:
-    name: Terraform
+  INFRA_VERIFICATION:
+    name: INFRA_VERIFICATION
     runs-on: ubuntu-latest
     permissions:
       contents: read

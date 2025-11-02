@@ -139,3 +139,42 @@ jobs:
             --recursive
             .
         continue-on-error: true
+
+  # Consolidated Status Checks (Primary Gates)
+  CODE_QUALITY:
+    name: CODE_QUALITY
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-tests, backend-tests]
+    if: always()
+    steps:
+      - name: Check Code Quality Status
+        run: |
+          if [ "${{ needs.code-quality.result }}" != "success" ] || \
+             [ "${{ needs.frontend-tests.result }}" != "success" ] || \
+             [ "${{ needs.backend-tests.result }}" != "success" ]; then
+            echo "❌ CODE_QUALITY check failed"
+            echo "  - Code Quality (Linting & Formatting): ${{ needs.code-quality.result }}"
+            echo "  - Frontend Unit Tests: ${{ needs.frontend-tests.result }}"
+            echo "  - Backend Tests: ${{ needs.backend-tests.result }}"
+            exit 1
+          fi
+          echo "✅ CODE_QUALITY check passed"
+          echo "All code quality, linting, and test checks passed successfully"
+
+  SECURITY_AUDIT:
+    name: SECURITY_AUDIT
+    runs-on: ubuntu-latest
+    needs: [tfsec-scan, osv-scanner]
+    if: always()
+    steps:
+      - name: Check Security Status
+        run: |
+          if [ "${{ needs.tfsec-scan.result }}" != "success" ] || \
+             [ "${{ needs.osv-scanner.result }}" != "success" ]; then
+            echo "❌ SECURITY_AUDIT check failed"
+            echo "  - Terraform Security Scan (tfsec): ${{ needs.tfsec-scan.result }}"
+            echo "  - OSV Dependency Vulnerability Scan: ${{ needs.osv-scanner.result }}"
+            exit 1
+          fi
+          echo "✅ SECURITY_AUDIT check passed"
+          echo "All security scans passed successfully"
