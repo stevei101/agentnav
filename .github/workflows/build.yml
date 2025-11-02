@@ -170,7 +170,6 @@ jobs:
           region: us-central1
           project_id: ${{ env.GCP_PROJECT_ID }}
           flags: '--allow-unauthenticated'
-          env_vars: ENVIRONMENT=staging
 
       - name: Report frontend staging deployment
         if: matrix.service == 'frontend'
@@ -190,7 +189,6 @@ jobs:
           region: europe-west1
           project_id: ${{ env.GCP_PROJECT_ID }}
           flags: '--allow-unauthenticated --service-account=agentnav-backend@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
-          env_vars: ENVIRONMENT=staging
 
       - name: Report backend staging deployment
         if: matrix.service == 'backend'
@@ -206,25 +204,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const frontendUrl = '${{ steps.deploy-frontend-staging.outputs.url }}';
-            const backendUrl = await (async () => {
-              try {
-                const { execSync } = require('child_process');
-                const url = execSync(
-                  'gcloud run services describe agentnav-backend-staging --region europe-west1 --project ${{ env.GCP_PROJECT_ID }} --format="value(status.url)"',
-                  { encoding: 'utf-8' }
-                ).trim();
-                return url;
-              } catch (error) {
-                return 'N/A';
-              }
-            })();
-
             const comment = `## 🚀 Staging Deployment Complete
 
-            **Staging Environment URLs:**
-            - Frontend: ${frontendUrl}
-            - Backend: ${backendUrl}
+            **Staging Environment:**
+            Both frontend and backend services have been deployed to the staging environment.
+
+            **Frontend URL:** ${{ steps.deploy-frontend-staging.outputs.url }}
+            
+            **Backend URL:** Check [Cloud Run Console](https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}) for agentnav-backend-staging
 
             **Image Tags:** \`pr-${{ github.event.pull_request.number }}\`
 
