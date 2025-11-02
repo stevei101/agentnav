@@ -223,7 +223,8 @@ jobs:
           image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-frontend:pr-${{ github.event.pull_request.number }}
           region: us-central1
           project_id: ${{ env.GCP_PROJECT_ID }}
-          flags: '--allow-unauthenticated'
+          flags: '--allow-unauthenticated --no-traffic'
+          create_service: true
 
       - name: Report frontend staging deployment
         if: matrix.service == 'frontend'
@@ -242,7 +243,8 @@ jobs:
           image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-backend:pr-${{ github.event.pull_request.number }}
           region: europe-west1
           project_id: ${{ env.GCP_PROJECT_ID }}
-          flags: '--allow-unauthenticated --service-account=agentnav-backend@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          flags: '--allow-unauthenticated --service-account=agentnav-backend@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com --no-traffic'
+          create_service: true
 
       - name: Report backend staging deployment
         if: matrix.service == 'backend'
