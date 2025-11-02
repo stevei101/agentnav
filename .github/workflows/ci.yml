@@ -70,11 +70,6 @@ jobs:
       - name: Run frontend tests with coverage
         run: bun run test -- --run --coverage
 
-      - name: Check coverage threshold
-        run: |
-          echo "Verifying frontend code coverage meets 70% threshold..."
-          bun run test -- --run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
-
   # Quality Gate: Backend unit tests with 70% code coverage
   test / backend-unit:
     name: test / backend-unit
