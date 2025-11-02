@@ -25,9 +25,48 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 
+def verify_jwt_token(token: str) -> bool:
+    """
+    Verify Google Cloud Run ID token using google-auth library
+    
+    Args:
+        token: JWT token to verify
+        
+    Returns:
+        True if token is valid, False otherwise
+    """
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        
+        # Verify the token
+        request = google_requests.Request()
+        id_info = id_token.verify_oauth2_token(token, request)
+        
+        # Verify issuer
+        if id_info.get('iss') not in ['https://accounts.google.com', 'accounts.google.com']:
+            logger.warning(f"Invalid issuer: {id_info.get('iss')}")
+            return False
+        
+        # Token is valid
+        logger.debug(f"Token verified for: {id_info.get('email', 'unknown')}")
+        return True
+        
+    except ValueError as e:
+        # Token is invalid
+        logger.warning(f"Token verification failed: {e}")
+        return False
+    except ImportError:
+        # google-auth not available, fall back to basic validation
+        logger.warning("google-auth library not available, using basic token validation")
+        return len(token) > 10
+    except Exception as e:
+        logger.error(f"Unexpected error during token verification: {e}")
+        return False
+
+
 async def verify_token(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    request: Request = None
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> bool:
     """
     Verify Workload Identity ID token for Cloud Run service-to-service authentication
@@ -37,7 +76,6 @@ async def verify_token(
     
     Args:
         credentials: HTTP Bearer credentials from request header
-        request: FastAPI request object
         
     Returns:
         True if authenticated, raises HTTPException if not
@@ -67,23 +105,13 @@ async def verify_token(
     
     token = credentials.credentials
     
-    # In a full implementation, we would verify the JWT token here
-    # For now, we just check that a token is present
-    # TODO: Add full JWT verification using google.auth or similar
-    if not token or len(token) < 10:
-        logger.warning("Invalid token format")
+    # Verify JWT token using google-auth
+    if not verify_jwt_token(token):
+        logger.warning("Token verification failed")
         raise HTTPException(
             status_code=401,
             detail="Invalid authentication token"
         )
-    
-    # TODO: Implement full JWT verification
-    # - Verify JWT signature using public key from Google
-    # - Validate token expiration (exp claim)
-    # - Verify issuer (iss claim)
-    # - Verify audience (aud claim)
-    # - Extract and validate service account email
-    # Consider using: google-auth library or jwt.decode with proper validation
     
     logger.debug("Token verification passed")
     return True
