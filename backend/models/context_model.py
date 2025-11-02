@@ -3,7 +3,7 @@ SessionContext Model - Shared Context for Multi-Agent Workflow
 Implements the shared session context as specified in FR#005
 """
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 import time
 
 
@@ -22,8 +22,8 @@ class EntityRelationship(BaseModel):
     label: Optional[str] = Field(None, description="Human-readable label for the relationship")
     confidence: Optional[str] = Field(None, description="Confidence level (high, medium, low)")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "source": "ClassA",
                 "target": "ClassB",
@@ -32,6 +32,7 @@ class EntityRelationship(BaseModel):
                 "confidence": "high"
             }
         }
+    )
 
 
 class SessionContext(BaseModel):
@@ -79,8 +80,8 @@ class SessionContext(BaseModel):
     workflow_status: str = Field(default="initializing", description="Current workflow status")
     errors: List[Dict[str, str]] = Field(default_factory=list, description="List of errors encountered during workflow")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "session_id": "session_12345",
                 "content_type": "document",
@@ -104,6 +105,7 @@ class SessionContext(BaseModel):
                 "workflow_status": "completed"
             }
         }
+    )
     
     def mark_agent_complete(self, agent_name: str):
         """Mark an agent as completed in the workflow"""
