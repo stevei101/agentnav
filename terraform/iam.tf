@@ -87,7 +87,7 @@ resource "google_project_iam_member" "github_actions_storage_admin" {
 
 resource "google_project_iam_member" "github_actions_cloudbuild_builder" {
   project = var.project_id
-  role    = "roles/cloudbuild.builds.submit"
+  role    = "roles/cloudbuild.builds.builder"
   member  = "serviceAccount:${local.github_actions_sa_email}"
 }
 
