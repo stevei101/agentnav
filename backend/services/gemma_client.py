@@ -40,7 +40,7 @@ async def get_cloud_run_id_token(audience: str) -> Optional[str]:
             )
             if response.status_code == 200:
                 token = response.text
-                logger.debug(f"Successfully fetched ID token (length: {len(token)})")
+                logger.debug("Successfully fetched ID token")
                 return token
             else:
                 logger.warning(f"Failed to fetch ID token: {response.status_code}")

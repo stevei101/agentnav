@@ -193,12 +193,14 @@ async def test_reason_http_error_with_details():
     """Test that HTTP errors include response text for debugging"""
     client = GemmaServiceClient(base_url="http://test:8080")
     
+    import httpx
+    
     with patch('httpx.AsyncClient') as mock_async_client:
         mock_response = Mock()
         mock_response.status_code = 503
         mock_response.text = "Service unavailable: Model not loaded"
         mock_response.raise_for_status = Mock(
-            side_effect=__import__('httpx').HTTPStatusError(
+            side_effect=httpx.HTTPStatusError(
                 "503", request=Mock(), response=mock_response
             )
         )
