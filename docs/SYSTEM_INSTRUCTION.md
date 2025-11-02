@@ -313,7 +313,8 @@ Firestore is used for persistent session memory and knowledge caching:
 
 - **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
 - **IAM Roles:** Use least-privilege IAM roles for all service accounts.
-- **Workload Identity Federation:** Prefer WIF over static service account keys.
+- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD authentication.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication to GCP services (Firestore, Secret Manager, etc.); never embed credentials in containers.
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.
