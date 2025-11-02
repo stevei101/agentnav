@@ -70,7 +70,7 @@ $COMPOSE_CMD up -d --build
 # Extract port configurations from environment and config files
 FRONTEND_PORT=${FRONTEND_PORT:-5173}  # Vite default (see vite.config.ts)
 BACKEND_PORT=${BACKEND_PORT:-8080}    # Backend default (see backend/main.py)
-FIRESTORE_PORT=${FIRESTORE_PORT:-8080} # Firestore emulator API port
+FIRESTORE_PORT=${FIRESTORE_PORT:-8081} # Firestore emulator API port (changed to avoid conflict with backend)
 FIRESTORE_UI_PORT=${FIRESTORE_UI_PORT:-4000} # Firestore emulator UI port
 
 echo "✅ Setup complete!"
