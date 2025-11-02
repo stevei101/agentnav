@@ -283,6 +283,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      deployments: write # Required for GitHub Deployments/Environments
 
     strategy:
       matrix:
@@ -302,48 +303,41 @@ jobs:
 
       - name: Deploy frontend to Cloud Run
         if: matrix.service == 'frontend'
-        run: |
-          set -euo pipefail
-          
-          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest"
-          
-          echo "🚀 Deploying frontend to Cloud Run..."
-          echo "   Image: ${IMAGE}"
-          echo "   Region: us-central1"
-          
-          gcloud run deploy agentnav-frontend \
-            --image ${IMAGE} \
-            --region us-central1 \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --quiet
-          
-          echo "✅ Frontend deployment completed"
+        id: deploy-frontend-production
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: agentnav-frontend
+          image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-frontend:latest
+          region: us-central1
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: '--allow-unauthenticated'
+
+      - name: Report frontend production deployment
+        if: matrix.service == 'frontend'
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          environment-url: ${{ steps.deploy-frontend-production.outputs.url }}
 
       - name: Deploy backend to Cloud Run
         if: matrix.service == 'backend'
-        run: |
-          set -euo pipefail
-          
-          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest"
-          SERVICE_ACCOUNT="agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-          
-          echo "🚀 Deploying backend to Cloud Run..."
-          echo "   Image: ${IMAGE}"
-          echo "   Region: europe-west1"
-          echo "   Service Account: ${SERVICE_ACCOUNT}"
-          
-          gcloud run deploy agentnav-backend \
-            --image ${IMAGE} \
-            --region europe-west1 \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --service-account ${SERVICE_ACCOUNT} \
-            --quiet
-          
-          echo "✅ Backend deployment completed"
+        id: deploy-backend-production
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: agentnav-backend
+          image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-backend:latest
+          region: europe-west1
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: '--allow-unauthenticated --service-account=agentnav-backend@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+
+      - name: Report backend production deployment
+        if: matrix.service == 'backend'
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          environment-url: ${{ steps.deploy-backend-production.outputs.url }}
 
       - name: Get service URLs
         if: matrix.service == 'frontend'
