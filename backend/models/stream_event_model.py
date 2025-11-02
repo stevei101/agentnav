@@ -5,7 +5,7 @@ Pydantic models for real-time event streaming during agent workflow execution.
 These models define the schema for all WebSocket messages between backend and frontend.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict, Any, List
 from enum import Enum
 from datetime import datetime
@@ -62,8 +62,8 @@ class EventMetadata(BaseModel):
         description="Order of agents in workflow"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "elapsed_ms": 1234,
                 "step": 2,
@@ -71,6 +71,7 @@ class EventMetadata(BaseModel):
                 "agent_sequence": ["orchestrator", "summarizer", "linker", "visualizer"]
             }
         }
+    )
 
 
 class ErrorPayload(BaseModel):
@@ -93,8 +94,8 @@ class ErrorPayload(BaseModel):
         description="Whether the error can be recovered"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "error": "SummarizationError",
                 "error_type": "timeout",
@@ -102,6 +103,7 @@ class ErrorPayload(BaseModel):
                 "recoverable": False
             }
         }
+    )
 
 
 class AgentEventPayload(BaseModel):
@@ -147,8 +149,8 @@ class AgentEventPayload(BaseModel):
         description="Performance metrics (latency, tokens, etc.)"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "summary": "This document describes the key features...",
                 "entities": None,
@@ -162,6 +164,7 @@ class AgentEventPayload(BaseModel):
                 }
             }
         }
+    )
 
 
 class AgentStreamEvent(BaseModel):
@@ -192,8 +195,8 @@ class AgentStreamEvent(BaseModel):
         description="Event payload with results or error"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "evt_abc12345",
                 "agent": "summarizer",
@@ -215,6 +218,7 @@ class AgentStreamEvent(BaseModel):
                 }
             }
         }
+    )
 
 
 class WorkflowStreamRequest(BaseModel):
@@ -228,7 +232,7 @@ class WorkflowStreamRequest(BaseModel):
     )
     content_type: Optional[str] = Field(
         default="document",
-        regex="^(document|codebase)$",
+        pattern="^(document|codebase)$",
         description="Type of content: 'document' or 'codebase'"
     )
     include_metadata: bool = Field(
@@ -240,8 +244,8 @@ class WorkflowStreamRequest(BaseModel):
         description="Include partial results during processing"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "document": "This is the document to analyze...",
                 "content_type": "document",
@@ -249,6 +253,7 @@ class WorkflowStreamRequest(BaseModel):
                 "include_partial_results": True
             }
         }
+    )
 
 
 class WorkflowStreamResponse(BaseModel):
@@ -287,8 +292,8 @@ class WorkflowStreamResponse(BaseModel):
         description="Error information if workflow failed"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "session_id": "session_abc123",
                 "workflow_status": "completed",
@@ -300,6 +305,7 @@ class WorkflowStreamResponse(BaseModel):
                 "error": None
             }
         }
+    )
 
 
 class ClientCommand(BaseModel):
@@ -307,7 +313,7 @@ class ClientCommand(BaseModel):
     
     action: str = Field(
         ...,
-        regex="^(cancel|pause|resume)$",
+        pattern="^(cancel|pause|resume)$",
         description="Action to perform"
     )
     reason: Optional[str] = Field(
@@ -315,13 +321,14 @@ class ClientCommand(BaseModel):
         description="Reason for the action"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "action": "cancel",
                 "reason": "User clicked cancel button"
             }
         }
+    )
 
 
 # Event factory functions for common event types
