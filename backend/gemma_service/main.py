@@ -101,12 +101,12 @@ class ReasonResponse(BaseModel):
 
 class EmbedRequest(BaseModel):
     """Request model for embedding generation (batch support)"""
-    texts: list[str] = Field(..., description="Batch of text strings to generate embeddings for")
+    texts: List[str] = Field(..., description="Batch of text strings to generate embeddings for")
 
 
 class EmbedResponse(BaseModel):
     """Response model for embeddings (batch support)"""
-    embeddings: list[list[float]] = Field(..., description="List of embedding vectors")
+    embeddings: List[List[float]] = Field(..., description="List of embedding vectors")
     dimension: int = Field(..., description="Embedding dimension")
     model: str = Field(..., description="Model name used")
 

@@ -121,10 +121,10 @@ class GemmaServiceClient:
             text: Input text
             
         Returns:
-            Embedding vector
+            Embedding vector (empty list if no embeddings)
         """
         embeddings_batch = await self.embed([text])
-        return embeddings_batch[0] if embeddings_batch else []
+        return embeddings_batch[0] if embeddings_batch and len(embeddings_batch) > 0 else []
     
     async def health_check(self) -> dict:
         """
