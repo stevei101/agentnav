@@ -62,20 +62,15 @@ echo "4. Checking for other sensitive file patterns..."
 SENSITIVE_FILES=(.env.local .env.production .env.development .env.test)
 FOUND_SENSITIVE=0
 
-# More efficient approach: combine all patterns into a single grep
-PATTERNS=$(printf "|%s" "${SENSITIVE_FILES[@]}")
-PATTERNS="${PATTERNS:1}$"  # Remove leading pipe and add end anchor
-
-if git log --all --name-only --pretty=format: | grep -qE "$PATTERNS"; then
-    for pattern in "${SENSITIVE_FILES[@]}"; do
-        if git log --all --name-only --pretty=format: -- "$pattern" | grep -q "^${pattern}$"; then
-            COUNT=$(git log --all --name-only --pretty=format: -- "$pattern" | grep -c "^${pattern}$")
-            echo -e "${RED}✗ Found $pattern in Git history ($COUNT occurrences)${NC}"
-            FOUND_SENSITIVE=1
-            FAILED=1
-        fi
-    done
-fi
+# Check each pattern individually using efficient git log filtering
+for pattern in "${SENSITIVE_FILES[@]}"; do
+    if git log --all --name-only --pretty=format: -- "$pattern" | grep -q "^${pattern}$"; then
+        COUNT=$(git log --all --name-only --pretty=format: -- "$pattern" | grep -c "^${pattern}$")
+        echo -e "${RED}✗ Found $pattern in Git history ($COUNT occurrences)${NC}"
+        FOUND_SENSITIVE=1
+        FAILED=1
+    fi
+done
 
 if [ "$FOUND_SENSITIVE" -eq 0 ]; then
     echo -e "${GREEN}✓ PASS: No sensitive environment files found in history${NC}"
