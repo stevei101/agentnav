@@ -7,15 +7,26 @@ export enum AgentName {
 
 export enum AgentStatusValue {
   IDLE = 'Idle',
+  QUEUED = 'Queued',
   PROCESSING = 'Processing',
   DONE = 'Done',
   ERROR = 'Error',
 }
 
 export interface AgentState {
+  id: string;
   name: AgentName;
   status: AgentStatusValue;
   details: string;
+  progress?: number; // 0-100 for progress tracking
+  currentTask?: string;
+  findings?: string[];
+  metrics?: {
+    startTime?: number;
+    endTime?: number;
+    duration?: number;
+    tokensProcessed?: number;
+  };
 }
 
 // New types for interactive graph visualization
@@ -44,4 +55,43 @@ export interface AnalysisResult {
     nodes: GraphNode[];
     edges: GraphEdge[];
   };
+}
+
+// WebSocket Event Types for Real-time Agent Streaming
+export enum AgentEventType {
+  QUEUED = 'queued',
+  PROCESSING = 'processing',
+  COMPLETE = 'complete',
+  ERROR = 'error',
+}
+
+export interface EventPayload {
+  summary?: string;
+  entities?: Array<{ name: string; type: string; confidence?: number }>;
+  relationships?: Array<{ source: string; target: string; type: string }>;
+  visualization?: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+  };
+  errorMessage?: string;
+  errorDetails?: Record<string, unknown>;
+  metrics?: {
+    processingTime?: number;
+    tokensProcessed?: number;
+    confidence?: number;
+  };
+}
+
+export interface AgentStreamEvent {
+  id: string;
+  agent: AgentName;
+  status: AgentEventType;
+  timestamp: string;
+  metadata?: {
+    sessionId?: string;
+    userId?: string;
+    contentHash?: string;
+    contentType?: 'document' | 'codebase';
+  };
+  payload?: EventPayload;
 }
