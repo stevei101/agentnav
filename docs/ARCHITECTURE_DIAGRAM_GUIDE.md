@@ -1,4 +1,5 @@
 # Architecture Diagram Guide
+
 ## For Cloud Run Hackathon Submission
 
 This guide helps you create a compelling architecture diagram for your Agentic Navigator submission.
@@ -10,20 +11,24 @@ This guide helps you create a compelling architecture diagram for your Agentic N
 Your architecture diagram must include:
 
 ### 1. User Layer
+
 - [ ] User accessing web application
 - [ ] Browser/client device icon
 
 ### 2. Frontend Service
+
 - [ ] React application (Cloud Run Service)
 - [ ] Port: 5173 (dev) / 80 (production)
 - [ ] Components: UI, Agent Status Display, Visualization
 
 ### 3. Backend Service
+
 - [ ] FastAPI application (Cloud Run Service)
 - [ ] Port: 8080
 - [ ] Components: API endpoints, ADK orchestrator
 
 ### 4. Agent Layer
+
 - [ ] **Orchestrator Agent** (ADK)
 - [ ] **Summarizer Agent** (ADK)
 - [ ] **Linker Agent** (ADK)
@@ -31,11 +36,13 @@ Your architecture diagram must include:
 - [ ] A2A Protocol communication flows (arrows)
 
 ### 5. External Services
+
 - [ ] **Gemini API** (Google AI)
 - [ ] **Firestore** (Database)
 - [ ] **Secret Manager** (API keys)
 
 ### 6. Infrastructure
+
 - [ ] Cloud Run (both services)
 - [ ] GCP Project boundary
 - [ ] Network/security groups
@@ -45,6 +52,7 @@ Your architecture diagram must include:
 ## ?? Diagram Layout Suggestions
 
 ### Option 1: Horizontal Flow
+
 ```
 User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
                                     ?
@@ -52,6 +60,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ```
 
 ### Option 2: Layered Architecture
+
 ```
 ???????????????????????????????????????
 ?         User Interface              ?
@@ -85,6 +94,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ```
 
 ### Option 3: Component Diagram
+
 ```
 ???????????????????????????????????????????????????????????
 ?              Google Cloud Platform                      ?
@@ -137,6 +147,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ## ?? Design Tools & Resources
 
 ### Recommended Tools
+
 1. **Draw.io** (Free)
    - URL: https://app.diagrams.net/
    - Cloud architecture templates available
@@ -155,6 +166,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
    - Download: https://cloud.google.com/icons
 
 ### Icon Libraries
+
 - Google Cloud Icons: https://cloud.google.com/icons
 - Font Awesome: https://fontawesome.com/
 - Material Icons: https://fonts.google.com/icons
@@ -164,6 +176,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ## ?? Diagram Checklist
 
 ### Content
+
 - [ ] User/client representation
 - [ ] Frontend Cloud Run service
 - [ ] Backend Cloud Run service
@@ -176,6 +189,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 - [ ] Component labels
 
 ### Design
+
 - [ ] Clear, readable fonts (16pt+)
 - [ ] Consistent color scheme
 - [ ] Proper spacing
@@ -184,6 +198,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 - [ ] Title: "Agentic Navigator Architecture"
 
 ### Format
+
 - [ ] Saved as PNG (high resolution, 1920x1080+)
 - [ ] Or SVG (for scalability)
 - [ ] File size < 5MB
@@ -194,25 +209,30 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ## ?? Best Practices
 
 ### 1. Use Official Icons
+
 - Download Google Cloud icons from official site
 - Use consistent icon style throughout
 
 ### 2. Show Data Flow
+
 - Use arrows to show request/response flow
 - Label data types (HTTP requests, agent messages, etc.)
 - Use different arrow styles for different flows
 
 ### 3. Group Related Components
+
 - Group Cloud Run services together
 - Group agents together
 - Group external services together
 
 ### 4. Add Annotations
+
 - Add brief descriptions for complex components
 - Include port numbers
 - Show protocol types (HTTP, A2A, etc.)
 
 ### 5. Color Coding
+
 - Use blue for Cloud Run services
 - Use green for Google services (Gemini, Firestore)
 - Use gray for infrastructure
@@ -223,6 +243,7 @@ User ? Frontend (Cloud Run) ? Backend (Cloud Run) ? Agents ? Gemini API
 ## ?? Example Descriptions for Components
 
 ### Frontend Service
+
 ```
 React Frontend
 Cloud Run Service
@@ -233,6 +254,7 @@ Port: 80
 ```
 
 ### Backend Service
+
 ```
 FastAPI Backend
 Cloud Run Service
@@ -244,6 +266,7 @@ Health: /healthz
 ```
 
 ### Agents
+
 ```
 Agent Development Kit (ADK)
 - Orchestrator: Task delegation
@@ -254,6 +277,7 @@ Communication: A2A Protocol
 ```
 
 ### Firestore
+
 ```
 Firestore Database
 - Session storage

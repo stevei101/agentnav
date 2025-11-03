@@ -32,6 +32,11 @@ These documents are:
 - `SYSTEM_INSTRUCTION.md` - Complete system architecture and deployment guide
 - `ARCHITECTURE_DIAGRAM_GUIDE.md` - How to create architecture diagrams
 
+### Contribution & Workflow Policies
+
+- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - PR discipline and minimum viable commit guidelines
+- `ZERO_TOLERANCE_FAILURE_POLICY.md` - **Mandatory policy for CI/CD failure response**
+
 ### Hackathon Submission Guides
 
 - `HACKATHON_SUBMISSION_GUIDE.md` - Complete submission preparation guide
@@ -43,11 +48,13 @@ These documents are:
 
 If you're a developer looking to:
 
-- **Set up the project locally** → Start with `local-development.md`
-- **Deploy to Google Cloud** → See `GCP_SETUP_GUIDE.md`
-- **Understand the architecture** → Read `SYSTEM_INSTRUCTION.md`
-- **Add GPU support** → Follow `GPU_SETUP_GUIDE.md`
-- **Get development assistance** → Use the custom Copilot agent (see `COPILOT_AGENT_GUIDE.md`)
+- **Set up the project locally** ? Start with `local-development.md`
+- **Deploy to Google Cloud** ? See `GCP_SETUP_GUIDE.md`
+- **Understand the architecture** ? Read `SYSTEM_INSTRUCTION.md`
+- **Add GPU support** ? Follow `GPU_SETUP_GUIDE.md`
+- **Get development assistance** ? Use the custom Copilot agent (see `COPILOT_AGENT_GUIDE.md`)
+- **Understand CI/CD failure response** ? Review `ZERO_TOLERANCE_FAILURE_POLICY.md` (**mandatory reading**)
+- **Follow PR best practices** ? See `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md`
 
 ## For Reviewers
 

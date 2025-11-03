@@ -16,6 +16,7 @@ Transform the agentic navigator from a static "black box" form into an interacti
 ## Problem Statement
 
 Current State Issues:
+
 - ❌ Users see only a loading spinner—no transparency into agent work
 - ❌ Backend orchestration is invisible; A2A Protocol magic is hidden
 - ❌ No feedback on bottlenecks or failures
@@ -32,6 +33,7 @@ Current State Issues:
 **Endpoint:** `WebSocket /api/v1/navigate/stream`
 
 **Flow:**
+
 1. Client connects to WebSocket endpoint with document content
 2. Backend initializes orchestrator workflow (from FR#005)
 3. As each agent processes, backend emits status events to client
@@ -111,7 +113,7 @@ class AgentStreamEvent(BaseModel):
 interface StreamEvent {
   id: string;
   agent: string;
-  status: "queued" | "processing" | "complete" | "error";
+  status: 'queued' | 'processing' | 'complete' | 'error';
   timestamp: string;
   metadata: EventMetadata;
   payload: EventPayload;
@@ -161,6 +163,7 @@ interface EventPayload {
 ```
 
 **Key Features:**
+
 - **Agent Timeline:** Visual representation of 4 agents with progress indicators
 - **Live Event Log:** Scrollable list of all WebSocket events received
 - **Streaming Metrics:** Duration, throughput, step timings
@@ -236,6 +239,7 @@ interface EventPayload {
 **Path:** `/api/v1/navigate/stream`
 
 **Connection Parameters:**
+
 ```typescript
 {
   document: string;
@@ -246,6 +250,7 @@ interface EventPayload {
 ```
 
 **Server → Client Event Structure:**
+
 ```json
 {
   "id": "evt_abc123",
@@ -269,6 +274,7 @@ interface EventPayload {
 ```
 
 **Client → Server Commands:**
+
 ```json
 {
   "action": "cancel" | "pause" | "resume"
@@ -278,6 +284,7 @@ interface EventPayload {
 ### Error Handling
 
 **Error Event Structure:**
+
 ```json
 {
   "status": "error",
@@ -291,6 +298,7 @@ interface EventPayload {
 ```
 
 **Error Types:**
+
 - `ServiceUnavailable` - Backend service down
 - `TimeoutError` - Agent exceeded time limit
 - `ValidationError` - Invalid document input
@@ -303,11 +311,13 @@ interface EventPayload {
 ### Backend Files (New/Modified)
 
 **New Files:**
+
 - `backend/models/stream_event_model.py` - Pydantic models for WebSocket events
 - `backend/services/event_emitter.py` - EventEmitter service
 - `backend/routes/stream_routes.py` - WebSocket endpoint
 
 **Modified Files:**
+
 - `backend/main.py` - Add WebSocket endpoint
 - `backend/agents/orchestrator_agent.py` - Add event emission
 - `backend/agents/summarizer_agent.py` - Add event emission
@@ -317,6 +327,7 @@ interface EventPayload {
 ### Frontend Files (New/Modified)
 
 **New Files:**
+
 - `hooks/useAgentStream.ts` - WebSocket client hook
 - `components/InteractiveAgentDashboard.tsx` - Main dashboard
 - `components/AgentTimeline.tsx` - Agent progress visualization
@@ -324,6 +335,7 @@ interface EventPayload {
 - `components/ResultsPreview.tsx` - Live results display
 
 **Modified Files:**
+
 - `App.tsx` - Route to new dashboard on stream trigger
 - `services/backendService.ts` - Add stream endpoint helper
 
@@ -338,6 +350,7 @@ interface EventPayload {
 ## Success Criteria
 
 ✅ **Functional Requirements:**
+
 - [ ] WebSocket endpoint successfully streams events
 - [ ] All 4 agents emit status events
 - [ ] Events contain complete metadata and payload
@@ -345,17 +358,20 @@ interface EventPayload {
 - [ ] Dashboard updates as events arrive
 
 ✅ **Performance Requirements:**
+
 - [ ] Event latency < 100ms
 - [ ] Can handle 1000+ events per session
 - [ ] No memory leaks in long-running streams
 
 ✅ **Reliability Requirements:**
+
 - [ ] WebSocket connection recovery on disconnect
 - [ ] Graceful error handling for failed agents
 - [ ] Timeout handling (agent takes > 30s)
 - [ ] Proper cleanup on client disconnect
 
 ✅ **User Experience Requirements:**
+
 - [ ] Dashboard is visually engaging and interactive
 - [ ] Timeline clearly shows agent progression
 - [ ] Results update live as they become available
@@ -366,12 +382,14 @@ interface EventPayload {
 ## Dependencies & Compatibility
 
 **Backend:**
+
 - `fastapi` (already installed)
 - `websockets` (need to add)
 - `pydantic` (already installed)
 - `asyncio` (standard library)
 
 **Frontend:**
+
 - `react` (already installed)
 - `react-hooks` (standard with React)
 - No additional external dependencies required
@@ -427,4 +445,3 @@ interface EventPayload {
 - **Related Feature:** FR#005 (Sequential Workflow)
 - **ADK/A2A Documentation:** docs/SYSTEM_INSTRUCTION.md
 - **FastAPI WebSocket Guide:** https://fastapi.tiangolo.com/advanced/websockets/
-

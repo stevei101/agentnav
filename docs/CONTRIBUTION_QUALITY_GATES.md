@@ -39,11 +39,13 @@ Update the Branch Protection rules for `main` to require the following checks (n
 Do NOT set the operational jobs as required (for example `Build and Push Containers`). The `Build Gemma (debug)` workflow no longer runs on pull requests as of FR#150.
 
 ### UI steps
+
 1. Go to the repository on GitHub > Settings > Branches > Branch protection rules.
 2. Edit the rule for `main` (or create a new one).
 3. Under "Require status checks to pass before merging" select the three checks above and save.
 
 ### API snippet (optional)
+
 You can programmatically set required status checks using the GitHub REST API. Replace placeholders as appropriate.
 
 ```bash
@@ -61,12 +63,14 @@ curl -X PUT -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vn
 ## Understanding INFRA_VERIFICATION status
 
 **Path Filtering Behavior:**
+
 - `INFRA_VERIFICATION` only runs when `terraform/**` files are modified
 - For PRs without Terraform changes, GitHub automatically skips the check
 - **The check shows as "successful" in branch protection**, even though it was skipped
 - This is the **correct and expected behavior** per GitHub's path filtering design
 
 **Why This Design?**
+
 - Prevents unnecessary Terraform validation runs for non-infrastructure PRs
 - Reduces CI/CD costs and execution time
 - Aligns with GitHub's recommendation for path-filtered required checks
@@ -79,6 +83,7 @@ Before pushing your changes, you can run the equivalent checks locally using Mak
 ### CODE_QUALITY checks
 
 Run all code quality checks locally:
+
 ```bash
 # Lint frontend code
 make lint
@@ -102,6 +107,7 @@ make ci                   # Lint + test (same as CI pipeline)
 ### SECURITY_AUDIT checks
 
 Run security scans locally:
+
 ```bash
 # Terraform security scan
 cd terraform
@@ -114,6 +120,7 @@ docker run --rm -v "$(pwd)":/app ossf/osv-scanner --recursive /app
 ### INFRA_VERIFICATION checks
 
 Validate Terraform changes:
+
 ```bash
 cd terraform
 terraform fmt -check -recursive     # Format check
@@ -137,6 +144,7 @@ terraform plan                      # Preview changes (on PR, this posts as comm
 ### Understanding failure messages
 
 If a composite check fails, click on the failed check to see details:
+
 - **CODE_QUALITY failed**: Look for "Code Quality", "Frontend Unit Tests", or "Backend Tests" job failures
 - **SECURITY_AUDIT failed**: Check "Terraform Security Scan" or "OSV Dependency Vulnerability Scan" logs
 - **INFRA_VERIFICATION failed**: Review "Terraform" job logs for plan errors
@@ -153,6 +161,7 @@ If a composite check fails, click on the failed check to see details:
 ### Status check execution
 
 Status checks execute on:
+
 - **All pushes** to any branch (immediate feedback during development)
 - **Pull requests** targeting `main` (required for merge)
 - **Direct pushes** to `main` (would be blocked if protection enabled)
@@ -160,6 +169,7 @@ Status checks execute on:
 ### Required status checks
 
 The following checks are **mandatory** for merging to `main`:
+
 - `CODE_QUALITY` - Ensures code quality, style, and tests pass
 - `SECURITY_AUDIT` - Ensures no security vulnerabilities introduced
 - `INFRA_VERIFICATION` - Ensures Terraform changes are valid
@@ -167,6 +177,7 @@ The following checks are **mandatory** for merging to `main`:
 ### Operational checks (optional)
 
 These checks run but are **not required** for merge:
+
 - `Build and Push Containers` - Container build verification
 - `Build Gemma Debug` - Gemma service debug builds
 
@@ -195,4 +206,3 @@ For detailed usage instructions, see [COPILOT_AGENT_GUIDE.md](COPILOT_AGENT_GUID
 - ✅ Custom Copilot agent available for development assistance
 - ⏳ Update branch protection rules in GitHub to require these checks (see setup script)
 - ⏳ Optional: Add automated job to validate status check existence
-

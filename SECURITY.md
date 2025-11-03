@@ -101,10 +101,21 @@ Every pull request runs the following security checks:
 
 1. **TFSec**: Terraform security scanning
 2. **OSV-Scanner**: Dependency vulnerability scanning
-3. **Linting**: Code quality and security linting
-4. **Tests**: Unit and integration tests
+3. **Secret Verification**: Verifies no `.env` files in git history (FR#095)
+4. **Linting**: Code quality and security linting
+5. **Tests**: Unit and integration tests
 
 All checks must pass before merging.
+
+### Secret History Verification (FR#095)
+
+As part of our commitment to security, we automatically verify that no `.env` files or other sensitive configuration files exist in the Git history:
+
+- **Automated Verification**: The `scripts/verify-no-secrets.sh` script runs on every PR
+- **Pre-commit Hook**: Local commits are checked before they reach the repository
+- **GitIgnore Enforcement**: `.env` files are properly excluded via `.gitignore`
+
+For more details, see [SECURITY_FIX_FR095.md](docs/SECURITY_FIX_FR095.md).
 
 ## Vulnerability Disclosure Policy
 

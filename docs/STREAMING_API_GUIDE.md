@@ -53,18 +53,22 @@ Events stream back to frontend in real-time
 ### 1. Client Initiates Connection
 
 ```typescript
-const ws = new WebSocket("ws://localhost:8000/api/v1/navigate/stream?session_id=session-123456");
+const ws = new WebSocket(
+  'ws://localhost:8000/api/v1/navigate/stream?session_id=session-123456'
+);
 
 ws.onopen = () => {
-  console.log("✅ Connected to streaming server");
-  
+  console.log('✅ Connected to streaming server');
+
   // Send analysis request
-  ws.send(JSON.stringify({
-    document: "Document content to analyze...",
-    content_type: "document",
-    include_metadata: true,
-    include_partial_results: true
-  }));
+  ws.send(
+    JSON.stringify({
+      document: 'Document content to analyze...',
+      content_type: 'document',
+      include_metadata: true,
+      include_partial_results: true,
+    })
+  );
 };
 ```
 
@@ -326,9 +330,7 @@ ws.onopen = () => {
         { "id": "n1", "label": "Concept", "type": "theme" },
         { "id": "n2", "label": "Related", "type": "entity" }
       ],
-      "edges": [
-        { "source": "n1", "target": "n2", "type": "related_to" }
-      ]
+      "edges": [{ "source": "n1", "target": "n2", "type": "related_to" }]
     },
     "metrics": {
       "processingTime": 4200,
@@ -359,7 +361,7 @@ function AnalysisDashboard() {
 
   const startAnalysis = (document: string) => {
     connect();
-    
+
     // Send document after connection
     setTimeout(() => {
       send({
@@ -395,25 +397,27 @@ let eventCount = 0;
 ws.onopen = () => {
   console.log('Connected');
   isConnected = true;
-  
+
   // Send initial request
-  ws.send(JSON.stringify({
-    document: "Your document content...",
-    content_type: "document"
-  }));
+  ws.send(
+    JSON.stringify({
+      document: 'Your document content...',
+      content_type: 'document',
+    })
+  );
 };
 
 // Handle events
-ws.onmessage = (event) => {
+ws.onmessage = event => {
   const data = JSON.parse(event.data);
   eventCount++;
-  
+
   console.log(`Event ${eventCount}:`, {
     agent: data.agent,
     status: data.status,
-    timestamp: data.timestamp
+    timestamp: data.timestamp,
   });
-  
+
   // Update UI based on agent and status
   switch (data.status) {
     case 'queued':
@@ -432,7 +436,7 @@ ws.onmessage = (event) => {
   }
 };
 
-ws.onerror = (error) => {
+ws.onerror = error => {
   console.error('WebSocket error:', error);
 };
 
@@ -448,12 +452,12 @@ ws.onclose = () => {
 
 ### Connection Errors
 
-| Error | Code | Description | Recovery |
-|-------|------|-------------|----|
-| Connection Refused | - | Server not running | Retry connection |
-| Invalid Session | 400 | Bad session format | Validate session ID |
-| Unauthorized | 401 | Authentication failed | Check API key |
-| Server Error | 500 | Internal server error | Retry with exponential backoff |
+| Error              | Code | Description           | Recovery                       |
+| ------------------ | ---- | --------------------- | ------------------------------ |
+| Connection Refused | -    | Server not running    | Retry connection               |
+| Invalid Session    | 400  | Bad session format    | Validate session ID            |
+| Unauthorized       | 401  | Authentication failed | Check API key                  |
+| Server Error       | 500  | Internal server error | Retry with exponential backoff |
 
 ### Message Errors
 
@@ -505,6 +509,7 @@ const reconnect = (attempt: number) => {
 ### Enable Debug Logging
 
 **Backend:**
+
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -512,6 +517,7 @@ logger = logging.getLogger("stream_routes")
 ```
 
 **Frontend:**
+
 ```javascript
 window.DEBUG_STREAMS = true;
 // In useAgentStream hook, will log all events
@@ -527,12 +533,12 @@ window.DEBUG_STREAMS = true;
 
 ### Common Issues
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| No events received | Connection not established | Check WebSocket URL, port, CORS |
-| Partial events | Network interruption | Reconnection logic will retry |
-| Memory leak | Events not cleared | Call disconnect() on unmount |
-| Slow processing | Large document | Reduce document size or increase timeout |
+| Issue              | Cause                      | Solution                                 |
+| ------------------ | -------------------------- | ---------------------------------------- |
+| No events received | Connection not established | Check WebSocket URL, port, CORS          |
+| Partial events     | Network interruption       | Reconnection logic will retry            |
+| Memory leak        | Events not cleared         | Call disconnect() on unmount             |
+| Slow processing    | Large document             | Reduce document size or increase timeout |
 
 ---
 
@@ -582,6 +588,7 @@ location /api/v1/navigate/stream {
 **Compatibility:** Breaking changes will increment major version (v2, v3, etc.)
 
 **Future Enhancements:**
+
 - Message compression
 - Selective event filtering
 - Client-side event caching
@@ -593,11 +600,13 @@ location /api/v1/navigate/stream {
 ## Security
 
 ### Development
+
 - No authentication required
 - CORS allows localhost origins
 - WebSocket unencrypted (ws://)
 
 ### Production
+
 - Require API key or OAuth2 token
 - Use secure WebSocket (wss://)
 - Implement rate limiting per session
