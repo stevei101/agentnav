@@ -111,5 +111,3 @@ variable "agentnav_model_type" {
     error_message = "agentnav_model_type must be either 'gemini' or 'gemma'."
   }
 }
-
-
