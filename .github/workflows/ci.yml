@@ -148,20 +148,81 @@ jobs:
     name: CODE_QUALITY
     runs-on: ubuntu-latest
     needs: [code-quality, frontend-tests, backend-tests]
+    if: always()
     steps:
       - name: Aggregate Code Quality
         run: |
-          echo "CODE_QUALITY: All aggregated code quality jobs completed successfully."
+          echo "## 📊 CODE_QUALITY Aggregation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          CODE_QUALITY_RESULT="${{ needs.code-quality.result }}"
+          FRONTEND_TESTS_RESULT="${{ needs.frontend-tests.result }}"
+          BACKEND_TESTS_RESULT="${{ needs.backend-tests.result }}"
+          
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| code-quality | $CODE_QUALITY_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| frontend-tests | $FRONTEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| backend-tests | $BACKEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for failure or cancelled states
+          # success and skipped (from path filtering) are both acceptable
+          if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$CODE_QUALITY_RESULT" == "cancelled" ]]; then
+            echo "❌ CODE_QUALITY check failed: code-quality job $CODE_QUALITY_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          if [[ "$FRONTEND_TESTS_RESULT" == "failure" ]] || [[ "$FRONTEND_TESTS_RESULT" == "cancelled" ]]; then
+            echo "❌ CODE_QUALITY check failed: frontend-tests job $FRONTEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          if [[ "$BACKEND_TESTS_RESULT" == "failure" ]] || [[ "$BACKEND_TESTS_RESULT" == "cancelled" ]]; then
+            echo "❌ CODE_QUALITY check failed: backend-tests job $BACKEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "✅ CODE_QUALITY: All aggregated code quality jobs completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 
   # Composite job that aggregates the infrastructure/security scans
   SECURITY_AUDIT:
     name: SECURITY_AUDIT
     runs-on: ubuntu-latest
     needs: [tfsec-scan, osv-scanner]
+    if: always()
     steps:
       - name: Aggregate Security Results
         run: |
-          echo "SECURITY_AUDIT: All aggregated security scans completed successfully."
+          echo "## 🔒 SECURITY_AUDIT Aggregation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          TFSEC_RESULT="${{ needs.tfsec-scan.result }}"
+          OSV_RESULT="${{ needs.osv-scanner.result }}"
+          
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| tfsec-scan | $TFSEC_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| osv-scanner | $OSV_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for failure or cancelled states
+          # success and skipped (from path filtering) are both acceptable
+          if [[ "$TFSEC_RESULT" == "failure" ]] || [[ "$TFSEC_RESULT" == "cancelled" ]]; then
+            echo "❌ SECURITY_AUDIT check failed: tfsec-scan job $TFSEC_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          if [[ "$OSV_RESULT" == "failure" ]] || [[ "$OSV_RESULT" == "cancelled" ]]; then
+            echo "❌ SECURITY_AUDIT check failed: osv-scanner job $OSV_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "✅ SECURITY_AUDIT: All aggregated security scans completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 
   # Final meta-check that runs unconditionally and handles skipped jobs properly
   # This is the ONLY check that should be required in branch protection rules
