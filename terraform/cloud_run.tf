@@ -25,10 +25,26 @@ resource "google_cloud_run_v2_service" "frontend" {
         container_port = var.frontend_container_port
       }
 
+      env {
+        name  = "PORT"
+        value = tostring(var.frontend_container_port)
+      }
+
       resources {
         limits = {
           cpu    = "1"
           memory = "512Mi"
+        }
+      }
+
+      startup_probe {
+        # Total startup window: 10s × 24 = 240 seconds
+        # timeout_seconds is per-probe attempt (should be <= period_seconds)
+        timeout_seconds   = 10
+        period_seconds    = 10
+        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        tcp_socket {
+          port = var.frontend_container_port
         }
       }
     }
@@ -76,6 +92,11 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name  = "PORT"
+        value = tostring(var.backend_container_port)
+      }
+
+      env {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
@@ -114,6 +135,17 @@ resource "google_cloud_run_v2_service" "backend" {
         limits = {
           cpu    = "4"
           memory = "8Gi"
+        }
+      }
+
+      startup_probe {
+        # Total startup window: 10s × 24 = 240 seconds
+        # timeout_seconds is per-probe attempt (should be <= period_seconds)
+        timeout_seconds   = 10
+        period_seconds    = 10
+        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        tcp_socket {
+          port = var.backend_container_port
         }
       }
     }
@@ -161,6 +193,11 @@ resource "google_cloud_run_v2_service" "gemma" {
       }
 
       env {
+        name  = "PORT"
+        value = tostring(var.gemma_container_port)
+      }
+
+      env {
         name  = "MODEL_NAME"
         value = "google/gemma-7b-it"
       }
@@ -187,6 +224,19 @@ resource "google_cloud_run_v2_service" "gemma" {
           memory = "16Gi"
         }
         cpu_idle = false
+      }
+
+      startup_probe {
+        # Total startup window: 10s × 30 = 300 seconds
+        # Extended timeout required for GPU model loading (Gemma 7B model initialization on NVIDIA L4)
+        # This timeout aligns with system instruction recommendations for GPU-accelerated model services
+        # timeout_seconds is per-probe attempt (should be <= period_seconds)
+        timeout_seconds   = 10
+        period_seconds    = 10
+        failure_threshold = 30  # 300s total / 10s period = 30 attempts (for GPU model loading)
+        tcp_socket {
+          port = var.gemma_container_port
+        }
       }
     }
 
