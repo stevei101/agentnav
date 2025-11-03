@@ -5,6 +5,7 @@ Implements Agent Development Kit (ADK) patterns and Agent2Agent (A2A) Protocol
 Updated for FR#027: Full A2A Protocol Integration with formal message schemas
 and security features.
 """
+
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -17,18 +18,19 @@ logger = logging.getLogger(__name__)
 # Import new A2A Protocol components (FR#027)
 try:
     from services.a2a_protocol import A2AProtocolService, create_status_message
-    from models.a2a_messages import (
-        A2AMessageBase,
-        AgentStatusMessage
-    )
+    from models.a2a_messages import A2AMessageBase, AgentStatusMessage
+
     HAS_ENHANCED_A2A = True
 except ImportError as e:
     HAS_ENHANCED_A2A = False
-    logger.warning(f"⚠️  Enhanced A2A Protocol not available, using legacy implementation: {e}")
+    logger.warning(
+        f"⚠️  Enhanced A2A Protocol not available, using legacy implementation: {e}"
+    )
 
 
 class AgentState(Enum):
     """Agent execution states"""
+
     IDLE = "idle"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -38,6 +40,7 @@ class AgentState(Enum):
 @dataclass
 class A2AMessage:
     """Agent2Agent Protocol Message Structure"""
+
     message_id: str
     from_agent: str
     to_agent: str
@@ -55,7 +58,7 @@ class A2AMessage:
             "message_type": self.message_type,
             "data": self.data,
             "timestamp": self.timestamp,
-            "priority": self.priority
+            "priority": self.priority,
         }
 
 
@@ -72,7 +75,9 @@ class A2AProtocol:
 
     async def send_message(self, message: A2AMessage):
         """Send A2A Protocol message to target agent(s)"""
-        logger.info(f"📨 A2A: {message.from_agent} → {message.to_agent} [{message.message_type}]")
+        logger.info(
+            f"📨 A2A: {message.from_agent} → {message.to_agent} [{message.message_type}]"
+        )
 
         # Add to queue (sorted by priority)
         self._message_queue.append(message)
@@ -86,7 +91,9 @@ class A2AProtocol:
         """Get pending messages for specific agent"""
         messages = [msg for msg in self._message_queue if msg.to_agent == agent_name]
         # Remove retrieved messages from queue
-        self._message_queue = [msg for msg in self._message_queue if msg.to_agent != agent_name]
+        self._message_queue = [
+            msg for msg in self._message_queue if msg.to_agent != agent_name
+        ]
         return messages
 
     def get_shared_context(self) -> Dict[str, Any]:
@@ -104,27 +111,34 @@ class Agent(ABC):
 
     All agents inherit from this base class and implement the process() method.
     Provides A2A Protocol integration and common agent capabilities.
-    
+
     FR#027 Updates:
     - Supports both legacy A2AProtocol and new A2AProtocolService
     - Uses typed A2A messages with security and traceability
     - Enhanced logging with structured metadata
     """
-    
-    def __init__(self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]):
+
+    def __init__(
+        self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]
+    ):
         self.name = name
         self.state = AgentState.IDLE
         self.a2a = a2a_protocol
         self.execution_history: List[Dict[str, Any]] = []
         self.logger = logging.getLogger(f"agent.{name}")
-        
+
         # Check if using enhanced A2A Protocol
-        self.using_enhanced_a2a = HAS_ENHANCED_A2A and isinstance(a2a_protocol, A2AProtocolService) if HAS_ENHANCED_A2A else False
-        
+        self.using_enhanced_a2a = (
+            HAS_ENHANCED_A2A and isinstance(a2a_protocol, A2AProtocolService)
+            if HAS_ENHANCED_A2A
+            else False
+        )
+
         if self.using_enhanced_a2a:
             self.logger.info(f"🔄 Agent '{name}' using Enhanced A2A Protocol (FR#027)")
         else:
             self.logger.info(f"🔄 Agent '{name}' using Legacy A2A Protocol")
+
     @abstractmethod
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -147,7 +161,9 @@ class Agent(ABC):
         execution_id = f"{self.name}_{int(execution_start)}"
 
         try:
-            self.logger.info(f"🚀 Agent {self.name} starting execution [{execution_id}]")
+            self.logger.info(
+                f"🚀 Agent {self.name} starting execution [{execution_id}]"
+            )
             self.state = AgentState.PROCESSING
 
             # Process any pending A2A messages
@@ -165,7 +181,9 @@ class Agent(ABC):
             self._record_execution(execution_id, execution_time, result, None)
 
             self.state = AgentState.COMPLETED
-            self.logger.info(f"✅ Agent {self.name} completed successfully [{execution_time:.2f}s]")
+            self.logger.info(
+                f"✅ Agent {self.name} completed successfully [{execution_time:.2f}s]"
+            )
 
             # Notify other agents of completion
             await self._notify_completion(result)
@@ -187,27 +205,29 @@ class Agent(ABC):
         """Process pending A2A Protocol messages for this agent"""
         messages = await self.a2a.get_messages_for_agent(self.name)
         for message in messages:
-            self.logger.info(f"📥 Processing A2A message: {message.message_type} from {message.from_agent}")
+            self.logger.info(
+                f"📥 Processing A2A message: {message.message_type} from {message.from_agent}"
+            )
             await self._handle_a2a_message(message)
-    
+
     async def _handle_a2a_message(self, message: Union["A2AMessage", "A2AMessageBase"]):
         """
         Handle incoming A2A message - can be overridden by subclasses
-        
+
         FR#027: Supports both legacy A2AMessage and new typed messages
         """
         # Extract message type (works for both formats)
-        if hasattr(message, 'message_type'):
+        if hasattr(message, "message_type"):
             msg_type = message.message_type
         else:
             msg_type = "unknown"
-        
+
         # Extract from_agent (works for both formats)
-        if hasattr(message, 'from_agent'):
+        if hasattr(message, "from_agent"):
             from_agent = message.from_agent
         else:
             from_agent = "unknown"
-        
+
         # Handle common message types
         if msg_type == "context_update":
             self.logger.info(f"📋 Received context update from {from_agent}")
@@ -215,33 +235,38 @@ class Agent(ABC):
             self.logger.info(f"✅ Dependency {from_agent} completed")
         elif msg_type == "agent_status":
             # Handle typed AgentStatusMessage (FR#027)
-            if hasattr(message, 'agent_status'):
+            if hasattr(message, "agent_status"):
                 status = message.agent_status
                 self.logger.info(f"📊 Agent {from_agent} status: {status}")
             else:
                 self.logger.info(f"📊 Agent {from_agent} status update")
-        elif msg_type in ["summarization_completed", "relationship_mapped", "visualization_ready"]:
+        elif msg_type in [
+            "summarization_completed",
+            "relationship_mapped",
+            "visualization_ready",
+        ]:
             # Handle specialized typed messages (FR#027)
             self.logger.info(f"📨 Received {msg_type} from {from_agent}")
         else:
             self.logger.warning(f"🤷 Unknown A2A message type: {msg_type}")
+
     async def _notify_completion(self, result: Dict[str, Any]):
         """
         Notify other agents that this agent has completed
-        
+
         FR#027: Uses typed AgentStatusMessage when enhanced A2A is available
         """
         execution_time = result.get("processing_time", 0.0)
         result_summary = self._summarize_result(result)
-        
+
         if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
             # Use typed AgentStatusMessage (FR#027)
             message = create_status_message(
                 from_agent=self.name,
                 agent_status="completed",
-                correlation_id=getattr(self.a2a, 'correlation_id', 'unknown'),
+                correlation_id=getattr(self.a2a, "correlation_id", "unknown"),
                 processing_time_seconds=execution_time,
-                result_summary=result_summary
+                result_summary=result_summary,
             )
         else:
             # Legacy message format
@@ -250,15 +275,15 @@ class Agent(ABC):
                 from_agent=self.name,
                 to_agent="*",  # Broadcast to all agents
                 message_type="agent_complete",
-                data={"agent": self.name, "result_summary": result_summary}
+                data={"agent": self.name, "result_summary": result_summary},
             )
-        
+
         await self.a2a.send_message(message)
 
     async def _notify_error(self, error: str):
         """
         Notify other agents of an error
-        
+
         FR#027: Uses typed AgentStatusMessage when enhanced A2A is available
         """
         if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
@@ -266,8 +291,8 @@ class Agent(ABC):
             message = create_status_message(
                 from_agent=self.name,
                 agent_status="failed",
-                correlation_id=getattr(self.a2a, 'correlation_id', 'unknown'),
-                error_message=error
+                correlation_id=getattr(self.a2a, "correlation_id", "unknown"),
+                error_message=error,
             )
         else:
             # Legacy message format
@@ -276,9 +301,9 @@ class Agent(ABC):
                 from_agent=self.name,
                 to_agent="*",  # Broadcast to all agents
                 message_type="agent_error",
-                data={"agent": self.name, "error": error}
+                data={"agent": self.name, "error": error},
             )
-        
+
         await self.a2a.send_message(message)
 
     def _summarize_result(self, result: Dict[str, Any]) -> str:
@@ -287,18 +312,25 @@ class Agent(ABC):
             return f"Generated {result['type']}"
         return "Processing completed"
 
-    def _record_execution(self, execution_id: str, execution_time: float,
-                         result: Optional[Dict[str, Any]], error: Optional[str]):
+    def _record_execution(
+        self,
+        execution_id: str,
+        execution_time: float,
+        result: Optional[Dict[str, Any]],
+        error: Optional[str],
+    ):
         """Record execution in agent history"""
-        self.execution_history.append({
-            "execution_id": execution_id,
-            "timestamp": time.time(),
-            "execution_time": execution_time,
-            "state": self.state.value,
-            "success": error is None,
-            "result_summary": self._summarize_result(result) if result else None,
-            "error": error
-        })
+        self.execution_history.append(
+            {
+                "execution_id": execution_id,
+                "timestamp": time.time(),
+                "execution_time": execution_time,
+                "state": self.state.value,
+                "success": error is None,
+                "result_summary": self._summarize_result(result) if result else None,
+                "error": error,
+            }
+        )
 
         # Keep only last 10 executions
         if len(self.execution_history) > 10:
@@ -309,8 +341,10 @@ class Agent(ABC):
         return {
             "name": self.name,
             "state": self.state.value,
-            "last_execution": self.execution_history[-1] if self.execution_history else None,
-            "total_executions": len(self.execution_history)
+            "last_execution": (
+                self.execution_history[-1] if self.execution_history else None
+            ),
+            "total_executions": len(self.execution_history),
         }
 
 
@@ -318,7 +352,7 @@ class AgentWorkflow:
     """
     ADK Workflow Engine
     Orchestrates multiple agents with dependency management and A2A Protocol
-    
+
     FR#027 Updates:
     - Supports both legacy A2AProtocol and new A2AProtocolService
     - Can be initialized with session_id for enhanced traceability
@@ -327,7 +361,7 @@ class AgentWorkflow:
     def __init__(self, session_id: Optional[str] = None, use_enhanced_a2a: bool = True):
         """
         Initialize AgentWorkflow
-        
+
         Args:
             session_id: Optional session ID for correlation tracking
             use_enhanced_a2a: Whether to use enhanced A2A Protocol (FR#027)
@@ -335,12 +369,13 @@ class AgentWorkflow:
         # Choose A2A Protocol implementation
         if use_enhanced_a2a and HAS_ENHANCED_A2A:
             from services.a2a_protocol import A2AProtocolService
+
             self.a2a = A2AProtocolService(session_id=session_id)
             logger.info("🔄 Using Enhanced A2A Protocol Service (FR#027)")
         else:
             self.a2a = A2AProtocol()
             logger.info("🔄 Using Legacy A2A Protocol")
-        
+
         self.agents: Dict[str, Agent] = {}
         self.dependencies: Dict[str, List[str]] = {}  # agent -> [prerequisite_agents]
         self.persistence_service = None  # Lazy initialization
@@ -396,7 +431,9 @@ class AgentWorkflow:
                 except Exception as e:
                     logger.error(f"❌ Agent {agent_name} failed: {e}")
                     # Continue with other agents - depending agents will handle the failure
-                    executed_agents.add(agent_name)  # Mark as processed to avoid infinite loop
+                    executed_agents.add(
+                        agent_name
+                    )  # Mark as processed to avoid infinite loop
 
         logger.info("🏁 ADK Agent Workflow completed")
         return workflow_results
@@ -433,12 +470,15 @@ class AgentWorkflow:
 
         # Validate input type
         if not isinstance(session_context, SessionContext):
-            raise TypeError(f"session_context must be a SessionContext instance, got {type(session_context)}")
+            raise TypeError(
+                f"session_context must be a SessionContext instance, got {type(session_context)}"
+            )
 
         # Initialize services if not already done
         if self.persistence_service is None:
             try:
                 from services.context_persistence import get_persistence_service
+
                 self.persistence_service = get_persistence_service()
             except Exception as e:
                 logger.warning(f"⚠️  Could not initialize persistence service: {e}")
@@ -446,6 +486,7 @@ class AgentWorkflow:
         if self.session_service is None:
             try:
                 from services.session_service import get_session_service
+
                 self.session_service = get_session_service()
             except Exception as e:
                 logger.warning(f"⚠️  Could not initialize session service: {e}")
@@ -453,6 +494,7 @@ class AgentWorkflow:
         if self.cache_service is None:
             try:
                 from services.knowledge_cache_service import get_knowledge_cache_service
+
                 self.cache_service = get_knowledge_cache_service()
             except Exception as e:
                 logger.warning(f"⚠️  Could not initialize cache service: {e}")
@@ -465,14 +507,14 @@ class AgentWorkflow:
                 session_id=session_context.session_id,
                 user_input=session_context.raw_input,
                 content_type=session_context.content_type,
-                metadata={"workflow_version": "FR#029"}
+                metadata={"workflow_version": "FR#029"},
             )
 
         # FR#029: Check knowledge cache before processing
         if self.cache_service:
             cached_result = await self.cache_service.check_cache(
                 content=session_context.raw_input,
-                content_type=session_context.content_type
+                content_type=session_context.content_type,
             )
 
             if cached_result:
@@ -484,6 +526,7 @@ class AgentWorkflow:
 
                 # Convert relationship dicts to EntityRelationship objects
                 from models.context_model import EntityRelationship
+
                 cached_relationships = cached_result.get("relationships", [])
                 session_context.relationships = [
                     EntityRelationship(**rel) if isinstance(rel, dict) else rel
@@ -495,13 +538,13 @@ class AgentWorkflow:
 
                 # Mark all agents as complete (from cache)
                 from models.context_model import STANDARD_AGENT_ORDER
+
                 for agent_name in STANDARD_AGENT_ORDER:
                     session_context.mark_agent_complete(agent_name)
 
                 # Increment cache hit count
                 content_hash = self.cache_service.generate_content_hash(
-                    session_context.raw_input,
-                    session_context.content_type
+                    session_context.raw_input, session_context.content_type
                 )
                 await self.cache_service.increment_hit_count(content_hash)
 
@@ -509,10 +552,7 @@ class AgentWorkflow:
                 if self.session_service:
                     await self.session_service.update_session(
                         session_context.session_id,
-                        {
-                            "workflow_status": "completed_from_cache",
-                            "cache_hit": True
-                        }
+                        {"workflow_status": "completed_from_cache", "cache_hit": True},
                     )
 
                 return session_context
@@ -523,13 +563,13 @@ class AgentWorkflow:
         # Update session status
         if self.session_service:
             await self.session_service.update_session(
-                session_context.session_id,
-                {"workflow_status": "in_progress"}
+                session_context.session_id, {"workflow_status": "in_progress"}
             )
 
         # Define execution order for sequential workflow
         # Uses standard agent order from context_model
         from models.context_model import STANDARD_AGENT_ORDER
+
         execution_order = STANDARD_AGENT_ORDER
 
         for agent_name in execution_order:
@@ -557,7 +597,9 @@ class AgentWorkflow:
                 agent_execution_time = time.time() - agent_start_time
 
                 # Update SessionContext based on agent type and results
-                self._update_session_context_from_result(session_context, agent_name, result)
+                self._update_session_context_from_result(
+                    session_context, agent_name, result
+                )
 
                 # Mark agent as complete
                 session_context.mark_agent_complete(agent_name)
@@ -570,8 +612,8 @@ class AgentWorkflow:
                         state={
                             "status": "completed",
                             "execution_time": agent_execution_time,
-                            "result_summary": result.get("agent", agent_name)
-                        }
+                            "result_summary": result.get("agent", agent_name),
+                        },
                     )
 
                 # Persist context to Firestore after each step
@@ -596,26 +638,33 @@ class AgentWorkflow:
                         state={
                             "status": "failed",
                             "execution_time": agent_execution_time,
-                            "error": str(e)
-                        }
+                            "error": str(e),
+                        },
                     )
 
                 if self.persistence_service:
                     await self.persistence_service.save_context(session_context)
 
         # Mark workflow as complete
-        session_context.workflow_status = "completed" if session_context.is_complete() else "partially_completed"
+        session_context.workflow_status = (
+            "completed" if session_context.is_complete() else "partially_completed"
+        )
         session_context.current_agent = None
 
         # FR#029: Store results in knowledge cache (including partial results)
-        if self.cache_service and session_context.workflow_status in ["completed", "partially_completed"]:
+        if self.cache_service and session_context.workflow_status in [
+            "completed",
+            "partially_completed",
+        ]:
             await self.cache_service.store_cache(
                 content=session_context.raw_input,
                 content_type=session_context.content_type,
                 summary=session_context.summary_text or "",
                 visualization_data=session_context.graph_json or {},
                 key_entities=session_context.key_entities,
-                relationships=[rel.model_dump() for rel in session_context.relationships]
+                relationships=[
+                    rel.model_dump() for rel in session_context.relationships
+                ],
             )
 
         # Final persistence
@@ -628,15 +677,19 @@ class AgentWorkflow:
                 session_context.session_id,
                 {
                     "workflow_status": session_context.workflow_status,
-                    "completed_at": time.time()
-                }
+                    "completed_at": time.time(),
+                },
             )
 
-        logger.info(f"🏁 Sequential ADK Agent Workflow completed: {session_context.workflow_status}")
+        logger.info(
+            f"🏁 Sequential ADK Agent Workflow completed: {session_context.workflow_status}"
+        )
 
         return session_context
 
-    def _update_session_context_from_result(self, session_context, agent_name: str, result: Dict[str, Any]):
+    def _update_session_context_from_result(
+        self, session_context, agent_name: str, result: Dict[str, Any]
+    ):
         """
         Update SessionContext with agent-specific results
 
@@ -662,6 +715,7 @@ class AgentWorkflow:
             if "relationships" in result:
                 # Convert relationship dicts to EntityRelationship objects
                 from models.context_model import EntityRelationship
+
                 relationships = result["relationships"]
                 session_context.relationships = [
                     EntityRelationship(
@@ -669,7 +723,7 @@ class AgentWorkflow:
                         target=rel.get("to", rel.get("target", "unknown")),
                         type=rel.get("type", "related"),
                         label=rel.get("label"),
-                        confidence=rel.get("confidence")
+                        confidence=rel.get("confidence"),
                     )
                     for rel in relationships
                 ]
@@ -697,5 +751,5 @@ class AgentWorkflow:
         return {
             "agents": {name: agent.get_status() for name, agent in self.agents.items()},
             "dependencies": self.dependencies,
-            "shared_context_keys": list(self.a2a.get_shared_context().keys())
+            "shared_context_keys": list(self.a2a.get_shared_context().keys()),
         }
