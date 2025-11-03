@@ -288,8 +288,49 @@ Extract 5-10 key entities:
             return entities[:10]  # Limit to 10 entities
             
         except Exception as e:
-            self.logger.error(f"Error extracting document entities: {e}")
-            return self._extract_document_entities_fallback(document)
+            self.logger.warning(f"⚠️  Error using Gemini for entity extraction: {e}")
+            self.logger.info("📋 Falling back to Gemma service for entity extraction")
+            # Fallback to Gemma service if Gemini fails
+            try:
+                from services.gemma_service import reason_with_gemma
+                
+                prompt = f"""
+Analyze this document and extract key entities (concepts, topics, themes).
+Return them as a simple list, one per line.
+
+Document:
+{document[:2000]}
+
+Extract 5-10 key entities:
+"""
+                
+                response = await reason_with_gemma(
+                    prompt=prompt,
+                    max_tokens=300,
+                    temperature=0.3
+                )
+                
+                # Parse response into entities (same logic as above)
+                entities = []
+                lines = response.strip().split('\n')
+                
+                for i, line in enumerate(lines):
+                    line = line.strip()
+                    if line and not line.startswith('-') and len(line) > 2:
+                        entity_name = line.replace('-', '').replace('*', '').strip()
+                        if entity_name:
+                            entities.append({
+                                "id": f"concept_{i}",
+                                "label": entity_name,
+                                "type": "concept",
+                                "group": "Concept",
+                                "importance": "high" if i < 3 else "medium"
+                            })
+                
+                return entities[:10]
+            except Exception as fallback_error:
+                self.logger.error(f"Error extracting document entities (both Gemini and Gemma failed): {fallback_error}")
+                return self._extract_document_entities_fallback(document)
     
     def _extract_document_entities_fallback(self, document: str) -> List[Dict[str, Any]]:
         """Fallback entity extraction for documents"""
@@ -531,6 +572,7 @@ Extract 5-10 key entities:
         
         This method asks the selected model to analyze specific entity relationships
         in the context of the full document.
+        Falls back to Gemma service if Gemini is unavailable.
         """
         try:
             from services.gemini_client import reason_with_gemini
@@ -565,7 +607,38 @@ Provide relationship insights:
             self.logger.info(f"✅ Enhanced relationships with reasoning (model_type={self.model_type})")
             
         except Exception as e:
-            self.logger.warning(f"⚠️  Could not enhance with reasoning: {e}")
+            self.logger.warning(f"⚠️  Could not enhance with Gemini reasoning: {e}")
+            self.logger.info("📋 Attempting fallback to Gemma service")
+            # Fallback to Gemma service if Gemini fails
+            try:
+                from services.gemma_service import reason_with_gemma
+                
+                top_entities = [e["label"] for e in entities[:5]]
+                prompt = f"""
+Analyze the relationships between these entities in the given context.
+For each pair, describe the relationship type (e.g., "supports", "contradicts", "builds on", "causes", "enables").
+
+Entities: {', '.join(top_entities)}
+
+Context:
+{document[:1500]}
+
+Provide relationship insights:
+"""
+                
+                response = await reason_with_gemma(
+                    prompt=prompt,
+                    max_tokens=400,
+                    temperature=0.3
+                )
+                
+                # Parse reasoning to enhance existing relationships
+                for relationship in relationships:
+                    relationship["reasoning_context"] = response[:200]
+                
+                self.logger.info("✅ Enhanced relationships with Gemma reasoning (fallback)")
+            except Exception as fallback_error:
+                self.logger.warning(f"⚠️  Could not enhance with reasoning (both Gemini and Gemma failed): {fallback_error}")
         
         return relationships
     

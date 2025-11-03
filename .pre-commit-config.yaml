@@ -57,3 +57,21 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
       - id: check-merge-conflict
+      - id: detect-private-key
+        description: Detect private keys in commits
+
+  # Security: Prevent .env file commits (FR#095)
+  - repo: local
+    hooks:
+      - id: check-env-files
+        name: Prevent .env file commits (FR#095)
+        entry: bash -c
+        args:
+          - |
+            if git diff --cached --name-only | grep -E "^\.env$|/\.env$"; then
+              echo "ERROR: .env file detected! Use .env.example instead."
+              exit 1
+            fi
+        language: system
+        pass_filenames: false
+        always_run: true

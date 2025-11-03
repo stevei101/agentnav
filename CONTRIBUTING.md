@@ -24,6 +24,22 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
    ```
    See [docs/local-development.md](docs/local-development.md) for detailed setup instructions.
 
+## Development Assistance with agentnav-copilot-agent
+
+We provide a custom GitHub Copilot agent (`@agentnav-gh-copilot-agent`) that is context-aware of our complete system architecture, quality policies, and conventions. Use it to:
+
+- **Generate compliant code** following project patterns (RORO, TypeScript, ADK)
+- **Review code** for policy compliance (70% coverage, Cloud Run compatibility)
+- **Understand architecture** and get instant answers about the multi-agent system
+- **Get tooling guidance** (e.g., "use uv for Python dependencies", "use bun for frontend")
+
+**Quick Start:**
+```
+@agentnav-gh-copilot-agent How do I implement a new ADK agent?
+```
+
+For detailed usage instructions and examples, see [docs/COPILOT_AGENT_GUIDE.md](docs/COPILOT_AGENT_GUIDE.md).
+
 ## Development Workflow
 
 ### 1. Create a Branch
@@ -66,6 +82,18 @@ pytest backend/tests
 bun run lint
 bun run format:check
 ```
+
+**⚠️ CRITICAL: Zero-Tolerance CI Failure Policy**
+
+If any CI check fails during or after your PR submission:
+
+1. **Stop all other work immediately**
+2. **Search for an existing open, assigned issue** tracking this failure
+3. **If no issue exists, create a new Feature Request immediately** using the template in [docs/ZERO_TOLERANCE_FAILURE_POLICY.md](docs/ZERO_TOLERANCE_FAILURE_POLICY.md)
+4. **Assign appropriate priority and owner** to the new FR
+5. **Do not merge or bypass the failed check** without explicit maintainer approval
+
+See the complete [Zero-Tolerance Failure Policy](docs/ZERO_TOLERANCE_FAILURE_POLICY.md) for detailed procedures.
 
 ### 4. Commit Your Changes
 
@@ -114,6 +142,7 @@ git push origin feature/your-feature-name
 📖 **[Contribution Guide: PR Discipline](docs/CONTRIBUTION_GUIDE_PR_DISCIPLINE.md)**
 
 Key principles:
+
 - Only commit files that are **consumed** by the application, CI/CD, or IaC
 - Remove temporary notes, scratch files, and local configuration
 - Optimize `.dockerignore` and `.gitignore` to minimize build context
@@ -139,8 +168,11 @@ Key principles:
 
 - Write unit tests for new functionality
 - Ensure all existing tests pass
-- Aim for high test coverage
+- **Mandatory: Achieve 70% or higher code coverage** for all new code
 - Test edge cases and error conditions
+- Run `make test` to verify all tests pass locally
+
+For detailed testing guidelines and coverage requirements, see [docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md).
 
 ### Documentation
 
@@ -182,6 +214,8 @@ If you find a bug, please create an issue on GitHub with:
 6. **Environment**: OS, browser, versions, etc.
 7. **Screenshots**: If applicable
 8. **Logs**: Relevant error messages or logs
+
+**⚠️ CI/CD Failures:** If the bug is a failed GitHub Actions CI check, you **MUST** follow the [Zero-Tolerance Failure Policy](docs/ZERO_TOLERANCE_FAILURE_POLICY.md) and create a Feature Request immediately with full log output and root cause analysis.
 
 ## Requesting Features
 

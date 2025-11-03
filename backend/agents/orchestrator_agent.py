@@ -226,7 +226,8 @@ Content to analyze:
             "content_summary": f"{content_type.title()} with {len(lines)} lines, {len(document.split())} words",
             "complexity_level": complexity_level,
             "key_topics": key_topics[:5],  # Top 5 topics
-            "analysis_timestamp": time.time()
+            "analysis_timestamp": time.time(),
+            "analysis_method": "heuristic"
         }
     
     async def _delegate_to_agents(self, content_analysis: Dict[str, Any], document: str):

@@ -1,35 +1,66 @@
-# Backend Production Dockerfile
-# Python 3.11+ with uv for fast dependency management
+# Backend Production Dockerfile - Cloud Run Optimized
+# Multi-stage build for minimal image size and fast deployments
+# Based on Google Cloud Run FastAPI/Gemini best practices
 
-FROM python:3.11-slim
+# Stage 1: Builder - Install dependencies
+FROM python:3.11-slim AS builder
 
-# Set environment variables
+# Set build-time environment variables
 ENV PYTHONUNBUFFERED=1 \
-    APP_HOME=/app
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR $APP_HOME
+WORKDIR /build
 
-# Install uv by copying the pre-compiled binary
+# Install uv for fast dependency installation
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 RUN chmod +x /usr/local/bin/uv
 
-# Copy dependency files
+# Copy dependency files only (better layer caching)
 COPY pyproject.toml requirements.txt ./
 
-# Install dependencies
-RUN uv pip install --system -r requirements.txt
+# Install dependencies to /install directory
+RUN uv pip install --system --target=/install -r requirements.txt
+
+# Stage 2: Runtime - Minimal production image
+FROM python:3.11-slim
+
+# Set runtime environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    APP_HOME=/app \
+    PORT=8080 \
+    PYTHONPATH=/install
+
+WORKDIR $APP_HOME
+
+# Copy installed dependencies from builder stage
+COPY --from=builder /install /install
 
 # Copy application code
 COPY . .
 
+# Create non-root user for security (Cloud Run best practice)
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    chown -R appuser:appuser $APP_HOME && \
+    chmod +x start.sh
+
+# Switch to non-root user
+USER appuser
+
 # Expose port (Cloud Run will set PORT env var automatically)
 EXPOSE 8080
+
+# Copy entrypoint script
+# Build context is ./backend, so entrypoint.sh is at root of context
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Health check for Cloud Run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')" || exit 1
 
-# Run FastAPI app with uvicorn
-# Cloud Run sets PORT env var automatically, read it dynamically
-CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; uvicorn.run('main:app', host='0.0.0.0', port=port, log_level='info')"
+# Run FastAPI app with entrypoint script for proper signal handling
+ENTRYPOINT ["/app/entrypoint.sh"]
 

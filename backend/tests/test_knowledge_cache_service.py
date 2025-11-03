@@ -92,22 +92,22 @@ async def test_cache_expiration():
     content = f"Test content for expiration {time.time()}"
     content_type = "document"
 
-    # Store with very short TTL (0.001 hours = 3.6 seconds)
+    # Store with very short TTL (0.0003 hours = ~1 second)
     store_success = await service.store_cache(
         content=content,
         content_type=content_type,
         summary="Test summary",
         visualization_data={},
-        ttl_hours=0.001
+        ttl_hours=0.0003
     )
 
     if not store_success:
         pytest.skip("Firestore not available - skipping test")
         return
 
-    # Wait for expiration using async sleep
+    # Wait for expiration using async sleep (reduced from 4s to 1.5s)
     import asyncio
-    await asyncio.sleep(4)
+    await asyncio.sleep(1.5)
 
     # Check cache - should return None for expired entry
     cached_result = await service.check_cache(content, content_type)

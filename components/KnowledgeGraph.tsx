@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
-import { Network } from "lucide-react";
-import type { AgentState, AgentStatusValue } from "../types";
+import React, { useEffect, useRef } from 'react';
+import { Network } from 'lucide-react';
+import type { AgentState } from '../types';
 
 interface KnowledgeGraphProps {
   agents: AgentState[];
@@ -13,7 +13,7 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Set canvas size
@@ -26,7 +26,7 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
     ctx.clearRect(0, 0, rect.width, rect.height);
 
     // Check if any agent has completed
-    const hasCompleted = agents.some((a) => a.status === "Done");
+    const hasCompleted = agents.some(a => a.status === 'Done');
     if (!hasCompleted) return;
 
     // Draw knowledge graph
@@ -37,9 +37,9 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
     // Draw central node
     ctx.beginPath();
     ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-    ctx.fillStyle = "#3b82f6";
+    ctx.fillStyle = '#3b82f6';
     ctx.fill();
-    ctx.strokeStyle = "#60a5fa";
+    ctx.strokeStyle = '#60a5fa';
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -54,16 +54,16 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.lineTo(x, y);
-      ctx.strokeStyle = "#374151";
+      ctx.strokeStyle = '#374151';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       // Draw node
       ctx.beginPath();
       ctx.arc(x, y, 20, 0, Math.PI * 2);
-      ctx.fillStyle = "#1f2937";
+      ctx.fillStyle = '#1f2937';
       ctx.fill();
-      ctx.strokeStyle = "#4b5563";
+      ctx.strokeStyle = '#4b5563';
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -78,7 +78,7 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
 
       // Find nearest main node
       const mainAngle =
-        Math.floor(i / (subConcepts / concepts)) * (Math.PI * 2 / concepts);
+        Math.floor(i / (subConcepts / concepts)) * ((Math.PI * 2) / concepts);
       const mainX = centerX + Math.cos(mainAngle) * radius;
       const mainY = centerY + Math.sin(mainAngle) * radius;
 
@@ -86,29 +86,29 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
       ctx.beginPath();
       ctx.moveTo(mainX, mainY);
       ctx.lineTo(x, y);
-      ctx.strokeStyle = "#1f2937";
+      ctx.strokeStyle = '#1f2937';
       ctx.lineWidth = 1;
       ctx.stroke();
 
       // Draw small node
       ctx.beginPath();
       ctx.arc(x, y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = "#111827";
+      ctx.fillStyle = '#111827';
       ctx.fill();
-      ctx.strokeStyle = "#374151";
+      ctx.strokeStyle = '#374151';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
 
     // Add animation for active agents
-    const processingAgents = agents.filter((a) => a.status === "Processing");
+    const processingAgents = agents.filter(a => a.status === 'Processing');
     if (processingAgents.length > 0) {
       // Add pulse effect to central node
       const time = Date.now() / 1000;
       const pulseRadius = 30 + Math.sin(time * 3) * 5;
       ctx.beginPath();
       ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = "#60a5fa";
+      ctx.strokeStyle = '#60a5fa';
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.5;
       ctx.stroke();
@@ -116,7 +116,7 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
     }
   }, [agents]);
 
-  const completedAgents = agents.filter((a) => a.status === "Done").length;
+  const completedAgents = agents.filter(a => a.status === 'Done').length;
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
@@ -126,13 +126,13 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ agents }) => {
         <span className="ml-auto text-sm text-gray-400">
           {completedAgents > 0
             ? `${completedAgents * 52} nodes`
-            : "Waiting for analysis"}
+            : 'Waiting for analysis'}
         </span>
       </div>
 
       <div
         className="relative bg-gray-950 rounded-lg overflow-hidden"
-        style={{ height: "400px" }}
+        style={{ height: '400px' }}
       >
         <canvas ref={canvasRef} className="w-full h-full" />
         {completedAgents === 0 && (

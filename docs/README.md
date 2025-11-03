@@ -18,11 +18,24 @@ These documents are:
 - `GCP_SETUP_GUIDE.md` - Step-by-step Google Cloud Platform setup
 - `GPU_SETUP_GUIDE.md` - Adding Gemma model with NVIDIA L4 GPU
 - `local-development.md` - Local development environment setup
+- `MANUAL_WORKFLOWS.md` - Guide for manually triggering GitHub Actions workflows
+
+### Contribution & CI/CD Documentation
+
+- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - Pull request best practices
+- `CONTRIBUTION_QUALITY_GATES.md` - Required CI/CD checks for PRs
+- `COPILOT_AGENT_GUIDE.md` - Using the agentnav-copilot-agent for development assistance
+- `WORKFLOW_PR_RECOVERY.md` - Recovering from failed workflows
 
 ### Architecture & System Documentation
 
 - `SYSTEM_INSTRUCTION.md` - Complete system architecture and deployment guide
 - `ARCHITECTURE_DIAGRAM_GUIDE.md` - How to create architecture diagrams
+
+### Contribution & Workflow Policies
+
+- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - PR discipline and minimum viable commit guidelines
+- `ZERO_TOLERANCE_FAILURE_POLICY.md` - **Mandatory policy for CI/CD failure response**
 
 ### Hackathon Submission Guides
 
@@ -39,6 +52,9 @@ If you're a developer looking to:
 - **Deploy to Google Cloud** ? See `GCP_SETUP_GUIDE.md`
 - **Understand the architecture** ? Read `SYSTEM_INSTRUCTION.md`
 - **Add GPU support** ? Follow `GPU_SETUP_GUIDE.md`
+- **Get development assistance** ? Use the custom Copilot agent (see `COPILOT_AGENT_GUIDE.md`)
+- **Understand CI/CD failure response** ? Review `ZERO_TOLERANCE_FAILURE_POLICY.md` (**mandatory reading**)
+- **Follow PR best practices** ? See `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md`
 
 ## For Reviewers
 

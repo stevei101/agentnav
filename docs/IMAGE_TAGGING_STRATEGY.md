@@ -64,9 +64,11 @@ The **"Determine Image Tags based on Event"** step in `.github/workflows/build.y
 
 **Key Points:**
 
+- Uses `set -euo pipefail` for robust error handling (fails fast on errors, undefined variables, pipe failures).
 - Uses conditional `[[ ]]` for robust string comparison (avoids word-splitting issues).
+- Validates PR number and IMAGE_TAG before proceeding (early failure detection).
 - Only sets `latest_tag` output when appropriate (conditional write to `$GITHUB_OUTPUT`).
-- Logs all context for debugging.
+- Logs all context for debugging and traceability.
 
 ### 2. Build and Push Integration
 
@@ -76,26 +78,41 @@ All three services (frontend, backend, gemma) follow the same pattern:
 - name: Build and push {SERVICE}
   if: matrix.service == '{SERVICE}'
   run: |
-    IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/{SERVICE-IMAGE-NAME}"
+    set -euo pipefail  # Fail on error, undefined vars, pipe failures
 
-    # Build with primary tag
+    IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/{SERVICE-IMAGE-NAME}"
+    IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+    # Validate image tag is set
+    if [[ -z "${IMAGE_TAG}" ]]; then
+      echo "❌ Error: image_tag output is missing"
+      exit 1
+    fi
+
+    echo "🔨 Building {SERVICE} image: ${IMAGE_NAME}:${IMAGE_TAG}"
     docker build \
-      -t ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} \
+      -t ${IMAGE_NAME}:${IMAGE_TAG} \
       -f {DOCKERFILE} \
       {BUILD_CONTEXT}
 
     # Conditionally tag as latest (only on main branch)
-    if [ -n "${{ steps.image.outputs.latest_tag }}" ]; then
-      docker tag ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+    LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+    if [[ -n "${LATEST_TAG}" ]]; then
+      echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+      docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
     fi
 
     # Push primary tag (always)
-    docker push ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}
+    echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+    docker push ${IMAGE_NAME}:${IMAGE_TAG}
 
     # Push latest tag (only if set)
-    [ -n "${{ steps.image.outputs.latest_tag }}" ] && docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+    if [[ -n "${LATEST_TAG}" ]]; then
+      echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+      docker push ${IMAGE_NAME}:${LATEST_TAG}
+    fi
 
-    echo "✅ {SERVICE} image pushed: ${IMAGE_NAME}:${{ steps.image.outputs.image_tag }}"
+    echo "✅ {SERVICE} image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 ```
 
 **Guarantee:** At least one tag is always pushed. If `latest_tag` is set, two tags are pushed.
@@ -401,11 +418,31 @@ docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
 
 ---
 
+## Technical Notes
+
+### Docker vs Podman
+
+- **CI/CD Pipeline (GitHub Actions)**: Uses `docker build` and `docker push` as Docker is pre-installed on GitHub Actions runners
+- **Local Development**: Uses Podman (see `Makefile` and `scripts/podman-setup.sh`)
+- Both tools produce OCI-compliant images compatible with Google Artifact Registry and Cloud Run
+
+### Error Handling
+
+All build and deployment steps use `set -euo pipefail` for robust error handling:
+
+- `-e`: Exit immediately on command failure
+- `-u`: Treat unset variables as errors
+- `-o pipefail`: Return exit status of the last command in a pipeline
+
+This ensures the workflow fails fast on any error, preventing partial deployments.
+
 ## Related Documentation
 
 - [CI/CD Workflow](../.github/workflows/build.yml)
 - [Google Artifact Registry (GAR) Setup](./GCP_SETUP_GUIDE.md)
 - [Cloud Run Deployment](./CLOUD_RUN_UPDATES_SUMMARY.md)
+- [System Instruction](SYSTEM_INSTRUCTION.md) - Project architecture and conventions
+- [Feature Request #025: Standardized Image Tagging](../docs/FR_025_IMAGE_TAGGING.md)
 
 ---
 
