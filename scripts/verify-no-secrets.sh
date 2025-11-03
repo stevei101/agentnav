@@ -75,6 +75,7 @@ for pattern in "${PRODUCTION_FILES[@]}"; do
 done
 
 # Special handling for .env.test - warn but don't fail if it's in .gitignore
+# Note: .env.test files typically contain only test data, not production secrets
 if git log --all --name-only --pretty=format: -- '.env.test' | grep -q '^.env.test$'; then
     COUNT=$(git log --all --name-only --pretty=format: -- '.env.test' | grep -c '^.env.test$')
     if grep -q "^\.env\.test$" .gitignore 2>/dev/null; then
