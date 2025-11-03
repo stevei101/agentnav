@@ -67,6 +67,18 @@ bun run lint
 bun run format:check
 ```
 
+**⚠️ CRITICAL: Zero-Tolerance CI Failure Policy**
+
+If any CI check fails during or after your PR submission:
+
+1. **Stop all other work immediately**
+2. **Search for an existing open, assigned issue** tracking this failure
+3. **If no issue exists, create a new Feature Request immediately** using the template in [docs/ZERO_TOLERANCE_FAILURE_POLICY.md](docs/ZERO_TOLERANCE_FAILURE_POLICY.md)
+4. **Assign appropriate priority and owner** to the new FR
+5. **Do not merge or bypass the failed check** without explicit maintainer approval
+
+See the complete [Zero-Tolerance Failure Policy](docs/ZERO_TOLERANCE_FAILURE_POLICY.md) for detailed procedures.
+
 ### 4. Commit Your Changes
 
 Follow these commit message guidelines:
@@ -183,6 +195,8 @@ If you find a bug, please create an issue on GitHub with:
 6. **Environment**: OS, browser, versions, etc.
 7. **Screenshots**: If applicable
 8. **Logs**: Relevant error messages or logs
+
+**⚠️ CI/CD Failures:** If the bug is a failed GitHub Actions CI check, you **MUST** follow the [Zero-Tolerance Failure Policy](docs/ZERO_TOLERANCE_FAILURE_POLICY.md) and create a Feature Request immediately with full log output and root cause analysis.
 
 ## Requesting Features
 
