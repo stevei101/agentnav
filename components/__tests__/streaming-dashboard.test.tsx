@@ -54,7 +54,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('enables file input and allows file selection', async () => {
-    const _user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     const browseButton = screen.getByText('Browse Files');
@@ -203,13 +202,12 @@ describe('DocumentUpload Component', () => {
   it('shows agent info cards', () => {
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
-    expect(screen.getByText('Summarizer Agent')).toBeInTheDocument();
-    expect(screen.getByText('Linker Agent')).toBeInTheDocument();
-    expect(screen.getByText('Visualizer Agent')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Summarizer Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Linker Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Visualizer Agent' })).toBeInTheDocument();
   });
 
   it('handles drag and drop file upload', async () => {
-    const _user = userEvent.setup();
     const { container } = render(
       <DocumentUpload onSessionStart={mockOnSessionStart} />
     );
@@ -234,7 +232,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('displays error message when file read fails', async () => {
-    const _user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     // This would require mocking FileReader to fail
@@ -242,7 +239,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('shows loading state during processing', async () => {
-    const _user = userEvent.setup();
     render(
       <DocumentUpload onSessionStart={mockOnSessionStart} isLoading={true} />
     );
