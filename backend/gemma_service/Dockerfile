@@ -11,7 +11,7 @@
 
 # Stage 1: Builder - Install dependencies
 # Use PyTorch base image with CUDA support for building
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS builder
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel AS builder
 
 WORKDIR /build
 
