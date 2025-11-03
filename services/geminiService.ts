@@ -5,7 +5,8 @@ import { AnalysisResult } from '../types';
 // API calls should go through the backend API endpoint
 // This is kept for legacy compatibility but should be migrated to backend API calls
 
-const API_KEY = (window as any).GEMINI_API_KEY;
+const API_KEY = (window as unknown as Record<string, unknown>)
+  .GEMINI_API_KEY as string | undefined;
 
 // Gracefully handle missing API key - don't throw, let the backend handle it
 // TODO: Migrate to backend API endpoint for secure API key handling

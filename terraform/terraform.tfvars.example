@@ -1,22 +1,73 @@
-# Terraform Variables Example
+# Terraform Variables Configuration Example
 # Copy this file to terraform.tfvars and fill in your values
 
+# ============================================
+# REQUIRED VARIABLES
+# ============================================
+
+# Google Cloud Project ID
 project_id = "your-gcp-project-id"
-github_repository = "stevei101/agentnav"
-environment = "prod"
 
-# GitHub branch for automatic deployments (Connect Repo)
-github_branch = "main"
+# ============================================
+# OPTIONAL VARIABLES (with defaults)
+# ============================================
 
-# Enable Cloud Run "Connect Repo" automatic deployments
-enable_connect_repo = true
-
-# Optional: Override defaults
+# Default GCP region for resources
 # default_region = "us-central1"
-# frontend_region = "us-central1"
-# backend_region = "europe-west1"
-# gemma_region = "europe-west1"
+
+# GitHub repository (format: owner/repo)
+# github_repository = "stevei101/agentnav"
+
+# Artifact Registry configuration
 # artifact_registry_location = "europe-west1"
 # artifact_registry_repository_id = "agentnav-containers"
+
+# Firestore database ID
 # firestore_database_id = "agentnav-db"
 
+# Cloud Run service regions
+# frontend_region = "us-central1"
+# backend_region = "europe-west1"
+# gemma_region = "europe-west1"  # Must support GPUs
+
+# Environment name (dev, staging, prod)
+# environment = "prod"
+
+# GitHub branch for deployments
+# github_branch = "main"
+
+# ============================================
+# STAGING ENVIRONMENT
+# ============================================
+
+# Enable staging environment for PR testing
+# When enabled, creates staging Cloud Run services:
+# - agentnav-frontend-staging
+# - agentnav-backend-staging
+#
+# Staging services are deployed automatically on PR creation
+# and use pr-{number} image tags
+enable_staging_environment = true
+
+# ============================================
+# CLOUD RUN CONFIGURATION
+# ============================================
+
+# Container ports
+# frontend_container_port = 80
+# backend_container_port = 8080
+# gemma_container_port = 8080
+
+# Enable Cloud Run Connect Repo (automatic deployments from GitHub)
+# enable_connect_repo = true
+
+# ============================================
+# CUSTOM DOMAIN CONFIGURATION
+# ============================================
+
+# Custom domain for frontend service
+# custom_domain_name = "agentnav.lornu.com"
+
+# Cloud DNS managed zone name (must already exist in GCP)
+# Find zone name with: gcloud dns managed-zones list
+# dns_zone_name = "lornu-com"

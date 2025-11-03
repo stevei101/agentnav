@@ -415,6 +415,7 @@ python3 test_a2a_protocol.py
 ```
 
 Test coverage:
+
 - ✅ Message schema validation
 - ✅ Security features (signing, verification, authentication)
 - ✅ Protocol service functionality
@@ -484,6 +485,7 @@ if not validation_result['is_valid']:
 ```
 
 Common issues:
+
 - Missing or invalid Service Account ID
 - Invalid message signature
 - Expired message (TTL exceeded)
