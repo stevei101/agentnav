@@ -79,11 +79,7 @@ Generate embeddings for a batch of text strings.
 
 ```json
 {
-  "texts": [
-    "Text to embed 1",
-    "Text to embed 2",
-    "Text to embed 3"
-  ]
+  "texts": ["Text to embed 1", "Text to embed 2", "Text to embed 3"]
 }
 ```
 

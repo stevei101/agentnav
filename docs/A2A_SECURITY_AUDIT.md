@@ -34,6 +34,7 @@ class ServiceAccountIdentity:
 ```
 
 **Benefits:**
+
 - No static Service Account keys in code or environment
 - Automatic credential rotation by GCP
 - Scoped permissions via IAM roles
@@ -57,6 +58,7 @@ signature = hashlib.pbkdf2_hmac(
 ```
 
 **Prevents:**
+
 - Message tampering
 - Message forgery
 - Man-in-the-middle attacks
@@ -77,6 +79,7 @@ authorization_rules = {
 ```
 
 **Enforces:**
+
 - Principle of least privilege
 - Explicit agent communication paths
 - Prevention of unauthorized agent impersonation
@@ -93,6 +96,7 @@ authorization_rules = {
 4. ✅ Timestamp freshness validation
 
 **Security Score Calculation:**
+
 ```python
 security_score = 100 * (1 - issues_found / 4)
 ```
@@ -123,24 +127,24 @@ security_log = {
 
 ### Threats Mitigated
 
-| Threat | Mitigation | Status |
-|--------|-----------|--------|
-| **Message Tampering** | HMAC-SHA256 signatures | ✅ Mitigated |
-| **Message Forgery** | Service Account authentication | ✅ Mitigated |
-| **Replay Attacks** | Message TTL and timestamp validation | ✅ Mitigated |
-| **Agent Impersonation** | Authorization policies | ✅ Mitigated |
-| **Unauthorized Access** | Workload Identity + IAM | ✅ Mitigated |
-| **Credential Theft** | No static credentials | ✅ Mitigated |
-| **Message Interception** | Signature verification | ✅ Mitigated |
+| Threat                   | Mitigation                           | Status       |
+| ------------------------ | ------------------------------------ | ------------ |
+| **Message Tampering**    | HMAC-SHA256 signatures               | ✅ Mitigated |
+| **Message Forgery**      | Service Account authentication       | ✅ Mitigated |
+| **Replay Attacks**       | Message TTL and timestamp validation | ✅ Mitigated |
+| **Agent Impersonation**  | Authorization policies               | ✅ Mitigated |
+| **Unauthorized Access**  | Workload Identity + IAM              | ✅ Mitigated |
+| **Credential Theft**     | No static credentials                | ✅ Mitigated |
+| **Message Interception** | Signature verification               | ✅ Mitigated |
 
 ### Residual Risks
 
-| Risk | Severity | Mitigation Plan |
-|------|----------|----------------|
-| **Message Content Disclosure** | LOW | Future: Add end-to-end encryption |
-| **Service Account Compromise** | MEDIUM | Rely on GCP IAM security + monitoring |
-| **DoS via Message Flooding** | LOW | Future: Implement rate limiting |
-| **Insider Threat** | LOW | Audit logging + least privilege |
+| Risk                           | Severity | Mitigation Plan                       |
+| ------------------------------ | -------- | ------------------------------------- |
+| **Message Content Disclosure** | LOW      | Future: Add end-to-end encryption     |
+| **Service Account Compromise** | MEDIUM   | Rely on GCP IAM security + monitoring |
+| **DoS via Message Flooding**   | LOW      | Future: Implement rate limiting       |
+| **Insider Threat**             | LOW      | Audit logging + least privilege       |
 
 ## Security Test Results
 
@@ -149,6 +153,7 @@ security_log = {
 **Status:** ✅ ALL TESTS PASSED
 
 #### 1. Message Schema Validation
+
 ```
 ✅ TaskDelegationMessage creation
 ✅ SummarizationCompletedMessage creation
@@ -158,6 +163,7 @@ security_log = {
 ```
 
 #### 2. Security Features
+
 ```
 ✅ Security service initialization
 ✅ Message signing (HMAC-SHA256)
@@ -169,6 +175,7 @@ security_log = {
 ```
 
 #### 3. Protocol Service
+
 ```
 ✅ A2A Protocol Service initialization
 ✅ Task delegation message send/receive
@@ -179,6 +186,7 @@ security_log = {
 ```
 
 #### 4. Agent Integration
+
 ```
 ✅ Workflow with enhanced A2A Protocol
 ✅ Agent registration
@@ -190,30 +198,36 @@ security_log = {
 ## Security Best Practices Implemented
 
 ### ✅ Authentication
+
 - Multi-factor authentication via Workload Identity
 - Service Account identity verification
 - Trusted account whitelist
 
 ### ✅ Authorization
+
 - Role-based access control for agents
 - Explicit communication policies
 - Deny-by-default approach
 
 ### ✅ Confidentiality
+
 - Message signatures prevent unauthorized viewing
 - Future: End-to-end encryption recommended
 
 ### ✅ Integrity
+
 - HMAC signatures ensure message integrity
 - Canonical message representation
 - 100,000 PBKDF2 iterations
 
 ### ✅ Non-Repudiation
+
 - All messages signed with Service Account identity
 - Audit logs track all security events
 - Message history provides full traceability
 
 ### ✅ Availability
+
 - Message TTL prevents queue overflow
 - Priority-based message handling
 - Graceful degradation on security failures
@@ -222,18 +236,18 @@ security_log = {
 
 ### OWASP Top 10 (2021)
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| A01 - Broken Access Control | ✅ Addressed | Authorization policies + Workload Identity |
-| A02 - Cryptographic Failures | ✅ Addressed | HMAC-SHA256 with 100k iterations |
-| A03 - Injection | ✅ Addressed | Pydantic validation |
-| A04 - Insecure Design | ✅ Addressed | Security-by-design architecture |
-| A05 - Security Misconfiguration | ✅ Addressed | Secure defaults + documentation |
-| A06 - Vulnerable Components | ✅ Addressed | Standard Python crypto libraries |
-| A07 - ID & Auth Failures | ✅ Addressed | Workload Identity + signatures |
-| A08 - Software & Data Integrity | ✅ Addressed | Message signatures + validation |
-| A09 - Security Logging Failures | ✅ Addressed | Comprehensive audit logging |
-| A10 - Server-Side Request Forgery | N/A | Not applicable to A2A Protocol |
+| Category                          | Status       | Notes                                      |
+| --------------------------------- | ------------ | ------------------------------------------ |
+| A01 - Broken Access Control       | ✅ Addressed | Authorization policies + Workload Identity |
+| A02 - Cryptographic Failures      | ✅ Addressed | HMAC-SHA256 with 100k iterations           |
+| A03 - Injection                   | ✅ Addressed | Pydantic validation                        |
+| A04 - Insecure Design             | ✅ Addressed | Security-by-design architecture            |
+| A05 - Security Misconfiguration   | ✅ Addressed | Secure defaults + documentation            |
+| A06 - Vulnerable Components       | ✅ Addressed | Standard Python crypto libraries           |
+| A07 - ID & Auth Failures          | ✅ Addressed | Workload Identity + signatures             |
+| A08 - Software & Data Integrity   | ✅ Addressed | Message signatures + validation            |
+| A09 - Security Logging Failures   | ✅ Addressed | Comprehensive audit logging                |
+| A10 - Server-Side Request Forgery | N/A          | Not applicable to A2A Protocol             |
 
 ### NIST Cybersecurity Framework
 
@@ -317,12 +331,14 @@ The A2A Protocol security implementation provides a robust foundation for secure
 ### Overall Security Rating: ✅ STRONG
 
 **Strengths:**
+
 - Multi-layered security approach
 - Cloud-native security integration
 - Comprehensive validation and logging
 - Backward compatibility maintained
 
 **Areas for Improvement:**
+
 - Add end-to-end encryption for sensitive data
 - Implement rate limiting
 - Integrate with Secret Manager for key storage

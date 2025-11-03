@@ -101,3 +101,9 @@ variable "gemma_container_port" {
   default     = 8080
 }
 
+variable "enable_staging_environment" {
+  description = "Enable staging environment Cloud Run services for PR testing and validation."
+  type        = bool
+  default     = true  # Enabled to support staging deployments for PRs
+}
+
