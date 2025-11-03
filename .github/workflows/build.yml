@@ -235,7 +235,7 @@ jobs:
                     --format="value(failureInfo.detail)" \
                     2>/dev/null || echo "")
                   
-                  if echo "$ERROR_MSG" | grep -q "429\|quota\|rate limit"; then
+                  if echo "$ERROR_MSG" | grep -qE "429|quota|rate limit"; then
                     echo "⚠️  Quota error detected (HTTP 429), retrying with backoff..."
                     delay=$((delay * 2))
                     if [ $delay -gt $max_delay ]; then
