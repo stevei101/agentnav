@@ -24,6 +24,7 @@ These documents are:
 
 - `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - Pull request best practices
 - `CONTRIBUTION_QUALITY_GATES.md` - Required CI/CD checks for PRs
+- `COPILOT_AGENT_GUIDE.md` - Using the agentnav-copilot-agent for development assistance
 - `WORKFLOW_PR_RECOVERY.md` - Recovering from failed workflows
 
 ### Architecture & System Documentation
@@ -42,10 +43,11 @@ These documents are:
 
 If you're a developer looking to:
 
-- **Set up the project locally** ? Start with `local-development.md`
-- **Deploy to Google Cloud** ? See `GCP_SETUP_GUIDE.md`
-- **Understand the architecture** ? Read `SYSTEM_INSTRUCTION.md`
-- **Add GPU support** ? Follow `GPU_SETUP_GUIDE.md`
+- **Set up the project locally** → Start with `local-development.md`
+- **Deploy to Google Cloud** → See `GCP_SETUP_GUIDE.md`
+- **Understand the architecture** → Read `SYSTEM_INSTRUCTION.md`
+- **Add GPU support** → Follow `GPU_SETUP_GUIDE.md`
+- **Get development assistance** → Use the custom Copilot agent (see `COPILOT_AGENT_GUIDE.md`)
 
 ## For Reviewers
 

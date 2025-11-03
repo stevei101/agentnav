@@ -314,8 +314,11 @@ Firestore is used for persistent session memory and knowledge caching:
 
 - **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
 - **IAM Roles:** Use least-privilege IAM roles for all service accounts.
-- **Workload Identity Federation:** Prefer WIF over static service account keys.
+- **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD authentication.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication to GCP services (Firestore, Secret Manager, etc.); never embed credentials in containers.
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
+- **Input Validation:** Validate and sanitize all user inputs.
+- **Rate Limiting:** Implement rate limiting on Cloud Run services.
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.
 
@@ -344,6 +347,7 @@ Firestore is used for persistent session memory and knowledge caching:
 - **Backend:** Unit tests for FastAPI routes and agent logic.
 - **Integration Tests:** Test ADK workflows and A2A Protocol communication.
 - **E2E Tests:** Test full user workflows with test Firestore instance.
+- **Code Coverage Requirement:** **All new code must achieve a minimum of 70% test coverage** as a mandatory quality gate before merge.
 
 ---
 
@@ -355,8 +359,9 @@ Firestore is used for persistent session memory and knowledge caching:
 4. **Agent Modularity:** Keep agents focused and modular, communicating via A2A Protocol.
 5. **Session Persistence:** Always persist agent state and session data in Firestore.
 6. **Error Handling:** Centralize error handling with consistent error shapes.
-7. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
-8. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
+7. **Code Quality Gate:** **Enforce a minimum of 70% test coverage for all new or modified code before merging.**
+8. **Type Safety:** Use TypeScript for frontend, Pydantic for backend validation.
+9. **Documentation:** Document agent roles, A2A Protocol message formats, and API endpoints.
 
 ---
 
