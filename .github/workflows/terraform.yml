@@ -1,9 +1,8 @@
-name: Terraform Infrastructure
+name: INFRA_VERIFICATION
 
 on:
   push:
-    branches:
-      - main
+    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
@@ -22,7 +21,7 @@ env:
 
 jobs:
   terraform:
-    name: Terraform
+    name: INFRA_VERIFICATION
     runs-on: ubuntu-latest
     permissions:
       contents: read

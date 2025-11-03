@@ -8,7 +8,7 @@ resource "google_secret_manager_secret" "gemini_api_key" {
   project   = var.project_id
 
   replication {
-    auto {
+    automatic {
     }
   }
 
@@ -27,7 +27,7 @@ resource "google_secret_manager_secret" "huggingface_token" {
   project   = var.project_id
 
   replication {
-    auto {
+    automatic {
     }
   }
 
@@ -46,7 +46,7 @@ resource "google_secret_manager_secret" "firestore_credentials" {
   project   = var.project_id
 
   replication {
-    auto {
+    automatic {
     }
   }
 

@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+## Code Organization and Secrets
+
+* **Scripts:** Always placed in folder `scripts/`.
+* **Terraform:** Always placed in folder `terraform/`.
+* **Frontend:** React application located in `frontend/` or root directory (if monorepo structure).
+* **Backend:** FastAPI application located in `backend/` directory.
+* **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
+* **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
+* **Service Clients:** HTTP clients for external services located in `backend/services/`.
