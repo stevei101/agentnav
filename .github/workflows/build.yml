@@ -214,7 +214,7 @@ jobs:
               # Poll with exponential backoff (reduces API rate limit issues)
               local poll_delay=30  # Start with 30s polling interval (vs default aggressive polling)
               local poll_count=0
-              local max_polls=120  # Maximum polling attempts (60 minutes total)
+              local max_polls=30   # Maximum polling attempts (15-18 minutes total - within 20min GitHub Actions timeout)
               
               while [ $poll_count -lt $max_polls ]; do
                 sleep $poll_delay
@@ -252,14 +252,15 @@ jobs:
                   exit 1
                 fi
                 
-                # Exponential backoff on polling interval (cap at 60s)
+                # Exponential backoff on polling interval (optimized for GitHub Actions 20min timeout)
                 if [ $poll_count -lt 10 ]; then
-                  poll_delay=30  # First 10 polls: 30s interval
-                elif [ $poll_count -lt 30 ]; then
-                  poll_delay=60  # Next 20 polls: 60s interval
+                  poll_delay=30   # First 10 polls: 30s interval (5 minutes)
+                elif [ $poll_count -lt 20 ]; then
+                  poll_delay=45   # Next 10 polls: 45s interval (7.5 minutes)
                 else
-                  poll_delay=120  # After 30 polls: 120s interval
+                  poll_delay=60   # Final 10 polls: 60s interval (10 minutes)
                 fi
+                # Total max time: 5 + 7.5 + 10 = 22.5 minutes, but limited by max_polls=30 = 17.5 minutes
                 
                 echo "   Build status: ${BUILD_STATUS} (polling every ${poll_delay}s)..."
               done
