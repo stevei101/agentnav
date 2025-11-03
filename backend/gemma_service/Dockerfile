@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies to /install directory
 # Only install packages not already in the base image to avoid disk space issues
-RUN pip install --no-cache-dir --target=/install \
+RUN pip install --no-cache-dir --prefix=/install \
     transformers>=4.40.0 \
     accelerate>=0.30.0 \
     bitsandbytes>=0.41.0 \
@@ -38,8 +38,9 @@ WORKDIR /app
 # Copy installed dependencies from builder stage
 COPY --from=builder /install /install
 
-# Set PYTHONPATH to include installed dependencies
-ENV PYTHONPATH=/install:$PYTHONPATH
+# Set PYTHONPATH to include installed dependencies from prefix install
+# With --prefix=/install, packages are in /install/lib/pythonX.X/site-packages
+ENV PYTHONPATH=/install/lib/python3.10/site-packages:$PYTHONPATH
 
 # Install minimal runtime dependencies (curl for healthcheck)
 RUN apt-get update && apt-get install -y \
