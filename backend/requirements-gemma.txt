@@ -21,6 +21,9 @@ python-dotenv>=1.0.0
 # Hugging Face Hub (for model download)
 huggingface-hub>=0.23.0
 
+# Authentication (JWT verification for Workload Identity)
+google-auth>=2.30.0
+
 # Note: For Cloud Run deployment, ensure base image includes CUDA support
 # Recommended base: nvidia/cuda:12.1.0-runtime-ubuntu22.04 or pytorch/pytorch:latest
 
