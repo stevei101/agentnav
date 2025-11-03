@@ -207,7 +207,7 @@ class WorkflowStreamRequest(BaseModel):
     )
     content_type: Optional[str] = Field(
         default="document",
-        regex="^(document|codebase)$",
+        pattern="^(document|codebase)$",
         description="Type of content: 'document' or 'codebase'",
     )
     include_metadata: bool = Field(
@@ -274,7 +274,7 @@ class ClientCommand(BaseModel):
     """Commands client can send to server during streaming"""
 
     action: str = Field(
-        ..., regex="^(cancel|pause|resume)$", description="Action to perform"
+        ..., pattern="^(cancel|pause|resume)$", description="Action to perform"
     )
     reason: Optional[str] = Field(default=None, description="Reason for the action")
 
