@@ -3,10 +3,10 @@ import '@testing-library/jest-dom';
 import { beforeAll } from 'vitest';
 
 // Setup DOM globals for jsdom environment
-beforeAll(() => {
+beforeAll(async () => {
   // Ensure global DOM objects are available
   if (typeof global.document === 'undefined') {
-    const { JSDOM } = require('jsdom');
+    const { JSDOM } = await import('jsdom');
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
       url: 'http://localhost:3000',
       pretendToBeVisual: true,
