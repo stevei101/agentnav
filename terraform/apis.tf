@@ -5,6 +5,8 @@ resource "google_project_service" "apis" {
   for_each = toset([
     # Cloud Run
     "run.googleapis.com",
+    # Cloud DNS API (required for custom domain DNS records)
+    "dns.googleapis.com",
 
     # Artifact Registry
     "artifactregistry.googleapis.com",
