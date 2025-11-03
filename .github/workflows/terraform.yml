@@ -135,3 +135,40 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
         run: terraform apply -auto-approve -input=false
+
+      - name: Sync Secrets from GitHub to GCP Secret Manager
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "🔄 Syncing secrets from GitHub Secrets to GCP Secret Manager..."
+          
+          # Sync GEMINI_API_KEY
+          if [[ -n "${{ secrets.GEMINI_API_KEY }}" ]]; then
+            echo "📤 Syncing GEMINI_API_KEY..."
+            if ! gcloud secrets describe GEMINI_API_KEY --project=${{ env.GCP_PROJECT_ID }} &>/dev/null; then
+              echo "⚠️  Secret container doesn't exist yet (should be created by Terraform)"
+            else
+              echo -n "${{ secrets.GEMINI_API_KEY }}" | gcloud secrets versions add GEMINI_API_KEY \
+                --project=${{ env.GCP_PROJECT_ID }} \
+                --data-file=- || echo "⚠️  Failed to sync GEMINI_API_KEY (may already exist)"
+              echo "✅ GEMINI_API_KEY synced"
+            fi
+          else
+            echo "⚠️  GEMINI_API_KEY not set in GitHub Secrets, skipping"
+          fi
+          
+          # Sync HUGGINGFACE_TOKEN
+          if [[ -n "${{ secrets.HUGGINGFACE_TOKEN }}" ]]; then
+            echo "📤 Syncing HUGGINGFACE_TOKEN..."
+            if ! gcloud secrets describe HUGGINGFACE_TOKEN --project=${{ env.GCP_PROJECT_ID }} &>/dev/null; then
+              echo "⚠️  Secret container doesn't exist yet (should be created by Terraform)"
+            else
+              echo -n "${{ secrets.HUGGINGFACE_TOKEN }}" | gcloud secrets versions add HUGGINGFACE_TOKEN \
+                --project=${{ env.GCP_PROJECT_ID }} \
+                --data-file=- || echo "⚠️  Failed to sync HUGGINGFACE_TOKEN (may already exist)"
+              echo "✅ HUGGINGFACE_TOKEN synced"
+            fi
+          else
+            echo "⚠️  HUGGINGFACE_TOKEN not set in GitHub Secrets, skipping"
+          fi
+          
+          echo "✅ Secret sync complete"
