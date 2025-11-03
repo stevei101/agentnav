@@ -422,8 +422,8 @@ This ensures the workflow fails fast on any error, preventing partial deployment
 - [CI/CD Workflow](../.github/workflows/build.yml)
 - [Google Artifact Registry (GAR) Setup](./GCP_SETUP_GUIDE.md)
 - [Cloud Run Deployment](./CLOUD_RUN_UPDATES_SUMMARY.md)
-- [System Instruction](../docs/SYSTEM_INSTRUCTION.md) - Project architecture and conventions
-- [Feature Request #025: Standardized Image Tagging](../markdown/FR_025_IMAGE_TAGGING.md)
+- [System Instruction](SYSTEM_INSTRUCTION.md) - Project architecture and conventions
+- [Feature Request #025: Standardized Image Tagging](../docs/FR_025_IMAGE_TAGGING.md)
 
 ---
 
