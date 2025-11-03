@@ -84,7 +84,7 @@ agentnav/
 │   │   ├── linker.py  
 │   │   └── visualizer.py  
 │   ├── services/            \# External service clients  
-│   ├── gemma\_service/       \# GPU-accelerated model service  
+│   ├── gemma_service/       \# GPU-accelerated model service  
 │   ├── main.py              \# FastAPI app entry point  
 │   ├── requirements.txt     \# Python dependencies  
 │   └── Containerfile        \# Podman build config  
