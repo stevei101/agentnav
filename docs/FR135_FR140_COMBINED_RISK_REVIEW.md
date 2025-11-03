@@ -201,13 +201,16 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
    - New/unknown failures
    - Flaky test patterns
 3. **Known Issue Exemptions:** Maintain a documented list of known transient issues
+   - **Location:** `docs/KNOWN_CI_ISSUES.md` (to be created)
+   - **Format:** Markdown table with issue link, description, exemption criteria, and expiration date
+   - **Review:** Quarterly review to remove obsolete exemptions
 4. **Priority Assignment:** Critical failures block all merges
 
 ### Policy Refinement
 
 **Acceptable without FR:**
-- Known transient failures already tracked in an existing issue
-- Failures in exempted categories (documented in project wiki)
+- Known transient failures already tracked in an existing issue and documented in `docs/KNOWN_CI_ISSUES.md`
+- Failures in exempted categories (documented in exemptions list)
 
 **Requires FR:**
 - All new, untracked failures
@@ -283,6 +286,14 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
    ```yaml
    echo "| new-job | $NEW_JOB_RESULT |" >> $GITHUB_STEP_SUMMARY
    ```
+
+**Note on Code Duplication:** The aggregation logic is intentionally duplicated in each job rather than extracted to a shared script. This design choice:
+- ✅ Keeps all logic visible in the workflow file (no hidden external dependencies)
+- ✅ Allows per-category customization if needed in the future
+- ✅ Follows GitHub Actions best practices for inline scripts
+- ✅ Makes debugging easier (all context in one place)
+
+While the pattern is similar, each category may evolve different requirements over time, making inline duplication more maintainable than premature abstraction.
 
 ### When Debugging Failures
 
