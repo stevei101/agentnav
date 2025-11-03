@@ -107,11 +107,119 @@ Determine:
         }
     
     async def _analyze_content(self, document: str) -> Dict[str, Any]:
-        """Analyze content to determine type and characteristics"""
+        """
+        Analyze content to determine type and characteristics
         
-        # Simple heuristics for content type detection
-        # In a full implementation, this could use Gemini for more sophisticated analysis
+        Uses Gemini for sophisticated analysis (FR#090) with fallback to heuristics.
+        """
+        # Try Gemini-based analysis first (FR#090)
+        try:
+            from services.gemini_client import generate_content_with_prompt_template
+            
+            # Use prompt template from Firestore if available (FR#003 integration)
+            try:
+                analysis_response = await generate_content_with_prompt_template(
+                    prompt_template_id="orchestrator_content_analysis",
+                    template_variables={
+                        "content": document[:3000],  # Limit for prompt size
+                        "content_length": len(document),
+                        "line_count": len(document.split('\n'))
+                    },
+                    temperature=0.3,
+                    max_output_tokens=500
+                )
+                
+                # Parse Gemini response (expecting structured output)
+                # Gemini will provide JSON-like analysis
+                self.logger.info("✅ Used Gemini for content analysis")
+                return self._parse_gemini_analysis(analysis_response, document)
+                
+            except (ValueError, RuntimeError):
+                # Fallback to direct prompt
+                prompt = f"""
+Analyze this content and determine:
+1. content_type: "document" or "codebase"
+2. complexity_level: "simple", "moderate", or "complex"
+3. key_topics: List 3-5 main topics/features
+
+Content (first 3000 chars):
+{document[:3000]}
+
+Provide your analysis:
+"""
+                from services.gemini_client import generate_content
+                analysis_response = await generate_content(
+                    prompt=prompt,
+                    temperature=0.3,
+                    max_output_tokens=500
+                )
+                return self._parse_gemini_analysis(analysis_response, document)
+                
+        except Exception as e:
+            self.logger.warning(f"⚠️  Gemini analysis failed: {e}, using heuristic fallback")
+            return self._analyze_content_heuristic(document)
+    
+    def _parse_gemini_analysis(self, response: str, document: str) -> Dict[str, Any]:
+        """
+        Parse Gemini's analysis response into structured format
         
+        Args:
+            response: Gemini's text response
+            document: Original document (for fallback parsing)
+            
+        Returns:
+            Structured analysis dictionary
+        """
+        import re
+        
+        # Extract content_type
+        content_type_match = re.search(r'(?:content_type|Content Type)[:]\s*(document|codebase)', response, re.IGNORECASE)
+        content_type = content_type_match.group(1).lower() if content_type_match else "document"
+        
+        # Extract complexity
+        complexity_match = re.search(r'(?:complexity|Complexity)[:]\s*(simple|moderate|complex)', response, re.IGNORECASE)
+        complexity_level = complexity_match.group(1).lower() if complexity_match else "moderate"
+        
+        # Extract topics (look for list items or numbered list)
+        topics = []
+        topic_patterns = [
+            r'key_topics[:\s]*(.+?)(?:\n\n|\n[A-Z]|$)',
+            r'(?:topic|Topic)s?:?\s*\n((?:[-*•]\s*.+\n?)+)',
+            r'\d+[.)]\s*(.+?)(?:\n|$)'
+        ]
+        
+        for pattern in topic_patterns:
+            matches = re.findall(pattern, response, re.IGNORECASE | re.MULTILINE)
+            if matches:
+                for match in matches[:5]:  # Limit to 5 topics
+                    topic = re.sub(r'^[-*•\d.)\s]+', '', match.strip())
+                    if topic and len(topic) > 2:
+                        topics.append(topic)
+                break
+        
+        # Fallback topic extraction if none found
+        if not topics:
+            lines = document.split('\n')
+            for line in lines[:10]:
+                line = line.strip()
+                if line and (line.startswith('#') or (len(line) < 100 and len(line) > 5)):
+                    topics.append(line.replace('#', '').strip()[:50])
+        
+        return {
+            "content_type": content_type,
+            "content_summary": response[:200] if len(response) > 200 else response,
+            "complexity_level": complexity_level,
+            "key_topics": topics[:5],
+            "analysis_timestamp": time.time(),
+            "analysis_method": "gemini"
+        }
+    
+    def _analyze_content_heuristic(self, document: str) -> Dict[str, Any]:
+        """
+        Fallback heuristic-based content analysis
+        
+        Used when Gemini is unavailable.
+        """
         code_indicators = [
             'import ', 'from ', 'class ', 'def ', 'function', 'var ', 'let ', 'const ',
             '#!/', '<?php', '<html', '<script', 'package ', 'public class', 'void main'
@@ -152,7 +260,8 @@ Determine:
             "content_summary": f"{content_type.title()} with {len(lines)} lines, {len(document.split())} words",
             "complexity_level": complexity_level,
             "key_topics": key_topics[:5],  # Top 5 topics
-            "analysis_timestamp": time.time()
+            "analysis_timestamp": time.time(),
+            "analysis_method": "heuristic"
         }
     
     async def _delegate_to_agents(self, content_analysis: Dict[str, Any], document: str):
