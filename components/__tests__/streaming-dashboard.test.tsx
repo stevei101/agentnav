@@ -203,9 +203,9 @@ describe('DocumentUpload Component', () => {
   it('shows agent info cards', () => {
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
-    expect(screen.getByText('Summarizer Agent')).toBeInTheDocument();
-    expect(screen.getByText('Linker Agent')).toBeInTheDocument();
-    expect(screen.getByText('Visualizer Agent')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Summarizer Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Linker Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Visualizer Agent' })).toBeInTheDocument();
   });
 
   it('handles drag and drop file upload', async () => {
