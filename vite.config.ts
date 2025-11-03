@@ -1,6 +1,7 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -9,7 +10,7 @@ export default defineConfig(({ mode }) => {
       port: 5173, // Vite default port (mapped to 3000 on host in docker-compose)
       host: '0.0.0.0',
     },
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     // SECURITY: Removed GEMINI_API_KEY exposure - frontend should call backend API
     // API keys should NEVER be exposed to browser/client-side code
     // Frontend should use backend API endpoints for secure API key handling
