@@ -19,23 +19,38 @@ RUN bun run build
 # Production stage with nginx
 FROM nginx:alpine
 
+# Install gettext for envsubst utility
+RUN apk add --no-cache gettext
+
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration (optional, nginx default works for SPA)
+# Create nginx configuration with runtime env injection
 RUN echo 'server { \
-    listen 80; \
+    listen ${PORT:-80}; \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
-}' > /etc/nginx/conf.d/default.conf
+}' > /etc/nginx/conf.d/default.conf.template
 
-# Expose port 80 (Cloud Run will set PORT env var, but nginx defaults to 80)
+# Create startup script to inject runtime env vars into HTML
+RUN echo '#!/bin/sh \
+set -e \
+# Replace PORT in nginx config \
+envsubst "\${PORT}" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
+# Inject VITE_API_URL into index.html if set \
+if [ -n "$VITE_API_URL" ]; then \
+  sed -i "s|<head>|<head><script>window.VITE_API_URL=\"$VITE_API_URL\";</script>|" /usr/share/nginx/html/index.html \
+fi \
+# Start nginx \
+exec nginx -g "daemon off;"' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
+
+# Expose port 80 (Cloud Run will set PORT env var)
 EXPOSE 80
 
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint for runtime configuration
+ENTRYPOINT ["/docker-entrypoint.sh"]
 

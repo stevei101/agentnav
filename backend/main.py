@@ -84,6 +84,9 @@ app.include_router(stream_router)
 class HealthResponse(BaseModel):
     status: str
     environment: str
+    adk_system: Optional[str] = None
+    firestore: Optional[str] = None
+    errors: Optional[Dict[str, str]] = None
 
 @app.get("/", tags=["health"])
 async def root():
@@ -98,17 +101,85 @@ async def health_check():
     This endpoint is deprecated in favor of /healthz (Cloud Run standard).
     Please migrate to /healthz. This endpoint will be removed in a future version.
     """
-    return HealthResponse(
-        status="healthy",
-        environment=os.getenv("ENVIRONMENT", "development")
-    )
+    return await healthz_check()
 
 @app.get("/healthz", tags=["health"], response_model=HealthResponse)
 async def healthz_check():
-    """Health check endpoint (Cloud Run standard)"""
+    """
+    Health check endpoint (Cloud Run standard)
+    
+    Checks backend health and ADK system dependencies:
+    - Basic service availability
+    - ADK agent system status
+    - Firestore connectivity
+    """
+    environment = os.getenv("ENVIRONMENT", "development")
+    health_status = "healthy"
+    adk_status = None
+    firestore_status = None
+    errors = {}
+    
+    # Check ADK System availability
+    try:
+        from agents import (
+            OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
+        )
+        
+        # Test agent instantiation (doesn't require full initialization)
+        a2a = A2AProtocol()
+        test_agent = OrchestratorAgent(a2a)
+        
+        if test_agent and hasattr(test_agent, 'name'):
+            adk_status = "operational"
+            logger.debug("✅ ADK system check passed")
+        else:
+            adk_status = "degraded"
+            errors["adk"] = "Agent instantiation incomplete"
+            
+    except ImportError as e:
+        adk_status = "unavailable"
+        error_msg = f"ADK agents not available: {str(e)}"
+        errors["adk"] = error_msg
+        logger.error(f"❌ ADK system check failed: {error_msg}")
+        health_status = "degraded"
+        
+    except Exception as e:
+        adk_status = "error"
+        error_msg = f"ADK system error: {str(e)}"
+        errors["adk"] = error_msg
+        logger.error(f"❌ ADK system check failed: {error_msg}")
+        health_status = "degraded"
+    
+    # Check Firestore connectivity (optional - may not be required for basic health)
+    try:
+        from services.firestore_client import get_firestore_client
+        
+        firestore_client = get_firestore_client()
+        # Simple connectivity test - just check if client was created
+        if firestore_client:
+            firestore_status = "connected"
+            logger.debug("✅ Firestore connectivity check passed")
+        else:
+            firestore_status = "disconnected"
+            errors["firestore"] = "Firestore client not initialized"
+            
+    except Exception as e:
+        firestore_status = "error"
+        error_msg = f"Firestore connectivity error: {str(e)}"
+        errors["firestore"] = error_msg
+        logger.warning(f"⚠️  Firestore connectivity check failed: {error_msg}")
+        # Firestore failure doesn't necessarily mean unhealthy if ADK can work without it
+    
+    # Determine overall health status
+    if adk_status == "unavailable" or adk_status == "error":
+        health_status = "unhealthy"
+    
     return HealthResponse(
-        status="healthy",
-        environment=os.getenv("ENVIRONMENT", "development")
+        status=health_status,
+        environment=environment,
+        adk_system=adk_status,
+        firestore=firestore_status,
+        errors=errors if errors else None
     )
 
 @app.get("/api/docs", tags=["docs"])
@@ -346,43 +417,153 @@ async def visualize_content(request: VisualizeRequest):
 async def get_agent_status():
     """
     Get status of all available agents in the ADK system
+    
+    Returns detailed status including agent availability, ADK system status,
+    and diagnostic information for troubleshooting.
     """
+    diagnostic_info = {
+        "import_errors": [],
+        "initialization_errors": [],
+        "environment_vars": {}
+    }
+    
+    # Check required environment variables
+    required_env_vars = ["FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID"]
+    for var in required_env_vars:
+        value = os.getenv(var)
+        diagnostic_info["environment_vars"][var] = "set" if value else "missing"
+    
     try:
         from agents import (
             OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
         )
         
-        # Create temporary agents to check status
-        a2a = A2AProtocol()
-        agents = {
-            "orchestrator": OrchestratorAgent(a2a),
-            "summarizer": SummarizerAgent(a2a), 
-            "linker": LinkerAgent(a2a),
-            "visualizer": VisualizerAgent(a2a)
-        }
+        logger.info("🔍 Checking ADK agent system status...")
         
-        agent_status = {}
-        for name, agent in agents.items():
-            agent_status[name] = {
-                "name": agent.name,
-                "state": agent.state.value,
-                "available": True,
-                "execution_history_count": len(agent.execution_history)
+        # Create temporary agents to check status
+        try:
+            a2a = A2AProtocol()
+            diagnostic_info["a2a_protocol"] = "initialized"
+        except Exception as e:
+            diagnostic_info["initialization_errors"].append(f"A2A Protocol initialization failed: {str(e)}")
+            logger.error(f"❌ A2A Protocol initialization failed: {e}")
+            return {
+                "total_agents": 0,
+                "agents": {},
+                "adk_system": "unavailable",
+                "a2a_protocol": "error",
+                "diagnostics": diagnostic_info,
+                "error": f"A2A Protocol initialization failed: {str(e)}"
             }
         
-        return {
-            "total_agents": len(agents),
-            "agents": agent_status,
-            "adk_system": "operational",
-            "a2a_protocol": "enabled"
+        agents = {}
+        agent_errors = []
+        
+        # Test each agent individually to identify specific failures
+        agent_classes = {
+            "orchestrator": OrchestratorAgent,
+            "summarizer": SummarizerAgent, 
+            "linker": LinkerAgent,
+            "visualizer": VisualizerAgent
         }
         
+        for name, agent_class in agent_classes.items():
+            try:
+                agent = agent_class(a2a)
+                agents[name] = agent
+                logger.debug(f"✅ {name} agent initialized successfully")
+            except Exception as e:
+                error_msg = f"{name} agent initialization failed: {str(e)}"
+                agent_errors.append(error_msg)
+                diagnostic_info["initialization_errors"].append(error_msg)
+                logger.error(f"❌ {error_msg}")
+        
+        if not agents:
+            return {
+                "total_agents": 0,
+                "agents": {},
+                "adk_system": "unavailable",
+                "a2a_protocol": "enabled" if a2a else "disabled",
+                "diagnostics": diagnostic_info,
+                "error": "All agent initializations failed. Check diagnostic_info for details.",
+                "agent_errors": agent_errors
+            }
+        
+        # Get status for successfully initialized agents
+        agent_status = {}
+        for name, agent in agents.items():
+            try:
+                agent_status[name] = {
+                    "name": agent.name,
+                    "state": agent.state.value,
+                    "available": True,
+                    "execution_history_count": len(agent.execution_history)
+                }
+            except Exception as e:
+                agent_status[name] = {
+                    "name": name,
+                    "state": "error",
+                    "available": False,
+                    "error": str(e)
+                }
+        
+        # Check Firestore connectivity if agents use it
+        firestore_status = "unknown"
+        try:
+            from services.firestore_client import get_firestore_client
+            firestore_client = get_firestore_client()
+            if firestore_client:
+                firestore_status = "connected"
+            else:
+                firestore_status = "disconnected"
+        except Exception as e:
+            firestore_status = f"error: {str(e)}"
+            diagnostic_info["initialization_errors"].append(f"Firestore check failed: {str(e)}")
+        
+        response = {
+            "total_agents": len(agents),
+            "agents": agent_status,
+            "adk_system": "operational" if len(agents) == len(agent_classes) else "degraded",
+            "a2a_protocol": "enabled",
+            "firestore_status": firestore_status
+        }
+        
+        # Include diagnostics if there were any issues
+        if agent_errors or diagnostic_info["initialization_errors"]:
+            response["diagnostics"] = diagnostic_info
+            response["warnings"] = f"{len(agent_errors)} agent(s) failed to initialize"
+        
+        logger.info(f"✅ ADK status check complete: {response['adk_system']}, {len(agents)}/{len(agent_classes)} agents available")
+        return response
+        
     except ImportError as e:
+        error_msg = f"Failed to import ADK agents: {str(e)}"
+        diagnostic_info["import_errors"].append(error_msg)
+        logger.error(f"❌ Import error: {error_msg}")
+        import traceback
+        diagnostic_info["import_traceback"] = traceback.format_exc()
+        
         return {
             "total_agents": 0,
             "agents": {},
             "adk_system": "unavailable",
-            "error": str(e)
+            "a2a_protocol": "unknown",
+            "diagnostics": diagnostic_info,
+            "error": error_msg
+        }
+    except Exception as e:
+        error_msg = f"Unexpected error checking agent status: {str(e)}"
+        logger.error(f"❌ Unexpected error: {error_msg}")
+        import traceback
+        diagnostic_info["unexpected_error"] = error_msg
+        diagnostic_info["traceback"] = traceback.format_exc()
+        
+        return {
+            "total_agents": 0,
+            "agents": {},
+            "adk_system": "error",
+            "diagnostics": diagnostic_info,
+            "error": error_msg
         }
 
 

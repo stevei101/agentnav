@@ -1,19 +1,19 @@
-import React, { useState, useRef } from "react";
-import { Upload, FileText, X, Sparkles, AlertCircle } from "lucide-react";
+import React, { useState, useRef } from 'react';
+import { Upload, FileText, X, Sparkles, AlertCircle } from 'lucide-react';
 
 interface DocumentUploadProps {
   onSessionStart: (sessionId: string, content: string) => void;
   isLoading?: boolean;
 }
 
-type DocumentType = "research" | "technical" | "codebase";
+type DocumentType = 'research' | 'technical' | 'codebase';
 
 export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   onSessionStart,
   isLoading = false,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [documentType, setDocumentType] = useState<DocumentType>("research");
+  const [documentType, setDocumentType] = useState<DocumentType>('research');
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,9 +22,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
@@ -37,7 +37,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const newFiles = Array.from(e.dataTransfer.files);
-      setSelectedFiles((prev) => [...prev, ...newFiles]);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
 
@@ -45,18 +45,18 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     setError(null);
     if (e.target.files && e.target.files[0]) {
       const newFiles = Array.from(e.target.files);
-      setSelectedFiles((prev) => [...prev, ...newFiles]);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const readFileAsText = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         const content = e.target?.result as string;
         resolve(content);
       };
@@ -69,7 +69,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
   const startAnalysis = async () => {
     if (selectedFiles.length === 0) {
-      setError("Please select at least one file");
+      setError('Please select at least one file');
       return;
     }
 
@@ -85,7 +85,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           fileContents.push(content);
         } catch (err) {
           setError(
-            `Failed to read file: ${file.name}. ${err instanceof Error ? err.message : ""}`
+            `Failed to read file: ${file.name}. ${err instanceof Error ? err.message : ''}`
           );
           setIsProcessing(false);
           return;
@@ -98,11 +98,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           const fileName = selectedFiles[idx].name;
           return `--- File: ${fileName} ---\n${content}`;
         })
-        .join("\n\n");
-
-      // Determine content type based on document type
-      const contentType =
-        documentType === "codebase" ? "codebase" : "document";
+        .join('\n\n');
 
       // Generate session ID
       const sessionId = `session-${Date.now()}`;
@@ -110,8 +106,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       // Trigger analysis
       onSessionStart(sessionId, combinedContent);
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "An error occurred";
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
       setError(`Failed to process files: ${errorMsg}`);
     } finally {
       setIsProcessing(false);
@@ -121,22 +116,20 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const documentTypeConfig = {
     research: {
       icon: FileText,
-      label: "Research Paper",
-      description: "Academic papers, articles, reports",
+      label: 'Research Paper',
+      description: 'Academic papers, articles, reports',
     },
     technical: {
       icon: FileText,
-      label: "Technical Doc",
-      description: "API docs, guides, specifications",
+      label: 'Technical Doc',
+      description: 'API docs, guides, specifications',
     },
     codebase: {
       icon: FileText,
-      label: "Codebase",
-      description: "Source code, scripts, configs",
+      label: 'Codebase',
+      description: 'Source code, scripts, configs',
     },
   };
-
-  const config = documentTypeConfig[documentType];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -147,7 +140,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           </div>
           <h2 className="text-2xl text-white mb-2">New Analysis Session</h2>
           <p className="text-gray-400">
-            Upload documents for multi-agent real-time analysis with WebSocket streaming
+            Upload documents for multi-agent real-time analysis with WebSocket
+            streaming
           </p>
         </div>
 
@@ -165,8 +159,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             Document Type
           </label>
           <div className="grid grid-cols-3 gap-3">
-            {(["research", "technical", "codebase"] as DocumentType[]).map(
-              (type) => (
+            {(['research', 'technical', 'codebase'] as DocumentType[]).map(
+              type => (
                 <button
                   key={type}
                   onClick={() => {
@@ -175,8 +169,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   }}
                   className={`p-4 rounded-lg border-2 transition-colors ${
                     documentType === type
-                      ? "border-blue-500 bg-blue-900/20 text-white"
-                      : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600"
+                      ? 'border-blue-500 bg-blue-900/20 text-white'
+                      : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
                   }`}
                 >
                   <FileText className="w-6 h-6 mx-auto mb-2" />
@@ -194,8 +188,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         <div
           className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
             dragActive
-              ? "border-blue-500 bg-blue-900/20"
-              : "border-gray-700 bg-gray-800/50"
+              ? 'border-blue-500 bg-blue-900/20'
+              : 'border-gray-700 bg-gray-800/50'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -265,7 +259,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         <div className="mt-6 bg-gray-800 rounded-lg p-4">
           <h4 className="text-white text-sm mb-3">Analysis Pipeline</h4>
           <p className="text-xs text-gray-400 mb-3">
-            Your documents will be processed through our multi-agent system with real-time streaming:
+            Your documents will be processed through our multi-agent system with
+            real-time streaming:
           </p>
           <div className="grid grid-cols-3 gap-2">
             <div className="text-xs">
