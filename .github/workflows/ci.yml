@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
 
 jobs:
   code-quality:
@@ -104,8 +104,10 @@ jobs:
         env:
           FIRESTORE_EMULATOR_HOST: 'localhost:8081'
           FIRESTORE_PROJECT_ID: 'agentnav-dev'
+          PYTHONPATH: ${{ github.workspace }}
+        working-directory: backend
         run: |
-          pytest -q backend/tests
+          pytest -v
 
       - name: Stop Firestore emulator
         if: always()
@@ -133,10 +135,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run OSV-Scanner
-        uses: google/osv-scanner-action@v1.8.5
+        uses: google/osv-scanner-action@v1.9.0
         with:
           scan-args: |-
             --recursive
+            --skip-git
             .
         continue-on-error: true
 
@@ -160,38 +163,43 @@ jobs:
         run: |
           echo "SECURITY_AUDIT: All aggregated security scans completed successfully."
 
-  # Final CI Quality Gate - Single, non-skippable meta-check for PR merge
-  CI_QUALITY_GATE:
-    name: CI Quality Gate (Final)
+  # Final meta-check that runs unconditionally and handles skipped jobs properly
+  # This is the ONLY check that should be required in branch protection rules
+  AGENTIC_NAVIGATOR_QUALITY_GATE:
+    name: AGENTIC_NAVIGATOR_QUALITY_GATE
     runs-on: ubuntu-latest
-    if: always()
     needs: [CODE_QUALITY, SECURITY_AUDIT]
+    if: always()
     steps:
-      - name: Evaluate CI Results
+      - name: Check Quality Gate Status
         run: |
-          echo "Evaluating CI Quality Gate..."
+          echo "## 🎯 Agentic Navigator Quality Gate" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Evaluating CI pipeline results..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Check the conclusions of required jobs
-          # If either CODE_QUALITY or SECURITY_AUDIT failed, fail this gate
-          # If they were skipped due to path filtering, that's OK (don't fail)
+          CODE_QUALITY_RESULT="${{ needs.CODE_QUALITY.result }}"
+          SECURITY_AUDIT_RESULT="${{ needs.SECURITY_AUDIT.result }}"
           
-          code_quality_conclusion="${{ needs.CODE_QUALITY.result }}"
-          security_audit_conclusion="${{ needs.SECURITY_AUDIT.result }}"
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CODE_QUALITY | $CODE_QUALITY_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| SECURITY_AUDIT | $SECURITY_AUDIT_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
-          echo "CODE_QUALITY result: $code_quality_conclusion"
-          echo "SECURITY_AUDIT result: $security_audit_conclusion"
+          # A job can be: success, failure, cancelled, or skipped
+          # We pass if jobs are either success OR skipped (due to path filtering)
+          # We fail only if a job that RAN has failed
           
-          # Fail only if a job was triggered and failed
-          # 'skipped' status is acceptable and means path filters excluded the tests
-          if [[ "$code_quality_conclusion" == "failure" ]] || [[ "$security_audit_conclusion" == "failure" ]]; then
-            echo "❌ CI Quality Gate FAILED - One or more quality checks failed"
+          if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$SECURITY_AUDIT_RESULT" == "failure" ]]; then
+            echo "❌ Quality gate FAILED - One or more checks failed" >> $GITHUB_STEP_SUMMARY
             exit 1
-          fi
-          
-          if [[ "$code_quality_conclusion" == "skipped" && "$security_audit_conclusion" == "skipped" ]]; then
-            echo "⚠️  CI Quality Gate: All quality checks were skipped (path filtering)"
+          elif [[ "$CODE_QUALITY_RESULT" == "cancelled" ]] || [[ "$SECURITY_AUDIT_RESULT" == "cancelled" ]]; then
+            echo "⚠️ Quality gate CANCELLED - One or more checks were cancelled" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ Quality gate PASSED - All triggered checks succeeded" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Note: Skipped checks (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
-          
-          echo "✅ CI Quality Gate PASSED - All required quality checks passed"
-          exit 0
