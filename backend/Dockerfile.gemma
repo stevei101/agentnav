@@ -1,23 +1,34 @@
-# Gemma GPU Service Dockerfile
+# Gemma GPU Service Dockerfile - Multi-Stage Build (FR#185 Optimization)
 # GPU-enabled container for Cloud Run deployment with NVIDIA L4 GPU
 # Region: europe-west1
 # GPU: NVIDIA L4 (1 GPU)
 # Memory: 16Gi
+#
+# Multi-stage build strategy:
+# 1. Builder stage: Install all dependencies and build artifacts
+# 2. Runtime stage: Copy only necessary files for a slim final image
 
-# Use PyTorch base image with CUDA support
-# This image includes PyTorch with CUDA 12.1 support
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS base
+# ============================================================================
+# STAGE 1: Builder - Install dependencies and prepare environment
+# ============================================================================
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-# Install system dependencies
+# Install system dependencies needed for building Python packages
 RUN apt-get update && apt-get install -y \
     curl \
     git \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies in a virtual environment for easy copying
+# This allows us to copy only the installed packages to the runtime stage
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Install additional Python dependencies (PyTorch already in base image)
-# Only install packages not already in the base image to avoid disk space issues
+# Using --no-cache-dir to reduce layer size
 RUN pip install --no-cache-dir \
     transformers>=4.40.0 \
     accelerate>=0.30.0 \
@@ -27,6 +38,22 @@ RUN pip install --no-cache-dir \
     pydantic>=2.0.0 \
     python-dotenv>=1.0.0 \
     huggingface-hub>=0.23.0
+
+# ============================================================================
+# STAGE 2: Runtime - Slim final image with only runtime dependencies
+# ============================================================================
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS runtime
+
+WORKDIR /app
+
+# Install only runtime system dependencies (no build tools)
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
