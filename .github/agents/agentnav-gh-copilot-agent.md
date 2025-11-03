@@ -319,8 +319,6 @@ Firestore is used for persistent session memory and knowledge caching:
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.
-- **Input Validation:** Validate and sanitize all user inputs.
-- **Rate Limiting:** Implement rate limiting on Cloud Run services.
 
 ---
 
