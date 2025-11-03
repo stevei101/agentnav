@@ -26,18 +26,38 @@ This guide describes the implementation and integration of the **Gemma GPU Servi
 │                               │ HTTP                        │
 │                               │ (gemma_client.py)          │
 └───────────────────────────────┼─────────────────────────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │  Gemma GPU Service    │
-                    │  (Cloud Run + L4 GPU) │
-                    │                       │
-                    │  Endpoints:           │
-                    │  • /embed             │
-                    │  • /reason            │
-                    │  • /healthz           │
-                    └───────────────────────┘
+                               │
+                               ▼
+                   ┌───────────────────────┐
+                   │  Gemma GPU Service    │
+                   │  (Cloud Run + L4 GPU) │
+                   │                       │
+                   │  Endpoints:           │
+                   │  • /embed             │
+                   │  • /reason            │
+                   │  • /healthz           │
+                   └───────────────────────┘
 ```
+
+### Build Optimization
+
+The Gemma service uses a **two-stage build process** to reduce CI/CD build times:
+
+1. **Base Image** (`gemma-base:latest`): Contains all heavy dependencies (PyTorch, CUDA, Python packages ~10GB+)
+   - Built weekly via GitHub Actions workflow
+   - Stored in Google Artifact Registry (GAR)
+   - Reduces build time from 15-20 minutes to 2-3 minutes
+
+2. **Application Image** (`gemma-service:latest`): Contains only application code
+   - Uses pre-built base image as starting point
+   - Built on every CI/CD run
+   - Fast deployment with cached dependencies
+
+**Build Time Comparison:**
+- **Before**: 15-20 minutes (full dependency installation)
+- **After**: 2-3 minutes (application code only)
+
+See [FR#189 Build Optimization](./FR189_BUILD_OPTIMIZATION.md) for implementation details.
 
 ## API Specification
 

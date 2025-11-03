@@ -1,65 +1,31 @@
 # Gemma GPU Service Dockerfile - Cloud Run Optimized
-# Multi-stage build for minimal image size and fast deployments
+# Uses pre-built base image for fast deployments
 # GPU-enabled container for Cloud Run deployment with NVIDIA L4 GPU
 # Region: europe-west1
 # GPU: NVIDIA L4 (1 GPU)
 # Memory: 16Gi
+# Base Image: Built from Dockerfile.base and pushed to GAR as gemma-base:latest
 
-# Stage 1: Builder - Install dependencies
-# Use PyTorch base image with CUDA support for building
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS builder
-
-WORKDIR /build
-
-# Install system dependencies needed for build
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies to /install directory
-# Only install packages not already in the base image to avoid disk space issues
-RUN pip install --no-cache-dir --prefix=/install \
-    transformers>=4.40.0 \
-    accelerate>=0.30.0 \
-    bitsandbytes>=0.41.0 \
-    fastapi>=0.115.0 \
-    uvicorn[standard]>=0.30.0 \
-    pydantic>=2.0.0 \
-    python-dotenv>=1.0.0 \
-    huggingface-hub>=0.23.0
-
-# Stage 2: Runtime - Minimal production image
-# Use the same PyTorch base for runtime (GPU support required)
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS runtime
+# Use pre-built base image from GAR
+# This contains all heavy dependencies (PyTorch, CUDA, Python packages)
+ARG BASE_IMAGE_REGION=europe-west1
+ARG GCP_PROJECT_ID
+ARG GAR_REPO=agentnav-containers
+FROM ${BASE_IMAGE_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/gemma-base:latest
 
 WORKDIR /app
-
-# Copy installed dependencies from builder stage
-COPY --from=builder /install /install
-
-# Set PYTHONPATH to include installed dependencies from prefix install
-# With --prefix=/install, packages are in /install/lib/pythonX.X/site-packages
-ENV PYTHONPATH=/install/lib/python3.10/site-packages:$PYTHONPATH
-
-# Install minimal runtime dependencies (curl for healthcheck)
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
 
-# Create non-root user for security (Cloud Run best practice)
-RUN groupadd -r appuser && useradd -r -g appuser appuser && \
-    chown -R appuser:appuser /app
+# Change ownership of app directory to appuser (base image already created the user)
+RUN chown -R appuser:appuser /app
 
-# Switch to non-root user
+# Switch to non-root user (already created in base image)
 USER appuser
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PORT=8080 \
+# Set environment variables (PYTHONUNBUFFERED already set in base image)
+ENV PORT=8080 \
     MODEL_NAME=google/gemma-7b-it
 
 # Expose port (Cloud Run sets PORT env var automatically)

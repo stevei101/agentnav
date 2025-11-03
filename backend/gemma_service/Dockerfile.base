@@ -1,0 +1,53 @@
+# Gemma GPU Base Image Dockerfile - Pre-built Dependencies
+# This image contains all heavy dependencies (PyTorch, CUDA, Python packages)
+# to reduce build times for the main Gemma service container.
+# Built and pushed to GAR as: gemma-base:latest
+# GPU-enabled container for Cloud Run deployment with NVIDIA L4 GPU
+# Region: europe-west1
+# GPU: NVIDIA L4 (1 GPU)
+# Memory: 16Gi
+
+# Use PyTorch base image with CUDA support
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+
+# Set working directory for build
+WORKDIR /build
+
+# Install system dependencies needed for Gemma service
+# These are lightweight and fast to install
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements-gemma.txt .
+
+# Install Python dependencies to /install directory
+# This is the slow/heavy part that we want to cache in GAR
+RUN pip install --no-cache-dir --prefix=/install -r requirements-gemma.txt
+
+# Create a final stage that copies the installed dependencies
+# This ensures the final image only contains what we need
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+
+# Copy installed dependencies from builder stage
+COPY --from=0 /install /install
+
+# Set PYTHONPATH to include installed dependencies
+# With --prefix=/install, packages are in /install/lib/pythonX.X/site-packages
+ENV PYTHONPATH=/install/lib/python3.10/site-packages:$PYTHONPATH
+
+# Install minimal runtime dependencies (curl for healthcheck)
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security (Cloud Run best practice)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Switch to non-root user
+USER appuser
+
+# Set basic environment variables (will be overridden by main service)
+ENV PYTHONUNBUFFERED=1

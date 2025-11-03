@@ -1,0 +1,90 @@
+name: Build Gemma Base Image
+
+on:
+  # Manual trigger for immediate builds
+  workflow_dispatch:
+  # Scheduled build - weekly on Monday at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * 1'
+  # Allow manual trigger for testing
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/gemma_service/Dockerfile.base'
+      - 'backend/requirements-gemma.txt'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: europe-west1
+  ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+
+jobs:
+  build-and-push-base:
+    name: Build and Push Gemma Base Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Build Gemma Base Image
+        run: |
+          echo "🔨 Building Gemma base image..."
+          docker build \
+            -f backend/gemma_service/Dockerfile.base \
+            -t ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:latest \
+            -t ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:${{ github.sha }} \
+            ./backend
+
+      - name: Push Gemma Base Image
+        run: |
+          echo "📤 Pushing Gemma base image to GAR..."
+          docker push ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:latest
+          docker push ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:${{ github.sha }}
+
+      - name: Verify Base Image
+        run: |
+          echo "✅ Verifying base image was pushed..."
+          gcloud artifacts docker images list \
+            ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY} \
+            --filter="package=gemma-base" \
+            --format="table[no-heading](package, version, createTime)" \
+            --limit=5
+
+      - name: Test Base Image Pull
+        run: |
+          echo "🧪 Testing base image can be pulled..."
+          docker pull ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:latest
+          echo "✅ Base image pull successful"
+
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "🎉 Gemma base image build completed successfully!"
+          echo "📍 Image: ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/gemma-base:latest"
+          echo "📅 Built at: $(date -u)"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Gemma base image build failed!"
+          echo "📍 Check logs for details"
+          exit 1
