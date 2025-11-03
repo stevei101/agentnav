@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { AgentCard } from "./AgentCard";
-import { AgentState, AgentStatusValue, AgentName, AgentStreamEvent } from "../types";
-import { Activity, Zap, RotateCcw } from "lucide-react";
-import { useAgentStream } from "../hooks/useAgentStream";
+import React, { useState } from 'react';
+import { AgentCard } from './AgentCard';
+import {
+  AgentState,
+  AgentStatusValue,
+  AgentName,
+  AgentStreamEvent,
+} from '../types';
+import { Activity, Zap, RotateCcw } from 'lucide-react';
+import { useAgentStream } from '../hooks/useAgentStream';
 
 interface AgentDashboardProps {
   sessionId: string | null;
   documentContent?: string | null;
-  contentType?: "document" | "codebase";
+  contentType?: 'document' | 'codebase';
   onStreamStart?: (sessionId: string) => void;
 }
 
@@ -20,11 +25,11 @@ const AGENT_TYPES: AgentName[] = [
 export const AgentDashboard: React.FC<AgentDashboardProps> = ({
   sessionId,
   documentContent,
-  contentType = "document",
+  contentType = 'document',
   onStreamStart,
 }) => {
   const [agents, setAgents] = useState<AgentState[]>(
-    AGENT_TYPES.map((name) => ({
+    AGENT_TYPES.map(name => ({
       id: `agent-${name.toLowerCase()}`,
       name,
       status: AgentStatusValue.IDLE,
@@ -48,7 +53,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
       handleStreamEvent(event);
     },
     onError: (err: Error) => {
-      console.error("Stream error:", err);
+      console.error('Stream error:', err);
     },
     autoConnect: false, // Manual control
   });
@@ -63,8 +68,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
       error: AgentStatusValue.ERROR,
     };
 
-    setAgents((prev) =>
-      prev.map((agent) => {
+    setAgents(prev =>
+      prev.map(agent => {
         if (agent.name === agentName) {
           const updatedAgent = { ...agent };
           updatedAgent.status = statusMap[event.status] || agent.status;
@@ -101,7 +106,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
   const startAnalysis = () => {
     if (sessionId) {
       connect();
-      
+
       // Send document content after connection is established
       // We'll use a small delay to ensure connection is ready
       setTimeout(() => {
@@ -114,15 +119,15 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
           });
         }
       }, 100);
-      
+
       onStreamStart?.(sessionId);
     }
   };
 
   const resetAnalysis = () => {
     disconnect();
-    setAgents((prev) =>
-      prev.map((agent) => ({
+    setAgents(prev =>
+      prev.map(agent => ({
         ...agent,
         status: AgentStatusValue.IDLE,
         progress: 0,
@@ -141,19 +146,17 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
           <div>
             <h2 className="text-xl text-white mb-2">Analysis Control</h2>
             <p className="text-gray-400">
-              {sessionId ? `Session: ${sessionId}` : "No active session"}
+              {sessionId ? `Session: ${sessionId}` : 'No active session'}
             </p>
             {!isConnecting && !isConnected && error && (
               <p className="text-sm mt-2">
-                Status:{" "}
-                <span className="font-semibold text-red-400">
-                  error
-                </span>
+                Status:{' '}
+                <span className="font-semibold text-red-400">error</span>
               </p>
             )}
             {isConnecting && (
               <p className="text-sm mt-2">
-                Status:{" "}
+                Status:{' '}
                 <span className="font-semibold text-yellow-400">
                   connecting
                 </span>
@@ -161,12 +164,13 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             )}
             {isConnected && (
               <p className="text-sm mt-2">
-                Status:{" "}
-                <span className="font-semibold text-green-400">
-                  connected
-                </span>
+                Status:{' '}
+                <span className="font-semibold text-green-400">connected</span>
                 {events.length > 0 && (
-                  <span className="text-gray-400"> ({events.length} events)</span>
+                  <span className="text-gray-400">
+                    {' '}
+                    ({events.length} events)
+                  </span>
                 )}
               </p>
             )}
@@ -182,8 +186,12 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             </button>
             <button
               onClick={resetAnalysis}
-              disabled={!isConnected && agents.every((a) => a.status === AgentStatusValue.IDLE)}
+              disabled={
+                !isConnected &&
+                agents.every(a => a.status === AgentStatusValue.IDLE)
+              }
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-700 disabled:text-gray-500 transition-colors"
+              aria-label="Reset analysis"
             >
               <RotateCcw className="w-5 h-5" />
             </button>
@@ -193,7 +201,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
 
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {agents.map((agent) => (
+        {agents.map(agent => (
           <AgentCard key={agent.id} agent={agent} />
         ))}
       </div>
@@ -208,7 +216,13 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
           <div className="bg-gray-800 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Status</p>
             <p className="text-white capitalize">
-              {isConnected ? "connected" : isConnecting ? "connecting" : error ? "error" : "idle"}
+              {isConnected
+                ? 'connected'
+                : isConnecting
+                  ? 'connecting'
+                  : error
+                    ? 'error'
+                    : 'idle'}
             </p>
           </div>
           <div className="bg-gray-800 rounded-lg p-4">
@@ -218,7 +232,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
           <div className="bg-gray-800 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Agents</p>
             <p className="text-white">
-              {agents.filter((a) => a.status !== AgentStatusValue.IDLE).length}/
+              {agents.filter(a => a.status !== AgentStatusValue.IDLE).length}/
               {agents.length}
             </p>
           </div>

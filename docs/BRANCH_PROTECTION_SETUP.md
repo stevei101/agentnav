@@ -33,7 +33,6 @@ The staging environment consists of:
 - **agentnav-frontend-staging** (us-central1)
   - Lower resource limits than production (max 5 instances vs 10)
   - Serves as pre-production validation environment
-  
 - **agentnav-backend-staging** (europe-west1)
   - Same configuration as production but with reduced limits
   - Environment variable: `ENVIRONMENT=staging`
@@ -73,6 +72,7 @@ terraform apply
 ```
 
 This will create:
+
 - `google_cloud_run_v2_service.frontend_staging`
 - `google_cloud_run_v2_service.backend_staging`
 
@@ -81,12 +81,14 @@ This will create:
 The `.github/workflows/build.yml` workflow handles deployments:
 
 **On Pull Request:**
+
 - Job: `deploy-staging`
 - Deploys to staging environment
 - Reports to GitHub `staging` environment
 - Posts comment with staging URLs to PR
 
 **On Merge to Main:**
+
 - Job: `deploy` (production)
 - Deploys to production environment
 - Reports to GitHub `production` environment
@@ -118,7 +120,7 @@ The `.github/workflows/build.yml` workflow handles deployments:
 
    ✅ **Require deployments to succeed before merging**
    - **Required deployment environments:** `staging`
-   
+
    ✅ **Require conversation resolution before merging** (recommended)
 
    ✅ **Do not allow bypassing the above settings** (recommended)
@@ -128,6 +130,7 @@ The `.github/workflows/build.yml` workflow handles deployments:
 ### Step 4: Test the Deployment Gate
 
 1. Create a test branch and make a small change:
+
    ```bash
    git checkout -b test/branch-protection
    echo "# Test" >> README.md
@@ -187,6 +190,7 @@ gcloud run services describe agentnav-backend-staging \
 ### Problem: Staging deployment fails
 
 **Solution:**
+
 1. Check Cloud Run service logs:
    ```bash
    gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=agentnav-frontend-staging" --limit 50 --format json
@@ -197,6 +201,7 @@ gcloud run services describe agentnav-backend-staging \
 ### Problem: GitHub environment doesn't show deployment
 
 **Solution:**
+
 1. Verify workflow has `deployments: write` permission
 2. Check that `chrnorm/deployment-action@v2` step completed successfully
 3. Review GitHub Actions logs for errors
@@ -204,6 +209,7 @@ gcloud run services describe agentnav-backend-staging \
 ### Problem: Branch protection rule doesn't block merge
 
 **Solution:**
+
 1. Verify branch protection rule is saved correctly
 2. Check that "Require deployments to succeed" is enabled with `staging` environment
 3. Ensure "Do not allow bypassing" is enabled
@@ -211,6 +217,7 @@ gcloud run services describe agentnav-backend-staging \
 ### Problem: PR builds but doesn't deploy to staging
 
 **Solution:**
+
 1. Check that workflow trigger includes `pull_request` event
 2. Verify `if: github.event_name == 'pull_request'` condition in `deploy-staging` job
 3. Check Workload Identity Federation credentials are configured
@@ -226,6 +233,7 @@ gcloud run services describe agentnav-backend-staging \
 ### Cost Optimization Tips
 
 1. **Disable staging when not needed:**
+
    ```hcl
    # terraform/variables.tf
    variable "enable_staging_environment" {
@@ -234,12 +242,13 @@ gcloud run services describe agentnav-backend-staging \
    ```
 
 2. **Delete old PR images:**
+
    ```bash
    # List old PR images
    gcloud artifacts docker images list \
      ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend \
      --filter="tags:pr-*"
-   
+
    # Delete specific PR image
    gcloud artifacts docker images delete \
      ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:pr-123

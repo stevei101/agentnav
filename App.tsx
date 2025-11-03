@@ -97,7 +97,7 @@ const App: React.FC = () => {
     let delay = 0;
 
     // More realistic agent simulation with ADK workflow
-    agentNames.forEach((name, index) => {
+    agentNames.forEach((name, _index) => {
       setTimeout(() => {
         let details = 'Analyzing document...';
         if (name === AgentName.ORCHESTRATOR)
@@ -144,7 +144,7 @@ const App: React.FC = () => {
     simulateAgentActivity();
 
     try {
-      console.log('🎬 Starting ADK Multi-Agent Analysis');
+      console.warn('🎬 Starting ADK Multi-Agent Analysis');
       const analysisResult = await runAgenticNavigator(documentText);
 
       // Mark all agents as done
@@ -157,7 +157,7 @@ const App: React.FC = () => {
       );
 
       setResult(analysisResult);
-      console.log('✅ Analysis complete:', analysisResult);
+      console.warn('✅ Analysis complete:', analysisResult);
     } catch (err) {
       console.error('❌ Analysis failed:', err);
       const errorMessage =

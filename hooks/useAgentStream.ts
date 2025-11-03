@@ -1,10 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import {
-  AgentStreamEvent,
-  AgentEventType,
-  AgentStatusValue,
-  AgentName,
-} from "../types";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { AgentStreamEvent, AgentEventType, AgentName } from '../types';
 
 interface UseAgentStreamOptions {
   sessionId: string | null;
@@ -20,7 +15,7 @@ interface UseAgentStreamReturn {
   error: Error | null;
   connect: () => void;
   disconnect: () => void;
-  send: (message: any) => void;
+  send: (message: Record<string, unknown>) => void;
 }
 
 export const useAgentStream = ({
@@ -41,13 +36,17 @@ export const useAgentStream = ({
 
   const connect = useCallback(() => {
     if (!sessionId) {
-      const err = new Error("Session ID is required to connect");
+      const err = new Error('Session ID is required to connect');
       setError(err);
       onError?.(err);
       return;
     }
 
-    if (isConnected || isConnecting || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      isConnected ||
+      isConnecting ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return;
     }
 
@@ -55,24 +54,23 @@ export const useAgentStream = ({
     setError(null);
 
     try {
-      const protocol =
-        window.location.protocol === "https:" ? "wss:" : "ws:";
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/api/v1/navigate/stream?session_id=${sessionId}`;
 
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connected");
+        console.warn('✅ WebSocket connected');
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
         reconnectAttemptsRef.current = 0;
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          
+
           // Validate event structure
           if (data.id && data.agent && data.status && data.timestamp) {
             const streamEvent: AgentStreamEvent = {
@@ -84,25 +82,25 @@ export const useAgentStream = ({
               payload: data.payload,
             };
 
-            setEvents((prev) => [...prev, streamEvent]);
+            setEvents(prev => [...prev, streamEvent]);
             onEvent?.(streamEvent);
           } else {
-            console.warn("Invalid event structure:", data);
+            console.warn('Invalid event structure:', data);
           }
         } catch (err) {
-          console.error("Failed to parse WebSocket message:", err);
+          console.error('Failed to parse WebSocket message:', err);
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         const err = new Error(`WebSocket error: ${event.type}`);
-        console.error("❌ WebSocket error:", err);
+        console.error('❌ WebSocket error:', err);
         setError(err);
         onError?.(err);
       };
 
       ws.onclose = () => {
-        console.log("❌ WebSocket disconnected");
+        console.warn('❌ WebSocket disconnected');
         setIsConnected(false);
         setIsConnecting(false);
         wsRef.current = null;
@@ -110,14 +108,14 @@ export const useAgentStream = ({
         // Attempt to reconnect
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current += 1;
-          console.log(
+          console.warn(
             `Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`
           );
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, reconnectDelay);
         } else {
-          const err = new Error("Max reconnection attempts reached");
+          const err = new Error('Max reconnection attempts reached');
           setError(err);
           onError?.(err);
         }
@@ -126,7 +124,7 @@ export const useAgentStream = ({
       wsRef.current = ws;
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      console.error("Failed to create WebSocket:", error);
+      console.error('Failed to create WebSocket:', error);
       setError(error);
       setIsConnecting(false);
       onError?.(error);
@@ -148,11 +146,11 @@ export const useAgentStream = ({
     reconnectAttemptsRef.current = 0;
   }, []);
 
-  const send = useCallback((message: any) => {
+  const send = useCallback((message: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      console.warn("WebSocket is not connected");
+      console.warn('WebSocket is not connected');
     }
   }, []);
 
