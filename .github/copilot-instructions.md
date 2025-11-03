@@ -1,4 +1,4 @@
-# **agentnav \- GitHub Copilot Instructions**
+# **agentnav - GitHub Copilot Instructions**
 
 ## **Project Overview**
 
