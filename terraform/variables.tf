@@ -129,4 +129,3 @@ variable "dns_zone_name" {
   type        = string
   default     = "lornu-com"
 }
-
