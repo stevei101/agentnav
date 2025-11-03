@@ -207,7 +207,11 @@ class WorkflowStreamRequest(BaseModel):
     content_type: Optional[str] = Field(
         default="document",
         pattern="^(document|codebase)$",
+<<<<<<< HEAD
         description="Type of content: 'document' or 'codebase'",
+=======
+        description="Type of content: 'document' or 'codebase'"
+>>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
     )
     include_metadata: bool = Field(
         default=True, description="Include detailed metadata in events"
@@ -273,7 +277,17 @@ class ClientCommand(BaseModel):
     """Commands client can send to server during streaming"""
 
     action: str = Field(
+<<<<<<< HEAD
         ..., pattern="^(cancel|pause|resume)$", description="Action to perform"
+=======
+        ...,
+        pattern="^(cancel|pause|resume)$",
+        description="Action to perform"
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Reason for the action"
+>>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
     )
     reason: Optional[str] = Field(default=None, description="Reason for the action")
 
