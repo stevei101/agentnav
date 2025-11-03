@@ -91,7 +91,9 @@ jobs:
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          [[ -n "${LATEST_TAG}" ]] && echo "Latest tag: ${LATEST_TAG}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "Latest tag: ${LATEST_TAG}"
+          fi
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
