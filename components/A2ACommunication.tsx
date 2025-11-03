@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from "react";
-import { MessageSquare, ArrowRight, Radio } from "lucide-react";
+import React, { useEffect, useRef } from 'react';
+import { MessageSquare, ArrowRight, Radio } from 'lucide-react';
 
 interface A2AMessage {
   id: string;
   from: string;
   to: string;
-  type: "request" | "response" | "broadcast";
+  type: 'request' | 'response' | 'broadcast';
   content: string;
   timestamp: Date;
 }
@@ -15,9 +15,9 @@ interface A2ACommunicationProps {
 }
 
 const messageTypeColors = {
-  request: "border-blue-500/50 bg-blue-900/20",
-  response: "border-green-500/50 bg-green-900/20",
-  broadcast: "border-purple-500/50 bg-purple-900/20",
+  request: 'border-blue-500/50 bg-blue-900/20',
+  response: 'border-green-500/50 bg-green-900/20',
+  broadcast: 'border-purple-500/50 bg-purple-900/20',
 };
 
 const messageTypeIcons = {
@@ -32,7 +32,7 @@ export const A2ACommunication: React.FC<A2ACommunicationProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   return (
@@ -55,11 +55,9 @@ export const A2ACommunication: React.FC<A2ACommunicationProps> = ({
             </p>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map(message => {
             const Icon =
-              messageTypeIcons[
-                message.type as keyof typeof messageTypeIcons
-              ];
+              messageTypeIcons[message.type as keyof typeof messageTypeIcons];
             return (
               <div
                 key={message.id}
@@ -74,7 +72,7 @@ export const A2ACommunication: React.FC<A2ACommunicationProps> = ({
                     <Icon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-300">
                       <span className="text-white">{message.from}</span>
-                      {" → "}
+                      {' → '}
                       <span className="text-white">{message.to}</span>
                     </span>
                   </div>

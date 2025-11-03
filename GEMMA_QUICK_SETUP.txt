@@ -1,0 +1,155 @@
+# Quick Credentials Checklist for Gemma Deployment
+
+## 🎯 TL;DR - What You Need
+
+For `google/gemma-7b-it` deployment in agentnav, you need:
+
+### 1 Secret Required (Optional but Recommended)
+```
+HUGGINGFACE_TOKEN = hf_xxxxxxxxxxxxxxxxxxxxx
+```
+
+---
+
+## ⚡ 5-Minute Setup
+
+### Step 1: Accept License (1 minute)
+```
+https://huggingface.co/google/gemma-7b-it
+→ Click "Agree and access repository"
+```
+
+### Step 2: Create Token (2 minutes)
+```
+https://huggingface.co/settings/tokens
+→ Click "New token"
+→ Copy the token (starts with hf_)
+```
+
+### Step 3: Add to GCP (2 minutes)
+```bash
+# Create secret
+echo -n "hf_YOUR_TOKEN_HERE" | \
+  gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
+
+# Grant Gemma service access
+gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
+  --member="serviceAccount:gemma-service@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+# Deploy
+terraform apply
+```
+
+---
+
+## ✅ What's Already Configured in agentnav
+
+| Component | Status | File |
+|-----------|--------|------|
+| Secret Manager Secret | ✅ Created | `terraform/secret_manager.tf` |
+| Cloud Run Env Config | ✅ Ready | `terraform/cloud_run.tf` |
+| IAM Permissions | ✅ Ready | `terraform/iam.tf` |
+| Gemma Service | ✅ Ready | `backend/Dockerfile.gemma` |
+
+**You only need to:** Add the HuggingFace token value to the secret!
+
+---
+
+## 📋 Credentials Matrix
+
+| Credential | Purpose | Required | Type | Location |
+|------------|---------|----------|------|----------|
+| **HUGGINGFACE_TOKEN** | Download Gemma 7B | ⚠️ Optional* | API Token | Secret Manager |
+| **GEMINI_API_KEY** | Orchestrator reasoning | ✅ Already set | API Key | Secret Manager |
+| **GEMMA_SERVICE_URL** | Backend → GPU Service | ✅ Auto-generated | URL | Environment Var |
+
+\* Recommended for production/high-volume
+
+---
+
+## 🔒 Credential Details
+
+### HUGGINGFACE_TOKEN
+- **Source:** https://huggingface.co/settings/tokens
+- **Format:** Starts with `hf_`, ~40 characters
+- **Expiration:** Set to 30-90 days (configurable)
+- **Scope:** Read-only (for downloading models)
+- **Used By:** Gemma service (`backend/gemma_service/main.py`)
+
+### GEMINI_API_KEY
+- **Status:** ✅ Already configured
+- **Source:** Google Cloud Console
+- **Used By:** Orchestrator Agent, Linker Agent (via FR#090)
+
+### GEMMA_SERVICE_URL
+- **Status:** ✅ Auto-generated after deployment
+- **Format:** `https://gemma-service-xxxxx.run.app`
+- **Used By:** Backend service
+- **How to find:**
+  ```bash
+  gcloud run services describe gemma-service \
+    --region europe-west1 --format='value(status.url)'
+  ```
+
+---
+
+## 🚀 Complete Setup Command
+
+```bash
+#!/bin/bash
+
+# 1. Get HF token (from https://huggingface.co/settings/tokens)
+read -sp "Enter HuggingFace Token: " HF_TOKEN
+echo ""
+
+# 2. Create secret
+echo -n "$HF_TOKEN" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
+
+# 3. Get your project ID
+PROJECT_ID=$(gcloud config get-value project)
+
+# 4. Grant permission
+gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
+  --member="serviceAccount:gemma-service@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+# 5. Deploy
+cd terraform && terraform apply
+
+echo "✅ Done! Gemma service will now use the HuggingFace token"
+```
+
+---
+
+## ❓ FAQ
+
+**Q: Is HUGGINGFACE_TOKEN really required?**
+A: No, `google/gemma-7b-it` is public. But recommended for production (rate limits, tracking).
+
+**Q: Can I use the same token for multiple deployments?**
+A: Yes, one token can be used across multiple environments.
+
+**Q: How do I rotate the token?**
+A: Update in Secret Manager:
+```bash
+echo -n "hf_NEW_TOKEN" | \
+  gcloud secrets versions add HUGGINGFACE_TOKEN --data-file=-
+```
+
+**Q: Where is the token actually stored?**
+A: GCP Secret Manager (encrypted at rest, audit logged).
+
+**Q: Can the Gemma service work without the token?**
+A: Yes, but might hit HuggingFace rate limits. Not recommended for production.
+
+---
+
+## 📚 Full Docs
+
+For detailed setup, security best practices, and troubleshooting:
+→ See: `docs/GEMMA_CREDENTIALS_SETUP.md`
+
+---
+
+**You're ready to deploy! 🚀**
