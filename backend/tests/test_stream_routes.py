@@ -113,24 +113,33 @@ class TestEventModelValidation:
 
     def test_agent_stream_event_validation(self):
         """Test AgentStreamEvent model validation"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import (
+            AgentStreamEvent,
+            EventMetadata,
+            AgentStatusEnum,
+            AgentTypeEnum,
+        )
 
         event = AgentStreamEvent(
             id="evt-123",
-            agent="summarizer",
-            status="processing",
+            agent=AgentTypeEnum.SUMMARIZER,
+            status=AgentStatusEnum.PROCESSING,
             timestamp="2024-01-01T00:00:00Z",
-            metadata={"session_id": "sess-123"},
+            metadata=EventMetadata(
+                elapsed_ms=100,
+                step=1,
+                total_steps=4,
+            ),
         )
         assert event.id == "evt-123"
-        assert event.agent == "summarizer"
-        assert event.status == "processing"
+        assert event.agent == AgentTypeEnum.SUMMARIZER
+        assert event.status == AgentStatusEnum.PROCESSING
 
     def test_event_payload_with_metrics(self):
-        """Test EventPayload with metrics"""
-        from backend.models.stream_event_model import EventPayload
+        """Test AgentEventPayload with metrics"""
+        from backend.models.stream_event_model import AgentEventPayload
 
-        payload = EventPayload(
+        payload = AgentEventPayload(
             summary="Test summary",
             metrics={
                 "processingTime": 1500,
@@ -142,15 +151,16 @@ class TestEventModelValidation:
         assert payload.metrics["processingTime"] == 1500
 
     def test_event_payload_with_error(self):
-        """Test EventPayload with error handling"""
-        from backend.models.stream_event_model import EventPayload
+        """Test ErrorPayload with error handling"""
+        from backend.models.stream_event_model import ErrorPayload, ErrorType
 
-        payload = EventPayload(
-            error_message="Failed to process document",
-            error_type="ProcessingError",
+        payload = ErrorPayload(
+            error="Failed to process document",
+            error_type=ErrorType.UNKNOWN,
+            error_details="ProcessingError occurred",
         )
-        assert payload.error_message == "Failed to process document"
-        assert payload.error_type == "ProcessingError"
+        assert payload.error == "Failed to process document"
+        assert payload.error_type == ErrorType.UNKNOWN
 
 
 class TestEventStreaming:
@@ -339,13 +349,15 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_workflow_execution_error_event(self):
         """Test that workflow errors are sent as error events"""
-        from backend.models.stream_event_model import EventPayload
+        from backend.models.stream_event_model import ErrorPayload, ErrorType
 
-        payload = EventPayload(
-            error_message="Workflow execution failed",
-            error_type="WorkflowError",
+        payload = ErrorPayload(
+            error="Workflow execution failed",
+            error_type=ErrorType.WORKFLOW_ERROR,
+            error_details="WorkflowError occurred",
         )
-        assert payload.error_message is not None
+        assert payload.error is not None
+        assert payload.error_type == ErrorType.WORKFLOW_ERROR
 
     def test_websocket_timeout_handling(self):
         """Test timeout handling in WebSocket communication"""
@@ -359,13 +371,23 @@ class TestPayloadParsing:
 
     def test_parse_agent_stream_event(self):
         """Test parsing agent stream events"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import (
+            AgentStreamEvent,
+            EventMetadata,
+            AgentStatusEnum,
+            AgentTypeEnum,
+        )
 
         raw_event = {
             "id": "evt-100",
-            "agent": "summarizer",
-            "status": "complete",
+            "agent": AgentTypeEnum.SUMMARIZER,
+            "status": AgentStatusEnum.COMPLETE,
             "timestamp": "2024-01-01T00:00:10Z",
+            "metadata": EventMetadata(
+                elapsed_ms=2000,
+                step=2,
+                total_steps=4,
+            ),
             "payload": {
                 "summary": "Key findings",
                 "metrics": {
@@ -383,16 +405,31 @@ class TestPayloadParsing:
 
     def test_parse_multiple_event_types(self):
         """Test parsing different agent event types"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import (
+            AgentStreamEvent,
+            EventMetadata,
+            AgentStatusEnum,
+            AgentTypeEnum,
+        )
 
-        event_types = ["queued", "processing", "complete", "error"]
+        event_types = [
+            AgentStatusEnum.QUEUED,
+            AgentStatusEnum.PROCESSING,
+            AgentStatusEnum.COMPLETE,
+            AgentStatusEnum.ERROR,
+        ]
 
         for status in event_types:
             event = AgentStreamEvent(
-                id=f"evt-{status}",
-                agent="visualizer",
+                id=f"evt-{status.value}",
+                agent=AgentTypeEnum.VISUALIZER,
                 status=status,
                 timestamp="2024-01-01T00:00:00Z",
+                metadata=EventMetadata(
+                    elapsed_ms=100,
+                    step=1,
+                    total_steps=4,
+                ),
             )
             assert event.status == status
 
