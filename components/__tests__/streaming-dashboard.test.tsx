@@ -1,3 +1,4 @@
+/* eslint-env browser, jest */
 /**
  * Component Tests for FR#020 Streaming Dashboard
  *
