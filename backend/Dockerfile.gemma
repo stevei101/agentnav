@@ -66,11 +66,14 @@ ENV MODEL_NAME=google/gemma-7b-it
 # Expose port (Cloud Run sets PORT env var automatically)
 EXPOSE 8080
 
+# Copy entrypoint script
+COPY gemma_service/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Health check (Cloud Run uses this)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:${PORT}/healthz || exit 1
 
-# Run FastAPI app
-# Cloud Run sets PORT env var automatically, read it dynamically
-CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; uvicorn.run('gemma_service.main:app', host='0.0.0.0', port=port)"
+# Run FastAPI app with entrypoint script for proper signal handling
+ENTRYPOINT ["/app/entrypoint.sh"]
 

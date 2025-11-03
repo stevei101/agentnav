@@ -24,6 +24,22 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
    ```
    See [docs/local-development.md](docs/local-development.md) for detailed setup instructions.
 
+## Development Assistance with agentnav-copilot-agent
+
+We provide a custom GitHub Copilot agent (`@agentnav-gh-copilot-agent`) that is context-aware of our complete system architecture, quality policies, and conventions. Use it to:
+
+- **Generate compliant code** following project patterns (RORO, TypeScript, ADK)
+- **Review code** for policy compliance (70% coverage, Cloud Run compatibility)
+- **Understand architecture** and get instant answers about the multi-agent system
+- **Get tooling guidance** (e.g., "use uv for Python dependencies", "use bun for frontend")
+
+**Quick Start:**
+```
+@agentnav-gh-copilot-agent How do I implement a new ADK agent?
+```
+
+For detailed usage instructions and examples, see [docs/COPILOT_AGENT_GUIDE.md](docs/COPILOT_AGENT_GUIDE.md).
+
 ## Development Workflow
 
 ### 1. Create a Branch
@@ -152,8 +168,11 @@ Key principles:
 
 - Write unit tests for new functionality
 - Ensure all existing tests pass
-- Aim for high test coverage
+- **Mandatory: Achieve 70% or higher code coverage** for all new code
 - Test edge cases and error conditions
+- Run `make test` to verify all tests pass locally
+
+For detailed testing guidelines and coverage requirements, see [docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md).
 
 ### Documentation
 

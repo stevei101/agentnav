@@ -1,4 +1,5 @@
-# Gemma GPU Service Dockerfile - Multi-Stage Build (FR#185 Optimization)
+# Gemma GPU Service Dockerfile - Cloud Run Optimized
+# Multi-stage build for minimal image size and fast deployments
 # GPU-enabled container for Cloud Run deployment with NVIDIA L4 GPU
 # Region: europe-west1
 # GPU: NVIDIA L4 (1 GPU)
@@ -8,28 +9,22 @@
 # 1. Builder stage: Install all dependencies and build artifacts
 # 2. Runtime stage: Copy only necessary files for a slim final image
 
-# ============================================================================
-# STAGE 1: Builder - Install dependencies and prepare environment
-# ============================================================================
+# Stage 1: Builder - Install dependencies
+# Use PyTorch base image with CUDA support for building
 FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS builder
 
 WORKDIR /build
 
-# Install system dependencies needed for building Python packages
+# Install system dependencies needed for build
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies in a virtual environment for easy copying
-# This allows us to copy only the installed packages to the runtime stage
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Install additional Python dependencies (PyTorch already in base image)
-# Using --no-cache-dir to reduce layer size
-RUN pip install --no-cache-dir \
+# Install Python dependencies to /install directory
+# Only install packages not already in the base image to avoid disk space issues
+RUN pip install --no-cache-dir --target=/install \
     transformers>=4.40.0 \
     accelerate>=0.30.0 \
     bitsandbytes>=0.41.0 \
@@ -39,29 +34,37 @@ RUN pip install --no-cache-dir \
     python-dotenv>=1.0.0 \
     huggingface-hub>=0.23.0
 
-# ============================================================================
-# STAGE 2: Runtime - Slim final image with only runtime dependencies
-# ============================================================================
+# Stage 2: Runtime - Minimal production image
+# Use the same PyTorch base for runtime (GPU support required)
 FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime AS runtime
 
 WORKDIR /app
 
-# Install only runtime system dependencies (no build tools)
+# Copy installed dependencies from builder stage
+COPY --from=builder /install /install
+
+# Set PYTHONPATH to include installed dependencies
+ENV PYTHONPATH=/install:$PYTHONPATH
+
+# Install minimal runtime dependencies (curl for healthcheck)
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python virtual environment from builder stage
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
 
+# Create non-root user for security (Cloud Run best practice)
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PORT=8080
-ENV MODEL_NAME=google/gemma-7b-it
+ENV PYTHONUNBUFFERED=1 \
+    PORT=8080 \
+    MODEL_NAME=google/gemma-7b-it
 
 # Expose port (Cloud Run sets PORT env var automatically)
 EXPOSE 8080
@@ -73,4 +76,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
 # Run FastAPI app
 # Cloud Run sets PORT env var automatically, read it dynamically
 CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; uvicorn.run('gemma_service.main:app', host='0.0.0.0', port=port)"
-

@@ -60,3 +60,14 @@ enable_staging_environment = true
 
 # Enable Cloud Run Connect Repo (automatic deployments from GitHub)
 # enable_connect_repo = true
+
+# ============================================
+# CUSTOM DOMAIN CONFIGURATION
+# ============================================
+
+# Custom domain for frontend service
+# custom_domain_name = "agentnav.lornu.com"
+
+# Cloud DNS managed zone name (must already exist in GCP)
+# Find zone name with: gcloud dns managed-zones list
+# dns_zone_name = "lornu-com"

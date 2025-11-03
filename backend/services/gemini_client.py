@@ -1,282 +1,174 @@
 """
-Gemini Client Service
-Standardized client for Google Gemini model interaction using official google-genai SDK
+Gemini client wrapper for Agentnav
 
-This service implements FR#090: Standardize AI Model Interaction with Google GenAI Python SDK.
-All direct calls to Gemini models should use this client for consistency and feature access.
+Provides a small, flexible wrapper around the official Google GenAI Python SDK
+so agents can consistently call Gemini models. The wrapper attempts to import
+the installed SDK (several import paths are tolerated) and exposes an async
+`generate` method and a convenience `reason_with_gemini` helper used by agents.
+
+This module intentionally keeps initialization minimal so the SDK can pick up
+credentials from the environment or Workload Identity (WI) when running on
+Cloud Run.
 """
-import os
-import logging
 import asyncio
-from typing import Optional, Dict, Any
+import logging
+import os
+from typing import Any, Optional
+
 logger = logging.getLogger(__name__)
 
+
+# Flexible import: support multiple possible package layouts for the GenAI SDK.
+genai = None
 try:
-    import google.generativeai as genai
-    from google.generativeai.types import HarmCategory, HarmBlockThreshold
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
-    logger.warning("google-genai package not installed. Install with: pip install google-genai")
-
-# Global client instance (lazy initialization)
-if GENAI_AVAILABLE:
-    _gemini_client: Optional[genai.GenerativeModel] = None
-else:
-    _gemini_client = None
-
-
-def get_gemini_client(model_name: str = "gemini-1.5-flash"):
-    """
-    Get or create Gemini client instance
-    
-    This function initializes the Google GenAI client with proper authentication.
-    It uses Workload Identity (WI) in deployed environments or API key for local development.
-    
-    Args:
-        model_name: Name of the Gemini model to use (default: "gemini-1.5-flash")
-        
-    Returns:
-        GenerativeModel instance configured for Gemini
-        
-    Raises:
-        ValueError: If API key is missing in local development
-        RuntimeError: If client initialization fails or package not installed
-        
-    Authentication Methods (in priority order):
-    1. Workload Identity (WI) - Automatic in Cloud Run (GCP environment)
-    2. GOOGLE_APPLICATION_CREDENTIALS - Service account JSON file path
-    3. GEMINI_API_KEY - API key from environment variable (local development)
-    
-    Note:
-        In Cloud Run, Workload Identity automatically provides credentials.
-        No explicit API key needed when running in GCP environment.
-    """
-    if not GENAI_AVAILABLE:
-        raise RuntimeError("google-genai package is not installed. Install with: pip install google-genai")
-    
-    global _gemini_client
-    
-    # Reuse existing client if already initialized
-    if _gemini_client is not None:
-        return _gemini_client
-    
+    # Preferred new layout
+    import google.genai as genai  # type: ignore
+except Exception:
     try:
-        # Check if running in GCP environment (Cloud Run, GCE, etc.)
-        # GCP environments automatically provide credentials via Application Default Credentials
-        gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT_ID")
-        
-        if gcp_project:
-            # Running in GCP - use Application Default Credentials (Workload Identity)
-            logger.info(f"🔐 Using Application Default Credentials (Workload Identity) for GCP project: {gcp_project}")
-            # GenAI SDK automatically uses Application Default Credentials when available
-            # No explicit API key needed
-            genai.configure()
-        else:
-            # Local development - require API key
-            api_key = os.getenv("GEMINI_API_KEY")
-            if not api_key:
-                error_msg = (
-                    "GEMINI_API_KEY environment variable is required for local development. "
-                    "In Cloud Run, credentials are provided automatically via Workload Identity."
-                )
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-            
-            logger.info("🔑 Using GEMINI_API_KEY for local development")
-            genai.configure(api_key=api_key)
-        
-        # Initialize the GenerativeModel with safety settings
-        _gemini_client = genai.GenerativeModel(
-            model_name=model_name,
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            }
-        )
-        
-        logger.info(f"✅ Gemini client initialized successfully (model: {model_name})")
-        return _gemini_client
-        
-    except Exception as e:
-        error_msg = f"Failed to initialize Gemini client: {e}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
+        import genai  # type: ignore
+    except Exception:
+        genai = None
 
 
-async def generate_content(
-    prompt: str,
-    context: Optional[str] = None,
-    model_name: str = "gemini-1.5-flash",
-    temperature: float = 0.7,
-    max_output_tokens: Optional[int] = None,
-    **kwargs
-) -> str:
+class GeminiClient:
+    """Lightweight wrapper around the installed GenAI SDK client.
+
+    The wrapper does not inject credentials; the SDK should use environment
+    credentials or Workload Identity (WI) provided by Cloud Run.
     """
-    Generate content using Gemini model
-    
-    This is the primary method for interacting with Gemini models. It handles
-    prompt formatting, model configuration, and response parsing.
-    
-    Args:
-        prompt: The main prompt text (can include template variables)
-        context: Optional additional context to prepend to the prompt
-        model_name: Gemini model to use (default: "gemini-1.5-flash")
-        temperature: Sampling temperature (0.0-1.0, default: 0.7)
-        max_output_tokens: Maximum tokens to generate (optional)
-        **kwargs: Additional generation config parameters
-        
-    Returns:
-        Generated text content
-        
-    Raises:
-        RuntimeError: If generation fails
-        ValueError: If prompt is empty
-        
-    Example:
-        ```python
-        response = await generate_content(
-            prompt="Summarize this document: {content}",
-            context="This is a technical document about...",
-            temperature=0.3
-        )
-        ```
-    """
-    if not prompt or not prompt.strip():
-        raise ValueError("Prompt cannot be empty")
-    
-    try:
-        client = get_gemini_client(model_name=model_name)
-        
-        # Format full prompt with context if provided
-        full_prompt = prompt
-        if context:
-            full_prompt = f"Context: {context}\n\n{prompt}"
-        
-        # Build generation config
-        generation_config = {
-            "temperature": temperature,
-        }
-        if max_output_tokens:
-            generation_config["max_output_tokens"] = max_output_tokens
-        
-        # Merge additional kwargs into generation config
-        generation_config.update(kwargs)
-        
-        logger.debug(f"Generating content with Gemini ({model_name})")
-        logger.debug(f"Prompt length: {len(full_prompt)} chars")
-        
-        # Generate content (GenAI SDK is synchronous, so run in thread pool for async compatibility)
-        loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None,
-            lambda: client.generate_content(
-                full_prompt,
-                generation_config=generation_config
+
+    def __init__(self, client: Optional[Any] = None):
+        if client is not None:
+            self._client = client
+            return
+
+        if genai is None:
+            raise RuntimeError(
+                "google-genai SDK is not installed. Install `google-genai` in requirements." 
             )
-        )
-        
-        # Extract text from response
-        generated_text = response.text if response.text else ""
-        
-        logger.debug(f"Generated {len(generated_text)} characters")
-        return generated_text
-        
-    except Exception as e:
-        error_msg = f"Failed to generate content with Gemini: {e}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
+
+        # Prefer an explicit Client() constructor if available
+        ClientCtor = getattr(genai, "Client", None)
+        if callable(ClientCtor):
+            try:
+                self._client = ClientCtor()
+            except Exception:
+                # Fall back to using module as client
+                self._client = genai
+        else:
+            # Some SDK versions expose top-level helpers; use module directly
+            self._client = genai
+
+        logger.info("Initialized Gemini client wrapper")
+
+    async def generate(self, model: Optional[str], prompt: str, max_tokens: int = 256, temperature: float = 0.0, **kwargs) -> Any:
+        """Generate text from the specified model.
+
+        This method attempts several common call signatures for different SDK
+        versions. The call is run in a thread to avoid blocking if the SDK is
+        synchronous.
+        """
+
+        def _sync_call():
+            # Try client.models.generate(model=..., prompt=...)
+            try:
+                if hasattr(self._client, "models") and hasattr(self._client.models, "generate"):
+                    # Newer SDKs (module.client.models.generate)
+                    return self._client.models.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
+
+                # genai.generate(...) or client.generate(...)
+                if hasattr(self._client, "generate"):
+                    return self._client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
+
+                # Older variants
+                if hasattr(self._client, "generate_text"):
+                    return self._client.generate_text(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
+
+            except Exception as e:
+                # Surface SDK errors
+                logger.exception("Error while calling GenAI SDK: %s", e)
+                raise
+
+            raise RuntimeError("Unsupported or unknown google-genai client interface")
+
+        return await asyncio.to_thread(_sync_call)
 
 
-async def generate_content_with_prompt_template(
-    prompt_template_id: str,
-    template_variables: Dict[str, Any],
-    context: Optional[str] = None,
-    model_name: str = "gemini-1.5-flash",
-    temperature: float = 0.7,
-    **kwargs
+async def reason_with_gemini(
+    prompt: str, 
+    max_tokens: int = 256, 
+    temperature: float = 0.0, 
+    model: Optional[str] = None,
+    model_type: str = "gemini"
 ) -> str:
-    """
-    Generate content using a prompt template from Firestore (FR#003 integration)
-    
-    This method integrates with FR#003 (Prompt Management) by:
-    1. Loading the prompt template from Firestore
-    2. Formatting it with runtime variables
-    3. Submitting to Gemini via the official SDK
-    
+    """Convenience helper used by agents for reasoning prompts.
+
+    Supports both cloud-based Gemini and local Gemma GPU service reasoning.
+    Agents should fetch prompt templates from prompt loader, format them, 
+    and call this helper.
+
     Args:
-        prompt_template_id: Document ID in agent_prompts Firestore collection
-        template_variables: Dictionary of variables to format into template
-        context: Optional additional context to prepend
-        model_name: Gemini model to use
-        temperature: Sampling temperature
-        **kwargs: Additional generation config parameters
-        
+        prompt: The reasoning prompt to send.
+        max_tokens: Maximum tokens in the response.
+        temperature: Sampling temperature (0.0 = deterministic, higher = more creative).
+        model: Optional explicit model name (overrides model_type logic).
+        model_type: Either "gemini" (cloud GenAI SDK) or "gemma" (local GPU service).
+                   Defaults to "gemini". Can be overridden by AGENTNAV_MODEL_TYPE env var.
+
     Returns:
-        Generated text content
-        
+        The text response from the selected model.
+
     Raises:
-        ValueError: If prompt template not found or template variables missing
-        RuntimeError: If generation fails
-        
-    Example:
-        ```python
-        response = await generate_content_with_prompt_template(
-            prompt_template_id="linker_system_instruction",
-            template_variables={"content": document_text, "content_type": "document"},
-            temperature=0.3
-        )
-        ```
+        ValueError: If model_type is not "gemini" or "gemma".
     """
-    try:
-        from .prompt_loader import get_prompt
-        
-        # Load prompt template from Firestore (FR#003)
-        prompt_template = get_prompt(prompt_template_id)
-        
-        # Format template with variables
+    # Allow override via environment variable
+    model_type = os.environ.get("AGENTNAV_MODEL_TYPE", model_type).lower()
+
+    if model_type == "gemma":
+        # Use local Gemma GPU service
         try:
-            formatted_prompt = prompt_template.format(**template_variables)
-        except KeyError as e:
-            error_msg = f"Missing template variable in prompt {prompt_template_id}: {e}"
-            logger.error(error_msg)
-            raise ValueError(error_msg) from e
-        
-        # Generate content using formatted prompt
-        return await generate_content(
-            prompt=formatted_prompt,
-            context=context,
-            model_name=model_name,
-            temperature=temperature,
-            **kwargs
-        )
-        
-    except ImportError:
-        # Fallback if prompt_loader not available
-        logger.warning("Prompt loader not available, using direct prompt")
-        return await generate_content(
-            prompt=str(template_variables),
-            context=context,
-            model_name=model_name,
-            temperature=temperature,
-            **kwargs
-        )
-    except Exception as e:
-        error_msg = f"Failed to generate content with prompt template: {e}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
+            from services.gemma_service import reason_with_gemma
+            response = await reason_with_gemma(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            logger.info(f"✅ Used Gemma service for reasoning (max_tokens={max_tokens})")
+            return response
+        except Exception as e:
+            logger.warning(f"⚠️ Gemma service unavailable: {e}. Falling back to Gemini.")
+            model_type = "gemini"
 
+    if model_type == "gemini":
+        # Use cloud Gemini via GenAI SDK
+        model = model or os.environ.get("GEMINI_MODEL") or "gemini-1"
+        client = GeminiClient()
+        result = await client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
 
-def reset_client():
-    """
-    Reset the global client instance (useful for testing)
-    
-    This function clears the cached client, forcing re-initialization
-    on the next call to get_gemini_client().
-    """
-    global _gemini_client
-    _gemini_client = None
-    logger.info("Gemini client reset")
+        # Normalize a few common SDK return shapes
+        # - Newer SDKs may return an object with .candidates or .output
+        if isinstance(result, dict):
+            # common pattern: {'candidates': [{'content': {'text': '...'}}]}
+            candidates = result.get("candidates") or result.get("outputs")
+            if isinstance(candidates, list) and len(candidates) > 0:
+                first = candidates[0]
+                # nested content
+                content = first.get("content") or first.get("output") or first
+                if isinstance(content, dict):
+                    text = content.get("text") or content.get("content")
+                    if text:
+                        logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
+                        return text
+                # fallback to string representation
+                return str(first)
 
+        # If result is a string-like return it
+        if isinstance(result, str):
+            logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
+            return result
+
+        # Last resort: return stringified result
+        logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
+        return str(result)
+
+    raise ValueError(f"Unsupported model_type: {model_type}. Must be 'gemini' or 'gemma'.")

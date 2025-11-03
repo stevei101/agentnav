@@ -9,8 +9,8 @@ dependencies = [
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
     "google-cloud-firestore>=2.13.0",
-    "httpx>=0.25.0",  # For calling Gemma GPU service
-    "websockets>=12.0",  # For WebSocket support in FastAPI
+    "httpx>=0.25.0", # For calling Gemma GPU service
+    "websockets>=12.0", # For WebSocket support in FastAPI
 ]
 
 [project.optional-dependencies]
@@ -20,4 +20,7 @@ dev = [
     "black>=23.0.0",
     "mypy>=1.6.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 

@@ -25,6 +25,7 @@ RUN apk add --no-cache gettext
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+
 # Create nginx configuration with runtime env injection
 RUN echo 'server { \
     listen ${PORT:-80}; \

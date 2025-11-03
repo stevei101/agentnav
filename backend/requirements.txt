@@ -9,3 +9,5 @@ google-genai>=0.3.0  # Official Google GenAI Python SDK for Gemini model interac
 # TODO: Add google-adk when available (Google Agent Development Kit)
 # google-adk>=X.X.X
 
+google-genai
+

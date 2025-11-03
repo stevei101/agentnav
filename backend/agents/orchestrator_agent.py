@@ -22,10 +22,12 @@ class OrchestratorAgent(Agent):
     - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None, model_type: str = "gemini"):
         super().__init__("orchestrator", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
+        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
+        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -107,119 +109,84 @@ Determine:
         }
     
     async def _analyze_content(self, document: str) -> Dict[str, Any]:
-        """
-        Analyze content to determine type and characteristics
+        """Analyze content to determine type and characteristics using AI reasoning"""
         
-        Uses Gemini for sophisticated analysis (FR#090) with fallback to heuristics.
-        """
-        # Try Gemini-based analysis first (FR#090)
+        # Try AI-powered analysis first, fall back to heuristics
         try:
-            from services.gemini_client import generate_content_with_prompt_template
-            
-            # Use prompt template from Firestore if available (FR#003 integration)
-            try:
-                analysis_response = await generate_content_with_prompt_template(
-                    prompt_template_id="orchestrator_content_analysis",
-                    template_variables={
-                        "content": document[:3000],  # Limit for prompt size
-                        "content_length": len(document),
-                        "line_count": len(document.split('\n'))
-                    },
-                    temperature=0.3,
-                    max_output_tokens=500
-                )
-                
-                # Parse Gemini response (expecting structured output)
-                # Gemini will provide JSON-like analysis
-                self.logger.info("✅ Used Gemini for content analysis")
-                return self._parse_gemini_analysis(analysis_response, document)
-                
-            except (ValueError, RuntimeError):
-                # Fallback to direct prompt
-                prompt = f"""
-Analyze this content and determine:
-1. content_type: "document" or "codebase"
-2. complexity_level: "simple", "moderate", or "complex"
-3. key_topics: List 3-5 main topics/features
-
-Content (first 3000 chars):
-{document[:3000]}
-
-Provide your analysis:
-"""
-                from services.gemini_client import generate_content
-                analysis_response = await generate_content(
-                    prompt=prompt,
-                    temperature=0.3,
-                    max_output_tokens=500
-                )
-                return self._parse_gemini_analysis(analysis_response, document)
-                
+            return await self._analyze_content_with_ai(document)
         except Exception as e:
-            self.logger.warning(f"⚠️  Gemini analysis failed: {e}, using heuristic fallback")
-            return self._analyze_content_heuristic(document)
+            self.logger.warning(f"⚠️ AI analysis failed: {e}. Using heuristics.")
+            return self._analyze_content_with_heuristics(document)
     
-    def _parse_gemini_analysis(self, response: str, document: str) -> Dict[str, Any]:
-        """
-        Parse Gemini's analysis response into structured format
+    async def _analyze_content_with_ai(self, document: str) -> Dict[str, Any]:
+        """Use Gemini/Gemma to analyze content type and characteristics"""
+        from services.gemini_client import reason_with_gemini
         
-        Args:
-            response: Gemini's text response
-            document: Original document (for fallback parsing)
-            
-        Returns:
-            Structured analysis dictionary
-        """
-        import re
+        analysis_prompt = f"""
+Analyze the following content and provide structured analysis.
+Return your response in this exact format:
+
+CONTENT_TYPE: [document|codebase]
+COMPLEXITY: [simple|moderate|complex]
+KEY_TOPICS: [comma-separated list of 3-5 main topics]
+SUMMARY: [1-2 sentence summary]
+
+Content to analyze:
+{document[:3000]}
+"""
         
-        # Extract content_type
-        content_type_match = re.search(r'(?:content_type|Content Type)[:]\s*(document|codebase)', response, re.IGNORECASE)
-        content_type = content_type_match.group(1).lower() if content_type_match else "document"
+        response = await reason_with_gemini(
+            prompt=analysis_prompt,
+            max_tokens=300,
+            temperature=0.3,
+            model_type=self.model_type
+        )
         
-        # Extract complexity
-        complexity_match = re.search(r'(?:complexity|Complexity)[:]\s*(simple|moderate|complex)', response, re.IGNORECASE)
-        complexity_level = complexity_match.group(1).lower() if complexity_match else "moderate"
+        # Parse structured response
+        return self._parse_analysis_response(response, document)
+    
+    def _parse_analysis_response(self, response: str, document: str) -> Dict[str, Any]:
+        """Parse structured analysis response from AI model"""
         
-        # Extract topics (look for list items or numbered list)
-        topics = []
-        topic_patterns = [
-            r'key_topics[:\s]*(.+?)(?:\n\n|\n[A-Z]|$)',
-            r'(?:topic|Topic)s?:?\s*\n((?:[-*•]\s*.+\n?)+)',
-            r'\d+[.)]\s*(.+?)(?:\n|$)'
-        ]
-        
-        for pattern in topic_patterns:
-            matches = re.findall(pattern, response, re.IGNORECASE | re.MULTILINE)
-            if matches:
-                for match in matches[:5]:  # Limit to 5 topics
-                    topic = re.sub(r'^[-*•\d.)\s]+', '', match.strip())
-                    if topic and len(topic) > 2:
-                        topics.append(topic)
-                break
-        
-        # Fallback topic extraction if none found
-        if not topics:
-            lines = document.split('\n')
-            for line in lines[:10]:
-                line = line.strip()
-                if line and (line.startswith('#') or (len(line) < 100 and len(line) > 5)):
-                    topics.append(line.replace('#', '').strip()[:50])
-        
-        return {
-            "content_type": content_type,
-            "content_summary": response[:200] if len(response) > 200 else response,
-            "complexity_level": complexity_level,
-            "key_topics": topics[:5],
-            "analysis_timestamp": time.time(),
-            "analysis_method": "gemini"
+        lines = response.strip().split('\n')
+        parsed = {
+            "content_type": "document",
+            "complexity_level": "moderate",
+            "key_topics": [],
+            "content_summary": "",
+            "analysis_timestamp": time.time()
         }
-    
-    def _analyze_content_heuristic(self, document: str) -> Dict[str, Any]:
-        """
-        Fallback heuristic-based content analysis
         
-        Used when Gemini is unavailable.
-        """
+        try:
+            for line in lines:
+                if line.startswith("CONTENT_TYPE:"):
+                    content_type = line.split(":", 1)[1].strip().lower()
+                    if content_type in ["document", "codebase"]:
+                        parsed["content_type"] = content_type
+                elif line.startswith("COMPLEXITY:"):
+                    complexity = line.split(":", 1)[1].strip().lower()
+                    if complexity in ["simple", "moderate", "complex"]:
+                        parsed["complexity_level"] = complexity
+                elif line.startswith("KEY_TOPICS:"):
+                    topics_str = line.split(":", 1)[1].strip()
+                    parsed["key_topics"] = [t.strip() for t in topics_str.split(",")][:5]
+                elif line.startswith("SUMMARY:"):
+                    parsed["content_summary"] = line.split(":", 1)[1].strip()
+        except Exception as e:
+            self.logger.warning(f"⚠️ Could not parse analysis: {e}")
+        
+        # Ensure summary exists
+        if not parsed["content_summary"]:
+            lines_count = len(document.split('\n'))
+            words_count = len(document.split())
+            parsed["content_summary"] = f"{parsed['content_type'].title()} with {lines_count} lines, {words_count} words"
+        
+        return parsed
+    
+    def _analyze_content_with_heuristics(self, document: str) -> Dict[str, Any]:
+        """Fallback: Analyze content using simple heuristics"""
+        
+        # Simple heuristics for content type detection
         code_indicators = [
             'import ', 'from ', 'class ', 'def ', 'function', 'var ', 'let ', 'const ',
             '#!/', '<?php', '<html', '<script', 'package ', 'public class', 'void main'
