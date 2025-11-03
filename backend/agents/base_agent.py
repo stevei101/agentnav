@@ -125,7 +125,6 @@ class Agent(ABC):
             self.logger.info(f"🔄 Agent '{name}' using Enhanced A2A Protocol (FR#027)")
         else:
             self.logger.info(f"🔄 Agent '{name}' using Legacy A2A Protocol")
-    
     @abstractmethod
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -226,7 +225,6 @@ class Agent(ABC):
             self.logger.info(f"📨 Received {msg_type} from {from_agent}")
         else:
             self.logger.warning(f"🤷 Unknown A2A message type: {msg_type}")
-    
     async def _notify_completion(self, result: Dict[str, Any]):
         """
         Notify other agents that this agent has completed
@@ -326,9 +324,6 @@ class AgentWorkflow:
     - Can be initialized with session_id for enhanced traceability
     """
 
-    def __init__(self):
-        self.a2a = A2AProtocol()
-    
     def __init__(self, session_id: Optional[str] = None, use_enhanced_a2a: bool = True):
         """
         Initialize AgentWorkflow
@@ -543,7 +538,7 @@ class AgentWorkflow:
                 continue
 
             agent = self.agents[agent_name]
-            agent_start_time = time.time()  # Initialize before try block
+            agent_start_time = time.time()
 
             try:
                 logger.info(f"🔄 Executing agent: {agent_name}")
@@ -612,8 +607,8 @@ class AgentWorkflow:
         session_context.workflow_status = "completed" if session_context.is_complete() else "partially_completed"
         session_context.current_agent = None
 
-        # FR#029: Store results in knowledge cache
-        if self.cache_service and session_context.workflow_status == "completed":
+        # FR#029: Store results in knowledge cache (including partial results)
+        if self.cache_service and session_context.workflow_status in ["completed", "partially_completed"]:
             await self.cache_service.store_cache(
                 content=session_context.raw_input,
                 content_type=session_context.content_type,
