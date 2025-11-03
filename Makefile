@@ -287,7 +287,9 @@ test-backend: check-podman podman-start network-create start-firestore
 	@echo "🧪 Running backend tests..."
 	@podman run --rm \
 		--network $(NETWORK) \
-		-v $$(pwd)/backend:/app \
+		-v $$(pwd):/workspace \
+		-w /workspace/backend \
+		-e PYTHONPATH=/workspace \
 		-e FIRESTORE_EMULATOR_HOST=$(FIRESTORE_CONTAINER):8080 \
 		-e FIRESTORE_PROJECT_ID=$${FIRESTORE_PROJECT_ID:-agentnav-dev} \
 		agentnav-backend:dev \
