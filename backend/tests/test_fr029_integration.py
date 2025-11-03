@@ -33,7 +33,7 @@ async def test_workflow_with_session_creation():
     
     # Execute workflow
     try:
-        updated_context = await workflow.execute_sequential_workflow(session_context)
+        await workflow.execute_sequential_workflow(session_context)
         
         # Verify session was created
         session_service = get_session_service()
@@ -85,7 +85,7 @@ async def test_workflow_with_cache():
     )
     
     try:
-        updated_context_1 = await workflow.execute_sequential_workflow(session_context_1)
+        await workflow.execute_sequential_workflow(session_context_1)
         
         # Give time for cache to be written
         await asyncio.sleep(1)
@@ -137,7 +137,7 @@ async def test_agent_states_persisted():
     )
     
     try:
-        updated_context = await workflow.execute_sequential_workflow(session_context)
+        await workflow.execute_sequential_workflow(session_context)
         
         # Check session for agent states
         session_service = get_session_service()

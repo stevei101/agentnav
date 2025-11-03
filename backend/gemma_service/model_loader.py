@@ -20,16 +20,51 @@ class ModelLoader:
         self._loaded = False
         
     def _detect_device(self) -> str:
-        """Detect available device (CUDA or CPU)"""
-        if torch.cuda.is_available():
-            device = "cuda"
-            logger.info(f"✅ GPU detected: {torch.cuda.get_device_name(0)}")
-            logger.info(f"   CUDA version: {torch.version.cuda}")
-            logger.info(f"   GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
-        else:
-            device = "cpu"
-            logger.warning("⚠️  No GPU detected, falling back to CPU")
-        return device
+        """
+        Detect available device (CUDA or CPU) with robust validation
+        
+        Enhanced GPU detection that validates actual CUDA functionality
+        before using GPU, with graceful fallback to CPU.
+        """
+        # Check if CUDA is available
+        if not torch.cuda.is_available():
+            logger.warning("⚠️  CUDA not available, using CPU")
+            return "cpu"
+        
+        try:
+            # Perform actual CUDA operation to validate GPU is functional
+            # This catches cases where CUDA is installed but GPU is inaccessible
+            test_tensor = torch.tensor([1.0]).cuda()
+            _ = test_tensor * 2  # Simple operation to verify GPU works
+            del test_tensor
+            torch.cuda.empty_cache()
+            
+            # Get detailed GPU information
+            device_count = torch.cuda.device_count()
+            if device_count == 0:
+                logger.warning("⚠️  CUDA available but no devices found, falling back to CPU")
+                return "cpu"
+            
+            device_name = torch.cuda.get_device_name(0)
+            device_props = torch.cuda.get_device_properties(0)
+            cuda_version = torch.version.cuda
+            
+            # Calculate GPU memory
+            total_memory_gb = device_props.total_memory / 1e9
+            
+            # Log comprehensive GPU information
+            logger.info(f"✅ GPU detected and validated: {device_name}")
+            logger.info(f"   CUDA version: {cuda_version}")
+            logger.info(f"   GPU memory: {total_memory_gb:.2f} GB")
+            logger.info(f"   Compute capability: {device_props.major}.{device_props.minor}")
+            logger.info(f"   Multi-processors: {device_props.multi_processor_count}")
+            
+            return "cuda"
+            
+        except Exception as e:
+            logger.warning(f"⚠️  GPU validation failed: {e}")
+            logger.info("   Falling back to CPU")
+            return "cpu"
     
     def load_model(self):
         """Load Gemma model and tokenizer"""
@@ -43,10 +78,19 @@ class ModelLoader:
             logger.info(f"🔄 Loading model: {self.model_name}")
             logger.info(f"   Device: {self.device}")
             
+            # Get Hugging Face token (only use if not dummy/placeholder)
+            hf_token = os.getenv("HUGGINGFACE_TOKEN")
+            if hf_token and hf_token.strip() and hf_token.lower() not in ["dummy-token-value", "placeholder", ""]:
+                logger.info("   Using Hugging Face token for authentication")
+                token_kwargs = {"token": hf_token}
+            else:
+                logger.warning("   No valid Hugging Face token found - model may require authentication")
+                token_kwargs = {}
+            
             # Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name,
-                token=os.getenv("HUGGINGFACE_TOKEN")  # Optional: for private models
+                **token_kwargs
             )
             
             # Load model with GPU support
@@ -54,6 +98,7 @@ class ModelLoader:
                 "torch_dtype": torch.float16 if self.device == "cuda" else torch.float32,
                 "device_map": "auto" if self.device == "cuda" else None,
             }
+            model_kwargs.update(token_kwargs)  # Add token if available
             
             # Use 8-bit quantization if memory constrained (optional)
             if os.getenv("USE_8BIT_QUANTIZATION", "false").lower() == "true":
@@ -67,8 +112,7 @@ class ModelLoader:
             
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                **model_kwargs,
-                token=os.getenv("HUGGINGFACE_TOKEN")
+                **model_kwargs
             )
             
             # When device_map="auto" is used, model placement is handled automatically
