@@ -26,6 +26,9 @@ resource "google_project_service" "apis" {
 
     # Cloud Build (for Connect Repo / automatic deployments)
     "cloudbuild.googleapis.com",
+
+    # Cloud DNS API (required for custom domain DNS records)
+    "dns.googleapis.com",
   ])
 
   project = var.project_id
