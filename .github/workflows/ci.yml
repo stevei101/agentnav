@@ -138,23 +138,18 @@ jobs:
   osv-scanner:
     name: OSV Dependency Vulnerability Scan
     needs: changes
-    # Only run on dependency file changes (minimum required check)
     if: |
       github.event_name == 'push' ||
       needs.changes.outputs.dependencies == 'true'
     permissions:
-      # Required to upload SARIF file to CodeQL
       actions: read
-      # Require writing security events to upload SARIF file to security tab
-      security-events: write
-      # Only need to read contents
       contents: read
+      security-events: write
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.4
     with:
       scan-args: |-
         --recursive
-        ./
-      fail-on-vuln: false
+        .
 
   # ============================================================================
   # PATH-FILTERED CI JOBS

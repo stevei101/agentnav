@@ -91,7 +91,9 @@ jobs:
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          [[ -n "${LATEST_TAG}" ]] && echo "Latest tag: ${LATEST_TAG}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "Latest tag: ${LATEST_TAG}"
+          fi
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
@@ -171,7 +173,7 @@ jobs:
 
       - name: Build and push gemma with Cloud Build
         if: matrix.service == 'gemma'
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           set -euo pipefail
           
@@ -181,11 +183,109 @@ jobs:
           echo "   Project: ${GCP_PROJECT_ID}"
           echo "   Artifact Registry: ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}"
 
-          # Submit Cloud Build job and wait for completion
-          gcloud builds submit \
-            --config=cloudbuild-gemma.yaml \
-            --substitutions=COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-
+          # Submit Cloud Build job with exponential backoff for quota errors (FR#185)
+          # Implements custom polling with exponential backoff to avoid 429 quota errors
+          SUBSTITUTIONS="COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+          
+          # Function for exponential backoff retry
+          submit_build_with_retry() {
+            local max_retries=5
+            local initial_delay=10
+            local max_delay=120
+            local retry_count=0
+            local delay=$initial_delay
+            
+            while [ $retry_count -lt $max_retries ]; do
+              echo "📤 Submitting Cloud Build (attempt $((retry_count + 1))/$max_retries)..."
+              
+              # Submit build without waiting (async)
+              BUILD_ID=$(gcloud builds submit \
+                --config=cloudbuild-gemma.yaml \
+                --substitutions="${SUBSTITUTIONS}" \
+                --async \
+                2>&1 | grep -oP '(?<=id: )[^ ]+' || echo "")
+              
+              if [ -z "$BUILD_ID" ]; then
+                echo "❌ Failed to submit build or extract build ID"
+                exit 1
+              fi
+              
+              echo "✅ Build submitted: ${BUILD_ID}"
+              echo "⏳ Waiting for build completion with exponential backoff polling..."
+              
+              # Poll with exponential backoff (reduces API rate limit issues)
+              local poll_delay=30  # Start with 30s polling interval (vs default aggressive polling)
+              local poll_count=0
+              local max_polls=30   # Maximum polling attempts (15-18 minutes total - within 20min GitHub Actions timeout)
+              
+              while [ $poll_count -lt $max_polls ]; do
+                sleep $poll_delay
+                poll_count=$((poll_count + 1))
+                
+                BUILD_STATUS=$(gcloud builds describe "${BUILD_ID}" \
+                  --format="value(status)" \
+                  2>/dev/null || echo "ERROR")
+                
+                if [ "$BUILD_STATUS" = "SUCCESS" ]; then
+                  echo "✅ Cloud Build completed successfully"
+                  return 0
+                elif [ "$BUILD_STATUS" = "FAILURE" ] || [ "$BUILD_STATUS" = "CANCELLED" ]; then
+                  # Check if it's a quota error
+                  ERROR_MSG=$(gcloud builds describe "${BUILD_ID}" \
+                    --format="value(failureInfo.detail)" \
+                    2>/dev/null || echo "")
+                  
+                  if echo "$ERROR_MSG" | grep -qE "429|quota|rate limit"; then
+                    echo "⚠️  Quota error detected (HTTP 429), retrying with backoff..."
+                    delay=$((delay * 2))
+                    if [ $delay -gt $max_delay ]; then
+                      delay=$max_delay
+                    fi
+                    echo "   Waiting ${delay}s before retry..."
+                    sleep $delay
+                    retry_count=$((retry_count + 1))
+                    break  # Break out of polling loop to retry submission
+                  else
+                    echo "❌ Build failed with non-quota error: ${ERROR_MSG}"
+                    exit 1
+                  fi
+                elif [ "$BUILD_STATUS" = "ERROR" ]; then
+                  echo "❌ Build error occurred"
+                  exit 1
+                fi
+                
+                # Exponential backoff on polling interval (optimized for GitHub Actions 20min timeout)
+                if [ $poll_count -lt 10 ]; then
+                  poll_delay=30   # First 10 polls: 30s interval (5 minutes)
+                elif [ $poll_count -lt 20 ]; then
+                  poll_delay=45   # Next 10 polls: 45s interval (7.5 minutes)
+                else
+                  poll_delay=60   # Final 10 polls: 60s interval (10 minutes)
+                fi
+                # Total max time: 5 + 7.5 + 10 = 22.5 minutes, but limited by max_polls=30 = 17.5 minutes
+                
+                echo "   Build status: ${BUILD_STATUS} (polling every ${poll_delay}s)..."
+              done
+              
+              if [ $poll_count -ge $max_polls ]; then
+                echo "⚠️  Build polling timeout, retrying submission..."
+                retry_count=$((retry_count + 1))
+                delay=$((delay * 2))
+                if [ $delay -gt $max_delay ]; then
+                  delay=$max_delay
+                fi
+                echo "   Waiting ${delay}s before retry..."
+                sleep $delay
+              fi
+            done
+            
+            echo "❌ Build failed after ${max_retries} retries"
+            exit 1
+          }
+          
+          # Execute build with retry logic
+          submit_build_with_retry
+          
           echo "✅ Gemma Cloud Build completed successfully"
 
   deploy:
