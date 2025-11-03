@@ -23,10 +23,11 @@ class LinkerAgent(Agent):
     - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None, model_type: str = "gemini"):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
+        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -244,29 +245,12 @@ Return a structured analysis of entities and their relationships.
         return entities
     
     async def _extract_document_entities(self, document: str) -> List[Dict[str, Any]]:
-        """
-        Extract entities from document content using Gemini (FR#090)
-        
-        Uses the standardized Gemini client (google-genai SDK) for entity extraction.
-        Falls back to Gemma service if Gemini is unavailable.
-        """
+        """Extract entities from document content using Gemini/Gemma"""
         try:
-            from services.gemini_client import generate_content_with_prompt_template
-            
-            # Try to use prompt template from Firestore (FR#003 integration)
-            try:
-                response = await generate_content_with_prompt_template(
-                    prompt_template_id="linker_entity_extraction",
-                    template_variables={
-                        "content": document[:2000],
-                        "entity_count": "5-10"
-                    },
-                    temperature=0.3,
-                    max_output_tokens=300
-                )
-            except (ValueError, RuntimeError):
-                # Fallback to direct prompt if template not available
-                prompt = f"""
+            # Use standardized Gemini client for cloud-based or local reasoning
+            from services.gemini_client import reason_with_gemini
+
+            prompt = f"""
 Analyze this document and extract key entities (concepts, topics, themes).
 Return them as a simple list, one per line.
 
@@ -275,12 +259,13 @@ Document:
 
 Extract 5-10 key entities:
 """
-                from services.gemini_client import generate_content
-                response = await generate_content(
-                    prompt=prompt,
-                    temperature=0.3,
-                    max_output_tokens=300
-                )
+
+            response = await reason_with_gemini(
+                prompt=prompt,
+                max_tokens=300,
+                temperature=0.3,
+                model_type=self.model_type
+            )
             
             # Parse response into entities
             entities = []
@@ -583,32 +568,19 @@ Extract 5-10 key entities:
         relationships: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        Use Gemini reasoning to enhance relationship analysis (FR#090)
+        Use reasoning to enhance relationship analysis (Gemini or Gemma based on model_type)
         
-        This method uses the standardized Gemini client to analyze specific entity relationships
+        This method asks the selected model to analyze specific entity relationships
         in the context of the full document.
         Falls back to Gemma service if Gemini is unavailable.
         """
         try:
-            from services.gemini_client import generate_content_with_prompt_template
+            from services.gemini_client import reason_with_gemini
             
             # Take top entities by importance
             top_entities = [e["label"] for e in entities[:5]]
             
-            # Try to use prompt template from Firestore (FR#003 integration)
-            try:
-                response = await generate_content_with_prompt_template(
-                    prompt_template_id="linker_relationship_analysis",
-                    template_variables={
-                        "entities": ', '.join(top_entities),
-                        "context": document[:1500]
-                    },
-                    temperature=0.3,
-                    max_output_tokens=400
-                )
-            except (ValueError, RuntimeError):
-                # Fallback to direct prompt if template not available
-                prompt = f"""
+            prompt = f"""
 Analyze the relationships between these entities in the given context.
 For each pair, describe the relationship type (e.g., "supports", "contradicts", "builds on", "causes", "enables").
 
@@ -619,19 +591,20 @@ Context:
 
 Provide relationship insights:
 """
-                from services.gemini_client import generate_content
-                response = await generate_content(
-                    prompt=prompt,
-                    temperature=0.3,
-                    max_output_tokens=400
-                )
+            
+            response = await reason_with_gemini(
+                prompt=prompt,
+                max_tokens=400,
+                temperature=0.3,
+                model_type=self.model_type
+            )
             
             # Parse reasoning to enhance existing relationships
             for relationship in relationships:
                 # Add reasoning context
                 relationship["reasoning_context"] = response[:200]  # Store snippet
             
-            self.logger.info("✅ Enhanced relationships with Gemini reasoning")
+            self.logger.info(f"✅ Enhanced relationships with reasoning (model_type={self.model_type})")
             
         except Exception as e:
             self.logger.warning(f"⚠️  Could not enhance with Gemini reasoning: {e}")
