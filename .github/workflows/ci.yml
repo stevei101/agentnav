@@ -159,3 +159,39 @@ jobs:
       - name: Aggregate Security Results
         run: |
           echo "SECURITY_AUDIT: All aggregated security scans completed successfully."
+
+  # Final CI Quality Gate - Single, non-skippable meta-check for PR merge
+  CI_QUALITY_GATE:
+    name: CI Quality Gate (Final)
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [CODE_QUALITY, SECURITY_AUDIT]
+    steps:
+      - name: Evaluate CI Results
+        run: |
+          echo "Evaluating CI Quality Gate..."
+          
+          # Check the conclusions of required jobs
+          # If either CODE_QUALITY or SECURITY_AUDIT failed, fail this gate
+          # If they were skipped due to path filtering, that's OK (don't fail)
+          
+          code_quality_conclusion="${{ needs.CODE_QUALITY.result }}"
+          security_audit_conclusion="${{ needs.SECURITY_AUDIT.result }}"
+          
+          echo "CODE_QUALITY result: $code_quality_conclusion"
+          echo "SECURITY_AUDIT result: $security_audit_conclusion"
+          
+          # Fail only if a job was triggered and failed
+          # 'skipped' status is acceptable and means path filters excluded the tests
+          if [[ "$code_quality_conclusion" == "failure" ]] || [[ "$security_audit_conclusion" == "failure" ]]; then
+            echo "❌ CI Quality Gate FAILED - One or more quality checks failed"
+            exit 1
+          fi
+          
+          if [[ "$code_quality_conclusion" == "skipped" && "$security_audit_conclusion" == "skipped" ]]; then
+            echo "⚠️  CI Quality Gate: All quality checks were skipped (path filtering)"
+            exit 0
+          fi
+          
+          echo "✅ CI Quality Gate PASSED - All required quality checks passed"
+          exit 0
