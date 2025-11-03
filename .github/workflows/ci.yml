@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
+    branches: ['**'] # Run on ALL branches for immediate feedback (FR#100)
 
 jobs:
   # ============================================================================
@@ -228,6 +228,22 @@ jobs:
         run: |
           pytest -v
 
+      - name: Run backend tests (Gemini model)
+        env:
+          FIRESTORE_EMULATOR_HOST: 'localhost:8081'
+          FIRESTORE_PROJECT_ID: 'agentnav-dev'
+          AGENTNAV_MODEL_TYPE: 'gemini'
+        run: |
+          pytest -q backend/tests/test_model_selection_integration.py
+
+      - name: Run backend tests (Gemma model)
+        env:
+          FIRESTORE_EMULATOR_HOST: 'localhost:8081'
+          FIRESTORE_PROJECT_ID: 'agentnav-dev'
+          AGENTNAV_MODEL_TYPE: 'gemma'
+        run: |
+          pytest -q backend/tests/test_model_selection_integration.py
+
       - name: Stop Firestore emulator
         if: always()
         run: docker rm -f firestore-emulator || true
@@ -376,20 +392,20 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Evaluating CI pipeline results..." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           CODE_QUALITY_RESULT="${{ needs.CODE_QUALITY.result }}"
           SECURITY_AUDIT_RESULT="${{ needs.SECURITY_AUDIT.result }}"
-          
+
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| CODE_QUALITY | $CODE_QUALITY_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| SECURITY_AUDIT | $SECURITY_AUDIT_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # A job can be: success, failure, cancelled, or skipped
           # We pass if jobs are either success OR skipped (due to path filtering)
           # We fail only if a job that RAN has failed
-          
+
           if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$SECURITY_AUDIT_RESULT" == "failure" ]]; then
             echo "❌ Quality gate FAILED - One or more checks failed" >> $GITHUB_STEP_SUMMARY
             exit 1
