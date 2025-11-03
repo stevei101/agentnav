@@ -71,8 +71,9 @@ async def add_security_headers(request: Request, call_next):
     # Referrer Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     
-    # Content Security Policy (basic)
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    # Content Security Policy (relaxed for FastAPI)
+    # Allow same-origin and inline styles for FastAPI docs
+    response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     
     return response
 

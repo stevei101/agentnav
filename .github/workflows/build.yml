@@ -271,9 +271,11 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --cpu-throttling \
-            --session-affinity \
             --port 8080 \
-            --set-env-vars "PORT=8080,ENVIRONMENT=production,ALLOWED_HOSTS=agentnav.lornu.com,*.run.app,CORS_ORIGINS=https://agentnav.lornu.com" \
+            --set-env-vars PORT=8080 \
+            --set-env-vars ENVIRONMENT=production \
+            --set-env-vars ALLOWED_HOSTS="agentnav.lornu.com,*.run.app" \
+            --set-env-vars CORS_ORIGINS="https://agentnav.lornu.com" \
             --quiet
           
           echo "✅ Backend deployment completed"

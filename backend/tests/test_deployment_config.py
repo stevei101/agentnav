@@ -17,7 +17,9 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_uses_multistage_build(self):
         """Verify Dockerfile uses multi-stage build pattern"""
-        dockerfile_path = "/home/runner/work/agentnav/agentnav/backend/Dockerfile"
+        import os
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dockerfile_path = os.path.join(backend_dir, "Dockerfile")
 
         with open(dockerfile_path, "r") as f:
             content = f.read()
@@ -258,7 +260,9 @@ class TestDeploymentBestPractices:
 
     def test_dockerfile_minimizes_layers(self):
         """Verify Dockerfile uses efficient layering strategy"""
-        dockerfile_path = "/home/runner/work/agentnav/agentnav/backend/Dockerfile"
+        import os
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dockerfile_path = os.path.join(backend_dir, "Dockerfile")
 
         with open(dockerfile_path, "r") as f:
             content = f.read()
@@ -266,8 +270,12 @@ class TestDeploymentBestPractices:
         # Check for combined RUN commands and efficient layering
         lines = [line for line in content.split('\n') if line.strip().startswith('RUN')]
         
-        # Should have limited number of RUN commands (efficient layering)
-        assert len(lines) <= 5
+        # Multi-stage builds typically have 3-5 RUN commands total
+        # Builder stage: 1-2 commands (uv install)
+        # Runtime stage: 1-2 commands (user creation, permissions)
+        # This is efficient for Docker layer caching
+        MAX_RUN_COMMANDS = 5
+        assert len(lines) <= MAX_RUN_COMMANDS, f"Found {len(lines)} RUN commands, expected <= {MAX_RUN_COMMANDS} for optimal layer caching"
 
     def test_startup_script_uses_exec(self):
         """Verify startup script uses exec for proper signal handling"""
