@@ -41,6 +41,11 @@ COPY --from=builder /install /install
 # Copy application code
 COPY . .
 
+# Copy entrypoint script and make it executable before switching users
+# Build context is ./backend, so entrypoint.sh is at root of context
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Create non-root user for security (Cloud Run best practice)
 RUN groupadd -r appuser && useradd -r -g appuser appuser && \
     chown -R appuser:appuser $APP_HOME && \
@@ -51,11 +56,6 @@ USER appuser
 
 # Expose port (Cloud Run will set PORT env var automatically)
 EXPOSE 8080
-
-# Copy entrypoint script
-# Build context is ./backend, so entrypoint.sh is at root of context
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 
 # Health check for Cloud Run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
