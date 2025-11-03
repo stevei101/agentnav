@@ -142,7 +142,7 @@ async def reason_with_gemini(
 
     if model_type == "gemini":
         # Use cloud Gemini via GenAI SDK
-        model = model or os.environ.get("GEMINI_MODEL") or "gemini-1"
+        model = model or os.environ.get("GEMINI_MODEL") or "gemini-1.5-pro"
         client = GeminiClient()
         result = await client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
 
