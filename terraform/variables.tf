@@ -101,3 +101,23 @@ variable "gemma_container_port" {
   default     = 8080
 }
 
+# Optional: Secret values (for Terraform-based secret management)
+# WARNING: These will be stored in Terraform state
+# For production, use gcloud CLI or GitHub Actions workflow instead
+# 
+# To use: Add to terraform.tfvars (and ensure it's in .gitignore!)
+
+variable "gemini_api_key" {
+  description = "Gemini API key value (optional - if empty, secret will be created without value)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "huggingface_token" {
+  description = "Hugging Face token value (optional - if empty, secret will be created without value)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+

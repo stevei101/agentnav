@@ -72,6 +72,35 @@ resource "google_secret_manager_secret_iam_member" "gemma_huggingface_token" {
   member    = "serviceAccount:${google_service_account.cloud_run_gemma.email}"
 }
 
-# Note: Secret values should be added after creation via:
+# Optional: Add secret versions via Terraform
+# WARNING: Secret values in Terraform state are visible to anyone with state access
+# For production, consider using gcloud CLI or GitHub Actions workflow instead
+# 
+# To use Terraform for secret values:
+# 1. Add variables to terraform.tfvars (never commit this file!)
+# 2. Uncomment the google_secret_manager_secret_version resources below
+# 3. Run: terraform apply
+
+# resource "google_secret_manager_secret_version" "gemini_api_key_version" {
+#   count       = var.gemini_api_key != "" ? 1 : 0
+#   secret      = google_secret_manager_secret.gemini_api_key.id
+#   secret_data = var.gemini_api_key
+# 
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+# 
+# resource "google_secret_manager_secret_version" "huggingface_token_version" {
+#   count       = var.huggingface_token != "" ? 1 : 0
+#   secret      = google_secret_manager_secret.huggingface_token.id
+#   secret_data = var.huggingface_token
+# 
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+
+# Note: For manual secret management (recommended for security):
 # echo -n "YOUR_SECRET_VALUE" | gcloud secrets versions add SECRET_NAME --data-file=-
 
