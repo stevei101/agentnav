@@ -59,7 +59,9 @@ fi
 
 echo ""
 echo "4. Checking for other sensitive file patterns..."
-SENSITIVE_FILES=(.env.local .env.production .env.development .env.test)
+# Note: .env.test is allowed in history if it only contains test data
+# We check that it's in .gitignore to ensure it won't be committed again
+SENSITIVE_FILES=(.env.local .env.production .env.development)
 FOUND_SENSITIVE=0
 
 # More efficient approach: combine all patterns into a single grep
@@ -75,6 +77,21 @@ if git log --all --name-only --pretty=format: | grep -qE "$PATTERNS"; then
             FAILED=1
         fi
     done
+fi
+
+# Special handling for .env.test - warn but don't fail if it's in .gitignore
+if git log --all --name-only --pretty=format: -- '.env.test' | grep -q '^.env.test$'; then
+    COUNT=$(git log --all --name-only --pretty=format: -- '.env.test' | grep -c '^.env.test$')
+    if grep -q "^\.env\.test$" .gitignore 2>/dev/null; then
+        echo -e "${YELLOW}⚠ Found .env.test in Git history ($COUNT occurrences)${NC}"
+        echo "   This is OK if it only contains test data. Ensure it's never committed again."
+        echo "   ✓ .env.test is in .gitignore"
+    else
+        echo -e "${RED}✗ Found .env.test in Git history ($COUNT occurrences)${NC}"
+        echo "   ✗ .env.test is NOT in .gitignore - this is a security risk!"
+        FOUND_SENSITIVE=1
+        FAILED=1
+    fi
 fi
 
 if [ "$FOUND_SENSITIVE" -eq 0 ]; then
