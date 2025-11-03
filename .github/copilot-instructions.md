@@ -60,7 +60,7 @@ All agents communicate asynchronously via A2A Protocol and persist state in Fire
 * **Secrets:** Google Secret Manager (never embed credentials)  
 * **Container Registry:** Google Artifact Registry (GAR)  
 * **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run  
-* **DNS/TLS:** Cloud DNS \+ Cloud Run managed TLS for agentnav.lornu.com
+* **DNS/TLS:** Cloud DNS + Cloud Run managed TLS for agentnav.lornu.com
 
 ---
 
