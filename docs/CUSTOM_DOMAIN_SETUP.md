@@ -95,9 +95,10 @@ gcloud run domain-mappings describe agentnav.lornu.com \
   --project=YOUR_PROJECT_ID
 
 # Check DNS records
+# Note: DNS record names in Cloud DNS include a trailing dot
 gcloud dns record-sets list \
   --zone=lornu-com \
-  --filter="name:agentnav.lornu.com" \
+  --filter="name:agentnav.lornu.com." \
   --project=YOUR_PROJECT_ID
 ```
 

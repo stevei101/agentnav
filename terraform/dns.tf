@@ -45,7 +45,8 @@ resource "google_cloud_run_domain_mapping" "frontend_custom_domain" {
 # Cloud Run provides these IP addresses in the domain mapping status
 # We extract A records from the domain mapping status
 resource "google_dns_record_set" "frontend_domain_a" {
-  name         = var.custom_domain_name
+  # DNS record names must include trailing dot for Cloud DNS
+  name         = "${var.custom_domain_name}."
   managed_zone = data.google_dns_managed_zone.lornu_zone.name
   type         = "A"
   ttl          = 300
@@ -53,13 +54,19 @@ resource "google_dns_record_set" "frontend_domain_a" {
 
   # Extract A record IPs from Cloud Run domain mapping status
   # The status.resource_records contains the target DNS records provided by Cloud Run
-  rrdatas = try(
-    [
+  # Use count to only create this resource when A records are available
+  count = try(
+    length([
       for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
       record.rrdata if record.type == "A"
-    ],
-    []
-  )
+    ]) > 0,
+    false
+  ) ? 1 : 0
+
+  rrdatas = [
+    for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+    record.rrdata if record.type == "A"
+  ]
 
   depends_on = [google_cloud_run_domain_mapping.frontend_custom_domain]
 }
@@ -75,19 +82,17 @@ resource "google_dns_record_set" "frontend_domain_cname" {
     false
   ) ? 1 : 0
 
-  name         = var.custom_domain_name
+  # DNS record names must include trailing dot for Cloud DNS
+  name         = "${var.custom_domain_name}."
   managed_zone = data.google_dns_managed_zone.lornu_zone.name
   type         = "CNAME"
   ttl          = 300
   project      = var.project_id
 
-  rrdatas = try(
-    [
-      for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
-      record.rrdata if record.type == "CNAME"
-    ],
-    []
-  )
+  rrdatas = [
+    for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+    record.rrdata if record.type == "CNAME"
+  ]
 
   depends_on = [google_cloud_run_domain_mapping.frontend_custom_domain]
 }
