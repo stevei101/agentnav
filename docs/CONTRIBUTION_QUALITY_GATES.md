@@ -181,9 +181,28 @@ These checks run but are **not required** for merge:
 - `Build and Push Containers` - Container build verification
 - `Build Gemma Debug` - Gemma service debug builds
 
+## Development Assistance
+
+### agentnav-copilot-agent
+
+The project includes a custom GitHub Copilot agent (`@agentnav-gh-copilot-agent`) that is context-aware of the complete system architecture, quality policies, and conventions. Use it to:
+
+- Generate code following project patterns
+- Review code for policy compliance (70% coverage, Cloud Run compatibility)
+- Understand architectural decisions
+- Get instant answers about tooling (e.g., "use uv for Python deps")
+
+**Quick Start:**
+```
+@agentnav-gh-copilot-agent [your question]
+```
+
+For detailed usage instructions, see [COPILOT_AGENT_GUIDE.md](COPILOT_AGENT_GUIDE.md).
+
 ## Next steps
 
 - ✅ GitHub Actions workflows configured with composite jobs
 - ✅ Status checks appear automatically on all pushes
+- ✅ Custom Copilot agent available for development assistance
 - ⏳ Update branch protection rules in GitHub to require these checks (see setup script)
 - ⏳ Optional: Add automated job to validate status check existence
