@@ -18,6 +18,8 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   TF_CLOUD_ORGANIZATION: ${{ secrets.TF_CLOUD_ORGANIZATION }}
   TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
 
 jobs:
   terraform:
@@ -50,6 +52,14 @@ jobs:
           terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
+      - name: Export Terraform/Google env
+        run: |
+          echo "GOOGLE_CLOUD_PROJECT=${GCP_PROJECT_ID}" >> $GITHUB_ENV
+          echo "GOOGLE_PROJECT=${GCP_PROJECT_ID}" >> $GITHUB_ENV
+          echo "TF_VAR_project_id=${GCP_PROJECT_ID}" >> $GITHUB_ENV
+          echo "CLOUDSDK_CORE_PROJECT=${GCP_PROJECT_ID}" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ steps.auth.outputs.credentials_file_path }}" >> $GITHUB_ENV
+
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive terraform/
@@ -58,11 +68,20 @@ jobs:
       - name: Terraform Init
         id: init
         working-directory: terraform
-        run: terraform init
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          TF_VAR_project_id: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+        run: terraform init -input=false -upgrade
 
       - name: Terraform Validate
         id: validate
         working-directory: terraform
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          TF_VAR_project_id: ${{ env.GCP_PROJECT_ID }}
         run: terraform validate -no-color
 
       - name: Setup TFLint
@@ -88,6 +107,10 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         working-directory: terraform
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          TF_VAR_project_id: ${{ env.GCP_PROJECT_ID }}
         run: terraform plan -no-color -input=false
 
       - name: Comment PR
@@ -134,4 +157,8 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          GOOGLE_PROJECT: ${{ env.GCP_PROJECT_ID }}
+          TF_VAR_project_id: ${{ env.GCP_PROJECT_ID }}
         run: terraform apply -auto-approve -input=false
