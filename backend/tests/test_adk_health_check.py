@@ -24,10 +24,9 @@ class TestHealthzEndpoint:
     def test_healthz_with_operational_adk(self):
         """Test healthz returns healthy when ADK is operational"""
         with (
-            patch("main.OrchestratorAgent") as mock_agent_class,
-            patch("main.A2AProtocol") as mock_a2a,
+            patch("backend.agents.OrchestratorAgent") as mock_agent_class,
+            patch("backend.agents.A2AProtocol") as mock_a2a,
         ):
-
             # Mock successful agent initialization
             mock_agent = MagicMock()
             mock_agent.name = "orchestrator"
@@ -62,7 +61,7 @@ class TestHealthzEndpoint:
 
     def test_healthz_firestore_check(self):
         """Test healthz checks Firestore connectivity"""
-        with patch("main.get_firestore_client") as mock_firestore:
+        with patch("backend.services.firestore_client.get_firestore_client") as mock_firestore:
             # Mock Firestore client available
             mock_firestore.return_value = MagicMock()
 
@@ -75,7 +74,7 @@ class TestHealthzEndpoint:
     def test_healthz_firestore_error_handling(self):
         """Test healthz handles Firestore errors gracefully"""
         with patch(
-            "main.get_firestore_client",
+            "backend.services.firestore_client.get_firestore_client",
             side_effect=Exception("Firestore connection failed"),
         ):
             response = client.get("/healthz")
@@ -93,13 +92,12 @@ class TestAgentStatusEndpoint:
     def test_agent_status_operational(self):
         """Test agent status returns operational when all agents are available"""
         with (
-            patch("main.OrchestratorAgent") as mock_orch,
-            patch("main.SummarizerAgent") as mock_sum,
-            patch("main.LinkerAgent") as mock_link,
-            patch("main.VisualizerAgent") as mock_viz,
-            patch("main.A2AProtocol") as mock_a2a,
+            patch("backend.agents.OrchestratorAgent") as mock_orch,
+            patch("backend.agents.SummarizerAgent") as mock_sum,
+            patch("backend.agents.LinkerAgent") as mock_link,
+            patch("backend.agents.VisualizerAgent") as mock_viz,
+            patch("backend.agents.A2AProtocol") as mock_a2a,
         ):
-
             # Mock agent instances
             def create_mock_agent(name):
                 agent = MagicMock()
@@ -140,15 +138,14 @@ class TestAgentStatusEndpoint:
     def test_agent_status_partial_availability(self):
         """Test agent status when some agents fail to initialize"""
         with (
-            patch("main.OrchestratorAgent") as mock_orch,
+            patch("backend.agents.OrchestratorAgent") as mock_orch,
             patch(
-                "main.SummarizerAgent", side_effect=Exception("Summarizer init failed")
+                "backend.agents.SummarizerAgent", side_effect=Exception("Summarizer init failed")
             ),
-            patch("main.LinkerAgent") as mock_link,
-            patch("main.VisualizerAgent") as mock_viz,
-            patch("main.A2AProtocol") as mock_a2a,
+            patch("backend.agents.LinkerAgent") as mock_link,
+            patch("backend.agents.VisualizerAgent") as mock_viz,
+            patch("backend.agents.A2AProtocol") as mock_a2a,
         ):
-
             # Mock successful agents
             def create_mock_agent(name):
                 agent = MagicMock()
@@ -173,13 +170,12 @@ class TestAgentStatusEndpoint:
     def test_agent_status_includes_environment_vars(self):
         """Test agent status includes environment variable diagnostics"""
         with (
-            patch("main.OrchestratorAgent"),
-            patch("main.SummarizerAgent"),
-            patch("main.LinkerAgent"),
-            patch("main.VisualizerAgent"),
-            patch("main.A2AProtocol"),
+            patch("backend.agents.OrchestratorAgent"),
+            patch("backend.agents.SummarizerAgent"),
+            patch("backend.agents.LinkerAgent"),
+            patch("backend.agents.VisualizerAgent"),
+            patch("backend.agents.A2AProtocol"),
         ):
-
             with patch.dict(
                 os.environ,
                 {"FIRESTORE_PROJECT_ID": "test-project", "FIRESTORE_DATABASE_ID": ""},
