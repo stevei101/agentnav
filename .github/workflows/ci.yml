@@ -137,7 +137,6 @@ jobs:
 
   osv-scanner:
     name: OSV Dependency Vulnerability Scan
-    runs-on: ubuntu-latest
     needs: changes
     if: |
       github.event_name == 'push' ||
