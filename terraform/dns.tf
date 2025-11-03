@@ -14,6 +14,9 @@
 data "google_dns_managed_zone" "lornu_zone" {
   name    = var.dns_zone_name
   project = var.project_id
+
+  # Ensure DNS API is enabled before attempting to read the zone
+  depends_on = [google_project_service.apis]
 }
 
 # Cloud Run Domain Mapping for agentnav.lornu.com
