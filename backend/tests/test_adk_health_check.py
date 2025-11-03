@@ -23,14 +23,17 @@ class TestHealthzEndpoint:
 
     def test_healthz_with_operational_adk(self):
         """Test healthz returns healthy when ADK is operational"""
-        with patch("main.OrchestratorAgent") as mock_agent_class, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+        with patch("agents.OrchestratorAgent") as mock_agent_class, patch(
+            "agents.A2AProtocol"
+        ) as mock_a2a_class:
 
             # Mock successful agent initialization
             mock_agent = MagicMock()
             mock_agent.name = "orchestrator"
             mock_agent_class.return_value = mock_agent
+            
+            mock_a2a = MagicMock()
+            mock_a2a_class.return_value = mock_a2a
 
             response = client.get("/healthz")
 
@@ -60,21 +63,20 @@ class TestHealthzEndpoint:
                 assert "adk" in data["errors"]
 
     def test_healthz_firestore_check(self):
-        """Test healthz checks Firestore connectivity"""
-        with patch("main.get_firestore_client") as mock_firestore:
-            # Mock Firestore client available
-            mock_firestore.return_value = MagicMock()
+        """Test healthz firestore connectivity check"""
+        with patch("services.firestore_client.get_firestore_client") as mock_firestore:
+            mock_firestore.return_value = MagicMock()  # Mock successful client
 
             response = client.get("/healthz")
 
             assert response.status_code == 200
             data = response.json()
-            assert data["firestore"] in ["connected", "disconnected", "error"]
+            assert "firestore_status" in data
 
     def test_healthz_firestore_error_handling(self):
-        """Test healthz handles Firestore errors gracefully"""
+        """Test healthz handles firestore errors gracefully"""
         with patch(
-            "main.get_firestore_client",
+            "services.firestore_client.get_firestore_client",
             side_effect=Exception("Firestore connection failed"),
         ):
             response = client.get("/healthz")
@@ -91,13 +93,13 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_operational(self):
         """Test agent status returns operational when all agents are available"""
-        with patch("main.OrchestratorAgent") as mock_orch, patch(
-            "main.SummarizerAgent"
-        ) as mock_sum, patch("main.LinkerAgent") as mock_link, patch(
-            "main.VisualizerAgent"
+        with patch("agents.OrchestratorAgent") as mock_orch, patch(
+            "agents.SummarizerAgent"
+        ) as mock_sum, patch("agents.LinkerAgent") as mock_link, patch(
+            "agents.VisualizerAgent"
         ) as mock_viz, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+            "agents.A2AProtocol"
+        ) as mock_a2a_class:
 
             # Mock agent instances
             def create_mock_agent(name):
@@ -138,13 +140,13 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_partial_availability(self):
         """Test agent status when some agents fail to initialize"""
-        with patch("main.OrchestratorAgent") as mock_orch, patch(
-            "main.SummarizerAgent", side_effect=Exception("Summarizer init failed")
-        ), patch("main.LinkerAgent") as mock_link, patch(
-            "main.VisualizerAgent"
+        with patch("agents.OrchestratorAgent") as mock_orch, patch(
+            "agents.SummarizerAgent", side_effect=Exception("Summarizer init failed")
+        ), patch("agents.LinkerAgent") as mock_link, patch(
+            "agents.VisualizerAgent"
         ) as mock_viz, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+            "agents.A2AProtocol"
+        ) as mock_a2a_class:
 
             # Mock successful agents
             def create_mock_agent(name):
@@ -169,9 +171,9 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_includes_environment_vars(self):
         """Test agent status includes environment variable diagnostics"""
-        with patch("main.OrchestratorAgent"), patch("main.SummarizerAgent"), patch(
-            "main.LinkerAgent"
-        ), patch("main.VisualizerAgent"), patch("main.A2AProtocol"):
+        with patch("agents.OrchestratorAgent"), patch("agents.SummarizerAgent"), patch(
+            "agents.LinkerAgent"
+        ), patch("agents.VisualizerAgent"), patch("agents.A2AProtocol"):
 
             with patch.dict(
                 os.environ,

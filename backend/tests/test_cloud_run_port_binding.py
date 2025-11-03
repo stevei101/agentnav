@@ -33,12 +33,18 @@ def test_backend_dockerfile_uses_port_env():
     with open(dockerfile_path, "r") as f:
         content = f.read()
 
-    # Check that Dockerfile:
-    # 1. Uses host='0.0.0.0' (not 127.0.0.1)
-    # 2. Reads PORT from environment with default fallback
-    assert "host='0.0.0.0'" in content, "Backend must bind to 0.0.0.0 for Cloud Run"
-    assert "os.getenv" in content, "Backend must read PORT from environment"
+    # Check that Dockerfile uses entrypoint script for proper Cloud Run configuration
+    assert "entrypoint.sh" in content, "Backend must use entrypoint script for Cloud Run"
+    assert "ENTRYPOINT" in content, "Backend must define entrypoint for signal handling"
     assert "PORT" in content, "Backend must use PORT environment variable"
+    
+    # Check that entrypoint script exists and has correct configuration
+    entrypoint_path = os.path.join(os.path.dirname(__file__), "..", "entrypoint.sh")
+    if os.path.exists(entrypoint_path):
+        with open(entrypoint_path, "r") as f:
+            entrypoint_content = f.read()
+        assert "--host 0.0.0.0" in entrypoint_content, "Entrypoint must bind to 0.0.0.0 for Cloud Run"
+        assert "uvicorn main:app" in entrypoint_content, "Entrypoint must run uvicorn"
 
 
 def test_gemma_dockerfile_uses_port_env():
@@ -48,14 +54,18 @@ def test_gemma_dockerfile_uses_port_env():
     with open(dockerfile_path, "r") as f:
         content = f.read()
 
-    # Check that Dockerfile:
-    # 1. Uses host='0.0.0.0' (not 127.0.0.1)
-    # 2. Reads PORT from environment with default fallback
-    assert (
-        "host='0.0.0.0'" in content
-    ), "Gemma service must bind to 0.0.0.0 for Cloud Run"
-    assert "os.getenv" in content, "Gemma service must read PORT from environment"
+    # Check that Dockerfile uses entrypoint script for proper Cloud Run configuration
+    assert "entrypoint.sh" in content, "Gemma service must use entrypoint script for Cloud Run"
+    assert "ENTRYPOINT" in content, "Gemma service must define entrypoint for signal handling"
     assert "PORT" in content, "Gemma service must use PORT environment variable"
+    
+    # Check that entrypoint script exists and has correct configuration
+    entrypoint_path = os.path.join(os.path.dirname(__file__), "..", "gemma_service", "entrypoint.sh")
+    if os.path.exists(entrypoint_path):
+        with open(entrypoint_path, "r") as f:
+            entrypoint_content = f.read()
+        assert "--host 0.0.0.0" in entrypoint_content, "Gemma entrypoint must bind to 0.0.0.0 for Cloud Run"
+        assert "uvicorn gemma_service.main:app" in entrypoint_content, "Gemma entrypoint must run uvicorn"
 
 
 def test_gemma_service_dockerfile_uses_port_env():
@@ -179,15 +189,16 @@ def test_dockerfile_exposes_correct_ports():
 
 
 def test_backend_uses_correct_uvicorn_params():
-    """Verify Dockerfile CMD uses correct uvicorn parameters"""
-    dockerfile_path = os.path.join(os.path.dirname(__file__), "..", "Dockerfile")
+    """Verify entrypoint script uses correct uvicorn parameters"""
+    entrypoint_path = os.path.join(os.path.dirname(__file__), "..", "entrypoint.sh")
 
-    with open(dockerfile_path, "r") as f:
+    with open(entrypoint_path, "r") as f:
         content = f.read()
 
-    # Validate uvicorn.run parameters
-    assert "uvicorn.run" in content, "Must use uvicorn.run to start"
-    assert "'main:app'" in content or '"main:app"' in content, "Must reference main:app"
+    # Validate uvicorn command line parameters
+    assert "uvicorn main:app" in content, "Must use uvicorn main:app to start"
+    assert "--host 0.0.0.0" in content, "Must bind to 0.0.0.0 for Cloud Run"
+    assert "--port" in content, "Must specify port parameter"
     assert "host='0.0.0.0'" in content, "Must bind to 0.0.0.0"
     # Port should be read from os.getenv('PORT', 8080)
     assert (

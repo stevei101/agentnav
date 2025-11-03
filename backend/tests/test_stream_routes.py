@@ -443,12 +443,12 @@ class TestStreamingStateManagement:
 
         session = SessionContext(
             session_id="test-session-001",
-            document="Test document",
+            raw_input="Test document",
             content_type="document",
         )
 
         assert session.session_id == "test-session-001"
-        assert session.document == "Test document"
+        assert session.raw_input == "Test document"
 
     @pytest.mark.asyncio
     async def test_session_state_updates_during_stream(self):
@@ -457,7 +457,7 @@ class TestStreamingStateManagement:
 
         session = SessionContext(
             session_id="test-session-002",
-            document="Content",
+            raw_input="Test codebase",
             content_type="codebase",
         )
 

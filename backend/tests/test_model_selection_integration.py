@@ -59,8 +59,8 @@ class TestLinkerAgentModelSelection:
         )
 
         context = {
-            "document": "Python function: def analyze(data): return process(data)",
-            "content_type": "codebase",
+            "document": "This is a technical document about Python data analysis methodologies and machine learning approaches.",
+            "content_type": "document",
             "shared_context": {},
             "sessionId": "test-session",
         }
@@ -105,7 +105,7 @@ class TestLinkerAgentModelSelection:
         }
 
         with patch(
-            "agents.linker_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_reason:
             mock_reason.return_value = "concept1\nconcept2"
 
@@ -149,7 +149,7 @@ class TestLinkerAgentModelSelection:
             return "entity1\nentity2"
 
         with patch(
-            "agents.linker_agent.reason_with_gemini",
+            "services.gemini_client.reason_with_gemini",
             new_callable=AsyncMock,
             side_effect=mock_reason,
         ):
@@ -197,7 +197,7 @@ KEY_TOPICS: machine learning, supervised learning, neural networks
 SUMMARY: A document about fundamental machine learning concepts and algorithms."""
 
         with patch(
-            "agents.orchestrator_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_gemini:
             mock_gemini.return_value = gemini_response
 
@@ -243,7 +243,7 @@ KEY_TOPICS: python, data processing, pandas
 SUMMARY: Python code for processing data using pandas."""
 
         with patch(
-            "agents.orchestrator_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_reason:
             mock_reason.return_value = gemma_response
 
@@ -269,7 +269,7 @@ SUMMARY: Python code for processing data using pandas."""
         context = {"document": document}
 
         with patch(
-            "agents.orchestrator_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_gemini:
             mock_gemini.side_effect = Exception("API error")
 
@@ -299,7 +299,7 @@ class TestModelSelectionEnvironmentVariable:
         context = {"document": "Test", "content_type": "document", "shared_context": {}}
 
         with patch(
-            "agents.linker_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_reason:
             mock_reason.return_value = "entity"
 
@@ -330,7 +330,7 @@ class TestModelFallbackBehavior:
         }
 
         with patch(
-            "agents.linker_agent.reason_with_gemini", new_callable=AsyncMock
+            "services.gemini_client.reason_with_gemini", new_callable=AsyncMock
         ) as mock_reason:
             # Simulate: first call requests gemma but it fails, then falls back to gemini
             mock_reason.return_value = "entity1"
