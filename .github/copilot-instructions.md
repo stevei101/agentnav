@@ -162,8 +162,26 @@ pytest tests/ \--cov=. \--cov-report=term \--cov-fail-under=70
 5. Podman builds container images, pushes to GAR
 
 Deploy to Cloud Run:  
- \# Frontend (us-central1)gcloud run deploy agentnav-frontend \\  \--image gcr.io/$PROJECT\_ID/agentnav-frontend:$GITHUB\_SHA \\  \--region us-central1 \--platform managed \--port 80 \--timeout 300s\# Backend (europe-west1)gcloud run deploy agentnav-backend \\  \--image gcr.io/$PROJECT\_ID/agentnav-backend:$GITHUB\_SHA \\  \--region europe-west1 \--platform managed \--port 8080 \--timeout 300s \\  \--set-env-vars PORT=8080,GEMINI\_API\_KEY=$$GEMINI\_API\_KEY \\  \--set-secrets GEMINI\_API\_KEY=GEMINI\_API\_KEY:latest\# Gemma GPU Service (europe-west1)gcloud run deploy gemma-service \\  \--image $REGION-docker.pkg.dev/$PROJECT\_ID/$GAR\_REPO/gemma-service:$GITHUB\_SHA \\  \--region europe-west1 \--platform managed \\  \--cpu gpu \--memory 16Gi \--gpu-type nvidia-l4 \--gpu-count 1 \\  \--port 8080 \--timeout 300s
 
+```bash
+# Frontend (us-central1)
+gcloud run deploy agentnav-frontend \
+  --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA \
+  --region us-central1 --platform managed --port 80 --timeout 300s
+
+# Backend (europe-west1)
+gcloud run deploy agentnav-backend \
+  --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA \
+  --region europe-west1 --platform managed --port 8080 --timeout 300s \
+  --set-env-vars PORT=8080,GEMINI_API_KEY=$GEMINI_API_KEY \
+  --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
+
+# Gemma GPU Service (europe-west1)
+gcloud run deploy gemma-service \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA \
+  --region europe-west1 --platform managed \
+  --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 \
+  --port 8080 --timeout 300s
 6. 
 
 ### **Cloud Run Requirements**
