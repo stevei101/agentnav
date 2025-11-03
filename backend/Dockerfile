@@ -46,15 +46,15 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser && \
     chown -R appuser:appuser $APP_HOME && \
     chmod +x start.sh
 
+# Copy entrypoint script with correct owner and permissions atomically
+# Build context is ./backend, so entrypoint.sh is at root of context
+COPY --chown=appuser:appuser --chmod=0755 entrypoint.sh /app/entrypoint.sh
+
 # Switch to non-root user
 USER appuser
 
 # Expose port (Cloud Run will set PORT env var automatically)
 EXPOSE 8080
-
-# Copy entrypoint script with correct owner and permissions atomically
-# Build context is ./backend, so entrypoint.sh is at root of context
-COPY --chown=appuser:appuser --chmod=0755 entrypoint.sh /app/entrypoint.sh
 
 # Health check for Cloud Run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
