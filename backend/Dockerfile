@@ -25,11 +25,14 @@ COPY . .
 # Expose port (Cloud Run will set PORT env var automatically)
 EXPOSE 8080
 
+# Copy entrypoint script
+COPY backend/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Health check for Cloud Run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')" || exit 1
 
-# Run FastAPI app with uvicorn
-# Cloud Run sets PORT env var automatically, read it dynamically
-CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; uvicorn.run('main:app', host='0.0.0.0', port=port, log_level='info')"
+# Run FastAPI app with entrypoint script for proper signal handling
+ENTRYPOINT ["/app/entrypoint.sh"]
 
