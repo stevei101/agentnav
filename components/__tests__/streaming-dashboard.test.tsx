@@ -203,9 +203,14 @@ describe('DocumentUpload Component', () => {
   it('shows agent info cards', () => {
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
-    expect(screen.getByText('Summarizer Agent')).toBeInTheDocument();
-    expect(screen.getByText('Linker Agent')).toBeInTheDocument();
-    expect(screen.getByText('Visualizer Agent')).toBeInTheDocument();
+    // Use getAllByText since there may be multiple instances
+    const summarizerAgents = screen.getAllByText('Summarizer Agent');
+    const linkerAgents = screen.getAllByText('Linker Agent');
+    const visualizerAgents = screen.getAllByText('Visualizer Agent');
+    
+    expect(summarizerAgents.length).toBeGreaterThan(0);
+    expect(linkerAgents.length).toBeGreaterThan(0);
+    expect(visualizerAgents.length).toBeGreaterThan(0);
   });
 
   it('handles drag and drop file upload', async () => {
@@ -223,6 +228,8 @@ describe('DocumentUpload Component', () => {
         type: 'text/plain',
       });
 
+      // Use DragEvent which is mocked in vitest.setup.ts
+      // The mocks should be available via global scope
       const dragEvent = new DragEvent('dragenter', {
         dataTransfer: new DataTransfer(),
         bubbles: true,
@@ -327,8 +334,9 @@ describe('AgentDashboard Component', () => {
       />
     );
 
-    const resetButton = screen.getByRole('button', { name: /reset/i });
-    expect(resetButton).toBeTruthy();
+    // The reset button has aria-label="Reset analysis", use getByLabelText
+    const resetButton = screen.getByLabelText(/reset analysis/i);
+    expect(resetButton).toBeInTheDocument();
   });
 
   it('displays stream statistics', () => {

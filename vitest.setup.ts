@@ -1,23 +1,12 @@
 // Vitest setup file for global test configuration
 
-// Mock DragEvent for jsdom environment
-if (typeof global.DragEvent === 'undefined') {
-  global.DragEvent = class DragEvent extends Event {
-    dataTransfer: DataTransfer;
-    constructor(type: string, init?: DragEventInit) {
-      super(type, init);
-      this.dataTransfer = init?.dataTransfer || new DataTransfer();
-    }
-  } as unknown as typeof DragEvent;
-}
-
-// Mock DataTransfer if not available
+// Mock DataTransfer if not available (must be before DragEvent)
 if (typeof global.DataTransfer === 'undefined') {
   global.DataTransfer = class DataTransfer {
-    items: DataTransferItemList;
-    files: FileList;
-    types: readonly string[];
-    dropEffect: 'none' | 'copy' | 'link' | 'move';
+    items: DataTransferItemList = [] as unknown as DataTransferItemList;
+    files: FileList = [] as unknown as FileList;
+    types: readonly string[] = [];
+    dropEffect: 'none' | 'copy' | 'link' | 'move' = 'none';
     effectAllowed:
       | 'none'
       | 'copy'
@@ -27,7 +16,7 @@ if (typeof global.DataTransfer === 'undefined') {
       | 'linkMove'
       | 'move'
       | 'all'
-      | 'uninitialized';
+      | 'uninitialized' = 'all';
 
     constructor() {
       this.items = [] as unknown as DataTransferItemList;
@@ -46,3 +35,13 @@ if (typeof global.DataTransfer === 'undefined') {
   } as unknown as typeof DataTransfer;
 }
 
+// Mock DragEvent for jsdom environment
+if (typeof global.DragEvent === 'undefined') {
+  global.DragEvent = class DragEvent extends Event {
+    dataTransfer: DataTransfer;
+    constructor(type: string, init?: DragEventInit) {
+      super(type, init);
+      this.dataTransfer = init?.dataTransfer || new DataTransfer();
+    }
+  } as unknown as typeof DragEvent;
+}
