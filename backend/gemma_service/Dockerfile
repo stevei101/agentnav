@@ -17,17 +17,13 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies to /install directory
-# Only install packages not already in the base image to avoid disk space issues
-RUN pip install --no-cache-dir --prefix=/install \
-    transformers>=4.40.0 \
-    accelerate>=0.30.0 \
-    bitsandbytes>=0.41.0 \
-    fastapi>=0.115.0 \
-    uvicorn[standard]>=0.30.0 \
-    pydantic>=2.0.0 \
-    python-dotenv>=1.0.0 \
-    huggingface-hub>=0.23.0
+# Install uv and Python dependencies into /install using uv (fast, reproducible)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+RUN chmod +x /usr/local/bin/uv
+
+# Provide requirements file for Gemma service
+COPY ../requirements-gemma.txt ./requirements-gemma.txt
+RUN uv pip install --system --target=/install -r requirements-gemma.txt
 
 # Stage 2: Runtime - Minimal production image
 # Use the same PyTorch base for runtime (GPU support required)
@@ -38,9 +34,8 @@ WORKDIR /app
 # Copy installed dependencies from builder stage
 COPY --from=builder /install /install
 
-# Set PYTHONPATH to include installed dependencies from prefix install
-# With --prefix=/install, packages are in /install/lib/pythonX.X/site-packages
-ENV PYTHONPATH=/install/lib/python3.10/site-packages:$PYTHONPATH
+# Make installed dependencies importable
+ENV PYTHONPATH=/install:$PYTHONPATH
 
 # Install minimal runtime dependencies (curl for healthcheck)
 RUN apt-get update && apt-get install -y \

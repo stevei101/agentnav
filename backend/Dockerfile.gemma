@@ -16,17 +16,11 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install additional Python dependencies (PyTorch already in base image)
-# Only install packages not already in the base image to avoid disk space issues
-RUN pip install --no-cache-dir \
-    transformers>=4.40.0 \
-    accelerate>=0.30.0 \
-    bitsandbytes>=0.41.0 \
-    fastapi>=0.115.0 \
-    uvicorn[standard]>=0.30.0 \
-    pydantic>=2.0.0 \
-    python-dotenv>=1.0.0 \
-    huggingface-hub>=0.23.0
+# Install dependencies using uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+RUN chmod +x /usr/local/bin/uv
+COPY requirements-gemma.txt ./requirements-gemma.txt
+RUN uv pip install --system -r requirements-gemma.txt
 
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
