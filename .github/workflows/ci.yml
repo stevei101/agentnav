@@ -7,9 +7,85 @@ on:
     branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
 
 jobs:
+  # ============================================================================
+  # PATH FILTERING DETECTION
+  # ============================================================================
+
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      infra: ${{ steps.filter.outputs.infra }}
+      docs: ${{ steps.filter.outputs.docs }}
+      code: ${{ steps.filter.outputs.code }}
+      dependencies: ${{ steps.filter.outputs.dependencies }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'components/**'
+              - 'hooks/**'
+              - 'services/*.ts'
+              - 'services/*.tsx'
+              - 'App.tsx'
+              - 'index.tsx'
+              - 'vite.config.ts'
+              - 'tailwind.config.ts'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'bun.lockb'
+            backend:
+              - 'backend/**'
+              - 'pyproject.toml'
+              - 'requirements*.txt'
+            infra:
+              - 'terraform/**'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+              - 'LICENSE'
+              - 'CODE_OF_CONDUCT.md'
+              - 'CONTRIBUTING.md'
+              - 'SECURITY.md'
+              - 'NOTICE'
+              - '*.md'
+            code:
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.jsx'
+              - '**/*.py'
+              - '**/*.json'
+              - '**/*.yml'
+              - '**/*.yaml'
+              - '**/*.md'
+            dependencies:
+              - 'package.json'
+              - 'bun.lockb'
+              - 'pyproject.toml'
+              - 'requirements*.txt'
+
+  # ============================================================================
+  # MINIMUM REQUIRED CHECKS (Always Run)
+  # ============================================================================
+
   code-quality:
     name: Code Quality (Linting & Formatting)
     runs-on: ubuntu-latest
+    needs: changes
+    # Always run on code/markdown changes (minimum required check)
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.code == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,39 +96,77 @@ jobs:
           bun-version: latest
 
       - name: Install frontend dependencies
+        if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
         run: bun install
 
       - name: Run ESLint
+        if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
         run: bun run lint
 
       - name: Check Prettier formatting
+        if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
         run: bun run format:check
 
       - name: Setup Python
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
       - name: Install Python dev dependencies
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: |
           python -m pip install --upgrade pip
           pip install black isort ruff mypy
 
       - name: Check Python formatting (Black)
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: black --check backend/
 
       - name: Check Python import sorting (isort)
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: isort --check-only --profile black backend/
 
       - name: Run Python linting (ruff)
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: ruff check backend/
 
       - name: Run Python type checking (mypy)
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: mypy backend/ --ignore-missing-imports
+
+  osv-scanner:
+    name: OSV Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    needs: changes
+    # Only run on dependency file changes (minimum required check)
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.dependencies == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run OSV-Scanner
+        uses: google/osv-scanner-action@v1.8.5
+        with:
+          scan-args: |-
+            --recursive
+            .
+        continue-on-error: true
+
+  # ============================================================================
+  # PATH-FILTERED CI JOBS
+  # ============================================================================
 
   frontend-tests:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
+    needs: changes
+    # FRONTEND_CI: Trigger on frontend code or dependency changes
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.frontend == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,7 +187,12 @@ jobs:
   backend-tests:
     name: Backend Tests (pytest + Firestore emulator)
     runs-on: ubuntu-latest
+    needs: changes
     services: {}
+    # BACKEND_CI: Trigger on backend code or dependency changes
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.backend == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,6 +235,11 @@ jobs:
   tfsec-scan:
     name: Terraform Security Scan (tfsec)
     runs-on: ubuntu-latest
+    needs: changes
+    # INFRA_CI: Trigger only on Terraform changes
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.infra == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -127,23 +251,31 @@ jobs:
           soft_fail: true
           format: default
 
-  osv-scanner:
-    name: OSV Dependency Vulnerability Scan
+  secret-verification:
+    name: Secret History Verification (FR#095)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (full history)
         uses: actions/checkout@v4
-
-      - name: Run OSV-Scanner
-        uses: google/osv-scanner-action@v1.9.0
         with:
-          scan-args: |-
-            --recursive
-            --skip-git
-            .
-        continue-on-error: true
+          fetch-depth: 0  # Full history needed for verification
 
-  # Composite job that aggregates the frontend/backend and python lint/tests
+      - name: Run secret verification script
+        run: |
+          chmod +x ./scripts/verify-no-secrets.sh
+          ./scripts/verify-no-secrets.sh
+
+      - name: Verify .gitignore contains .env pattern
+        run: |
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "ERROR: .env pattern not found in .gitignore"
+            exit 1
+          fi
+          echo "✓ .gitignore properly configured"
+
+  # ============================================================================
+  # COMPOSITE JOBS (Handle Skipped Jobs Gracefully)
+  # ============================================================================
   CODE_QUALITY:
     name: CODE_QUALITY
     runs-on: ubuntu-latest
@@ -187,11 +319,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 
-  # Composite job that aggregates the infrastructure/security scans
   SECURITY_AUDIT:
     name: SECURITY_AUDIT
     runs-on: ubuntu-latest
-    needs: [tfsec-scan, osv-scanner]
+    needs: [tfsec-scan, osv-scanner, secret-verification]
     if: always()
     steps:
       - name: Aggregate Security Results
@@ -201,11 +332,13 @@ jobs:
           
           TFSEC_RESULT="${{ needs.tfsec-scan.result }}"
           OSV_RESULT="${{ needs.osv-scanner.result }}"
+          SECRET_VERIFICATION_RESULT="${{ needs.secret-verification.result }}"
           
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| tfsec-scan | $TFSEC_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| osv-scanner | $OSV_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| secret-verification | $SECRET_VERIFICATION_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Check for failure or cancelled states
@@ -220,7 +353,12 @@ jobs:
             exit 1
           fi
           
-          echo "✅ SECURITY_AUDIT: All aggregated security scans completed successfully" >> $GITHUB_STEP_SUMMARY
+          if [[ "$SECRET_VERIFICATION_RESULT" == "failure" ]] || [[ "$SECRET_VERIFICATION_RESULT" == "cancelled" ]]; then
+            echo "❌ SECURITY_AUDIT check failed: secret-verification job $SECRET_VERIFICATION_RESULT" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "✅ SECURITY_AUDIT: All aggregated security jobs completed successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 
