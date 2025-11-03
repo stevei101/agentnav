@@ -32,5 +32,3 @@ exec uvicorn main:app \
     --timeout-graceful-shutdown 30 \
     --log-level info \
     --no-access-log
-
-# Made with Bob
