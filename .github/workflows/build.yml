@@ -91,9 +91,7 @@ jobs:
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
           echo "Image tag: ${IMAGE_TAG}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "Latest tag: ${LATEST_TAG}"
-          fi
+          [[ -n "${LATEST_TAG}" ]] && echo "Latest tag: ${LATEST_TAG}"
 
       - name: Build and push frontend
         if: matrix.service == 'frontend'
@@ -190,103 +188,14 @@ jobs:
 
           echo "✅ Gemma Cloud Build completed successfully"
 
-  deploy-staging:
-    name: Deploy to Staging Environment
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    # Deploy to staging on all PRs targeting main
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      id-token: write
-      deployments: write # Required for GitHub Deployments/Environments
-
-    strategy:
-      matrix:
-        service: [frontend, backend]
-      fail-fast: false
-
-    steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Deploy frontend to Staging
-        if: matrix.service == 'frontend'
-        id: deploy-frontend-staging
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: agentnav-frontend-staging
-          image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-frontend:pr-${{ github.event.pull_request.number }}
-          region: us-central1
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          flags: '--allow-unauthenticated --set-env-vars=VITE_API_URL=https://agentnav-backend-lcze65fova-ew.a.run.app'
-
-      - name: Report frontend staging deployment
-        if: matrix.service == 'frontend'
-        uses: chrnorm/deployment-action@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          environment: staging
-          environment-url: ${{ steps.deploy-frontend-staging.outputs.url }}
-
-      - name: Deploy backend to Staging
-        if: matrix.service == 'backend'
-        id: deploy-backend-staging
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: agentnav-backend-staging
-          image: ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/agentnav-backend:pr-${{ github.event.pull_request.number }}
-          region: europe-west1
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          flags: '--allow-unauthenticated --service-account=agentnav-backend@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
-
-      - name: Report backend staging deployment
-        if: matrix.service == 'backend'
-        uses: chrnorm/deployment-action@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          environment: staging
-          environment-url: ${{ steps.deploy-backend-staging.outputs.url }}
-
-      - name: Comment PR with staging URLs
-        if: matrix.service == 'frontend' && success()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const comment = `## 🚀 Staging Deployment Complete (Frontend)
-
-            **Frontend Staging URL:** ${{ steps.deploy-frontend-staging.outputs.url }}
-
-            **Backend Staging:** The backend service has also been deployed. Check the [Cloud Run Console](https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}) for \`agentnav-backend-staging\` details.
-
-            **Image Tags:** \`pr-${{ github.event.pull_request.number }}\`
-
-            The staging frontend deployment has completed successfully and is ready for testing!`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
   deploy:
-    name: Deploy to Production Environment
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read
       id-token: write
-      deployments: write # Required for GitHub Deployments/Environments
 
     strategy:
       matrix:
@@ -315,12 +224,21 @@ jobs:
           echo "   Image: ${IMAGE}"
           echo "   Region: us-central1"
           
+          # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-frontend \
             --image ${IMAGE} \
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
             --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 80 \
             --quiet
           
           echo "✅ Frontend deployment completed"
@@ -338,6 +256,7 @@ jobs:
           echo "   Region: europe-west1"
           echo "   Service Account: ${SERVICE_ACCOUNT}"
           
+          # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-backend \
             --image ${IMAGE} \
             --region europe-west1 \
@@ -345,6 +264,18 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account ${SERVICE_ACCOUNT} \
+            --memory 8Gi \
+            --cpu 4 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 8080 \
+            --set-env-vars PORT=8080 \
+            --set-env-vars ENVIRONMENT=production \
+            --set-env-vars ALLOWED_HOSTS="agentnav.lornu.com,*.run.app" \
+            --set-env-vars CORS_ORIGINS="https://agentnav.lornu.com" \
             --quiet
           
           echo "✅ Backend deployment completed"

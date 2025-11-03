@@ -1,30 +1,30 @@
-import React from "react";
-import { FileText, Download, Share2 } from "lucide-react";
-import type { AgentState } from "../types";
+import React from 'react';
+import { FileText, Download, Share2 } from 'lucide-react';
+import type { AgentState } from '../types';
 
 interface ResultsPanelProps {
   agents: AgentState[];
 }
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({ agents }) => {
-  const completedAgents = agents.filter((a) => a.status === "Done");
-  const allFindings = completedAgents.flatMap((a) => a.findings || []);
+  const completedAgents = agents.filter(a => a.status === 'Done');
+  const allFindings = completedAgents.flatMap(a => a.findings || []);
 
   const handleDownload = () => {
-    const content = `Analysis Results\n================\n\n${allFindings.join("\n")}`;
-    const blob = new Blob([content], { type: "text/plain" });
+    const content = `Analysis Results\n================\n\n${allFindings.join('\n')}`;
+    const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = "analysis-results.txt";
+    a.download = 'analysis-results.txt';
     a.click();
   };
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: "Analysis Results",
-        text: allFindings.join("\n"),
+        title: 'Analysis Results',
+        text: allFindings.join('\n'),
       });
     }
   };
@@ -69,9 +69,9 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ agents }) => {
             <div className="bg-gray-800 rounded-lg p-4">
               <h4 className="text-white mb-2">Executive Summary</h4>
               <p className="text-gray-300 text-sm leading-relaxed">
-                Multi-agent analysis successfully completed. The system processed and analyzed
-                complex content using specialized agents working in coordination through the
-                A2A protocol.
+                Multi-agent analysis successfully completed. The system
+                processed and analyzed complex content using specialized agents
+                working in coordination through the A2A protocol.
               </p>
             </div>
 
@@ -96,7 +96,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ agents }) => {
               <div className="bg-gray-800 rounded-lg p-4">
                 <h4 className="text-white mb-3">Agent Contributions</h4>
                 <div className="space-y-3">
-                  {completedAgents.map((agent) => (
+                  {completedAgents.map(agent => (
                     <div
                       key={agent.id}
                       className="border-l-2 border-blue-500 pl-3"
@@ -115,7 +115,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ agents }) => {
             <div className="bg-gray-800 rounded-lg p-4">
               <h4 className="text-white mb-3">Next Steps</h4>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li>• Review the generated knowledge graph for concept relationships</li>
+                <li>
+                  • Review the generated knowledge graph for concept
+                  relationships
+                </li>
                 <li>• Export findings for further analysis</li>
                 <li>• Share results with team members</li>
                 <li>• Schedule follow-up analysis on related documents</li>
