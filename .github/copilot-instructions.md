@@ -182,7 +182,6 @@ gcloud run deploy gemma-service \
   --region europe-west1 --platform managed \
   --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 \
   --port 8080 --timeout 300s
-6. 
 
 ### **Cloud Run Requirements**
 
