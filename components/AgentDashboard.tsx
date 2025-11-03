@@ -180,6 +180,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
               onClick={startAnalysis}
               disabled={isConnected || isConnecting || !sessionId}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-700 disabled:text-gray-500 transition-colors flex items-center gap-2"
+              aria-label="Start Analysis"
             >
               <Zap className="w-5 h-5" />
               Start Analysis

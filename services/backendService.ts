@@ -55,7 +55,7 @@ export const runAgenticNavigator = async (
   };
 
   try {
-    console.warn('🎬 Starting ADK Multi-Agent Analysis via backend API');
+    console.info('🎬 Starting ADK Multi-Agent Analysis via backend API');
 
     const response = await fetch(`${BACKEND_API_URL}/api/analyze`, {
       method: 'POST',

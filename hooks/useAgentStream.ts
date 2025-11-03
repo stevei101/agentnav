@@ -60,7 +60,7 @@ export const useAgentStream = ({
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.warn('✅ WebSocket connected');
+        console.info('✅ WebSocket connected');
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
@@ -100,7 +100,7 @@ export const useAgentStream = ({
       };
 
       ws.onclose = () => {
-        console.warn('❌ WebSocket disconnected');
+        console.info('❌ WebSocket disconnected');
         setIsConnected(false);
         setIsConnecting(false);
         wsRef.current = null;
@@ -108,7 +108,7 @@ export const useAgentStream = ({
         // Attempt to reconnect
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current += 1;
-          console.warn(
+          console.info(
             `Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`
           );
           reconnectTimeoutRef.current = setTimeout(() => {

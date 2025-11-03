@@ -46,4 +46,3 @@ if (typeof global.DataTransfer === 'undefined') {
   } as unknown as typeof DataTransfer;
 }
 
-// Made with Bob

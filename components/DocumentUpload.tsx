@@ -100,10 +100,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         })
         .join('\n\n');
 
-      // Determine content type based on document type
-      const _contentType =
-        documentType === 'codebase' ? 'codebase' : 'document';
-
       // Generate session ID
       const sessionId = `session-${Date.now()}`;
 
@@ -134,8 +130,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       description: 'Source code, scripts, configs',
     },
   };
-
-  const _config = documentTypeConfig[documentType];
 
   return (
     <div className="max-w-4xl mx-auto">

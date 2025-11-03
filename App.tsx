@@ -144,7 +144,7 @@ const App: React.FC = () => {
     simulateAgentActivity();
 
     try {
-      console.warn('🎬 Starting ADK Multi-Agent Analysis');
+      console.info('🎬 Starting ADK Multi-Agent Analysis');
       const analysisResult = await runAgenticNavigator(documentText);
 
       // Mark all agents as done
