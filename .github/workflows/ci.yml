@@ -107,7 +107,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         working-directory: backend
         run: |
-          pytest -q tests
+          pytest -v
 
       - name: Stop Firestore emulator
         if: always()
