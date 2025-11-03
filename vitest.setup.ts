@@ -50,4 +50,3 @@ beforeAll(() => {
     } as unknown as typeof DataTransfer;
   }
 });
-
