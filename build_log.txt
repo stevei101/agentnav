@@ -1,0 +1,263 @@
+Build and Push Containers (gemma)	Set up job	﻿2025-11-03T06:17:51.9806055Z Current runner version: '2.329.0'
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9839008Z ##[group]Runner Image Provisioner
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9840370Z Hosted Compute Agent
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9841325Z Version: 20251016.436
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9842429Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9843890Z Build Date: 2025-10-15T20:44:12Z
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9844949Z ##[endgroup]
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9845972Z ##[group]Operating System
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9846865Z Ubuntu
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9847648Z 24.04.3
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9848536Z LTS
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9849350Z ##[endgroup]
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9850115Z ##[group]Runner Image
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9851214Z Image: ubuntu-24.04
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9852167Z Version: 20251030.96.2
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9854216Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251030.96/images/ubuntu/Ubuntu2404-Readme.md
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9856756Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251030.96
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9858791Z ##[endgroup]
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9860485Z ##[group]GITHUB_TOKEN Permissions
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9863596Z Contents: read
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9864614Z Metadata: read
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9865427Z ##[endgroup]
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9869070Z Secret source: Actions
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:51.9870243Z Prepare workflow directory
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:52.0593989Z Prepare all required actions
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:52.0648940Z Getting action download info
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:52.3623976Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:52.5496571Z Download action repository 'google-github-actions/auth@v2' (SHA:c200f3691d83b41bf9bbd8638997a462592937ed)
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:53.0495613Z Download action repository 'google-github-actions/setup-gcloud@v2' (SHA:e427ad8a34f8676edf47cf7d7925499adf3eb74f)
+Build and Push Containers (gemma)	Set up job	2025-11-03T06:17:53.2997886Z Complete job name: Build and Push Containers (gemma)
+Build and Push Containers (gemma)	Checkout code	﻿2025-11-03T06:17:53.3783651Z ##[group]Run actions/checkout@v4
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3785136Z with:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3785992Z   repository: stevei101/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3787317Z   token: ***
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3788116Z   ssh-strict: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3788959Z   ssh-user: git
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3789817Z   persist-credentials: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3790787Z   clean: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3791671Z   sparse-checkout-cone-mode: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3792904Z   fetch-depth: 1
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3793778Z   fetch-tags: false
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3794677Z   show-progress: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3795561Z   lfs: false
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3796383Z   submodules: false
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3797276Z   set-safe-directory: true
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3798454Z env:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3799399Z   GCP_PROJECT_ID: ***
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3800381Z   ARTIFACT_REGISTRY_LOCATION: europe-west1
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3801679Z   ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.3803032Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.4944410Z Syncing repository: stevei101/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.4948905Z ##[group]Getting Git version info
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.4950396Z Working directory is '/home/runner/work/agentnav/agentnav'
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.4952824Z [command]/usr/bin/git version
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5000238Z git version 2.51.2
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5029126Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5046050Z Temporarily overriding HOME='/home/runner/work/_temp/ab980ead-2c77-428b-8fd4-82ec651dac34' before making global git config changes
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5051156Z Adding repository directory to the temporary git global config as a safe directory
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5055385Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/agentnav/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5091877Z Deleting the contents of '/home/runner/work/agentnav/agentnav'
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5096157Z ##[group]Initializing the repository
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5101213Z [command]/usr/bin/git init /home/runner/work/agentnav/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5196487Z hint: Using 'master' as the name for the initial branch. This default branch name
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5199604Z hint: is subject to change. To configure the initial branch name to use in all
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5202791Z hint: of your new repositories, which will suppress this warning, call:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5205388Z hint:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5207201Z hint: 	git config --global init.defaultBranch <name>
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5209323Z hint:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5211359Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5214943Z hint: 'development'. The just-created branch can be renamed via this command:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5217523Z hint:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5218893Z hint: 	git branch -m <name>
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5220255Z hint:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5221548Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5223823Z Initialized empty Git repository in /home/runner/work/agentnav/agentnav/.git/
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5228617Z [command]/usr/bin/git remote add origin https://github.com/stevei101/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5251457Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5254395Z ##[group]Disabling automatic garbage collection
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5256792Z [command]/usr/bin/git config --local gc.auto 0
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5286811Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5289307Z ##[group]Setting up auth
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5294837Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5326949Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5750127Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.5788596Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.6018830Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.6056191Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.6058893Z ##[group]Fetching the repository
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.6068982Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +32d2b4793ed94aa31a0dbe81f8e5e190adbd8825:refs/remotes/pull/167/merge
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.8983401Z From https://github.com/stevei101/agentnav
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.8986874Z  * [new ref]         32d2b4793ed94aa31a0dbe81f8e5e190adbd8825 -> pull/167/merge
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9015837Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9017484Z ##[group]Determining the checkout info
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9019117Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9023212Z [command]/usr/bin/git sparse-checkout disable
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9061849Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9088969Z ##[group]Checking out the ref
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9092274Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/167/merge
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9267143Z Note: switching to 'refs/remotes/pull/167/merge'.
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9268219Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9269005Z You are in 'detached HEAD' state. You can look around, make experimental
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9271511Z changes and commit them, and you can discard any commits you make in this
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9274912Z state without impacting any branches by switching back to a branch.
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9276988Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9278375Z If you want to create a new branch to retain commits you create, you may
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9281157Z do so (now or later) by using -c with the switch command. Example:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9283022Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9283688Z   git switch -c <new-branch-name>
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9284768Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9285385Z Or undo this operation with:
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9286449Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9286989Z   git switch -
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9287849Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9289269Z Turn off this advice by setting config variable advice.detachedHead to false
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9290436Z 
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9291675Z HEAD is now at 32d2b47 Merge cd4a623039353832197b55a7a7894ebcd05bf412 into 26bac12d4299846165fd439b654da20c7a3eb309
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9296871Z ##[endgroup]
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9316905Z [command]/usr/bin/git log -1 --format=%H
+Build and Push Containers (gemma)	Checkout code	2025-11-03T06:17:53.9340701Z 32d2b4793ed94aa31a0dbe81f8e5e190adbd8825
+Build and Push Containers (gemma)	Authenticate to Google Cloud	﻿2025-11-03T06:17:53.9725163Z ##[group]Run google-github-actions/auth@v2
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9726308Z with:
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9728553Z   workload_identity_provider: ***
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9730100Z   service_account: ***
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9731045Z   project_id: ***
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9731890Z   create_credentials_file: true
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9733112Z   export_environment_variables: true
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9734153Z   universe: googleapis.com
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9735100Z   cleanup_credentials: true
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9736074Z   access_token_lifetime: 3600s
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9737469Z   access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9738868Z   id_token_include_email: false
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9739845Z env:
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9810370Z   GCP_PROJECT_ID: ***
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9811504Z   ARTIFACT_REGISTRY_LOCATION: europe-west1
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9813137Z   ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:53.9814358Z ##[endgroup]
+Build and Push Containers (gemma)	Authenticate to Google Cloud	2025-11-03T06:17:54.1595384Z Created credentials file at "/home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json"
+Build and Push Containers (gemma)	Set up Cloud SDK	﻿2025-11-03T06:17:54.2371172Z ##[group]Run google-github-actions/setup-gcloud@v2
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2372382Z with:
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2373303Z   version: latest
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2374151Z   skip_install: false
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2375035Z   skip_tool_cache: false
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2375916Z env:
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2376893Z   GCP_PROJECT_ID: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2377864Z   ARTIFACT_REGISTRY_LOCATION: europe-west1
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2379112Z   ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2381126Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2383874Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2386255Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2388062Z   CLOUDSDK_CORE_PROJECT: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2389128Z   CLOUDSDK_PROJECT: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2390134Z   GCLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2391138Z   GCP_PROJECT: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2392127Z   GOOGLE_CLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:54.2393159Z ##[endgroup]
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:17:55.3024858Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/04976917-9395-4b11-b77f-dd9d3d21799a -f /home/runner/work/_temp/9ecf119d-525b-4020-afb1-b3cae3c9a422
+Build and Push Containers (gemma)	Set up Cloud SDK	2025-11-03T06:18:13.0920255Z Successfully authenticated
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	﻿2025-11-03T06:18:13.1095780Z ##[group]Run gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1096474Z [36;1mgcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev[0m
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1135011Z shell: /usr/bin/bash -e {0}
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1135296Z env:
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1135743Z   GCP_PROJECT_ID: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1136029Z   ARTIFACT_REGISTRY_LOCATION: europe-west1
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1136367Z   ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1136902Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1137612Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1138231Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1138702Z   CLOUDSDK_CORE_PROJECT: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1138978Z   CLOUDSDK_PROJECT: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1139507Z   GCLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1139749Z   GCP_PROJECT: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1140023Z   GOOGLE_CLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1140319Z   CLOUDSDK_METRICS_ENVIRONMENT: github-actions-setup-gcloud
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1140658Z   CLOUDSDK_METRICS_ENVIRONMENT_VERSION: 2.2.1
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.1140923Z ##[endgroup]
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6684939Z Adding credentials for: europe-west1-docker.pkg.dev
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6686592Z After update, the following will be written to your Docker config file located 
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6687479Z at [/home/runner/.docker/config.json]:
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6687941Z  {
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6688257Z   "credHelpers": {
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6688674Z     "europe-west1-docker.pkg.dev": "gcloud"
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6689110Z   }
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6689407Z }
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6689559Z 
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6689719Z Do you want to continue (Y/n)?  
+Build and Push Containers (gemma)	Configure Docker for Artifact Registry	2025-11-03T06:18:13.6872002Z Docker configuration file updated.
+Build and Push Containers (gemma)	Determine Image Tags based on Event	﻿2025-11-03T06:18:13.7839026Z ##[group]Run set -euo pipefail
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7839418Z [36;1mset -euo pipefail[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7839649Z [36;1m[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7839832Z [36;1mLATEST_TAG=""[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7840041Z [36;1m[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7840241Z [36;1m# 1. Check for Pull Request trigger[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7840556Z [36;1mif [[ "pull_request" == "pull_request" ]]; then[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7840838Z [36;1m  PR_NUMBER="167"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7841078Z [36;1m  if [[ -z "${PR_NUMBER}" ]]; then[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7841392Z [36;1m    echo "❌ Error: Pull request number is missing"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7841683Z [36;1m    exit 1[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7841874Z [36;1m  fi[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7842075Z [36;1m  IMAGE_TAG="pr-${PR_NUMBER}"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7842315Z [36;1m  [0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7842517Z [36;1m# 2. Check for Push to 'main' branch[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7843270Z [36;1melif [[ "refs/pull/167/merge" == "refs/heads/main" ]]; then[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7843697Z [36;1m  IMAGE_TAG="32d2b4793ed94aa31a0dbe81f8e5e190adbd8825"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7844022Z [36;1m  LATEST_TAG="latest"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7844243Z [36;1m  [0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7844438Z [36;1m# 3. Default (other branches)[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7844677Z [36;1melse[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7844982Z [36;1m  IMAGE_TAG="$(echo '32d2b4793ed94aa31a0dbe81f8e5e190adbd8825' | cut -c1-7)"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7845336Z [36;1mfi[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7845505Z [36;1m[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7845688Z [36;1m# Validate IMAGE_TAG is set[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7845932Z [36;1mif [[ -z "${IMAGE_TAG}" ]]; then[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7846200Z [36;1m  echo "❌ Error: IMAGE_TAG is empty"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7846454Z [36;1m  exit 1[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7846638Z [36;1mfi[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7846809Z [36;1m[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7847023Z [36;1m# Set outputs for subsequent build/push steps[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7847355Z [36;1mecho "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7847671Z [36;1mif [[ -n "${LATEST_TAG}" ]]; then[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7847976Z [36;1m  echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7848263Z [36;1mfi[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7848430Z [36;1m[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7848617Z [36;1mecho "Event: pull_request"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7848876Z [36;1mecho "Ref: refs/pull/167/merge"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7849129Z [36;1mecho "Service: gemma"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7849370Z [36;1mecho "Image tag: ${IMAGE_TAG}"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7849681Z [36;1m[[ -n "${LATEST_TAG}" ]] && echo "Latest tag: ${LATEST_TAG}"[0m
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7883453Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7883796Z env:
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7884086Z   GCP_PROJECT_ID: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7884318Z   ARTIFACT_REGISTRY_LOCATION: europe-west1
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7884625Z   ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7885145Z   CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7886026Z   GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7886641Z   GOOGLE_GHA_CREDS_PATH: /home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7887112Z   CLOUDSDK_CORE_PROJECT: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7887376Z   CLOUDSDK_PROJECT: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7887613Z   GCLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7887848Z   GCP_PROJECT: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7888094Z   GOOGLE_CLOUD_PROJECT: ***
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7888381Z   CLOUDSDK_METRICS_ENVIRONMENT: github-actions-setup-gcloud
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7888727Z   CLOUDSDK_METRICS_ENVIRONMENT_VERSION: 2.2.1
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7888987Z ##[endgroup]
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7940521Z Event: pull_request
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7940912Z Ref: refs/pull/167/merge
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7941259Z Service: gemma
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7941466Z Image tag: pr-167
+Build and Push Containers (gemma)	Determine Image Tags based on Event	2025-11-03T06:18:13.7953388Z ##[error]Process completed with exit code 1.
+Build and Push Containers (gemma)	Post Authenticate to Google Cloud	﻿2025-11-03T06:18:13.8099845Z Post job cleanup.
+Build and Push Containers (gemma)	Post Authenticate to Google Cloud	2025-11-03T06:18:13.8933401Z Removed exported credentials at "/home/runner/work/agentnav/agentnav/gha-creds-f04448600ebf1cba.json".
+Build and Push Containers (gemma)	Post Checkout code	﻿2025-11-03T06:18:13.9050394Z Post job cleanup.
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0031828Z [command]/usr/bin/git version
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0069613Z git version 2.51.2
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0131337Z Temporarily overriding HOME='/home/runner/work/_temp/5079e687-93e4-494c-9b7a-987cca517843' before making global git config changes
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0132755Z Adding repository directory to the temporary git global config as a safe directory
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0133725Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/agentnav/agentnav
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0178086Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0228551Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0543010Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0565442Z http.https://github.com/.extraheader
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0582319Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Build and Push Containers (gemma)	Post Checkout code	2025-11-03T06:18:14.0620698Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Build and Push Containers (gemma)	Complete job	﻿2025-11-03T06:18:14.0977725Z Cleaning up orphan processes

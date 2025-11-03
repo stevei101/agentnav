@@ -54,9 +54,13 @@ RUN apt-get update && apt-get install -y \
 # Copy Gemma service code
 COPY gemma_service/ ./gemma_service/
 
+# Copy entrypoint script and make it executable
+COPY gemma_service/entrypoint.sh /app/entrypoint.sh
+
 # Create non-root user for security (Cloud Run best practice)
 RUN groupadd -r appuser && useradd -r -g appuser appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
 USER appuser
@@ -73,6 +77,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:${PORT}/healthz || exit 1
 
-# Run FastAPI app
-# Cloud Run sets PORT env var automatically, read it dynamically
-CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; uvicorn.run('gemma_service.main:app', host='0.0.0.0', port=port)"
+# Run FastAPI app with entrypoint script for proper signal handling
+ENTRYPOINT ["/app/entrypoint.sh"]
