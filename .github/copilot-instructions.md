@@ -276,7 +276,7 @@ Backend service requires:
 
 interface VisualizationProps {  
   data: GraphData;  
-  onError?: (error: Error) \=\> void;  
+  onError?: (error: Error) => void;  
 }
 
 export function Visualization({ data, onError }: VisualizationProps) {  
