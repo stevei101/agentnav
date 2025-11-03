@@ -34,18 +34,22 @@ As the **Agentic Navigator** repository grows, maintaining a clean, efficient, a
 Following the initial **Repository Hygiene (FR#045)** pass, we identified several issues that must be prevented in future contributions:
 
 ### Codebase Clutter
+
 - Pull Requests often include temporary notes, redundant files, or local IDE configuration that bloat the commit history and confuse reviewers.
 - Example: `notes.md`, `scratchpad.py`, `test_temp.ts`, `FR020_COMPLETION_SUMMARY.md`
 
 ### Build Context Degradation
+
 - Unnecessary files increase the size of the Podman build context, slowing down the CI/CD pipeline and local build times.
 - Every file not excluded by `.dockerignore` is sent to the container build context.
 
 ### Conflicting Documentation
+
 - Ad-hoc notes or temporary markdown files, if merged, quickly become outdated and contradict the authoritative **System Instruction** or **Architecture Guide**.
 - Temporary documentation should never be committed.
 
 ### Increased Review Burden
+
 - Reviewers must manually audit every file to determine if it is essential to the feature.
 - This slows down the review process and increases the chance of missing issues.
 
@@ -53,18 +57,18 @@ Following the initial **Repository Hygiene (FR#045)** pass, we identified severa
 
 ## Minimum Viable Commit (MVC) Principles
 
-### 1. The Core Principle: Ask "Is it *Consumed*?"
+### 1. The Core Principle: Ask "Is it _Consumed_?"
 
 Before committing or merging, audit every new file and ask:
 
 > **"Is this file consumed by the running application, the CI/CD pipeline, or the Infrastructure as Code (IaC)?"**
 
-| File Type | Criteria for Inclusion | Action for Exclusion |
-|:----------|:----------------------|:---------------------|
-| **Source Code** | Must be imported/called by the application (`frontend/`, `backend/`). | **Keep** only final, functional code. |
-| **Configuration** | Must be used by `podman-compose.yml`, `uv`, `bun`, or `terraform/`. | **Keep** only `requirements.txt`, `package.json`, `podman-compose.yml`. |
-| **Documentation** | Must be a *final* file in the `docs/` folder or the `README.md`. | **Drop** all temporary notes, scratchpad files, or internal markdown drafts. |
-| **Build/Hygiene** | Must be an updated `.*ignore` file (`.gitignore`, `.dockerignore`). | **Keep** only if an addition is necessary. |
+| File Type         | Criteria for Inclusion                                                | Action for Exclusion                                                         |
+| :---------------- | :-------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| **Source Code**   | Must be imported/called by the application (`frontend/`, `backend/`). | **Keep** only final, functional code.                                        |
+| **Configuration** | Must be used by `podman-compose.yml`, `uv`, `bun`, or `terraform/`.   | **Keep** only `requirements.txt`, `package.json`, `podman-compose.yml`.      |
+| **Documentation** | Must be a _final_ file in the `docs/` folder or the `README.md`.      | **Drop** all temporary notes, scratchpad files, or internal markdown drafts. |
+| **Build/Hygiene** | Must be an updated `.*ignore` file (`.gitignore`, `.dockerignore`).   | **Keep** only if an addition is necessary.                                   |
 
 ### 2. The Non-Breaking Guiding Question
 
@@ -82,25 +86,25 @@ To ensure no new features are broken, the final check is:
 
 With a focus on **efficiency and clean CI/CD**, the following files/types **MUST** be audited and dropped from the PR before final merge, unless a specific, production-critical reason is provided:
 
-| File Pattern | Description & Action |
-|:------------|:--------------------|
-| `*.bak`, `*.tmp`, `*.old` | **Discard.** Backup and temporary files. |
-| `notes.md`, `scratchpad.*` | **Discard.** Personal note files. |
-| `*_SUMMARY.md` (in root) | **Discard.** Feature implementation summaries belong in docs/ or should be removed after merge. |
-| `PR_*.md` (in root) | **Discard.** PR-specific notes should not be committed. |
-| `test_temp.*`, `scratch_*` | **Discard.** Ad-hoc test files that do not belong in the final test suite. |
-| **Local Dev Environment** | **Discard.** Do not commit local `.env`, `.vscode/settings.json`, `.idea/`, or other IDE configuration files. Ensure these are in `.gitignore`. |
-| **Duplicate Documentation** | **Discard.** Any temporary documentation that has not been finalized and merged into an official `docs/` file or the `README.md`. |
-| **Build Artifacts** | **Discard.** Ensure `dist/`, `build/`, `__pycache__/`, `node_modules/` are in `.gitignore`. |
+| File Pattern                | Description & Action                                                                                                                            |
+| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `*.bak`, `*.tmp`, `*.old`   | **Discard.** Backup and temporary files.                                                                                                        |
+| `notes.md`, `scratchpad.*`  | **Discard.** Personal note files.                                                                                                               |
+| `*_SUMMARY.md` (in root)    | **Discard.** Feature implementation summaries belong in docs/ or should be removed after merge.                                                 |
+| `PR_*.md` (in root)         | **Discard.** PR-specific notes should not be committed.                                                                                         |
+| `test_temp.*`, `scratch_*`  | **Discard.** Ad-hoc test files that do not belong in the final test suite.                                                                      |
+| **Local Dev Environment**   | **Discard.** Do not commit local `.env`, `.vscode/settings.json`, `.idea/`, or other IDE configuration files. Ensure these are in `.gitignore`. |
+| **Duplicate Documentation** | **Discard.** Any temporary documentation that has not been finalized and merged into an official `docs/` file or the `README.md`.               |
+| **Build Artifacts**         | **Discard.** Ensure `dist/`, `build/`, `__pycache__/`, `node_modules/` are in `.gitignore`.                                                     |
 
 ### Files to CAREFULLY Review
 
-| File Type | Review Question |
-|:----------|:---------------|
-| **New Dependencies** | Is this dependency absolutely necessary? Does it add value proportional to its size/complexity? |
-| **Configuration Files** | Is this configuration file required for CI/CD or deployment? Or is it local-only? |
-| **Test Files** | Is this test file part of the permanent test suite? Or was it created for ad-hoc debugging? |
-| **Scripts** | Is this script used in CI/CD or deployment? Or is it a one-time utility? |
+| File Type               | Review Question                                                                                 |
+| :---------------------- | :---------------------------------------------------------------------------------------------- |
+| **New Dependencies**    | Is this dependency absolutely necessary? Does it add value proportional to its size/complexity? |
+| **Configuration Files** | Is this configuration file required for CI/CD or deployment? Or is it local-only?               |
+| **Test Files**          | Is this test file part of the permanent test suite? Or was it created for ad-hoc debugging?     |
+| **Scripts**             | Is this script used in CI/CD or deployment? Or is it a one-time utility?                        |
 
 ---
 
@@ -109,25 +113,30 @@ With a focus on **efficiency and clean CI/CD**, the following files/types **MUST
 Before requesting final review, complete this checklist:
 
 ### 1. Self-Audit
+
 - [ ] Review your PR file list and ask the "Is it Consumed?" question for every file
 - [ ] Verify all new files have a clear purpose in the application or CI/CD process
 - [ ] Ensure no temporary notes, local configuration, or outdated drafts are present
 
 ### 2. File Cleanup
+
 - [ ] Remove unnecessary files using `git rm <file>`
 - [ ] Commit the deletion: `git commit -m "Remove temporary files"`
 - [ ] Push the cleanup: `git push`
 
 ### 3. Build Context Validation
+
 - [ ] Verify `.dockerignore` excludes all unnecessary files
 - [ ] Check that build context size is reasonable (use `podman build --no-cache` to verify)
 
 ### 4. Final Testing
+
 - [ ] Run `make ci` to ensure all linting, building, and testing passes
 - [ ] Verify the deployed feature works as expected
 - [ ] Check that no functionality was broken by file removals
 
 ### 5. Documentation
+
 - [ ] Update documentation if adding user-facing features
 - [ ] Ensure all documentation is in `docs/` folder
 - [ ] Remove any temporary documentation files
@@ -145,6 +154,7 @@ git --no-pager diff --name-only main
 ### Step 2: Review Each File
 
 For each file, ask:
+
 1. **Is this file consumed?** (by application, CI/CD, or IaC)
 2. **If I delete this file, does `make ci` still pass?**
 3. **Is this file in the correct location?** (e.g., docs in `docs/`, not root)
@@ -190,6 +200,7 @@ When reviewing a Pull Request, verify:
 ### Reviewer Action Items
 
 If unnecessary files are found:
+
 1. **Comment** on the PR with specific files to remove
 2. **Request changes** and ask the contributor to follow the self-audit process
 3. **Do not approve** until all unnecessary files are removed
@@ -203,6 +214,7 @@ If unnecessary files are found:
 **Feature:** Add Firestore session persistence
 
 **Files Changed:**
+
 ```
 backend/services/session_service.py          # New service implementation
 backend/tests/test_session_service.py        # Tests for new service
@@ -220,6 +232,7 @@ docs/SESSION_PERSISTENCE_GUIDE.md            # User-facing documentation
 **Feature:** Add Firestore session persistence
 
 **Files Changed:**
+
 ```
 backend/services/session_service.py          # ✅ New service implementation
 backend/tests/test_session_service.py        # ✅ Tests for new service
@@ -300,6 +313,7 @@ This guide integrates with the existing contribution workflow documented in [CON
 ### Q: Where should I put temporary notes during development?
 
 **A:** Use `/tmp/` for temporary files that should not be committed. Example:
+
 ```bash
 # Good: Temporary notes that won't be committed
 echo "TODO: Test edge case" > /tmp/notes.md
@@ -311,17 +325,20 @@ echo "TODO: Test edge case" > notes.md
 ### Q: What if I need to document my implementation approach?
 
 **A:** If the documentation is valuable for future contributors:
+
 - Create a final, polished document in `docs/`
 - Follow the existing documentation style
 - Remove any temporary drafts
 
 If the documentation is only for your own reference:
+
 - Keep it in `/tmp/` or on your local machine
 - Do not commit it
 
 ### Q: How do I know if a dependency is necessary?
 
 **A:** Ask:
+
 1. Is the dependency used in production code? (Check imports)
 2. Can the functionality be achieved without the dependency?
 3. Does the dependency add value proportional to its size/complexity?
@@ -331,6 +348,7 @@ If unsure, ask in the PR description or discuss with reviewers.
 ### Q: What about test files I used for debugging?
 
 **A:** If the test file:
+
 - **Is part of the permanent test suite:** Keep it (e.g., `test_session_service.py`)
 - **Was created for ad-hoc debugging:** Remove it (e.g., `scratch_test.py`, `test_temp.py`)
 
@@ -348,9 +366,9 @@ If unsure, ask in the PR description or discuss with reviewers.
 
 ## Revision History
 
-| Date | Version | Description |
-|:-----|:--------|:------------|
-| 2024-11-02 | 1.0 | Initial policy creation (FR#050) |
+| Date       | Version | Description                      |
+| :--------- | :------ | :------------------------------- |
+| 2024-11-02 | 1.0     | Initial policy creation (FR#050) |
 
 ---
 

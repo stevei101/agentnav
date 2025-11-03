@@ -28,6 +28,7 @@ This document describes workflows that can be triggered manually via the GitHub 
 ### Automatic Triggers
 
 The workflow also runs automatically when:
+
 - Changes are pushed to the `main` branch that affect:
   - `backend/Dockerfile.gemma*` files
   - `backend/gemma_service/**` directory

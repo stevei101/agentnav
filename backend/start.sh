@@ -16,4 +16,3 @@ exec uvicorn main:app \
     --log-level info \
     --no-access-log
 
-# Made with Bob
