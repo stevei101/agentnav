@@ -143,7 +143,7 @@ class TestGeminiContentGeneration:
         mock_loop.run_in_executor = MagicMock(return_value=executor_wrapper())
         
         # Test generate_content
-        result = await generate_content(
+        await generate_content(
             prompt="Test prompt",
             temperature=0.7
         )
@@ -163,7 +163,7 @@ class TestGeminiContentGeneration:
         # Mock generate_content
         mock_generate.return_value = "Generated response"
         
-        result = await generate_content_with_prompt_template(
+        await generate_content_with_prompt_template(
             prompt_template_id="test_template",
             template_variables={"variable": "test_value"}
         )
