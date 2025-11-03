@@ -3,15 +3,16 @@ Integration tests for Linker Agent with Gemma Service
 Tests the enhanced semantic relationship mapping functionality
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from agents.linker_agent import LinkerAgent
 from agents.base_agent import A2AProtocol
+from agents.linker_agent import LinkerAgent
 
 
 @pytest.fixture

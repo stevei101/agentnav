@@ -4,9 +4,9 @@ Test script for SessionContext and Sequential Multi-Agent Workflow (FR#005)
 Tests the new SessionContext model and sequential workflow implementation
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,7 +17,7 @@ async def test_session_context_model():
     print("🧪 Testing SessionContext Model")
 
     try:
-        from models.context_model import SessionContext, EntityRelationship
+        from models.context_model import EntityRelationship, SessionContext
 
         # Test 1: Create basic SessionContext
         context = SessionContext(
@@ -88,9 +88,9 @@ async def test_sequential_workflow():
     try:
         from agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
         from models.context_model import SessionContext
@@ -161,7 +161,7 @@ Applications include image recognition, natural language processing, and recomme
             print("   ⚠️  Relationships: None found")
 
         if updated_context.graph_json:
-            print(f"   ✅ Graph JSON: Generated")
+            print("   ✅ Graph JSON: Generated")
             print(f"      - Type: {updated_context.graph_json.get('type')}")
             print(f"      - Nodes: {len(updated_context.graph_json.get('nodes', []))}")
             print(f"      - Edges: {len(updated_context.graph_json.get('edges', []))}")

@@ -4,9 +4,10 @@ HTTP client for calling the Gemma GPU service with support for WI-based authenti
 Implements Workload Identity ID token fetching for Cloud Run service-to-service calls
 """
 
-import os
 import logging
-from typing import Optional, List
+import os
+from typing import List, Optional
+
 import httpx
 
 logger = logging.getLogger(__name__)

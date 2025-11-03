@@ -11,24 +11,21 @@ This replaces the basic A2AProtocol class in base_agent.py with
 a production-ready implementation.
 """
 
+import json
 import logging
 import time
-from typing import List, Dict, Any, Optional, Type, Union
 from collections import defaultdict
-import json
+from typing import Any, Dict, List, Optional
 
 from models.a2a_messages import (
     A2AMessageBase,
-    TaskDelegationMessage,
-    SummarizationCompletedMessage,
-    RelationshipMappedMessage,
-    VisualizationReadyMessage,
-    KnowledgeTransferMessage,
-    AgentStatusMessage,
     A2AMessagePriority,
     A2AMessageStatus,
-    create_message_id,
+    AgentStatusMessage,
+    KnowledgeTransferMessage,
+    TaskDelegationMessage,
     create_correlation_id,
+    create_message_id,
 )
 from services.a2a_security import get_security_service
 
@@ -68,7 +65,7 @@ class A2AProtocolService:
         # Security service
         self._security_service = get_security_service()
 
-        logger.info(f"🔄 A2A Protocol Service initialized")
+        logger.info("🔄 A2A Protocol Service initialized")
         logger.info(f"   Session ID: {self.session_id}")
         logger.info(f"   Correlation ID: {self.correlation_id}")
 

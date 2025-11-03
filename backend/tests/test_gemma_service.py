@@ -3,10 +3,11 @@ Tests for Gemma GPU Service
 Tests the API endpoints and client functionality
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Mock torch before importing gemma_service
 sys.modules["torch"] = MagicMock()

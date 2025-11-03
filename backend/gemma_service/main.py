@@ -3,17 +3,18 @@ Gemma GPU Service - FastAPI Application
 Serves Gemma model on Cloud Run with GPU acceleration
 """
 
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
 
-from .model_loader import ModelLoader
-from .inference import GemmaInference
 from .auth import verify_jwt_token
+from .inference import GemmaInference
+from .model_loader import ModelLoader
 
 # Configure logging
 logging.basicConfig(
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
     # Startup: Load model
     try:
         model_name = os.getenv("MODEL_NAME", "google/gemma-7b-it")
-        logger.info(f"🚀 Starting Gemma GPU Service")
+        logger.info("🚀 Starting Gemma GPU Service")
         logger.info(f"   Model: {model_name}")
 
         model_loader = ModelLoader(model_name=model_name)

@@ -4,13 +4,14 @@ Uses Gemma GPU service for complex graph generation tasks
 Integrates with Linker and Summarizer agents via A2A Protocol
 """
 
-import os
 import json
-import re
 import logging
+import os
+import re
 import time
-from typing import Dict, Any, Optional
-from .base_agent import Agent, A2AMessage
+from typing import Any, Dict, Optional
+
+from .base_agent import A2AMessage, Agent
 
 logger = logging.getLogger(__name__)
 

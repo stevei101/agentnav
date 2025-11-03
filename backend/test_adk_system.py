@@ -4,9 +4,9 @@ Test script for ADK Multi-Agent System
 Tests the new /api/analyze endpoint and agent functionality
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,9 +19,9 @@ async def test_agents():
     try:
         from agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
 
@@ -99,7 +99,7 @@ async def test_agents():
 
         # Test agent status
         status = workflow.get_workflow_status()
-        print(f"\n📋 Workflow Status:")
+        print("\n📋 Workflow Status:")
         print(f"  - Total agents: {len(status['agents'])}")
         print(f"  - Dependencies: {len(status['dependencies'])} configured")
         print(f"  - Shared context keys: {len(status['shared_context_keys'])}")
@@ -120,7 +120,7 @@ async def test_api_components():
 
     try:
         # Test AnalyzeRequest model
-        from main import AnalyzeRequest, AnalyzeResponse
+        from main import AnalyzeRequest
 
         # Create test request
         request = AnalyzeRequest(

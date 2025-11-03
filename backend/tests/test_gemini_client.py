@@ -8,7 +8,7 @@ with the current API (no legacy functions).
 import os
 import sys
 import types
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec, spec_from_file_location
 
 # Add backend to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

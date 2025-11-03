@@ -3,10 +3,10 @@ SessionContext Model - Shared Context for Multi-Agent Workflow
 Implements the shared session context as specified in FR#005
 """
 
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
 import time
+from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # Standard agent execution order for the workflow
 STANDARD_AGENT_ORDER = ["orchestrator", "summarizer", "linker", "visualizer"]

@@ -3,10 +3,11 @@ JWT Authentication for Gemma Service
 Implements Workload Identity authentication for Cloud Run service-to-service calls
 """
 
-import os
 import logging
+import os
 from typing import Optional
-from fastapi import HTTPException, Header
+
+from fastapi import Header, HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ def verify_jwt_token(authorization: Optional[str] = Header(None)) -> bool:
                 request=request,
                 verify=True,  # Enable verification in production
                 audience=None,  # In production, set to expected service URL
-                issuer=f"https://accounts.google.com" if gcp_project_id else None,
+                issuer="https://accounts.google.com" if gcp_project_id else None,
             )
 
             # Log authentication success (without sensitive token data)

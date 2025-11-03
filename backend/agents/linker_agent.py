@@ -4,10 +4,11 @@ Identifies key entities and their relationships for visualization
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from .base_agent import Agent, A2AMessage
-import time
 import re
+import time
+from typing import Any, Dict, List, Optional
+
+from .base_agent import A2AMessage, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -486,7 +487,6 @@ Extract 5-10 key entities:
         relationships = []
 
         # Simple approach: entities that appear near each other are related
-        entity_labels = [entity["label"].lower() for entity in entities]
 
         for i, entity1 in enumerate(entities):
             for j, entity2 in enumerate(entities):
@@ -718,7 +718,6 @@ Provide relationship insights:
     ) -> List[Dict[str, Any]]:
         """Enhance relationships using summary context from Summarizer Agent"""
         # This could use summary insights to weight or filter relationships
-        insights = summary_context.get("insights", {})
 
         # For now, just add metadata based on content length
         for relationship in relationships:

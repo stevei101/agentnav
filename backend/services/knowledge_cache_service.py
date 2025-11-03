@@ -7,7 +7,8 @@ Implements content hash-based caching to avoid redundant processing
 import hashlib
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from google.cloud.firestore import Increment
 
 logger = logging.getLogger(__name__)

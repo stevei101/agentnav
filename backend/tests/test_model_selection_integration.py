@@ -6,20 +6,22 @@ the cloud-based Gemini model or the local Gemma GPU service based
 on the model_type parameter.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Enable asyncio for pytest
 pytestmark = pytest.mark.asyncio
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from agents.base_agent import A2AProtocol
+
 # Avoid importing top-level services module (pulls in firestore)
 from agents.linker_agent import LinkerAgent
 from agents.orchestrator_agent import OrchestratorAgent
-from agents.base_agent import A2AProtocol
 
 
 @pytest.fixture
