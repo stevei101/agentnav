@@ -6,8 +6,10 @@ Multi-agent system with ADK and A2A Protocol
 import os
 import logging
 from typing import Optional, Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Import WebSocket streaming routes (FR#020)
@@ -21,14 +23,60 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS middleware for local development
+# Security: Trusted Host Middleware (Cloud Run best practice)
+# Allow Cloud Run service URLs and custom domain
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS", 
+    "agentnav.lornu.com,*.run.app,localhost,127.0.0.1"
+).split(",")
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+
+# CORS middleware - Enhanced for production
+# Configurable via environment variables for different environments
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,https://agentnav.lornu.com"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+
+# Security headers middleware (Cloud Run best practice)
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add security headers to all responses"""
+    response = await call_next(request)
+    
+    # HSTS (HTTP Strict Transport Security) - Cloud Run best practice
+    # Force HTTPS for 1 year
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
+    # Prevent clickjacking
+    response.headers["X-Frame-Options"] = "DENY"
+    
+    # Prevent MIME type sniffing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    
+    # XSS Protection
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    
+    # Referrer Policy
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (relaxed for FastAPI)
+    # Allow same-origin and inline styles for FastAPI docs
+    response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    
+    return response
+
 
 # Include WebSocket streaming routes (FR#020 - Interactive Agent Dashboard)
 app.include_router(stream_router)
