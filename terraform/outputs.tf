@@ -88,3 +88,16 @@ output "cloud_build_triggers" {
   }
 }
 
+# Custom Domain Outputs
+output "custom_domain_url" {
+  description = "Custom domain URL for frontend service"
+  value       = "https://${var.custom_domain_name}"
+  depends_on  = [google_cloud_run_domain_mapping.frontend_custom_domain]
+}
+
+output "domain_mapping_status" {
+  description = "Status of Cloud Run domain mapping"
+  value       = google_cloud_run_domain_mapping.frontend_custom_domain.status
+  sensitive   = false
+}
+
