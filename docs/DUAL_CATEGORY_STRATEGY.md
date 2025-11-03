@@ -1,4 +1,5 @@
 # Dual Category Strategy: AI Agents + GPU
+
 ## Cloud Run Hackathon Submission Guide
 
 Your project **Agentic Navigator** can target **BOTH categories** simultaneously!
@@ -8,7 +9,9 @@ Your project **Agentic Navigator** can target **BOTH categories** simultaneously
 ## ?? Category Strategy
 
 ### Primary: AI Agents Category
+
 ? **Requirements Met:**
+
 - ? Built with Google's Agent Development Kit (ADK)
 - ? Multi-agent architecture (Orchestrator, Summarizer, Linker, Visualizer)
 - ? Agents communicate via A2A Protocol
@@ -16,7 +19,9 @@ Your project **Agentic Navigator** can target **BOTH categories** simultaneously
 - ? Uses Gemini models
 
 ### Secondary: GPU Category
+
 ? **Requirements Met:**
+
 - ? Utilize NVIDIA L4 GPUs on Cloud Run
 - ? Use europe-west1 or europe-west4 region
 - ? Deploy open-source model (Gemma) on GPU-enabled Cloud Run service
@@ -50,6 +55,7 @@ Your project **Agentic Navigator** can target **BOTH categories** simultaneously
 ## ?? Implementation Strategy
 
 ### Option 1: Separate GPU Service
+
 ```
 ???????????????????????????????????????
 ?         Frontend (Cloud Run)        ?
@@ -76,6 +82,7 @@ Your project **Agentic Navigator** can target **BOTH categories** simultaneously
 ```
 
 ### Option 2: Hybrid Agent Approach
+
 - **Orchestrator, Summarizer, Linker**: Use Gemini API (fast, no GPU needed)
 - **Visualizer Agent**: Use Gemma on GPU for complex graph generation
 - **Embedding Generation**: Use Gemma on GPU for semantic embeddings
@@ -150,7 +157,7 @@ class VisualizerAgent(Agent):
         # Use Gemma on GPU for complex graph generation
         graph_prompt = f"Generate a knowledge graph for: {context['document']}"
         graph_data = await generate_with_gemma(graph_prompt)
-        
+
         # Process and return
         return self.parse_graph(graph_data)
 ```
@@ -162,6 +169,7 @@ class VisualizerAgent(Agent):
 Your architecture diagram should show:
 
 ### Components to Add:
+
 - [ ] **Gemma Service** (Cloud Run with GPU)
 - [ ] **NVIDIA L4 GPU** icon
 - [ ] **europe-west1** region label
@@ -169,6 +177,7 @@ Your architecture diagram should show:
 - [ ] Backend ? Gemma service connection
 
 ### Example Layout:
+
 ```
 User ? Frontend ? Backend ? ADK Agents
                     ?
@@ -185,13 +194,14 @@ User ? Frontend ? Backend ? ADK Agents
 ### GPU Category Demo Section (Add 30 seconds)
 
 **Script Addition:**
-"Now let me show you the GPU-powered component. Our Visualizer Agent uses 
-Gemma, an open-source model running on NVIDIA L4 GPUs in the europe-west1 
-region. [Show Cloud Console GPU metrics] This enables us to generate 
-complex visualizations much faster than CPU-only inference. [Show comparison] 
+"Now let me show you the GPU-powered component. Our Visualizer Agent uses
+Gemma, an open-source model running on NVIDIA L4 GPUs in the europe-west1
+region. [Show Cloud Console GPU metrics] This enables us to generate
+complex visualizations much faster than CPU-only inference. [Show comparison]
 Notice how the GPU-accelerated service handles large documents in seconds."
 
 ### Show in Demo:
+
 - [ ] Cloud Console GPU metrics
 - [ ] GPU utilization graph
 - [ ] Performance comparison (CPU vs GPU)
@@ -206,18 +216,19 @@ Notice how the GPU-accelerated service handles large documents in seconds."
 ```markdown
 ## GPU Acceleration
 
-Agentic Navigator leverages NVIDIA L4 GPUs on Cloud Run to accelerate 
-AI model inference. The Visualizer Agent uses Gemma, an open-source 
-language model, deployed on a GPU-enabled Cloud Run service in the 
+Agentic Navigator leverages NVIDIA L4 GPUs on Cloud Run to accelerate
+AI model inference. The Visualizer Agent uses Gemma, an open-source
+language model, deployed on a GPU-enabled Cloud Run service in the
 europe-west1 region.
 
 **GPU Implementation:**
+
 - Gemma model deployed on Cloud Run with NVIDIA L4 GPU
 - GPU used for complex graph generation and embeddings
 - Provides 10x faster inference compared to CPU-only
 - Scales automatically based on workload
 
-This dual approach - Gemini for agent reasoning and Gemma on GPU for 
+This dual approach - Gemini for agent reasoning and Gemma on GPU for
 specialized tasks - maximizes both performance and cost efficiency.
 ```
 
@@ -226,6 +237,7 @@ specialized tasks - maximizes both performance and cost efficiency.
 ## ? Dual Category Checklist
 
 ### AI Agents Category
+
 - [x] Built with Google ADK
 - [x] Multi-agent system (4 agents)
 - [x] A2A Protocol communication
@@ -233,6 +245,7 @@ specialized tasks - maximizes both performance and cost efficiency.
 - [x] Uses Gemini models
 
 ### GPU Category
+
 - [ ] Gemma model deployed on Cloud Run
 - [ ] NVIDIA L4 GPU configured
 - [ ] europe-west1 region used
@@ -244,11 +257,13 @@ specialized tasks - maximizes both performance and cost efficiency.
 ## ?? Maximizing Points
 
 ### Both Categories Eligible For:
+
 - **Best of AI Agents** ($8,000 + credits)
 - **Best of GPUs** ($8,000 + credits)
 - **Grand Prize** ($20,000 + credits) - if you win overall
 
 ### Bonus Points Still Apply:
+
 - ? Google AI Models (+0.2) - Gemini + Gemma
 - ? Multiple Cloud Run Services (+0.2) - Frontend + Backend + Gemma Service
 - ? Blog post (+0.4)

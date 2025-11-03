@@ -12,6 +12,7 @@ Agentic Navigator uses a **two-environment deployment strategy**:
 ## Architecture
 
 ### Staging Environment
+
 - **Purpose**: Test PRs before merging to main
 - **Services**:
   - `agentnav-frontend-staging` (us-central1)
@@ -21,6 +22,7 @@ Agentic Navigator uses a **two-environment deployment strategy**:
 - **Access**: Public (unauthenticated)
 
 ### Production Environment
+
 - **Purpose**: Serve production traffic
 - **Services**:
   - `agentnav-frontend` (us-central1)
@@ -194,18 +196,21 @@ Frontend services are static (nginx) and don't require runtime env vars. API URL
 GitHub Environments provide deployment tracking and protection:
 
 ### Staging Environment
+
 - **Name**: `staging`
 - **Protection**: None (automatic deployments)
 - **Reviewers**: Not required
 - **Deployment URL**: Staging frontend URL
 
 ### Production Environment
+
 - **Name**: `production`
 - **Protection**: Optional (can require manual approval)
 - **Reviewers**: Optional (can require team approval)
 - **Deployment URL**: Production frontend URL
 
 **Configure in GitHub:**
+
 1. Go to repository Settings → Environments
 2. Create `staging` and `production` environments
 3. Set protection rules as needed
@@ -327,6 +332,7 @@ gcloud artifacts docker tags list \
 ### Secrets
 
 All secrets stored in Secret Manager:
+
 - `gemini-api-key`
 - `huggingface-token`
 - `firestore-credentials`
@@ -334,6 +340,7 @@ All secrets stored in Secret Manager:
 ### Workload Identity Federation
 
 GitHub Actions authenticates to GCP using WIF (no service account keys):
+
 - **Provider**: `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider`
 - **Service Account**: `github-actions@PROJECT_ID.iam.gserviceaccount.com`
 
