@@ -18,6 +18,13 @@ These documents are:
 - `GCP_SETUP_GUIDE.md` - Step-by-step Google Cloud Platform setup
 - `GPU_SETUP_GUIDE.md` - Adding Gemma model with NVIDIA L4 GPU
 - `local-development.md` - Local development environment setup
+- `MANUAL_WORKFLOWS.md` - Guide for manually triggering GitHub Actions workflows
+
+### Contribution & CI/CD Documentation
+
+- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - Pull request best practices
+- `CONTRIBUTION_QUALITY_GATES.md` - Required CI/CD checks for PRs
+- `WORKFLOW_PR_RECOVERY.md` - Recovering from failed workflows
 
 ### Architecture & System Documentation
 
