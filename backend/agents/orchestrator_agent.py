@@ -27,7 +27,6 @@ class OrchestratorAgent(Agent):
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
         self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
-        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
