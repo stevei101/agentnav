@@ -104,8 +104,9 @@ jobs:
         env:
           FIRESTORE_EMULATOR_HOST: 'localhost:8081'
           FIRESTORE_PROJECT_ID: 'agentnav-dev'
+        working-directory: backend
         run: |
-          pytest -q backend/tests
+          pytest -v
 
       - name: Stop Firestore emulator
         if: always()
