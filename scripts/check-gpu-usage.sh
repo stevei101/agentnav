@@ -22,10 +22,10 @@ echo ""
 echo "🔍 Checking which services have GPUs configured..."
 
 # Check each service for GPU configuration
-for SERVICE in $(gcloud run services list --region=${REGION} --project=${PROJECT_ID} --format="value(metadata.name)"); do
+while IFS= read -r SERVICE; do
   echo ""
   echo "📌 Service: ${SERVICE}"
-  GPU_CONFIG=$(gcloud run services describe ${SERVICE} \
+  GPU_CONFIG=$(gcloud run services describe "${SERVICE}" \
     --region=${REGION} \
     --project=${PROJECT_ID} \
     --format="value(spec.template.containers[0].resources.gpu)" 2>/dev/null || echo "none")
@@ -36,7 +36,7 @@ for SERVICE in $(gcloud run services list --region=${REGION} --project=${PROJECT
   else
     echo "   ❌ No GPU configured"
   fi
-done
+done < <(gcloud run services list --region=${REGION} --project=${PROJECT_ID} --format="value(metadata.name)")
 
 echo ""
 echo "📊 Current GPU Quota:"

@@ -43,16 +43,16 @@ fi
 
 echo "✅ Found repositories:"
 echo ""
-for REPO in $REPOS; do
+while IFS= read -r REPO; do
   # Extract just the repository ID (last part after the last /)
-  REPO_ID=$(echo $REPO | awk -F'/' '{print $NF}')
+  REPO_ID=$(echo "$REPO" | awk -F'/' '{print $NF}')
   echo "   📦 Repository ID: ${REPO_ID}"
   echo "      Full name: ${REPO}"
   echo ""
-done
+done <<< "$REPOS"
 
 echo "📝 Use this value for GAR_REPO:"
-FIRST_REPO=$(echo $REPOS | head -1 | awk -F'/' '{print $NF}')
+FIRST_REPO=$(echo "$REPOS" | head -n 1 | awk -F'/' '{print $NF}')
 echo ""
 echo "   export GAR_REPO=${FIRST_REPO}"
 echo ""

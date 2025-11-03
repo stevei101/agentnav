@@ -58,8 +58,8 @@ echo "🔍 Finding services with GPU configuration..."
 
 # Find all services with GPUs
 FOUND_GPU=false
-for SERVICE in $(gcloud run services list --region=${REGION} --project=${PROJECT_ID} --format="value(metadata.name)" 2>/dev/null); do
-  GPU_CONFIG=$(gcloud run services describe ${SERVICE} \
+while IFS= read -r SERVICE; do
+  GPU_CONFIG=$(gcloud run services describe "${SERVICE}" \
     --region=${REGION} \
     --project=${PROJECT_ID} \
     --format="value(spec.template.containers[0].resources.gpu)" 2>/dev/null || echo "")
@@ -75,7 +75,7 @@ for SERVICE in $(gcloud run services list --region=${REGION} --project=${PROJECT
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "🔄 Removing GPU from ${SERVICE}..."
-      gcloud run services update ${SERVICE} \
+      gcloud run services update "${SERVICE}" \
         --region=${REGION} \
         --project=${PROJECT_ID} \
         --clear-gpu \
@@ -86,7 +86,7 @@ for SERVICE in $(gcloud run services list --region=${REGION} --project=${PROJECT
       exit 0
     fi
   fi
-done
+done < <(gcloud run services list --region=${REGION} --project=${PROJECT_ID} --format="value(metadata.name)" 2>/dev/null)
 
 if [ "$FOUND_GPU" = false ]; then
   echo "   ✅ No services found with GPU configured"
