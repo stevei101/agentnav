@@ -1,20 +1,19 @@
-import React, { useState } from "react";
-import { AgentName, AgentStatusValue } from "../types";
-import { AgentDashboard } from "./AgentDashboard";
-import { DocumentUpload } from "./DocumentUpload";
-import { BrainCircuitIcon } from "./icons";
+import React, { useState } from 'react';
+import { AgentDashboard } from './AgentDashboard';
+import { DocumentUpload } from './DocumentUpload';
+import { BrainCircuitIcon } from './icons';
 
 export const StreamingDashboard: React.FC = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [documentContent, setDocumentContent] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<"dashboard" | "upload">(
-    "upload"
+  const [activeView, setActiveView] = useState<'dashboard' | 'upload'>(
+    'upload'
   );
 
   const handleSessionStart = (sessionId: string, content: string) => {
     setCurrentSessionId(sessionId);
     setDocumentContent(content);
-    setActiveView("dashboard");
+    setActiveView('dashboard');
   };
 
   return (
@@ -33,21 +32,21 @@ export const StreamingDashboard: React.FC = () => {
 
           <div className="flex gap-2">
             <button
-              onClick={() => setActiveView("upload")}
+              onClick={() => setActiveView('upload')}
               className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-                activeView === "upload"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                activeView === 'upload'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
             >
               New Analysis
             </button>
             <button
-              onClick={() => setActiveView("dashboard")}
+              onClick={() => setActiveView('dashboard')}
               className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-                activeView === "dashboard"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                activeView === 'dashboard'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
             >
               Dashboard
@@ -57,17 +56,17 @@ export const StreamingDashboard: React.FC = () => {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        {activeView === "dashboard" && currentSessionId && (
+        {activeView === 'dashboard' && currentSessionId && (
           <AgentDashboard
             sessionId={currentSessionId}
             documentContent={documentContent}
-            contentType={documentContent ? "document" : undefined}
+            contentType={documentContent ? 'document' : undefined}
             onStreamStart={() => {
               // Optional: add custom handling when stream starts
             }}
           />
         )}
-        {activeView === "upload" && (
+        {activeView === 'upload' && (
           <DocumentUpload
             onSessionStart={handleSessionStart}
             isLoading={false}

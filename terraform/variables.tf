@@ -101,6 +101,12 @@ variable "gemma_container_port" {
   default     = 8080
 }
 
+variable "enable_staging_environment" {
+  description = "Enable staging environment Cloud Run services for PR testing and validation."
+  type        = bool
+  default     = true # Enabled to support staging deployments for PRs
+}
+
 variable "agentnav_model_type" {
   description = "Model type for reasoning tasks: 'gemini' (cloud) or 'gemma' (local GPU). Controls AGENTNAV_MODEL_TYPE env var."
   type        = string
@@ -112,4 +118,15 @@ variable "agentnav_model_type" {
   }
 }
 
+variable "custom_domain_name" {
+  description = "Custom domain name for the frontend service (e.g., 'agentnav.lornu.com')"
+  type        = string
+  default     = "agentnav.lornu.com"
+}
+
+variable "dns_zone_name" {
+  description = "Name of the Cloud DNS managed zone for the custom domain (e.g., 'lornu-com' or 'lornu-zone')"
+  type        = string
+  default     = "lornu-com"
+}
 
