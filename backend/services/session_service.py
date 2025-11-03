@@ -137,13 +137,20 @@ class SessionService:
             doc_ref = client.get_document(self._collection_name, session_id)
 
             # Update agent state using dot notation for nested update
+            # Filter out None values to avoid Firestore errors
+            agent_state_data = {
+                "status": state.get("status", "completed"),
+                "timestamp": time.time(),
+            }
+            
+            # Only include non-None values
+            if state.get("execution_time") is not None:
+                agent_state_data["execution_time"] = state.get("execution_time")
+            if state.get("result_summary") is not None:
+                agent_state_data["result_summary"] = state.get("result_summary")
+            
             updates = {
-                f"agent_states.{agent_name}": {
-                    "status": state.get("status", "completed"),
-                    "timestamp": time.time(),
-                    "execution_time": state.get("execution_time"),
-                    "result_summary": state.get("result_summary")
-                },
+                f"agent_states.{agent_name}": agent_state_data,
                 "updated_at": time.time()
             }
 

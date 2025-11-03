@@ -72,7 +72,7 @@ jobs:
             
           # 3. Default (other branches)
           else
-            IMAGE_TAG="$(echo ${{ github.sha }} | cut -c1-7)"
+            IMAGE_TAG="$(echo '${{ github.sha }}' | cut -c1-7)"
           fi
 
           # Validate IMAGE_TAG is set
@@ -224,14 +224,21 @@ jobs:
           echo "   Image: ${IMAGE}"
           echo "   Region: us-central1"
           
+          # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-frontend \
             --image ${IMAGE} \
             --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
             --allow-unauthenticated \
-            --port 80 \
+            --memory 512Mi \
+            --cpu 1 \
             --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 80 \
             --quiet
           
           echo "✅ Frontend deployment completed"
@@ -249,6 +256,7 @@ jobs:
           echo "   Region: europe-west1"
           echo "   Service Account: ${SERVICE_ACCOUNT}"
           
+          # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-backend \
             --image ${IMAGE} \
             --region europe-west1 \
@@ -256,9 +264,18 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account ${SERVICE_ACCOUNT} \
-            --port 8080 \
+            --memory 8Gi \
+            --cpu 4 \
             --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 8080 \
             --set-env-vars PORT=8080 \
+            --set-env-vars ENVIRONMENT=production \
+            --set-env-vars ALLOWED_HOSTS="agentnav.lornu.com,*.run.app" \
+            --set-env-vars CORS_ORIGINS="https://agentnav.lornu.com" \
             --quiet
           
           echo "✅ Backend deployment completed"

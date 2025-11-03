@@ -87,7 +87,7 @@ class KnowledgeCacheService:
             expires_at = cached_data.get("expires_at")
             if expires_at and expires_at < time.time():
                 logger.info(f"⏰ Cache EXPIRED: {content_hash[:16]}...")
-                # Optionally delete expired entry
+                # Delete expired entry
                 await self.delete_cache_entry(content_hash)
                 return None
 
@@ -257,6 +257,7 @@ class KnowledgeCacheService:
             collection = client.get_collection(self._collection_name)
 
             # Get all cache entries (limited for performance)
+            # Limit can be made configurable via constructor parameter if needed
             docs = collection.limit(1000).stream()
 
             total_entries = 0

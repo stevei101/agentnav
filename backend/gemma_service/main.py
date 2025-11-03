@@ -12,6 +12,7 @@ from typing import Optional
 
 from .model_loader import ModelLoader
 from .inference import GemmaInference
+from .auth import verify_jwt_token
 
 # Configure logging
 logging.basicConfig(
@@ -136,16 +137,47 @@ async def root():
 @app.get("/healthz", tags=["health"], response_model=HealthResponse)
 async def health_check():
     """
-    Health check endpoint (Cloud Run requirement)
-    Returns service status and GPU information
-    """
-    if not model_loader:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    Enhanced health check endpoint (Cloud Run requirement)
     
+    Returns service status, GPU information, and model readiness.
+    Validates that both model_loader and inference_engine are initialized.
+    """
+    # Check model loader initialization
+    if not model_loader:
+        raise HTTPException(
+            status_code=503,
+            detail="Model loader not initialized"
+        )
+    
+    # Check inference engine initialization
+    if not inference_engine:
+        raise HTTPException(
+            status_code=503,
+            detail="Inference engine not initialized"
+        )
+    
+    # Get comprehensive model information
     model_info = model_loader.get_model_info()
     
+    # Enhanced validation: Check if model is actually loaded and ready
+    if not model_info.get("loaded", False):
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded"
+        )
+    
+    # Determine health status based on readiness
+    is_healthy = (
+        model_info.get("loaded", False) and
+        inference_engine is not None and
+        model_loader.model is not None and
+        model_loader.tokenizer is not None
+    )
+    
+    status = "healthy" if is_healthy else "loading"
+    
     return HealthResponse(
-        status="healthy" if model_info["loaded"] else "loading",
+        status=status,
         model=model_info["model"],
         device=model_info["device"],
         gpu_available=model_info.get("gpu_available", False),
@@ -156,16 +188,23 @@ async def health_check():
 
 
 @app.post("/reason", tags=["inference"], response_model=ReasonResponse)
-async def reason(request: ReasonRequest):
+async def reason(
+    request: ReasonRequest,
+    authorization: Optional[str] = Header(None)
+):
     """
     Generate reasoning/text using Gemma model with optional context
     
     Args:
         request: Reasoning parameters including prompt and optional context
+        authorization: JWT token for authentication (production only)
         
     Returns:
         Generated text
     """
+    # Verify JWT token if authentication is required
+    verify_jwt_token(authorization)
+    
     if not inference_engine:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
@@ -201,16 +240,23 @@ async def reason(request: ReasonRequest):
 
 
 @app.post("/embed", tags=["inference"], response_model=EmbedResponse)
-async def embed(request: EmbedRequest):
+async def embed(
+    request: EmbedRequest,
+    authorization: Optional[str] = Header(None)
+):
     """
     Generate embeddings for a batch of text strings
     
     Args:
         request: Batch of texts to embed
+        authorization: JWT token for authentication (production only)
         
     Returns:
         List of embedding vectors
     """
+    # Verify JWT token if authentication is required
+    verify_jwt_token(authorization)
+    
     if not inference_engine:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
