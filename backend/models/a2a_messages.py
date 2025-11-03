@@ -61,8 +61,8 @@ class A2ASecurityContext(BaseModel):
         description="Whether the message signature has been verified"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "service_account_id": "backend@agentnav-project.iam.gserviceaccount.com",
                 "signature": "a3f8b2c1d4e5f6...",
@@ -70,6 +70,7 @@ class A2ASecurityContext(BaseModel):
                 "verified": True
             }
         }
+    )
 
 
 class A2ATraceContext(BaseModel):
@@ -98,8 +99,8 @@ class A2ATraceContext(BaseModel):
         description="Additional metadata for observability and debugging"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "correlation_id": "session_12345_workflow_001",
                 "parent_message_id": "msg_orchestrator_001",
@@ -110,6 +111,7 @@ class A2ATraceContext(BaseModel):
                 }
             }
         }
+    )
 
 
 class A2AMessageBase(BaseModel):
@@ -196,8 +198,8 @@ class A2AMessageBase(BaseModel):
     # services.a2a_security.A2ASecurityService for better separation of concerns
     # and to avoid code duplication.
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_summarizer_001",
                 "message_type": "knowledge_transfer",
@@ -219,6 +221,7 @@ class A2AMessageBase(BaseModel):
                 "data": {}
             }
         }
+    )
 
 
 # ============================================================================
@@ -247,8 +250,8 @@ class TaskDelegationMessage(A2AMessageBase):
         description="List of prerequisite agent names"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_orch_to_summ_001",
                 "from_agent": "orchestrator",
@@ -262,6 +265,7 @@ class TaskDelegationMessage(A2AMessageBase):
                 "depends_on": []
             }
         }
+    )
 
 
 class SummarizationCompletedMessage(A2AMessageBase):
@@ -282,8 +286,8 @@ class SummarizationCompletedMessage(A2AMessageBase):
     content_type: str = Field(..., description="Type of content summarized")
     word_count: Optional[int] = Field(None, description="Word count of summary")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_summ_complete_001",
                 "from_agent": "summarizer",
@@ -296,6 +300,7 @@ class SummarizationCompletedMessage(A2AMessageBase):
                 "content_type": "document"
             }
         }
+    )
 
 
 class RelationshipMappedMessage(A2AMessageBase):
@@ -323,8 +328,8 @@ class RelationshipMappedMessage(A2AMessageBase):
         description="Preliminary graph data structure"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_linker_complete_001",
                 "from_agent": "linker",
@@ -339,6 +344,7 @@ class RelationshipMappedMessage(A2AMessageBase):
                 "relationship_count": 15
             }
         }
+    )
 
 
 class VisualizationReadyMessage(A2AMessageBase):
@@ -357,8 +363,8 @@ class VisualizationReadyMessage(A2AMessageBase):
     edge_count: int = Field(..., description="Number of edges in the graph")
     generation_method: str = Field(..., description="Method used to generate visualization")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_viz_ready_001",
                 "from_agent": "visualizer",
@@ -374,6 +380,7 @@ class VisualizationReadyMessage(A2AMessageBase):
                 "generation_method": "gemma-gpu-service"
             }
         }
+    )
 
 
 class KnowledgeTransferMessage(A2AMessageBase):
@@ -396,8 +403,8 @@ class KnowledgeTransferMessage(A2AMessageBase):
         description="Additional metadata about the knowledge"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_knowledge_001",
                 "from_agent": "summarizer",
@@ -409,6 +416,7 @@ class KnowledgeTransferMessage(A2AMessageBase):
                 }
             }
         }
+    )
 
 
 class AgentStatusMessage(A2AMessageBase):
@@ -437,8 +445,8 @@ class AgentStatusMessage(A2AMessageBase):
         description="Brief summary of results (if completed)"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "message_id": "msg_status_001",
                 "from_agent": "summarizer",
@@ -448,6 +456,7 @@ class AgentStatusMessage(A2AMessageBase):
                 "result_summary": "Generated summary with 500 words"
             }
         }
+    )
 
 
 # ============================================================================

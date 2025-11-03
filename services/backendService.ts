@@ -144,11 +144,26 @@ export const getAgentStatus = async () => {
 
 /**
  * Health check for the backend API
+ * 
+ * Returns health status including ADK system availability
  */
 export const checkBackendHealth = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/healthz`);
-    return response.ok;
+    if (!response.ok) {
+      console.error(`Backend health check failed: ${response.status} ${response.statusText}`);
+      return false;
+    }
+    
+    const healthData = await response.json();
+    
+    // Check if ADK system is operational
+    if (healthData.adk_system === 'unavailable' || healthData.adk_system === 'error') {
+      console.error('ADK system is unavailable:', healthData.errors);
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     console.error('Backend health check failed:', error);
     return false;
