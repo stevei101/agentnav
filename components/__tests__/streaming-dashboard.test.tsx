@@ -13,6 +13,7 @@ import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 
 // Import components
 import { DocumentUpload } from '../DocumentUpload';
@@ -53,7 +54,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('enables file input and allows file selection', async () => {
-    const user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     const browseButton = screen.getByText('Browse Files');
@@ -202,13 +202,12 @@ describe('DocumentUpload Component', () => {
   it('shows agent info cards', () => {
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
-    expect(screen.getByText('Summarizer Agent')).toBeInTheDocument();
-    expect(screen.getByText('Linker Agent')).toBeInTheDocument();
-    expect(screen.getByText('Visualizer Agent')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Summarizer Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Linker Agent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Visualizer Agent' })).toBeInTheDocument();
   });
 
   it('handles drag and drop file upload', async () => {
-    const user = userEvent.setup();
     const { container } = render(
       <DocumentUpload onSessionStart={mockOnSessionStart} />
     );
@@ -218,7 +217,9 @@ describe('DocumentUpload Component', () => {
     ) as HTMLElement;
 
     if (uploadArea) {
-      const file = new File(['content'], 'dropped.txt', { type: 'text/plain' });
+      const _file = new File(['content'], 'dropped.txt', {
+        type: 'text/plain',
+      });
 
       const dragEvent = new DragEvent('dragenter', {
         dataTransfer: new DataTransfer(),
@@ -231,7 +232,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('displays error message when file read fails', async () => {
-    const user = userEvent.setup();
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     // This would require mocking FileReader to fail
@@ -239,7 +239,6 @@ describe('DocumentUpload Component', () => {
   });
 
   it('shows loading state during processing', async () => {
-    const user = userEvent.setup();
     render(
       <DocumentUpload onSessionStart={mockOnSessionStart} isLoading={true} />
     );
@@ -260,7 +259,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(
       <AgentDashboard
@@ -278,7 +277,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(
       <AgentDashboard
@@ -296,7 +295,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(
       <AgentDashboard
@@ -315,7 +314,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(
       <AgentDashboard
@@ -334,7 +333,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(
       <AgentDashboard
@@ -353,7 +352,7 @@ describe('AgentDashboard Component', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     render(<AgentDashboard sessionId={null} documentContent="Test content" />);
 
@@ -365,7 +364,7 @@ describe('AgentDashboard Component', () => {
 describe('useAgentStream Hook', () => {
   beforeEach(() => {
     // Mock WebSocket
-    global.WebSocket = vi.fn(function (url: string) {
+    global.WebSocket = vi.fn(function (_url: string) {
       return {
         close: vi.fn(),
         send: vi.fn(),
@@ -373,7 +372,7 @@ describe('useAgentStream Hook', () => {
         removeEventListener: vi.fn(),
         readyState: 0,
       };
-    }) as any;
+    }) as unknown as typeof WebSocket;
 
     // Mock window.location
     Object.defineProperty(window, 'location', {
@@ -437,7 +436,7 @@ describe('useAgentStream Hook', () => {
   });
 
   it('provides send function', () => {
-    let sendRef: ((msg: any) => void) | null = null;
+    let sendRef: ((msg: Record<string, unknown>) => void) | null = null;
 
     const TestComponent = () => {
       const { send } = useAgentStream({
@@ -457,16 +456,16 @@ describe('useAgentStream Hook', () => {
   });
 
   it('requires sessionId to connect', () => {
-    let errorRef: Error | null = null;
-    let onErrorCalled = false;
+    let _errorRef: Error | null = null;
+    let _onErrorCalled = false;
 
     const TestComponent = () => {
       const { error } = useAgentStream({
         sessionId: null,
         autoConnect: false,
         onError: err => {
-          errorRef = err;
-          onErrorCalled = true;
+          _errorRef = err;
+          _onErrorCalled = true;
         },
       });
 
@@ -509,7 +508,7 @@ describe('Streaming Dashboard Integration', () => {
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    })) as any;
+    })) as unknown as typeof WebSocket;
 
     // This would test StreamingDashboard component
     // Implementation depends on component structure

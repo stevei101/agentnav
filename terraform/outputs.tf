@@ -35,6 +35,11 @@ output "backend_service_url" {
   value       = google_cloud_run_v2_service.backend.uri
 }
 
+output "backend_model_type" {
+  description = "Model type for backend reasoning tasks (AGENTNAV_MODEL_TYPE)"
+  value       = var.agentnav_model_type
+}
+
 output "gemma_service_url" {
   description = "Gemma GPU Cloud Run service URL"
   value       = google_cloud_run_v2_service.gemma.uri
@@ -86,5 +91,18 @@ output "cloud_build_triggers" {
     frontend = var.enable_connect_repo && length(google_cloudbuild_trigger.frontend) > 0 ? google_cloudbuild_trigger.frontend[0].name : null
     backend  = var.enable_connect_repo && length(google_cloudbuild_trigger.backend) > 0 ? google_cloudbuild_trigger.backend[0].name : null
   }
+}
+
+# Custom Domain Outputs
+output "custom_domain_url" {
+  description = "Custom domain URL for frontend service"
+  value       = "https://${var.custom_domain_name}"
+  depends_on  = [google_cloud_run_domain_mapping.frontend_custom_domain]
+}
+
+output "domain_mapping_status" {
+  description = "Status of Cloud Run domain mapping"
+  value       = google_cloud_run_domain_mapping.frontend_custom_domain.status
+  sensitive   = false
 }
 

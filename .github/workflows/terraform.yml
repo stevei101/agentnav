@@ -2,7 +2,7 @@ name: INFRA_VERIFICATION
 
 on:
   push:
-    branches: ['**']  # Run on ALL branches for immediate feedback (FR#100)
+    branches: ['**'] # Run on ALL branches for immediate feedback (FR#100)
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'

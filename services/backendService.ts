@@ -3,7 +3,8 @@ import { AnalysisResult, VisualizationType } from '../types';
 // Backend API URL - can be configured via environment variable
 // Use window for browser environment compatibility
 const BACKEND_API_URL =
-  (typeof window !== 'undefined' && (window as any).VITE_API_URL) ||
+  (typeof window !== 'undefined' &&
+    (window as unknown as Record<string, unknown>).VITE_API_URL) ||
   'http://localhost:8080';
 
 interface AnalyzeRequest {
@@ -21,7 +22,7 @@ interface AnalyzeResponse {
       label: string;
       group: string;
       type?: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }>;
     edges: Array<{
       from: string;
@@ -32,8 +33,8 @@ interface AnalyzeResponse {
     }>;
   };
   agent_workflow: {
-    orchestration: any;
-    agent_status: any;
+    orchestration: Record<string, unknown>;
+    agent_status: Record<string, unknown>;
     total_agents: number;
     successful_agents: number;
   };
@@ -54,7 +55,7 @@ export const runAgenticNavigator = async (
   };
 
   try {
-    console.log('🎬 Starting ADK Multi-Agent Analysis via backend API');
+    console.info('🎬 Starting ADK Multi-Agent Analysis via backend API');
 
     const response = await fetch(`${BACKEND_API_URL}/api/analyze`, {
       method: 'POST',
@@ -73,10 +74,10 @@ export const runAgenticNavigator = async (
 
     const data: AnalyzeResponse = await response.json();
 
-    console.log(
+    console.warn(
       `✅ ADK Analysis completed in ${data.processing_time.toFixed(2)}s`
     );
-    console.log(
+    console.warn(
       `📊 Agent workflow: ${data.agent_workflow.successful_agents}/${data.agent_workflow.total_agents} agents successful`
     );
 
@@ -144,25 +145,30 @@ export const getAgentStatus = async () => {
 
 /**
  * Health check for the backend API
- * 
+ *
  * Returns health status including ADK system availability
  */
 export const checkBackendHealth = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/healthz`);
     if (!response.ok) {
-      console.error(`Backend health check failed: ${response.status} ${response.statusText}`);
+      console.error(
+        `Backend health check failed: ${response.status} ${response.statusText}`
+      );
       return false;
     }
-    
+
     const healthData = await response.json();
-    
+
     // Check if ADK system is operational
-    if (healthData.adk_system === 'unavailable' || healthData.adk_system === 'error') {
+    if (
+      healthData.adk_system === 'unavailable' ||
+      healthData.adk_system === 'error'
+    ) {
       console.error('ADK system is unavailable:', healthData.errors);
       return false;
     }
-    
+
     return true;
   } catch (error) {
     console.error('Backend health check failed:', error);
