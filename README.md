@@ -2,6 +2,8 @@
 
 **A multi-agent knowledge explorer for complex documents and codebases.**
 
+> **Note:** This PR is for testing FR#145 path filtering - docs-only changes should skip frontend and backend tests.
+
 This project is a submission for the **Google Cloud Run Hackathon** on Devpost (**AI Agents + GPU Categories**). It demonstrates a multi-agent AI system using Gemini models, Gemma GPU service, and deployed on Cloud Run.
 
 ?? **Hackathon Categories:** AI Agents + GPU  
