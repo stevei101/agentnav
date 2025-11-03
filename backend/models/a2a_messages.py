@@ -15,7 +15,7 @@ import time
 import hashlib
 import json
 from typing import Dict, Any, Optional, List, Literal
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
 
 
