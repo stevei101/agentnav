@@ -46,6 +46,7 @@ This guide describes the implementation and integration of the **Gemma GPU Servi
 Generates semantic embeddings for a batch of text strings.
 
 **Request:**
+
 ```json
 {
   "texts": [
@@ -57,6 +58,7 @@ Generates semantic embeddings for a batch of text strings.
 ```
 
 **Response:**
+
 ```json
 {
   "embeddings": [
@@ -70,6 +72,7 @@ Generates semantic embeddings for a batch of text strings.
 ```
 
 **Features:**
+
 - Batch processing for efficiency
 - 4096-dimensional embeddings (Gemma 7B)
 - GPU-accelerated computation
@@ -80,6 +83,7 @@ Generates semantic embeddings for a batch of text strings.
 Generates text with optional context for enhanced reasoning.
 
 **Request:**
+
 ```json
 {
   "prompt": "Explain the relationship between these concepts",
@@ -92,6 +96,7 @@ Generates text with optional context for enhanced reasoning.
 ```
 
 **Response:**
+
 ```json
 {
   "text": "Deep learning is a specialized form of machine learning...",
@@ -102,6 +107,7 @@ Generates text with optional context for enhanced reasoning.
 ```
 
 **Features:**
+
 - Context-aware generation
 - Configurable sampling parameters
 - GPU-accelerated inference
@@ -112,6 +118,7 @@ Generates text with optional context for enhanced reasoning.
 Returns service health and GPU status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -137,15 +144,15 @@ async def identify_relationships(entities):
     # 1. Generate embeddings for all entities
     entity_labels = [e["label"] for e in entities]
     embeddings = await embed_with_gemma(entity_labels)
-    
+
     # 2. Calculate cosine similarity
     for i, entity1 in enumerate(entities):
         for j, entity2 in enumerate(entities):
             similarity = cosine_similarity(
-                embeddings[i], 
+                embeddings[i],
                 embeddings[j]
             )
-            
+
             # 3. Create relationship if similar (threshold: 0.7)
             if similarity >= 0.7:
                 relationships.append({
@@ -154,13 +161,13 @@ async def identify_relationships(entities):
                     "similarity": similarity,
                     "type": "semantically_related"
                 })
-    
+
     # 4. Enhance with reasoning
     reasoning = await reason_with_gemma(
         prompt="Analyze relationships between entities",
         context=document_context
     )
-    
+
     return relationships
 ```
 
@@ -260,12 +267,14 @@ gcloud run deploy gemma-service \
 ### Environment Variables
 
 **Gemma Service:**
+
 - `PORT`: Service port (default: 8080, set by Cloud Run)
 - `MODEL_NAME`: Gemma model to use (default: google/gemma-7b-it)
 - `HUGGINGFACE_TOKEN`: Optional token for private models
 - `USE_8BIT_QUANTIZATION`: Enable 8-bit quantization (default: false)
 
 **Backend Service:**
+
 - `GEMMA_SERVICE_URL`: URL of Gemma service (e.g., https://gemma-service-xxx.run.app)
 - `GEMMA_SERVICE_TIMEOUT`: Request timeout in seconds (default: 60.0)
 
@@ -273,25 +282,27 @@ gcloud run deploy gemma-service \
 
 ### Benchmarks
 
-| Operation | Input Size | Time (GPU) | Time (CPU) |
-|-----------|-----------|------------|------------|
-| Embedding (single) | 1 text | ~100ms | ~2s |
-| Embedding (batch) | 10 texts | ~500ms | ~20s |
-| Reasoning | 500 tokens | ~2s | ~30s |
+| Operation          | Input Size | Time (GPU) | Time (CPU) |
+| ------------------ | ---------- | ---------- | ---------- |
+| Embedding (single) | 1 text     | ~100ms     | ~2s        |
+| Embedding (batch)  | 10 texts   | ~500ms     | ~20s       |
+| Reasoning          | 500 tokens | ~2s        | ~30s       |
 
 ### Optimization
 
 1. **Batch Processing**: Use batch embedding for multiple texts
+
    ```python
    # Good: Batch request
    embeddings = await embed_with_gemma(["Text 1", "Text 2", "Text 3"])
-   
+
    # Avoid: Sequential requests
    for text in texts:
        embedding = await embed_with_gemma([text])
    ```
 
 2. **Caching**: Cache embeddings in Firestore
+
    ```python
    # Check cache first
    cached = firestore.get_embeddings(text_hash)
@@ -397,11 +408,11 @@ async def embed(request: EmbedRequest):
 
 ### Endpoint Changes
 
-| Old Endpoint | New Endpoint | Changes |
-|--------------|--------------|---------|
-| `/embeddings` | `/embed` | Now accepts batch (`texts` array) |
-| `/generate` | `/reason` | Added optional `context` parameter |
-| `/healthz` | `/healthz` | No changes |
+| Old Endpoint  | New Endpoint | Changes                            |
+| ------------- | ------------ | ---------------------------------- |
+| `/embeddings` | `/embed`     | Now accepts batch (`texts` array)  |
+| `/generate`   | `/reason`    | Added optional `context` parameter |
+| `/healthz`    | `/healthz`   | No changes                         |
 
 ### Client Migration
 

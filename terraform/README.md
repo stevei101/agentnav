@@ -140,6 +140,7 @@ variable "enable_staging_environment" {
 ```
 
 When enabled, Terraform provisions:
+
 - `agentnav-frontend-staging` (us-central1)
 - `agentnav-backend-staging` (europe-west1)
 

@@ -114,6 +114,7 @@ git push origin feature/your-feature-name
 📖 **[Contribution Guide: PR Discipline](docs/CONTRIBUTION_GUIDE_PR_DISCIPLINE.md)**
 
 Key principles:
+
 - Only commit files that are **consumed** by the application, CI/CD, or IaC
 - Remove temporary notes, scratch files, and local configuration
 - Optimize `.dockerignore` and `.gitignore` to minimize build context
