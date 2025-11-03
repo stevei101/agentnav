@@ -22,6 +22,7 @@ python3 scripts/restore_closed_prs.py --since 2025-11-02T16:00:00Z --interactive
 ```
 
 The script will:
+
 1. ✅ Identify all closed (non-merged) PRs closed after the force push
 2. ✅ Verify your source branch still exists
 3. ✅ Recreate the PR with original title, body, and linked issues
@@ -85,6 +86,7 @@ Original PR: #XXX"
 ```
 
 Or use the GitHub web interface:
+
 1. Go to your repository on GitHub
 2. Click "New Pull Request"
 3. Select your rebased branch → `main`
@@ -154,12 +156,12 @@ python3 scripts/restore_closed_prs.py --since 2025-11-02T16:00:00Z
 
 ### Command-Line Options
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--since TIMESTAMP` | Only process PRs closed after this time | `--since 2025-11-02T16:00:00Z` |
-| `--dry-run` | Show what would be restored without creating PRs | Always recommended first |
-| `--interactive` | Prompt before recreating each PR | Useful for selective recovery |
-| `--limit N` | Maximum number of PRs to process | `--limit 20` |
+| Option              | Description                                      | Example                        |
+| ------------------- | ------------------------------------------------ | ------------------------------ |
+| `--since TIMESTAMP` | Only process PRs closed after this time          | `--since 2025-11-02T16:00:00Z` |
+| `--dry-run`         | Show what would be restored without creating PRs | Always recommended first       |
+| `--interactive`     | Prompt before recreating each PR                 | Useful for selective recovery  |
+| `--limit N`         | Maximum number of PRs to process                 | `--limit 20`                   |
 
 ---
 
@@ -170,6 +172,7 @@ python3 scripts/restore_closed_prs.py --since 2025-11-02T16:00:00Z
 **Cause:** The source branch was deleted or never pushed.
 
 **Solution:**
+
 1. Check if you still have the branch locally: `git branch -a`
 2. If local branch exists, push it: `git push origin branch-name`
 3. If branch was deleted, you'll need to restore it from your local copy
@@ -177,6 +180,7 @@ python3 scripts/restore_closed_prs.py --since 2025-11-02T16:00:00Z
 ### Issue: "GitHub CLI not authenticated"
 
 **Solution:**
+
 ```bash
 gh auth login
 # Follow the prompts to authenticate
@@ -187,6 +191,7 @@ gh auth login
 **Cause:** Your changes conflict with new commits in `main`.
 
 **Solution:**
+
 ```bash
 # During rebase, resolve conflicts
 git rebase origin/main
@@ -205,6 +210,7 @@ git rebase --abort
 **Cause:** Someone already recreated the PR, or you ran the script twice.
 
 **Solution:**
+
 - Check existing open PRs: `gh pr list`
 - Close duplicate if needed: `gh pr close <number>`
 
@@ -215,6 +221,7 @@ git rebase --abort
 ### For Contributors
 
 1. **Always rebase before force push recovery:**
+
    ```bash
    git fetch origin
    git rebase origin/main
@@ -234,6 +241,7 @@ git rebase --abort
 ### For Maintainers
 
 1. **Always run in dry-run mode first:**
+
    ```bash
    python3 scripts/restore_closed_prs.py --dry-run
    ```
@@ -318,4 +326,3 @@ If you encounter issues not covered in this guide:
 **Last Updated:** 2025-11-02  
 **Feature Request:** #110  
 **Status:** Active
-

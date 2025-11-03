@@ -51,6 +51,7 @@ The dashboard automatically switches to the **"Dashboard"** tab showing:
 ### Step 3: Analyze Results
 
 Once agents complete:
+
 - **Summarizer Agent** displays key themes and summaries
 - **Linker Agent** shows identified entities and relationships
 - **Visualizer Agent** renders knowledge graph visualization
@@ -165,26 +166,28 @@ Machine learning is a subset of artificial intelligence...`;
 const ws = new WebSocket('ws://localhost:8080/api/v1/navigate/stream');
 
 ws.onopen = () => {
-  ws.send(JSON.stringify({
-    document,
-    content_type: "document",
-    include_metadata: true
-  }));
+  ws.send(
+    JSON.stringify({
+      document,
+      content_type: 'document',
+      include_metadata: true,
+    })
+  );
 };
 
 // Receive events
-ws.onmessage = (event) => {
+ws.onmessage = event => {
   const data = JSON.parse(event.data);
-  
-  if (data.agent === "summarizer") {
-    if (data.status === "complete") {
-      console.log("Summary:", data.payload.summary);
+
+  if (data.agent === 'summarizer') {
+    if (data.status === 'complete') {
+      console.log('Summary:', data.payload.summary);
     }
   }
-  
-  if (data.agent === "linker") {
-    if (data.status === "complete") {
-      console.log("Entities:", data.payload.entities);
+
+  if (data.agent === 'linker') {
+    if (data.status === 'complete') {
+      console.log('Entities:', data.payload.entities);
     }
   }
 };
@@ -206,7 +209,7 @@ export function Dashboard() {
 
   const analyze = (doc: string) => {
     connect();
-    
+
     setTimeout(() => {
       send({
         document: doc,
@@ -220,7 +223,7 @@ export function Dashboard() {
       <button onClick={() => analyze(documentContent)}>
         Start Analysis
       </button>
-      
+
       <p>Events: {events.length}</p>
       <p>Status: {isConnected ? 'Connected' : 'Disconnected'}</p>
     </div>
@@ -233,22 +236,18 @@ export function Dashboard() {
 ```typescript
 const ws = new WebSocket('ws://localhost:8080/api/v1/navigate/stream');
 
-ws.onerror = (error) => {
-  console.error("WebSocket error:", error);
-  showErrorNotification("Connection failed");
+ws.onerror = error => {
+  console.error('WebSocket error:', error);
+  showErrorNotification('Connection failed');
 };
 
-ws.onmessage = (event) => {
+ws.onmessage = event => {
   const data = JSON.parse(event.data);
-  
-  if (data.status === "error") {
-    console.error(
-      `Agent ${data.agent} failed: ${data.payload.error_message}`
-    );
-    
-    showErrorNotification(
-      `${data.agent} error: ${data.payload.error_message}`
-    );
+
+  if (data.status === 'error') {
+    console.error(`Agent ${data.agent} failed: ${data.payload.error_message}`);
+
+    showErrorNotification(`${data.agent} error: ${data.payload.error_message}`);
   }
 };
 
@@ -271,16 +270,18 @@ async function analyzeMultipleFiles(files: File[]) {
     contents.push(`--- File: ${file.name} ---\n${text}`);
   }
 
-  const combinedDocument = contents.join("\n\n");
+  const combinedDocument = contents.join('\n\n');
 
   const ws = new WebSocket('ws://localhost:8080/api/v1/navigate/stream');
 
   ws.onopen = () => {
-    ws.send(JSON.stringify({
-      document: combinedDocument,
-      content_type: "codebase",  // Multiple code files
-      include_metadata: true
-    }));
+    ws.send(
+      JSON.stringify({
+        document: combinedDocument,
+        content_type: 'codebase', // Multiple code files
+        include_metadata: true,
+      })
+    );
   };
 }
 ```
@@ -304,12 +305,12 @@ const document = entireBookText;
 ```typescript
 // ✅ GOOD: Use event handler
 useAgentStream({
-  onEvent: (event) => {
+  onEvent: event => {
     // Only process needed events
-    if (event.status === "complete") {
+    if (event.status === 'complete') {
       updateResults(event);
     }
-  }
+  },
 });
 
 // ❌ BAD: Process all events
@@ -334,15 +335,15 @@ useEffect(() => {
 
 ```typescript
 // Document analysis
-send({ 
+send({
   document,
-  content_type: "document"
+  content_type: 'document',
 });
 
 // Code analysis (enables syntax-aware parsing)
 send({
   document: codeContent,
-  content_type: "codebase"
+  content_type: 'codebase',
 });
 ```
 
@@ -355,6 +356,7 @@ send({
 **Symptom:** "Connection refused" or "Failed to construct 'WebSocket'"
 
 **Solution:**
+
 1. Verify backend is running: `curl http://localhost:8080/health`
 2. Check correct URL format: `ws://` not `http://`
 3. Verify CORS if running on different ports
@@ -364,6 +366,7 @@ send({
 **Symptom:** Connected but no events received
 
 **Solution:**
+
 1. Check browser console for JavaScript errors
 2. Verify document field is not empty
 3. Check backend logs: `tail -f /var/log/agentnav.log`
@@ -374,6 +377,7 @@ send({
 **Symptom:** Connection drops randomly during processing
 
 **Solution:**
+
 1. Increase backend timeout
 2. Check network stability (ping backend)
 3. Verify firewall/proxy not blocking WebSocket
@@ -384,6 +388,7 @@ send({
 **Symptom:** Browser tab memory grows over time
 
 **Solution:**
+
 1. Clear events periodically: `events = events.slice(-100)`
 2. Disconnect when not analyzing
 3. Use browser dev tools to find memory leaks
@@ -396,14 +401,14 @@ send({
 
 ```typescript
 const { events, onEvent } = useAgentStream({
-  sessionId: "session-123",
-  onEvent: (event) => {
+  sessionId: 'session-123',
+  onEvent: event => {
     // Only process certain agents
-    const targetAgents = ["summarizer", "visualizer"];
+    const targetAgents = ['summarizer', 'visualizer'];
     if (targetAgents.includes(event.agent)) {
       handleEvent(event);
     }
-  }
+  },
 });
 ```
 
@@ -413,15 +418,15 @@ const { events, onEvent } = useAgentStream({
 const agentResults = {};
 
 useAgentStream({
-  onEvent: (event) => {
+  onEvent: event => {
     if (!agentResults[event.agent]) {
       agentResults[event.agent] = [];
     }
-    
-    if (event.status === "complete") {
+
+    if (event.status === 'complete') {
       agentResults[event.agent].push(event.payload);
     }
-  }
+  },
 });
 ```
 
@@ -432,15 +437,15 @@ const exportResults = () => {
   const summary = {
     sessionId,
     timestamp: new Date().toISOString(),
-    events: events.filter(e => e.status === "complete"),
-    agents: agentStates
+    events: events.filter(e => e.status === 'complete'),
+    agents: agentStates,
   };
 
   const json = JSON.stringify(summary, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  
+  const blob = new Blob([json], { type: 'application/json' });
+
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = `analysis-${sessionId}.json`;
   link.click();
