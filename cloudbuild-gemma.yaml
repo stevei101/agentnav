@@ -9,7 +9,7 @@ steps:
     args:
       - 'build'
       - '-f'
-      - 'backend/Dockerfile.gemma'
+      - 'backend/gemma_service/Dockerfile'
       - '-t'
       - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/gemma-service:${COMMIT_SHA}'
       - '-t'
