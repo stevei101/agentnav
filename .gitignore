@@ -99,4 +99,3 @@ CI_WORKFLOW_FIX.md
 # Test environment files (should not be committed with real data)
 .env.test
 .env.*.test
->>>>>>> f6e564d... Remove .env file and update .gitignore
