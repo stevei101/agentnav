@@ -188,7 +188,7 @@ jobs:
           export CONFIG_FILE="cloudbuild-gemma.yaml"
           export SUBSTITUTIONS="COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
           export REGION="${ARTIFACT_REGISTRY_LOCATION}"
-          
+
           # Make script executable and run
           chmod +x ./scripts/cloud-build-submit-with-backoff.sh
           ./scripts/cloud-build-submit-with-backoff.sh

@@ -45,4 +45,3 @@ if (typeof global.DataTransfer === 'undefined') {
     setDragImage(): void {}
   } as unknown as typeof DataTransfer;
 }
-
