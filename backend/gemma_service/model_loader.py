@@ -43,10 +43,19 @@ class ModelLoader:
             logger.info(f"🔄 Loading model: {self.model_name}")
             logger.info(f"   Device: {self.device}")
             
+            # Get Hugging Face token (only use if not dummy/placeholder)
+            hf_token = os.getenv("HUGGINGFACE_TOKEN")
+            if hf_token and hf_token.strip() and hf_token.lower() not in ["dummy-token-value", "placeholder", ""]:
+                logger.info("   Using Hugging Face token for authentication")
+                token_kwargs = {"token": hf_token}
+            else:
+                logger.warning("   No valid Hugging Face token found - model may require authentication")
+                token_kwargs = {}
+            
             # Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name,
-                token=os.getenv("HUGGINGFACE_TOKEN")  # Optional: for private models
+                **token_kwargs
             )
             
             # Load model with GPU support
@@ -54,6 +63,7 @@ class ModelLoader:
                 "torch_dtype": torch.float16 if self.device == "cuda" else torch.float32,
                 "device_map": "auto" if self.device == "cuda" else None,
             }
+            model_kwargs.update(token_kwargs)  # Add token if available
             
             # Use 8-bit quantization if memory constrained (optional)
             if os.getenv("USE_8BIT_QUANTIZATION", "false").lower() == "true":
@@ -67,8 +77,7 @@ class ModelLoader:
             
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                **model_kwargs,
-                token=os.getenv("HUGGINGFACE_TOKEN")
+                **model_kwargs
             )
             
             # When device_map="auto" is used, model placement is handled automatically
