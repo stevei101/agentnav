@@ -227,7 +227,9 @@ resource "google_cloud_run_v2_service" "gemma" {
       }
 
       startup_probe {
-        # Total startup window: 10s × 30 = 300 seconds (extended for model loading)
+        # Total startup window: 10s × 30 = 300 seconds
+        # Extended timeout required for GPU model loading (Gemma 7B model initialization on NVIDIA L4)
+        # This timeout aligns with system instruction recommendations for GPU-accelerated model services
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
