@@ -123,12 +123,14 @@
 ## 📝 Credentials Deployment Checklist
 
 ### Pre-Deployment
+
 - [ ] Create HuggingFace account (if needed)
 - [ ] Accept Gemma 7B-IT license agreement
 - [ ] Create HuggingFace Read token
 - [ ] Copy token value
 
 ### GCP Setup
+
 - [ ] Verify Terraform is up-to-date
 - [ ] Create HUGGINGFACE_TOKEN secret in Secret Manager
 - [ ] Grant IAM permissions to gemma-service Service Account
@@ -136,11 +138,13 @@
 - [ ] Verify IAM binding: `gcloud secrets get-iam-policy HUGGINGFACE_TOKEN`
 
 ### Deployment
+
 - [ ] Run `terraform apply` to deploy Gemma service
 - [ ] Verify service created: `gcloud run services list --region=europe-west1`
 - [ ] Check service URL: `gcloud run services describe gemma-service --region europe-west1`
 
 ### Post-Deployment Verification
+
 - [ ] Test health endpoint: `curl https://gemma-service-XXXXX.run.app/healthz`
 - [ ] Verify GPU detected: Check response includes `"device": "cuda"`
 - [ ] Verify model loaded: Check response includes `"model_loaded": true`
@@ -152,6 +156,7 @@
 ## 🔑 Environment Variable Reference
 
 ### Local Development
+
 ```bash
 export HUGGINGFACE_TOKEN=hf_YOUR_TOKEN_HERE
 export AGENTNAV_MODEL_TYPE=gemma
@@ -160,6 +165,7 @@ export PORT=8080
 ```
 
 ### Cloud Run (Gemma Service)
+
 ```
 HUGGINGFACE_TOKEN   → Secret Manager (encrypted)
 MODEL_NAME          → google/gemma-7b-it (Dockerfile default)
@@ -168,6 +174,7 @@ PORT                → 8080 (set automatically by Cloud Run)
 ```
 
 ### Cloud Run (Backend Service)
+
 ```
 AGENTNAV_MODEL_TYPE → gemini or gemma (via Terraform variable)
 GEMMA_SERVICE_URL   → https://gemma-service-XXXXX.run.app
@@ -179,12 +186,14 @@ GEMINI_API_KEY      → Secret Manager (existing)
 ## 🐛 Credential Issues Troubleshooting
 
 ### Issue: "Token is invalid"
+
 ```bash
 # Check token format
 echo $HUGGINGFACE_TOKEN | head -c 10  # Should show: hf_
 ```
 
 ### Issue: "AccessDenied" from Secret Manager
+
 ```bash
 # Verify IAM binding
 gcloud secrets get-iam-policy HUGGINGFACE_TOKEN
@@ -197,6 +206,7 @@ gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
 ```
 
 ### Issue: "Model not found" on Cloud Run
+
 ```bash
 # Check Gemma service logs
 gcloud run services logs read gemma-service --region europe-west1 --limit 50
@@ -208,6 +218,7 @@ gcloud run services logs read gemma-service --region europe-west1 --limit 50
 ```
 
 ### Issue: "Timeout downloading model"
+
 ```bash
 # Increase memory in terraform/cloud_run.tf
 # Change from 16Gi to 32Gi if needed
@@ -223,24 +234,28 @@ gcloud run services logs read gemma-service --region europe-west1 --limit 50
 ### Credentials Properly Configured If:
 
 1. ✅ Secret exists in GCP:
+
    ```bash
    gcloud secrets describe HUGGINGFACE_TOKEN
    # Shows: "Status: ENABLED"
    ```
 
 2. ✅ Service account has permission:
+
    ```bash
    gcloud secrets get-iam-policy HUGGINGFACE_TOKEN
    # Shows: "roles/secretmanager.secretAccessor" for gemma-service@PROJECT_ID
    ```
 
 3. ✅ Gemma service running:
+
    ```bash
    gcloud run services describe gemma-service --region europe-west1 | grep -i status
    # Shows: "status: active"
    ```
 
 4. ✅ Service can download model:
+
    ```bash
    GEMMA_URL=$(gcloud run services describe gemma-service --region europe-west1 --format='value(status.url)')
    curl -v ${GEMMA_URL}/healthz
@@ -287,6 +302,7 @@ terraform/
 **Status: 🟢 Ready for Deployment**
 
 All infrastructure is configured. You only need to:
+
 1. Create HuggingFace token
 2. Add it to Secret Manager
 3. Run `terraform apply`

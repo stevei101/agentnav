@@ -72,6 +72,7 @@ However, the deployment infrastructure is managed within this repository (`steve
 ### 2. Supabase Secrets
 
 **Resources:**
+
 - `google_secret_manager_secret.supabase_url`
 - `google_secret_manager_secret.supabase_anon_key`
 - `google_secret_manager_secret.supabase_service_key`
@@ -112,6 +113,7 @@ echo -n "your-service-role-key-here" | \
   - Memory: 512Mi
 
 **Environment Variables:**
+
 - `PORT` - Container port (set by Cloud Run)
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL (from Secret Manager)
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key (from Secret Manager)
@@ -165,10 +167,10 @@ The CI/CD pipeline automatically deploys the Prompt Management App when changes 
 
 Add these to your GitHub repository settings:
 
-| Secret Name | Description |
-|-------------|-------------|
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key |
+| Secret Name            | Description               |
+| ---------------------- | ------------------------- |
+| `SUPABASE_URL`         | Supabase project URL      |
+| `SUPABASE_ANON_KEY`    | Supabase anonymous key    |
 | `SUPABASE_SERVICE_KEY` | Supabase service role key |
 
 ## Local Development
@@ -293,13 +295,15 @@ gcloud secrets versions access latest --secret=SUPABASE_URL
 
 #### Issue: OAuth redirect fails
 
-**Solution:** 
+**Solution:**
+
 1. Verify the redirect URI in Google Cloud Console matches Supabase callback URL
 2. Check Supabase logs: Dashboard > Logs > Auth Logs
 
 #### Issue: Service won't start
 
 **Solution:**
+
 1. Check the container logs for errors
 2. Verify the container image was built correctly
 3. Ensure the PORT environment variable is being read
@@ -309,11 +313,13 @@ gcloud secrets versions access latest --secret=SUPABASE_URL
 ### 1. Secret Management
 
 ✅ **DO:**
+
 - Store all secrets in Google Secret Manager
 - Use IAM to control access to secrets
 - Rotate secrets regularly
 
 ❌ **DON'T:**
+
 - Commit secrets to Git
 - Share service role keys
 - Use secrets in client-side code (except anon key)
@@ -321,11 +327,13 @@ gcloud secrets versions access latest --secret=SUPABASE_URL
 ### 2. Authentication
 
 ✅ **DO:**
+
 - Enable Row Level Security (RLS) in Supabase
 - Use the service role key only in server-side code
 - Implement proper authorization checks
 
 ❌ **DON'T:**
+
 - Expose the service role key in the browser
 - Skip RLS policy configuration
 - Trust client-side authentication alone
@@ -333,6 +341,7 @@ gcloud secrets versions access latest --secret=SUPABASE_URL
 ### 3. Network Security
 
 ✅ **DO:**
+
 - Use HTTPS for all communication (provided by Cloud Run)
 - Enable CORS only for trusted origins
 - Implement rate limiting

@@ -18,22 +18,25 @@ CMD python -c "import os; port = int(os.getenv('PORT', 8080)); import uvicorn; u
 ```
 
 **Problems with this approach:**
+
 1. **Complex shell command** - Hard to parse, shell interpretation issues
 2. **Error handling issues** - If PORT env var is missing or malformed, silently defaults
 3. **Logging issues** - Output from this command may not be captured correctly by Cloud Run
 4. **Signal handling** - SIGTERM not handled properly for graceful shutdown
 5. **Debugging difficulty** - Hard to troubleshoot startup failures
 
-### Root Cause: 
+### Root Cause:
 
 The indirect startup method combined with Cloud Run's timeout may cause:
+
 - Connection refused errors (not binding to 0.0.0.0)
 - Startup timeout (Cloud Run kills container before uvicorn starts)
 - Logging issues (error messages not reaching Cloud Run logs)
 
-### Solution: 
+### Solution:
 
 Replace `python -c` with direct entry point script that:
+
 1. Explicitly binds to `0.0.0.0`
 2. Reads `PORT` environment variable with proper error handling
 3. Handles SIGTERM for graceful shutdown
@@ -45,16 +48,19 @@ Replace `python -c` with direct entry point script that:
 ## 📋 Files Affected
 
 ### 1. backend/Dockerfile
+
 - **Current:** Uses `python -c` with inline uvicorn command
 - **Fix:** Create `backend/entrypoint.sh` script
 - **Impact:** Backend service startup reliability
 
 ### 2. backend/Dockerfile.gemma
+
 - **Current:** Uses `python -c` with inline uvicorn command
 - **Fix:** Create `backend/gemma_service/entrypoint.sh` script
 - **Impact:** Gemma GPU service startup reliability + model loading
 
 ### 3. terraform/cloud_run.tf (Optional)
+
 - **Current:** Timeout is 300s (sufficient)
 - **Review:** Add startup probe configuration if needed
 

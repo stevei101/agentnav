@@ -10,9 +10,10 @@
 ## 🔍 Problem Statement
 
 Cloud Run deployment fails with:
+
 ```
-The user-provided container failed to start and listen on the port 
-defined provided by the PORT=8080 environment variable within the 
+The user-provided container failed to start and listen on the port
+defined provided by the PORT=8080 environment variable within the
 allocated timeout
 ```
 
@@ -37,6 +38,7 @@ cat /workspaces/agentnav/backend/Dockerfile
 ```
 
 **What to check:**
+
 - [ ] Is the host `0.0.0.0`? (NOT `127.0.0.1` or `localhost`)
 - [ ] Is the port reading `$PORT` env var? (default 8080)
 - [ ] Is the command using the correct syntax?
@@ -51,6 +53,7 @@ cat /workspaces/agentnav/backend/Dockerfile.gemma
 ```
 
 **What to check:**
+
 - [ ] Same host/port requirements
 - [ ] Model loading timeout configuration
 
@@ -62,6 +65,7 @@ grep -n "PORT\|0\.0\.0\.0\|host\|port" /workspaces/agentnav/backend/main.py | he
 ```
 
 **What to check:**
+
 - [ ] Is uvicorn configured with `host="0.0.0.0"`?
 - [ ] Is it reading `os.getenv("PORT", "8080")`?
 - [ ] Example from SYSTEM_INSTRUCTION.md:
@@ -81,6 +85,7 @@ grep -A 20 "gemma" /workspaces/agentnav/terraform/cloud_run.tf | head -30
 ```
 
 **What to check:**
+
 - [ ] Backend service: Normal timeout (240s default usually OK)
 - [ ] Gemma service: Extended timeout (300s for model loading)?
 - [ ] Both services expose PORT via environment variable?
@@ -95,6 +100,7 @@ grep -A 20 "Gemma GPU Service Configuration" /workspaces/agentnav/docs/SYSTEM_IN
 ```
 
 **Key requirements:**
+
 - Backend: `PORT` env var, `host="0.0.0.0"`, timeout 300s
 - Gemma: `PORT` env var, `host="0.0.0.0"`, timeout 300s, startup timeout 300s
 
@@ -105,6 +111,7 @@ grep -A 20 "Gemma GPU Service Configuration" /workspaces/agentnav/docs/SYSTEM_IN
 ### If Code Binding is the Issue:
 
 **Backend (backend/main.py):**
+
 ```python
 # WRONG ❌
 uvicorn.run(app, port=8080)  # Defaults to 127.0.0.1!
@@ -115,6 +122,7 @@ uvicorn.run(app, host="0.0.0.0", port=PORT)
 ```
 
 **Gemma Service (backend/gemma_service/main.py or similar):**
+
 ```python
 # WRONG ❌
 uvicorn.run(app, port=8080)
@@ -127,6 +135,7 @@ uvicorn.run(app, host="0.0.0.0", port=PORT)
 ### If Timeout is the Issue:
 
 **Dockerfile.gemma:**
+
 ```dockerfile
 # Add or increase startup timeout in gcloud deploy command
 # Or via Terraform:
@@ -137,6 +146,7 @@ uvicorn.run(app, host="0.0.0.0", port=PORT)
 ```
 
 **Terraform (terraform/cloud_run.tf):**
+
 ```hcl
 # For Gemma service:
 timeout_seconds = 300  # Max allowed for startup
@@ -167,6 +177,7 @@ startup_probe {
 ### Phase 2: Fix (1-2 days)
 
 **Option A: If code binding issue**
+
 - [ ] Update backend/main.py to bind to `0.0.0.0`
 - [ ] Update backend/gemma_service/main.py (if exists)
 - [ ] Test locally: `python backend/main.py`
@@ -174,6 +185,7 @@ startup_probe {
 - [ ] Test with local Podman if possible
 
 **Option B: If timeout issue**
+
 - [ ] Update Terraform startup probe timeout to 300s
 - [ ] Add startup probe if missing
 - [ ] Run `terraform plan` to verify
@@ -212,6 +224,7 @@ netstat -an | grep 8080
 ## 📚 Reference Files
 
 **Key files to review:**
+
 - `backend/main.py` - Check uvicorn configuration
 - `backend/Dockerfile` - Check CMD instruction
 - `backend/Dockerfile.gemma` - Check Gemma CMD
@@ -260,6 +273,7 @@ gh pr create --title "Fix: FR#165 Cloud Run Startup Bug" \
 ## 📞 Need Help?
 
 If stuck:
+
 1. Check `docs/SYSTEM_INSTRUCTION.md` for requirements
 2. Review `docs/GPU_SETUP_GUIDE.md` for Gemma timeouts
 3. Look at Cloud Logging output for specific error
@@ -268,6 +282,7 @@ If stuck:
 ---
 
 **Ready to start? Run this:**
+
 ```bash
 cd /workspaces/agentnav && git checkout -b fix/fr165-cloud-run-startup
 ```

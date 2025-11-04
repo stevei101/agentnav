@@ -22,6 +22,7 @@ export AGENTNAV_MODEL_TYPE=gemini  # or "gemma"
 ```
 
 Supported values:
+
 - `gemini` (default): Cloud-based Gemini model
 - `gemma`: Local GPU-based Gemma model
 
@@ -59,6 +60,7 @@ linker = LinkerAgent(model_type="gemma")
 ```
 
 The agent will use the specified model type for all reasoning tasks:
+
 - Entity extraction from documents
 - Relationship analysis
 - Semantic similarity reasoning
@@ -72,7 +74,7 @@ class MyAgent(Agent):
     def __init__(self, a2a_protocol=None, model_type: str = "gemini"):
         super().__init__("my_agent", a2a_protocol)
         self.model_type = model_type
-    
+
     async def process(self, context):
         # Use model_type when calling reasoning
         result = await reason_with_gemini(
@@ -86,14 +88,14 @@ class MyAgent(Agent):
 
 ## Model Comparison
 
-| Aspect | Gemini | Gemma |
-|--------|--------|-------|
-| **Location** | Cloud (Google Cloud) | Local GPU (Cloud Run with L4) |
-| **Latency** | ~500ms–2s | ~200–500ms (no network) |
-| **Cost** | Per-API-call pricing | Compute cost (GPU hours) |
-| **Availability** | Always available | Requires GPU service running |
-| **Model Size** | Latest (1.5, 2.0, etc.) | 2B or 7B (configurable) |
-| **Best For** | Complex reasoning, latest features | Real-time, cost-sensitive, offline |
+| Aspect           | Gemini                             | Gemma                              |
+| ---------------- | ---------------------------------- | ---------------------------------- |
+| **Location**     | Cloud (Google Cloud)               | Local GPU (Cloud Run with L4)      |
+| **Latency**      | ~500ms–2s                          | ~200–500ms (no network)            |
+| **Cost**         | Per-API-call pricing               | Compute cost (GPU hours)           |
+| **Availability** | Always available                   | Requires GPU service running       |
+| **Model Size**   | Latest (1.5, 2.0, etc.)            | 2B or 7B (configurable)            |
+| **Best For**     | Complex reasoning, latest features | Real-time, cost-sensitive, offline |
 
 ---
 
@@ -145,7 +147,7 @@ Control model selection in workflows:
 
 ```yaml
 env:
-  AGENTNAV_MODEL_TYPE: gemini  # For cloud reasoning in tests
+  AGENTNAV_MODEL_TYPE: gemini # For cloud reasoning in tests
 ```
 
 ---
@@ -215,6 +217,7 @@ ValueError: Unsupported model_type: invalid. Must be 'gemini' or 'gemma'.
 ```
 
 **Check:**
+
 - Is the Gemma GPU service deployed and running?
 - Does the backend have network access to the Gemma service?
 - Check service URL in `GEMMA_SERVICE_URL` environment variable
@@ -222,11 +225,13 @@ ValueError: Unsupported model_type: invalid. Must be 'gemini' or 'gemma'.
 ### Slow Reasoning with Gemini
 
 Latency spikes may indicate:
+
 - Cold start (first request after scale-down)
 - API rate limiting
 - Network latency
 
 **Mitigation:**
+
 - Use Gemma for latency-sensitive workloads
 - Increase Cloud Run min-instances if Gemini is your primary model
 

@@ -54,12 +54,13 @@ Before you begin, ensure you have:
 5. Select **Application type**: **Web application**
 6. Set a name: `Prompt Management App - Supabase`
 7. Under **Authorized redirect URIs**, add the Supabase callback URL:
+
    ```
    https://<your-project-ref>.supabase.co/auth/v1/callback
    ```
-   
+
    **Important:** Replace `<your-project-ref>` with your actual Supabase project reference ID.
-   
+
    You can find this in your Supabase dashboard under:
    - **Settings** > **API** > **Project URL**
    - The format is: `https://xxxxxxxxxxxxx.supabase.co`
@@ -123,7 +124,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-from-supabase-dashboard
 
 **Where to find these values:**
 
-1. **SUPABASE_URL**: 
+1. **SUPABASE_URL**:
    - Supabase Dashboard > **Settings** > **API** > **Project URL**
 
 2. **SUPABASE_ANON_KEY**:
@@ -142,11 +143,11 @@ Add these secrets to your GitHub repository:
 3. Click **New repository secret**
 4. Add each of the following:
 
-| Secret Name | Value | Description |
-|-------------|-------|-------------|
-| `SUPABASE_URL` | `https://<your-project-ref>.supabase.co` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | `eyJ...` | Supabase anonymous key (public) |
-| `SUPABASE_SERVICE_KEY` | `eyJ...` | Supabase service role key (private) |
+| Secret Name            | Value                                    | Description                         |
+| ---------------------- | ---------------------------------------- | ----------------------------------- |
+| `SUPABASE_URL`         | `https://<your-project-ref>.supabase.co` | Your Supabase project URL           |
+| `SUPABASE_ANON_KEY`    | `eyJ...`                                 | Supabase anonymous key (public)     |
+| `SUPABASE_SERVICE_KEY` | `eyJ...`                                 | Supabase service role key (private) |
 
 ### Google Secret Manager (for Cloud Run)
 
@@ -178,28 +179,28 @@ echo -n "your-service-role-key" | \
 If using the Supabase JavaScript client library:
 
 ```typescript
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Sign in with Google
 async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`
-    }
-  })
-  
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
+
   if (error) {
-    console.error('Error signing in:', error)
-    return
+    console.error('Error signing in:', error);
+    return;
   }
-  
-  console.log('Sign in initiated:', data)
+
+  console.log('Sign in initiated:', data);
 }
 ```
 
@@ -229,6 +230,7 @@ async function signInWithGoogle() {
 ### Issue: "Redirect URI mismatch" error
 
 **Solution:**
+
 - Verify the redirect URI in Google Cloud Console matches exactly:
   ```
   https://<your-project-ref>.supabase.co/auth/v1/callback
@@ -239,6 +241,7 @@ async function signInWithGoogle() {
 ### Issue: "Invalid client" error
 
 **Solution:**
+
 - Double-check that the Client ID and Client Secret in Supabase match those from Google Cloud
 - Ensure the OAuth credentials in Google Cloud are of type "Web application"
 - Verify the Google+ API is enabled in your Google Cloud project
@@ -246,6 +249,7 @@ async function signInWithGoogle() {
 ### Issue: User not appearing in Supabase after authentication
 
 **Solution:**
+
 - Check the browser console for errors
 - Verify your Supabase project is not in "Paused" state
 - Check the Supabase logs: **Logs** > **Auth Logs**
@@ -253,6 +257,7 @@ async function signInWithGoogle() {
 ### Issue: "Access blocked: This app's request is invalid"
 
 **Solution:**
+
 - Configure the OAuth consent screen in Google Cloud Console
 - Add your email as a test user if using "External" user type in testing mode
 - Ensure all required fields are filled in the consent screen configuration
@@ -260,6 +265,7 @@ async function signInWithGoogle() {
 ### Issue: Environment variables not loading
 
 **Solution:**
+
 - Verify `.env` file exists in the project root
 - Restart your development server after modifying `.env`
 - For Next.js, ensure public variables are prefixed with `NEXT_PUBLIC_`

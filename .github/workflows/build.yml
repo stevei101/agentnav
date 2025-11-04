@@ -53,9 +53,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          
+
           LATEST_TAG=""
-          
+
           # 1. Check for Pull Request trigger
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_NUMBER="${{ github.event.pull_request.number }}"
@@ -86,7 +86,7 @@ jobs:
           if [[ -n "${LATEST_TAG}" ]]; then
             echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
           echo "Service: ${{ matrix.service }}"
@@ -99,15 +99,15 @@ jobs:
         if: matrix.service == 'frontend'
         run: |
           set -euo pipefail
-          
+
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
           IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-          
+
           if [[ -z "${IMAGE_TAG}" ]]; then
             echo "❌ Error: image_tag output is missing"
             exit 1
           fi
-          
+
           echo "🔨 Building frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker build \
             -t ${IMAGE_NAME}:${IMAGE_TAG} \
@@ -120,32 +120,32 @@ jobs:
             echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
             docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
           fi
-          
+
           # Push primary tag
           echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker push ${IMAGE_NAME}:${IMAGE_TAG}
-          
+
           # Push latest tag if set
           if [[ -n "${LATEST_TAG}" ]]; then
             echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
             docker push ${IMAGE_NAME}:${LATEST_TAG}
           fi
-          
+
           echo "✅ Frontend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
       - name: Build and push backend
         if: matrix.service == 'backend'
         run: |
           set -euo pipefail
-          
+
           IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
           IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-          
+
           if [[ -z "${IMAGE_TAG}" ]]; then
             echo "❌ Error: image_tag output is missing"
             exit 1
           fi
-          
+
           echo "🔨 Building backend image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker build \
             -t ${IMAGE_NAME}:${IMAGE_TAG} \
@@ -158,17 +158,17 @@ jobs:
             echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
             docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
           fi
-          
+
           # Push primary tag
           echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
           docker push ${IMAGE_NAME}:${IMAGE_TAG}
-          
+
           # Push latest tag if set
           if [[ -n "${LATEST_TAG}" ]]; then
             echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
             docker push ${IMAGE_NAME}:${LATEST_TAG}
           fi
-          
+
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
       - name: Build and push gemma with Cloud Build
@@ -176,7 +176,7 @@ jobs:
         timeout-minutes: 30
         run: |
           set -euo pipefail
-          
+
           # Use Cloud Build for Gemma due to disk space constraints on GitHub Actions
           echo "🚀 Triggering Cloud Build for Gemma GPU service..."
           echo "   Commit SHA: ${{ github.sha }}"
@@ -186,7 +186,7 @@ jobs:
           # Submit Cloud Build job with exponential backoff for quota errors (FR#185)
           # Implements custom polling with exponential backoff to avoid 429 quota errors
           SUBSTITUTIONS="COMMIT_SHA=${{ github.sha }},_PROJECT_ID=${GCP_PROJECT_ID},_GAR_REPO=${ARTIFACT_REGISTRY_REPOSITORY},_ARTIFACT_REGION=${ARTIFACT_REGISTRY_LOCATION},_SERVICE_NAME=gemma-service,_REGION=europe-west1,_SERVICE_ACCOUNT=agentnav-gemma@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-          
+
           # Function for exponential backoff retry
           submit_build_with_retry() {
             local max_retries=5
@@ -282,10 +282,10 @@ jobs:
             echo "❌ Build failed after ${max_retries} retries"
             exit 1
           }
-          
+
           # Execute build with retry logic
           submit_build_with_retry
-          
+
           echo "✅ Gemma Cloud Build completed successfully"
 
   deploy:
@@ -317,13 +317,13 @@ jobs:
         if: matrix.service == 'frontend'
         run: |
           set -euo pipefail
-          
+
           IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest"
-          
+
           echo "🚀 Deploying frontend to Cloud Run..."
           echo "   Image: ${IMAGE}"
           echo "   Region: us-central1"
-          
+
           # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-frontend \
             --image ${IMAGE} \
@@ -340,22 +340,22 @@ jobs:
             --cpu-throttling \
             --port 80 \
             --quiet
-          
+
           echo "✅ Frontend deployment completed"
 
       - name: Deploy backend to Cloud Run
         if: matrix.service == 'backend'
         run: |
           set -euo pipefail
-          
+
           IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest"
           SERVICE_ACCOUNT="agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-          
+
           echo "🚀 Deploying backend to Cloud Run..."
           echo "   Image: ${IMAGE}"
           echo "   Region: europe-west1"
           echo "   Service Account: ${SERVICE_ACCOUNT}"
-          
+
           # Modern gcloud run deploy with Cloud Run best practices
           gcloud run deploy agentnav-backend \
             --image ${IMAGE} \
@@ -377,7 +377,7 @@ jobs:
             --set-env-vars ALLOWED_HOSTS="agentnav.lornu.com,*.run.app" \
             --set-env-vars CORS_ORIGINS="https://agentnav.lornu.com" \
             --quiet
-          
+
           echo "✅ Backend deployment completed"
 
       - name: Get service URLs

@@ -8,12 +8,14 @@
 ## 📋 Credentials Setup Status
 
 ### GitHub Secrets ✅ COMPLETE
+
 - [x] **HUGGINGFACE_TOKEN** - Added to GitHub Secrets
   - Used by: GitHub Actions CI/CD pipeline
   - Purpose: Download Gemma model during container build
   - Format: `hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
 ### GCP Secret Manager ⏳ NEXT STEP
+
 - [ ] **HUGGINGFACE_TOKEN** - Create in GCP Secret Manager
   - Used by: Cloud Run Gemma service at runtime
   - Purpose: Download model from HuggingFace Hub
@@ -27,6 +29,7 @@
   - Status: Configured ✅
 
 ### Configuration Status ✅ COMPLETE
+
 - [x] Terraform templates with secret definitions
 - [x] Cloud Run service with env var configuration
 - [x] IAM policies for service account access
@@ -38,6 +41,7 @@
 ## 🔄 Deployment Sequence
 
 ### Phase 1: Local Testing (Optional)
+
 ```bash
 # Test token works locally
 export HUGGINGFACE_TOKEN="hf_YOUR_TOKEN"
@@ -48,6 +52,7 @@ python -c "from transformers import AutoTokenizer; \
 ```
 
 ### Phase 2: Create GCP Secret
+
 ```bash
 # Add token to GCP Secret Manager
 echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
@@ -63,6 +68,7 @@ gcloud secrets get-iam-policy HUGGINGFACE_TOKEN
 ```
 
 ### Phase 3: Deploy to Cloud Run
+
 ```bash
 # Deploy with Terraform
 cd terraform
@@ -75,6 +81,7 @@ gcloud run deploy gemma-service \
 ```
 
 ### Phase 4: Verify Deployment
+
 ```bash
 # Check service status
 gcloud run services describe gemma-service --region europe-west1
@@ -102,6 +109,7 @@ curl -v ${GEMMA_URL}/healthz
 ## 📊 Credential Mapping
 
 ### GitHub Actions CI/CD
+
 ```
 HUGGINGFACE_TOKEN (GitHub Secret)
         ↓
@@ -111,6 +119,7 @@ Scope:   Local to GitHub Actions runner
 ```
 
 ### Cloud Run Production
+
 ```
 HUGGINGFACE_TOKEN (GCP Secret Manager)
         ↓
@@ -128,38 +137,45 @@ Model Loader (downloads from HuggingFace)
 ## ✨ What's Now Ready
 
 ### GitHub Actions
+
 ✅ HUGGINGFACE_TOKEN secret configured  
 ✅ CI pipeline can build Gemma container  
-✅ Tests run with both Gemini and Gemma models  
+✅ Tests run with both Gemini and Gemma models
 
 ### Infrastructure
+
 ✅ Terraform templates complete  
 ✅ Cloud Run service definitions ready  
 ✅ IAM policies configured  
-✅ Secret Manager schema defined  
+✅ Secret Manager schema defined
 
 ### Container & Service
+
 ✅ Dockerfile.gemma ready  
 ✅ Model loader with HF token support  
 ✅ FastAPI endpoints configured  
-✅ GPU detection enabled  
+✅ GPU detection enabled
 
 ### Integration
+
 ✅ Backend configured for Gemma service  
 ✅ Model selection routing complete (FR#090)  
-✅ Fallback mechanisms in place  
+✅ Fallback mechanisms in place
 
 ---
 
 ## 🎯 Remaining Tasks
 
 ### Before Cloud Run Deployment
+
 1. Create HUGGINGFACE_TOKEN in GCP Secret Manager
+
    ```bash
    echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
    ```
 
 2. Grant IAM permissions
+
    ```bash
    gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
      --member="serviceAccount:gemma-service@PROJECT_ID.iam.gserviceaccount.com" \
@@ -167,6 +183,7 @@ Model Loader (downloads from HuggingFace)
    ```
 
 3. Deploy with Terraform
+
    ```bash
    cd terraform && terraform apply
    ```
@@ -177,6 +194,7 @@ Model Loader (downloads from HuggingFace)
    ```
 
 ### Optional (Post-Deployment)
+
 - [ ] Test generation endpoint
 - [ ] Integrate with backend agents
 - [ ] Monitor GPU utilization
@@ -223,17 +241,21 @@ cd terraform && terraform apply
 ## 📞 Quick Reference
 
 ### Token Already Added To:
+
 - ✅ GitHub Secrets (HUGGINGFACE_TOKEN)
 
 ### Token Needs To Be Added To:
+
 - ⏳ GCP Secret Manager (HUGGINGFACE_TOKEN)
 
 ### Command to Add to GCP:
+
 ```bash
 echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
 ```
 
 ### Current Status:
+
 🟢 **Ready for GCP deployment** - Just add the GCP secret and run `terraform apply`
 
 ---

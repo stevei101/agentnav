@@ -193,6 +193,7 @@ The project includes a custom GitHub Copilot agent (`@agentnav-gh-copilot-agent`
 - Get instant answers about tooling (e.g., "use uv for Python deps")
 
 **Quick Start:**
+
 ```
 @agentnav-gh-copilot-agent [your question]
 ```
