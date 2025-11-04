@@ -2,9 +2,9 @@
 
 ## **Project Overview**
 
-agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support.
+agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support. The project includes a companion application, the **Gen AI Prompt Management App**, which provides prompt management capabilities using Supabase for persistence and authentication.
 
-**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Podman, Terraform, GitHub Actions
+**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Supabase, Podman, Terraform, GitHub Actions
 
 **Project Type:** Full-stack web application with AI agent orchestration
 
@@ -54,9 +54,19 @@ All agents communicate asynchronously via A2A Protocol and persist state in Fire
 * **Hardware:** NVIDIA L4 GPU on Cloud Run (europe-west1)  
 * **Models:** Gemma 7B or 2B with optional 8-bit quantization
 
+### **Gen AI Prompt Management App**
+
+* **Location:** `prompt-management-app/` (companion application)  
+* **Purpose:** Prompt management interface with CRUD operations for AI prompts  
+* **Technology Stack:** Node.js, React, TypeScript (managed by bun)  
+* **Persistence:** Supabase (PostgreSQL) for prompt storage  
+* **Authentication:** Google OAuth via Supabase Auth  
+* **Deployment:** Cloud Run serverless (us-central1)
+
 ### **Infrastructure**
 
 * **Database:** Firestore (NoSQL) for session memory and knowledge caching  
+* **Supabase:** External PostgreSQL/Auth service for Gen AI Prompt Management App (prompts storage and Google OAuth authentication)  
 * **Secrets:** Google Secret Manager (never embed credentials)  
 * **Container Registry:** Google Artifact Registry (GAR)  
 * **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run  
@@ -87,6 +97,10 @@ agentnav/
 │   ├── gemma_service/       \# GPU-accelerated model service  
 │   ├── main.py              \# FastAPI app entry point  
 │   ├── requirements.txt     \# Python dependencies  
+│   └── Containerfile        \# Podman build config  
+├── prompt-management-app/   \# Gen AI Prompt Management App  
+│   ├── src/                 \# Application source  
+│   ├── package.json         \# Dependencies (managed by bun)  
 │   └── Containerfile        \# Podman build config  
 ├── terraform/               \# Infrastructure as Code  
 │   ├── main.tf  
@@ -120,6 +134,17 @@ PORT=8080 uvicorn main:app \--host 0.0.0.0 \--port 8080 \--reload
 
 **Important:** Backend MUST read PORT environment variable for Cloud Run compatibility.
 
+### **Gen AI Prompt Management App Development**
+
+cd prompt-management-app  
+bun install                  \# Install dependencies  
+bun run dev                  \# Start dev server (port 3000\)  
+bun run build                \# Production build  
+bun run test                 \# Run tests  
+bun run lint                 \# Lint code
+
+**Important:** The app requires Supabase environment variables (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) for local development.
+
 ### **Local Testing with Firestore Emulator**
 
 gcloud emulators firestore start \--host-port=localhost:8080  
@@ -135,6 +160,9 @@ podman build \-t agentnav-backend:latest \-f backend/Containerfile backend/
 
 \# Gemma GPU Service  
 podman build \-t gemma-service:latest \-f backend/gemma\_service/Containerfile backend/gemma\_service/
+
+\# Gen AI Prompt Management App  
+podman build \-t prompt-management-app:latest \-f prompt-management-app/Containerfile prompt-management-app/
 
 ### **Running Tests**
 
@@ -159,7 +187,8 @@ pytest tests/ \--cov=. \--cov-report=term \--cov-fail-under=70
 2. GitHub Actions workflow triggers  
 3. Authenticate via Workload Identity Federation (WIF)  
 4. Terraform Cloud provisions/updates GCP infrastructure  
-5. Podman builds container images, pushes to GAR
+5. Podman builds container images for all applications (Agent Navigator services and Gen AI Prompt Management App), pushes to GAR  
+6. Deploy both Agent Navigator and Gen AI Prompt Management App to Cloud Run
 
 Deploy to Cloud Run:  
 
@@ -183,6 +212,14 @@ gcloud run deploy gemma-service \
   --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 \
   --port 8080 --timeout 300s
 
+# Gen AI Prompt Management App (us-central1)
+gcloud run deploy prompt-management-app \
+  --image gcr.io/$PROJECT_ID/prompt-management-app:$GITHUB_SHA \
+  --region us-central1 --platform managed --port 8080 --timeout 300s \
+  --set-env-vars PORT=8080 \
+  --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest
+```
+
 ### **Cloud Run Requirements**
 
 **CRITICAL:** All services must:
@@ -204,6 +241,22 @@ Backend service requires:
 * `FIRESTORE_DATABASE_ID`  
 * `ADK_AGENT_CONFIG_PATH`  
 * `A2A_PROTOCOL_ENABLED=true`
+
+Gen AI Prompt Management App service requires:
+
+* `PORT` \- Set by Cloud Run  
+* `SUPABASE_URL` \- Base URL for the Supabase project (from Secret Manager)  
+* `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (from Secret Manager)  
+* `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (from Secret Manager)
+
+### **Cloud Run Service Configurations**
+
+| Service | Region | CPU | Memory | GPU | Special Config |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Agent Navigator Frontend** | us-central1 | 1 vCPU | 512Mi | None | Port 80, Nginx static serving |
+| **Agent Navigator Backend** | europe-west1 | 1 vCPU | 1Gi | None | Port 8080, Firestore access |
+| **Gemma GPU Service** | europe-west1 | GPU | 16Gi | NVIDIA L4 (1x) | Port 8080, CUDA support |
+| **Gen AI Prompt Management App** | us-central1 | 1 vCPU | 512Mi | None | Port 8080, Supabase secrets |
 
 ---
 
@@ -454,7 +507,10 @@ Before making a pull request, always:
 * `TF_CLOUD_ORGANIZATION` \- Terraform Cloud org name  
 * `TF_WORKSPACE` \- Terraform Cloud workspace  
 * `WIF_PROVIDER` \- Workload Identity Federation provider  
-* `WIF_SERVICE_ACCOUNT` \- WIF service account email
+* `WIF_SERVICE_ACCOUNT` \- WIF service account email  
+* `SUPABASE_URL` \- Base URL for the Supabase project (required for Gen AI Prompt Management App)  
+* `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (required for Gen AI Prompt Management App)  
+* `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (required for Gen AI Prompt Management App)
 
 ---
 
