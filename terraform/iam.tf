@@ -27,6 +27,15 @@ resource "google_service_account" "cloud_run_gemma" {
   depends_on = [google_project_service.apis]
 }
 
+resource "google_service_account" "cloud_run_prompt_mgmt" {
+  account_id   = "agentnav-prompt-mgmt"
+  display_name = "Gen AI Prompt Management App Service Account"
+  description  = "Service account for Prompt Management App Cloud Run service"
+  project      = var.project_id
+
+  depends_on = [google_project_service.apis]
+}
+
 # Service account for GitHub Actions (Workload Identity Federation)
 # Using data source to reference existing SA created manually
 data "google_service_account" "github_actions" {
@@ -58,6 +67,19 @@ resource "google_project_iam_member" "gemma_secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.cloud_run_gemma.email}"
+}
+
+# Prompt Management App needs secret access (for Supabase keys)
+resource "google_project_iam_member" "prompt_mgmt_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
+}
+
+resource "google_project_iam_member" "prompt_mgmt_service_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
 }
 
 # GitHub Actions service account permissions (for CI/CD)

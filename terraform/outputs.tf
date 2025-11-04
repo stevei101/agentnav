@@ -45,6 +45,11 @@ output "gemma_service_url" {
   value       = google_cloud_run_v2_service.gemma.uri
 }
 
+output "prompt_mgmt_service_url" {
+  description = "Prompt Management App Cloud Run service URL"
+  value       = google_cloud_run_v2_service.prompt_mgmt.uri
+}
+
 # Staging Environment Outputs
 output "frontend_staging_service_url" {
   description = "Staging Frontend Cloud Run service URL"
@@ -69,6 +74,9 @@ output "secrets" {
     gemini_api_key        = google_secret_manager_secret.gemini_api_key.secret_id
     huggingface_token     = google_secret_manager_secret.huggingface_token.secret_id
     firestore_credentials = google_secret_manager_secret.firestore_credentials.secret_id
+    supabase_url          = google_secret_manager_secret.supabase_url.secret_id
+    supabase_anon_key     = google_secret_manager_secret.supabase_anon_key.secret_id
+    supabase_service_key  = google_secret_manager_secret.supabase_service_key.secret_id
   }
 }
 
