@@ -143,13 +143,13 @@ fi
 # Test 12: Check documentation exists
 echo ""
 echo "Test 12: Checking for documentation..."
-if [ -f "../docs/SUPABASE_GOOGLE_OAUTH_SETUP.md" ]; then
+if [ -f "$SCRIPT_DIR/../../docs/SUPABASE_GOOGLE_OAUTH_SETUP.md" ]; then
     print_result 0 "OAuth setup documentation exists"
 else
     print_result 1 "OAuth setup documentation is missing"
 fi
 
-if [ -f "../docs/PROMPT_MANAGEMENT_APP_DEPLOYMENT.md" ]; then
+if [ -f "$SCRIPT_DIR/../../docs/PROMPT_MANAGEMENT_APP_DEPLOYMENT.md" ]; then
     print_result 0 "Deployment documentation exists"
 else
     print_result 1 "Deployment documentation is missing"

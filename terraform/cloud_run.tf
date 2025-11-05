@@ -293,12 +293,12 @@ resource "google_cloud_run_v2_service" "prompt_mgmt" {
       image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/prompt-management-app:latest" # Placeholder - updated by CI/CD
 
       ports {
-        container_port = var.frontend_container_port
+        container_port = var.prompt_mgmt_container_port
       }
 
       env {
         name  = "PORT"
-        value = tostring(var.frontend_container_port)
+        value = tostring(var.prompt_mgmt_container_port)
       }
 
       env {
@@ -350,7 +350,7 @@ resource "google_cloud_run_v2_service" "prompt_mgmt" {
         period_seconds    = 10
         failure_threshold = 24  # 240s total / 10s period = 24 attempts
         tcp_socket {
-          port = var.frontend_container_port
+          port = var.prompt_mgmt_container_port
         }
       }
     }
