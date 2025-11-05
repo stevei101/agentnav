@@ -241,7 +241,7 @@ jobs:
             --max-instances 10 \
             --cpu-throttling \
             --port 80 \
-            --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,NEXT_PUBLIC_GOOGLE_CLIENT_ID=GOOGLE_OAUTH_CLIENT_ID:latest \
+            --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,GOOGLE_OAUTH_CLIENT_ID=GOOGLE_OAUTH_CLIENT_ID:latest \
             --quiet
           
           echo "✅ Prompt Vault frontend deployment completed"

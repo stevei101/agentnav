@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2, Search } from 'lucide-react'
 export default function PromptList() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
@@ -28,11 +29,13 @@ export default function PromptList() {
       setPrompts(data || [])
     } catch (error: any) {
       console.error('Error loading prompts:', error)
-      alert('Failed to load prompts: ' + error.message)
+      setError('Failed to load prompts: ' + (error.message || 'Unknown error'))
     } finally {
       setLoading(false)
     }
   }
+
+  const [error, setError] = useState<string | null>(null)
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this prompt?')) return
@@ -47,7 +50,7 @@ export default function PromptList() {
       loadPrompts()
     } catch (error: any) {
       console.error('Error deleting prompt:', error)
-      alert('Failed to delete prompt: ' + error.message)
+      setError('Failed to delete prompt: ' + (error.message || 'Unknown error'))
     }
   }
 
@@ -70,6 +73,19 @@ export default function PromptList() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-white">My Prompts</h1>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-200">
+          <p className="font-semibold">Error</p>
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="mt-2 text-xs underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="mb-6">
         <div className="relative">

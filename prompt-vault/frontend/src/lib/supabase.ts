@@ -19,16 +19,18 @@ const getSupabaseAnonKey = (): string => {
 const supabaseUrl = getSupabaseUrl()
 const supabaseAnonKey = getSupabaseAnonKey()
 
-// Use placeholder values if credentials are missing to prevent app crash
-const safeSupabaseUrl = supabaseUrl || 'https://placeholder.supabase.co'
-const safeSupabaseAnonKey = supabaseAnonKey || 'placeholder-key'
-
+// Fail fast if credentials are missing - prevents silent failures and security issues
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Missing Supabase credentials. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local')
-  console.warn('   App will run but authentication will not work.')
+  const errorMessage = '❌ Missing Supabase credentials. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local'
+  console.error(errorMessage)
+  // In development, throw error to make the issue immediately visible
+  // In production (Cloud Run), this should never happen as secrets are injected
+  if (import.meta.env.DEV) {
+    throw new Error(errorMessage)
+  }
 }
 
-export const supabase = createClient(safeSupabaseUrl, safeSupabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Prompt, PromptInsert, PromptUpdate } from '../types/database'
+import { PromptInsert, PromptUpdate } from '../types/database'
 import { Save, ArrowLeft } from 'lucide-react'
 
 export default function PromptEditor() {
@@ -11,6 +11,7 @@ export default function PromptEditor() {
 
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [prompt, setPrompt] = useState<PromptInsert>({
     title: '',
     content: '',
@@ -52,7 +53,7 @@ export default function PromptEditor() {
       }
     } catch (error: any) {
       console.error('Error loading prompt:', error)
-      alert('Failed to load prompt: ' + error.message)
+      setError('Failed to load prompt: ' + (error.message || 'Unknown error'))
       navigate('/prompts')
     } finally {
       setLoading(false)
@@ -61,15 +62,16 @@ export default function PromptEditor() {
 
   const handleSave = async () => {
     if (!prompt.title.trim() || !prompt.content.trim()) {
-      alert('Please fill in both title and content.')
+      setError('Please fill in both title and content.')
       return
     }
 
-    try {
+      try {
       setSaving(true)
+      setError(null)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        alert('You must be logged in to save prompts.')
+        setError('You must be logged in to save prompts.')
         return
       }
 
@@ -95,7 +97,7 @@ export default function PromptEditor() {
       }
     } catch (error: any) {
       console.error('Error saving prompt:', error)
-      alert('Failed to save prompt: ' + error.message)
+      setError('Failed to save prompt: ' + (error.message || 'Unknown error'))
     } finally {
       setSaving(false)
     }
@@ -122,6 +124,25 @@ export default function PromptEditor() {
           {isNew ? 'Create New Prompt' : 'Edit Prompt'}
         </h1>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-200">
+          <p className="font-semibold">Error</p>
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="mt-2 text-xs underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {!prompt.title.trim() || !prompt.content.trim() ? (
+        <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-500/50 rounded-lg text-yellow-200 text-sm">
+          Please fill in both title and content to save.
+        </div>
+      ) : null}
 
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 space-y-6">
         <div>
