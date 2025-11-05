@@ -60,6 +60,16 @@ repos:
       - id: detect-private-key
         description: Detect private keys in commits
 
+  # Secret scanning with IBM detect-secrets
+  # Note: Pre-commit hook will fail if baseline doesn't exist
+  # Run 'detect-secrets scan --baseline .secrets.baseline' first to create it
+  - repo: https://github.com/ibm/detect-secrets
+    rev: master
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline', '--force-use-all-plugins']
+        description: Detect secrets using IBM detect-secrets (non-interactive check)
+
   # Security: Prevent .env file commits (FR#095)
   - repo: local
     hooks:
@@ -68,8 +78,18 @@ repos:
         entry: bash -c
         args:
           - |
-            if git diff --cached --name-only | grep -E "^\.env$|/\.env$"; then
+            # Check for .env files in any directory
+            if git diff --cached --name-only | grep -E "^\.env$|/\.env$|prompt-vault.*\.env"; then
               echo "ERROR: .env file detected! Use .env.example instead."
+              echo "Found files:"
+              git diff --cached --name-only | grep -E "^\.env$|/\.env$|prompt-vault.*\.env"
+              exit 1
+            fi
+            # Check for common secret patterns
+            if git diff --cached --name-only | grep -E "\.secret$|\.key$|.*secret.*\.json$|.*oauth.*\.json$"; then
+              echo "ERROR: Secret file detected! Secrets should be in Secret Manager, not committed."
+              echo "Found files:"
+              git diff --cached --name-only | grep -E "\.secret$|\.key$|.*secret.*\.json$|.*oauth.*\.json$"
               exit 1
             fi
         language: system

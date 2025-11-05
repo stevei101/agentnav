@@ -19,11 +19,12 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 | Component                          | Description                                                                                                                                                                                                                                                                                                                        | Deployment Tooling                   |
 | :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
 | **Google Cloud Run**               | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference.                                                                                                                                                      | Terraform, Cloud Run API             |
-| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)**                                                                                                                                                                                                                               | Terraform, Podman CI                 |
+| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)** Images are prefixed by application name (e.g., `agentnav-frontend`, `prompt-vault-frontend`) for isolation.                                                                                                                                                                                                                               | Terraform, Podman CI                 |
 | **GCP IAM & Identity**             | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
 | **Cloud DNS & TLS**                | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination.                                                                                                                                                                                        | Terraform, Cloud Run                 |
-| **Firestore**                      | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod).                                                                                                                                                                        | Terraform, Firestore API             |
-| **Secret Manager**                 | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets.                                                                                                                                                                                                                         | Terraform, Secret Manager API        |
+| **Firestore**                      | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod). Used by agentnav application.                                                                                                                                                                        | Terraform, Firestore API             |
+| **Supabase**                       | **External PostgreSQL/Auth service** used by Prompt Vault companion application for prompt storage and Google OAuth authentication. Completely separate from agentnav's Firestore persistence.                                                                                                                                      | External Service (Supabase Cloud)    |
+| **Secret Manager**                 | Stores sensitive credentials including Gemini API keys, Firestore service account keys, Supabase credentials, and other secrets.                                                                                                                                                                                                                         | Terraform, Secret Manager API        |
 | **Gemma GPU Service**              | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks.                                                                                                                                                    | Podman, Cloud Run API                |
 
 ---
@@ -115,6 +116,7 @@ The project uses **two distinct identity mechanisms** for different purposes:
 | **Frontend (UI)**        | **TypeScript**, **React**, **Vite**, **Tailwind CSS**                          | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run.                                                                   |
 | **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini**          | **uv** (for fast Python package installation/resolution)        | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
 | **Gemma GPU Service**    | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image)                                    | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU.                          |
+| **Prompt Vault (Companion App)** | **TypeScript**, **React**, **Supabase**, **Google OAuth** | **bun** (for fast JS runtime and package management) | Completely isolated from agentnav with separate CI/CD workflow, container images (`prompt-vault-*`), and Cloud Run services. Uses Supabase for persistence and authentication. See `docs/PROMPT_VAULT_ISOLATION_PLAN.md` for isolation strategy. |
 
 ### 2. Multi-Agent Architecture
 
@@ -140,8 +142,10 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
 
 ## The CI/CD Workflow (Cloud Run & GitHub Actions)
 
+### agentnav Application
+
 1. **Code Commit:** Changes are pushed to the GitHub repository.
-2. **GitHub Action Trigger:** The push triggers a GitHub Actions workflow.
+2. **GitHub Action Trigger:** The push triggers the `build.yml` GitHub Actions workflow.
 3. **Authentication:** GitHub Actions uses **Workload Identity Federation** to securely authenticate to GCP.
 4. **Terraform Provisioning (IaC):** The action triggers **Terraform Cloud** to provision/update GCP infrastructure (Cloud Run services, GAR, IAM, Cloud DNS, Firestore, Secret Manager).
 5. **Container Build (Podman):** The CI step uses **Podman** to build container images for both frontend and backend services. Images are tagged with the Git SHA and pushed to **Google Artifact Registry (GAR)**.
@@ -154,9 +158,30 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
    - Cloud Run services use **Workload Identity (WI)** with their Service Accounts to automatically authenticate to Firestore and Secret Manager (no credentials in containers).
    - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
    - **Final Commands:**
-     - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
-     - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
+     - `gcloud run deploy agentnav-frontend --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
+     - `gcloud run deploy agentnav-backend --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
      - `gcloud run deploy gemma-service --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 --port 8080 --timeout 300s`
+
+### Prompt Vault Application (Companion App - Isolated)
+
+**Separate CI/CD Workflow:** `.github/workflows/build-prompt-vault.yml`
+
+1. **Code Commit:** Changes to `prompt-vault/` directory trigger the separate workflow (path filtering ensures no cross-contamination).
+2. **GitHub Action Trigger:** Only triggers on changes within `prompt-vault/**` or the workflow file itself.
+3. **Authentication:** Uses same **Workload Identity Federation** as agentnav.
+4. **Container Build (Podman):** Builds `prompt-vault-frontend` and `prompt-vault-backend` images with same tagging strategy (pr-{number}, {sha}, latest).
+5. **Application Deployment (Cloud Run):**
+   - Deploys to separate Cloud Run services: `prompt-vault-frontend` and `prompt-vault-backend`
+   - Uses Supabase secrets from Secret Manager (not Firestore)
+   - **Deployment Commands:**
+     - `gcloud run deploy prompt-vault-frontend --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/prompt-vault-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,NEXT_PUBLIC_GOOGLE_CLIENT_ID=GOOGLE_OAUTH_CLIENT_ID:latest`
+     - `gcloud run deploy prompt-vault-backend --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/prompt-vault-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest`
+
+**Isolation Guarantees:**
+- Changes to `prompt-vault/` do NOT trigger agentnav builds
+- Changes to agentnav do NOT trigger prompt-vault builds
+- Separate container images prevent conflicts
+- Separate Cloud Run services prevent resource conflicts
 
 ### CI/CD Failure Response (Zero-Tolerance Policy)
 
@@ -186,9 +211,11 @@ This is the **highest priority workflow item** after a CI run. See [ZERO_TOLERAN
 - **Agent Definitions:** ADK agent configurations and A2A Protocol handlers located in `backend/agents/`.
 - **Gemma Service:** GPU-accelerated model service located in `backend/gemma_service/`.
 - **Service Clients:** HTTP clients for external services located in `backend/services/`.
+- **Prompt Vault:** Companion application located in `prompt-vault/` directory (completely isolated from agentnav code).
 
 **GitHub Secrets List:**
 
+**agentnav (Core Application):**
 - `GCP_PROJECT_ID` - Google Cloud Project ID
 - `GCP_SA_KEY` - Google Cloud Service Account Key in json format (maintained for legacy/fallback, but **WIF is preferred**)
 - `GEMINI_API_KEY` - API key for Google Gemini models
@@ -198,6 +225,13 @@ This is the **highest priority workflow item** after a CI run. See [ZERO_TOLERAN
 - `TF_WORKSPACE` - Workspace Name for Terraform Cloud
 - `WIF_PROVIDER` - Name of Workload Identity Federation Provider
 - `WIF_SERVICE_ACCOUNT` - Email of Workload Identity Federation Service Account
+
+**Prompt Vault (Companion Application):**
+- `SUPABASE_URL` - Supabase project URL (e.g., `https://{project-ref}.supabase.co`)
+- `SUPABASE_ANON_KEY` - Supabase publishable key (for frontend/client-side use)
+- `SUPABASE_SERVICE_KEY` - Supabase secret key (for backend/admin operations, optional)
+- `GOOGLE_OAUTH_CLIENT_ID` - Google OAuth client ID for Supabase Google Sign-in
+- `GOOGLE_OAUTH_CLIENT_SECRET` - Google OAuth client secret for Supabase Google Sign-in
 
 ---
 
@@ -255,6 +289,43 @@ This is the **highest priority workflow item** after a CI run. See [ZERO_TOLERAN
   - `MODEL_NAME` (default: `google/gemma-7b-it`)
   - `HUGGINGFACE_TOKEN` (optional, from Secret Manager)
   - `USE_8BIT_QUANTIZATION` (optional, for memory efficiency)
+
+### Prompt Vault Configuration
+
+**Isolation Strategy:** Prompt Vault is completely isolated from agentnav using separate naming conventions, CI/CD workflows, and infrastructure resources. See `docs/PROMPT_VAULT_ISOLATION_PLAN.md` for complete details.
+
+**Frontend Service (`prompt-vault-frontend`):**
+- **Region:** `us-central1` (for low latency)
+- **CPU:** 1 vCPU
+- **Memory:** 512Mi
+- **Max Instances:** 10
+- **Min Instances:** 0 (serverless scaling)
+- **Concurrency:** 80 requests per instance
+- **Container Port:** 80
+- **Service Account:** `prompt-vault-frontend@${PROJECT_ID}.iam.gserviceaccount.com`
+- **Environment Variables (from Secret Manager):**
+  - `SUPABASE_URL` - Supabase project URL
+  - `SUPABASE_ANON_KEY` - Supabase publishable key
+  - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` - Google OAuth client ID for Supabase Sign-in
+
+**Backend Service (`prompt-vault-backend`):** (Optional - only if not using Supabase Edge Functions)
+- **Region:** `europe-west1`
+- **CPU:** 2 vCPU
+- **Memory:** 1Gi
+- **Max Instances:** 10
+- **Min Instances:** 0
+- **Concurrency:** 80 requests per instance
+- **Container Port:** 8080
+- **Service Account:** `prompt-vault-backend@${PROJECT_ID}.iam.gserviceaccount.com`
+- **Environment Variables (from Secret Manager):**
+  - `SUPABASE_URL` - Supabase project URL
+  - `SUPABASE_SERVICE_KEY` - Supabase secret key (for admin operations)
+
+**Key Isolation Features:**
+- **Separate CI/CD Workflow:** `.github/workflows/build-prompt-vault.yml` with path filtering (only triggers on `prompt-vault/**` changes)
+- **Separate Container Images:** `prompt-vault-frontend` and `prompt-vault-backend` (vs `agentnav-frontend`, `agentnav-backend`)
+- **Shared GAR Repository:** Uses same `agentnav-containers` repository but with different image names
+- **Separate Terraform Resources:** `terraform/prompt_vault_cloud_run.tf` for complete infrastructure isolation
 
 ### GPU Configuration
 

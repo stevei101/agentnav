@@ -2,9 +2,9 @@
 
 ## **Project Overview**
 
-agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support.
+agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support. The project includes a companion application, **Prompt Vault**, which provides prompt management capabilities using Supabase for persistence and authentication.
 
-**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Podman, Terraform, GitHub Actions
+**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Supabase, Podman, Terraform, GitHub Actions
 
 **Project Type:** Full-stack web application with AI agent orchestration
 
@@ -54,12 +54,24 @@ All agents communicate asynchronously via A2A Protocol and persist state in Fire
 * **Hardware:** NVIDIA L4 GPU on Cloud Run (europe-west1)  
 * **Models:** Gemma 7B or 2B with optional 8-bit quantization
 
+### **Prompt Vault (Companion Application)**
+
+* **Location:** `prompt-vault/` directory (completely isolated from agentnav)  
+* **Purpose:** Prompt management interface with CRUD operations for AI prompts  
+* **Technology Stack:** Node.js, React, TypeScript (managed by bun)  
+* **Persistence:** Supabase (PostgreSQL) for prompt storage  
+* **Authentication:** Google OAuth via Supabase Auth  
+* **Deployment:** Cloud Run serverless (us-central1)  
+* **Isolation:** Separate CI/CD workflow, separate container images, separate Cloud Run services with `prompt-vault-` prefix  
+* **See:** `docs/PROMPT_VAULT_ISOLATION_PLAN.md` for complete isolation strategy
+
 ### **Infrastructure**
 
-* **Database:** Firestore (NoSQL) for session memory and knowledge caching  
+* **Database:** Firestore (NoSQL) for session memory and knowledge caching (agentnav)  
+* **Database:** Supabase (PostgreSQL) for Prompt Vault persistence and authentication  
 * **Secrets:** Google Secret Manager (never embed credentials)  
-* **Container Registry:** Google Artifact Registry (GAR)  
-* **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run  
+* **Container Registry:** Google Artifact Registry (GAR) - shared registry with prefixed image names  
+* **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run (separate workflows for agentnav and prompt-vault)  
 * **DNS/TLS:** Cloud DNS + Cloud Run managed TLS for agentnav.lornu.com
 
 ---
@@ -92,6 +104,10 @@ agentnav/
 │   ├── main.tf  
 │   ├── variables.tf  
 │   └── modules/  
+├── prompt-vault/            \# Prompt Vault companion app (isolated)  
+│   ├── frontend/            \# React frontend  
+│   ├── backend/             \# Optional backend (or Supabase Edge Functions)  
+│   └── Dockerfile           \# Production Dockerfile  
 ├── scripts/                 \# Build and deployment scripts  
 └── docs/                    \# Additional documentation
 
@@ -447,6 +463,7 @@ Before making a pull request, always:
 
 ## **Key GitHub Actions Secrets**
 
+**agentnav (Core Application):**
 * `GCP_PROJECT_ID` \- Google Cloud Project ID  
 * `GEMINI_API_KEY` \- API key for Gemini models  
 * `FIRESTORE_CREDENTIALS` \- Service account JSON (or use WIF)  
@@ -455,6 +472,13 @@ Before making a pull request, always:
 * `TF_WORKSPACE` \- Terraform Cloud workspace  
 * `WIF_PROVIDER` \- Workload Identity Federation provider  
 * `WIF_SERVICE_ACCOUNT` \- WIF service account email
+
+**Prompt Vault (Companion Application):**
+* `SUPABASE_URL` \- Supabase project URL  
+* `SUPABASE_ANON_KEY` \- Supabase publishable key (for frontend)  
+* `SUPABASE_SERVICE_KEY` \- Supabase secret key (for backend, optional)  
+* `GOOGLE_OAUTH_CLIENT_ID` \- Google OAuth client ID for Supabase Sign-in  
+* `GOOGLE_OAUTH_CLIENT_SECRET` \- Google OAuth client secret for Supabase Sign-in
 
 ---
 
