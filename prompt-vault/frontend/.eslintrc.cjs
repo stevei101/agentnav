@@ -8,13 +8,27 @@ module.exports = {
   ],
   ignorePatterns: ['dist', '.eslintrc.cjs'],
   parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
+  },
   plugins: ['react-refresh'],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
   rules: {
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },
     ],
     '@typescript-eslint/no-explicit-any': 'warn',
+    // Disable react-hooks/exhaustive-deps temporarily if it causes issues
+    // 'react-hooks/exhaustive-deps': 'warn',
   },
 }
 
