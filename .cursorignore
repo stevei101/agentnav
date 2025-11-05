@@ -1,0 +1,62 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+
+# Large dependency directories
+node_modules/
+
+# Git repository data
+.git/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Build artifacts and outputs
+dist/
+dist-ssr/
+build/
+*.egg-info/
+
+# Lock files (large and frequently changing)
+*.lock
+bun.lock
+package-lock.json
+
+# Terraform state and modules
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Cache directories
+.cache/
+.coverage
+htmlcov/
+
+# Log files
+*.log
+logs/
+
+# OS-specific files
+.DS_Store
+**/.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.test
+.env.*.test
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files (Cursor might handle these automatically, but good to be explicit)
+.vscode/
+.idea/
+
+# Test coverage
+coverage.xml
+.nyc_output/
