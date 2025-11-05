@@ -7,7 +7,8 @@ FROM oven/bun:latest AS builder
 WORKDIR /app
 
 # Copy dependency files from frontend directory
-COPY frontend/package.json frontend/bun.lockb* ./
+COPY frontend/package.json ./
+COPY frontend/bun.lock* ./
 
 # Install dependencies with frozen lockfile for reproducible builds
 RUN bun install --frozen-lockfile || bun install
