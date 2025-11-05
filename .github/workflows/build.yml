@@ -199,11 +199,14 @@ jobs:
               echo "📤 Submitting Cloud Build (attempt $((retry_count + 1))/$max_retries)..."
               
               # Submit build without waiting (async)
-              BUILD_ID=$(gcloud builds submit \
+              BUILD_OUTPUT=$(gcloud builds submit \
                 --config=cloudbuild-gemma.yaml \
                 --substitutions="${SUBSTITUTIONS}" \
                 --async \
-                2>&1 | grep -oP '(?<=id: )[^ ]+' || echo "")
+                2>&1)
+
+              # Extract build ID from output (more robust than regex)
+              BUILD_ID=$(echo "$BUILD_OUTPUT" | grep "id:" | head -1 | awk '{print $2}' | tr -d '[:space:]' || echo "")
               
               if [ -z "$BUILD_ID" ]; then
                 echo "❌ Failed to submit build or extract build ID"
