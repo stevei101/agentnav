@@ -1,7 +1,7 @@
 ---
 name: Good First Issue
 about: Create a beginner-friendly issue for new contributors
-title: "[Good First Issue] "
+title: '[Good First Issue] '
 labels: good first issue, help wanted, contribution
 assignees: ''
 ---
@@ -23,14 +23,17 @@ assignees: ''
 ## 🛠️ Technical Context
 
 ### Relevant Files
+
 - `path/to/file1.ext` - [Brief description of what this file does]
 - `path/to/file2.ext` - [Brief description of what this file does]
 
 ### Technologies Used
+
 - [List the specific technologies, frameworks, or tools involved]
 - [e.g., React, TypeScript, FastAPI, etc.]
 
 ### Architecture Notes
+
 [Provide brief context about how this fits into the overall system architecture. Reference relevant documentation if needed.]
 
 ## ✅ Acceptance Criteria
@@ -46,21 +49,25 @@ assignees: ''
 ## 📚 Helpful Resources
 
 ### Documentation
+
 - [System Instruction](../../docs/SYSTEM_INSTRUCTION.md) - Complete system architecture and conventions
 - [Contribution Guide](../../CONTRIBUTING.md) - How to contribute to the project
 - [Local Development Setup](../../docs/local-development.md) - Setting up your development environment
 - [Copilot Agent Guide](../../docs/COPILOT_AGENT_GUIDE.md) - Using the agentnav-copilot-agent for assistance
 
 ### Related Code Examples
+
 - [Link to similar implementation in the codebase]
 - [Link to relevant test file for reference]
 
 ### External References
+
 - [Link to relevant external documentation, if any]
 
 ## 🚀 Getting Started
 
 1. **Set up your development environment:**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/agentnav.git
    cd agentnav
@@ -68,16 +75,18 @@ assignees: ''
    ```
 
 2. **Create a feature branch:**
+
    ```bash
    git checkout -b fix/good-first-issue-[issue-number]
    ```
 
 3. **Run the application locally:**
+
    ```bash
    # Frontend
    bun install
    bun run dev
-   
+
    # Backend (if needed)
    cd backend
    uv venv
@@ -89,6 +98,7 @@ assignees: ''
 4. **Make your changes** following the acceptance criteria
 
 5. **Test your changes:**
+
    ```bash
    make ci  # Run all checks (lint + tests)
    ```
@@ -100,11 +110,13 @@ assignees: ''
 [Provide helpful hints or guidance on how to approach the problem. Don't give away the complete solution, but point contributors in the right direction.]
 
 ### Step-by-step Approach:
+
 1. [First step to take]
 2. [Second step to take]
 3. [Third step to take]
 
 ### Things to Keep in Mind:
+
 - [Important consideration 1]
 - [Important consideration 2]
 - Remember: All new code must have **70% or higher test coverage**
@@ -126,6 +138,7 @@ assignees: ''
 Welcome! This issue is specifically designed for people who are new to the project. We're here to help you make your first contribution. Don't be afraid to ask questions!
 
 ### What You'll Learn:
+
 - [Skill or concept 1 you'll learn by completing this issue]
 - [Skill or concept 2 you'll learn by completing this issue]
 - Working with the agentnav multi-agent architecture

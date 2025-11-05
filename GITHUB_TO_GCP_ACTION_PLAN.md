@@ -22,6 +22,7 @@ GitHub Secrets                  Terraform (IaC)           GCP Runtime
 ## ⚡ What You Need to Do (2 Steps)
 
 ### Step 1: Add Secret Value to GCP
+
 ```bash
 # Get your token (you have it in GitHub)
 # Then run:
@@ -29,6 +30,7 @@ echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-fi
 ```
 
 ### Step 2: Deploy
+
 ```bash
 cd terraform && terraform apply
 ```
@@ -38,6 +40,7 @@ cd terraform && terraform apply
 ## 🔐 Why It's Designed This Way
 
 ### ✅ Why NOT sync from GitHub to Terraform:
+
 1. **Separation of Concerns**
    - GitHub manages its own secrets (secure)
    - Terraform manages infrastructure (safe)
@@ -54,6 +57,7 @@ cd terraform && terraform apply
    - Easier to audit and rotate
 
 ### ✅ Why Manual Addition is Correct:
+
 - Secret values don't belong in Terraform code
 - Secret values don't belong in version control
 - Manual step = intentional & verified
@@ -62,11 +66,11 @@ cd terraform && terraform apply
 
 ## 📊 Your Three Options (Ranked)
 
-| Rank | Option | Effort | Security | Recommended |
-|------|--------|--------|----------|-------------|
-| 🥇 1 | Manual gcloud | 1 min | ✅ Best | **YES - USE THIS NOW** |
-| 🥈 2 | GitHub Actions auto-sync | 10 min | ✅ Good | For future (optional) |
-| 🥉 3 | Terraform local-exec | 5 min | ⚠️ Medium | Avoid |
+| Rank | Option                   | Effort | Security  | Recommended            |
+| ---- | ------------------------ | ------ | --------- | ---------------------- |
+| 🥇 1 | Manual gcloud            | 1 min  | ✅ Best   | **YES - USE THIS NOW** |
+| 🥈 2 | GitHub Actions auto-sync | 10 min | ✅ Good   | For future (optional)  |
+| 🥉 3 | Terraform local-exec     | 5 min  | ⚠️ Medium | Avoid                  |
 
 ---
 
@@ -83,7 +87,7 @@ cd terraform && terraform apply
           ├─ IAM policies
           └─ Auto-injects secret at runtime
           ↓
-3. Result: 
+3. Result:
    - Gemma service on Cloud Run with GPU ✅
    - HUGGINGFACE_TOKEN injected securely ✅
    - Backend can call Gemma service ✅

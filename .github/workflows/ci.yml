@@ -270,7 +270,7 @@ jobs:
       - name: Checkout (full history)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed for verification
+          fetch-depth: 0 # Full history needed for verification
 
       - name: Run secret verification script
         run: |
@@ -298,35 +298,35 @@ jobs:
         run: |
           echo "## 📊 CODE_QUALITY Aggregation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           CODE_QUALITY_RESULT="${{ needs.code-quality.result }}"
           FRONTEND_TESTS_RESULT="${{ needs.frontend-tests.result }}"
           BACKEND_TESTS_RESULT="${{ needs.backend-tests.result }}"
-          
+
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| code-quality | $CODE_QUALITY_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| frontend-tests | $FRONTEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| backend-tests | $BACKEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check for failure or cancelled states
           # success and skipped (from path filtering) are both acceptable
           if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$CODE_QUALITY_RESULT" == "cancelled" ]]; then
             echo "❌ CODE_QUALITY check failed: code-quality job $CODE_QUALITY_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [[ "$FRONTEND_TESTS_RESULT" == "failure" ]] || [[ "$FRONTEND_TESTS_RESULT" == "cancelled" ]]; then
             echo "❌ CODE_QUALITY check failed: frontend-tests job $FRONTEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [[ "$BACKEND_TESTS_RESULT" == "failure" ]] || [[ "$BACKEND_TESTS_RESULT" == "cancelled" ]]; then
             echo "❌ CODE_QUALITY check failed: backend-tests job $BACKEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           echo "✅ CODE_QUALITY: All aggregated code quality jobs completed successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
@@ -341,35 +341,35 @@ jobs:
         run: |
           echo "## 🔒 SECURITY_AUDIT Aggregation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           TFSEC_RESULT="${{ needs.tfsec-scan.result }}"
           OSV_RESULT="${{ needs.osv-scanner.result }}"
           SECRET_VERIFICATION_RESULT="${{ needs.secret-verification.result }}"
-          
+
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| tfsec-scan | $TFSEC_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| osv-scanner | $OSV_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "| secret-verification | $SECRET_VERIFICATION_RESULT |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check for failure or cancelled states
           # success and skipped (from path filtering) are both acceptable
           if [[ "$TFSEC_RESULT" == "failure" ]] || [[ "$TFSEC_RESULT" == "cancelled" ]]; then
             echo "❌ SECURITY_AUDIT check failed: tfsec-scan job $TFSEC_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [[ "$OSV_RESULT" == "failure" ]] || [[ "$OSV_RESULT" == "cancelled" ]]; then
             echo "❌ SECURITY_AUDIT check failed: osv-scanner job $OSV_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [[ "$SECRET_VERIFICATION_RESULT" == "failure" ]] || [[ "$SECRET_VERIFICATION_RESULT" == "cancelled" ]]; then
             echo "❌ SECURITY_AUDIT check failed: secret-verification job $SECRET_VERIFICATION_RESULT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           echo "✅ SECURITY_AUDIT: All aggregated security jobs completed successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
