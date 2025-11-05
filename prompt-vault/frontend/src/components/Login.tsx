@@ -2,14 +2,39 @@ import { useState } from 'react'
 import { supabase, getGoogleClientId } from '../lib/supabase'
 import { LogIn } from 'lucide-react'
 
+// Get Supabase URL for checking configuration
+const getSupabaseUrl = (): string => {
+  if (typeof window !== 'undefined' && (window as any).SUPABASE_URL) {
+    return (window as any).SUPABASE_URL
+  }
+  return import.meta.env.VITE_SUPABASE_URL || ''
+}
+
+const getSupabaseAnonKey = (): string => {
+  if (typeof window !== 'undefined' && (window as any).SUPABASE_ANON_KEY) {
+    return (window as any).SUPABASE_ANON_KEY
+  }
+  return import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+}
+
+const supabaseUrl = getSupabaseUrl()
+const supabaseAnonKey = getSupabaseAnonKey()
+
 export default function Login() {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  // Note: googleClientId is not required for signInWithOAuth
+  // It's only needed if using Google's pre-built buttons (which we're not using)
   const googleClientId = getGoogleClientId()
 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signInWithOAuth({
+      setError(null)
+
+      // According to Supabase docs, signInWithOAuth doesn't require Client ID in frontend
+      // The Client ID and Secret are configured in Supabase Dashboard
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`,
@@ -21,11 +46,14 @@ export default function Login() {
       })
 
       if (error) throw error
+      // Note: For implicit flow, the user will be redirected automatically
+      // No need to handle data here as redirect happens automatically
     } catch (error: any) {
-      alert(error.error_description || error.message)
-    } finally {
+      console.error('Login error:', error)
+      setError(error.error_description || error.message || 'Failed to sign in. Please check your configuration.')
       setLoading(false)
     }
+    // Note: Don't set loading to false on success - user will be redirected
   }
 
   return (
@@ -41,7 +69,24 @@ export default function Login() {
           </div>
 
           <div className="space-y-4">
-            {googleClientId ? (
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-200 text-sm">
+                {error}
+              </div>
+            )}
+            
+            {!supabaseUrl || !supabaseAnonKey ? (
+              <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 text-yellow-200 text-sm space-y-2">
+                <p className="font-semibold">⚠️ Configuration Required</p>
+                <p>Please create a <code className="bg-yellow-900/50 px-1 rounded">.env.local</code> file in the frontend directory with:</p>
+                <pre className="bg-black/30 p-2 rounded text-xs mt-2 overflow-x-auto">
+{`VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_GOOGLE_CLIENT_ID=your_google_client_id`}
+                </pre>
+                <p className="text-xs mt-2">See <code className="bg-yellow-900/50 px-1 rounded">QUICK_START.md</code> for setup instructions.</p>
+              </div>
+            ) : (
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
@@ -73,10 +118,6 @@ export default function Login() {
                   </>
                 )}
               </button>
-            ) : (
-              <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 text-yellow-200 text-sm">
-                Google OAuth is not configured. Please set GOOGLE_OAUTH_CLIENT_ID in Secret Manager.
-              </div>
             )}
           </div>
 
