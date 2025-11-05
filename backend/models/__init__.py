@@ -19,6 +19,15 @@ from .a2a_messages import (
     create_message_id,
     create_correlation_id,
 )
+from .prompt_models import (
+    Prompt,
+    PromptCreate,
+    PromptUpdate,
+    PromptVersion,
+    TestResult,
+    TestResultCreate,
+    UserInfo,
+)
 
 __all__ = [
     # Context models
@@ -38,4 +47,12 @@ __all__ = [
     "AgentStatusMessage",
     "create_message_id",
     "create_correlation_id",
+    # Prompt management models
+    "Prompt",
+    "PromptCreate",
+    "PromptUpdate",
+    "PromptVersion",
+    "TestResult",
+    "TestResultCreate",
+    "UserInfo",
 ]

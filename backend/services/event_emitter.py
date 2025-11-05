@@ -11,7 +11,7 @@ from typing import Dict, Set, Optional, Any, List
 from datetime import datetime
 import json
 
-from backend.models.stream_event_model import (
+from models.stream_event_model import (
     AgentStreamEvent,
     AgentStatusEnum,
     AgentTypeEnum,
