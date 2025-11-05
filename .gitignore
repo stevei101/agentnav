@@ -1,3 +1,6 @@
+# Secret scanning baseline (should be committed)
+# .secrets.baseline
+
 # Logs
 logs
 *.log
@@ -33,6 +36,16 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+.env.*.secret
+.env.secret
+*.env.secret
+
+# Prompt Vault specific environment files
+prompt-vault/.env
+prompt-vault/.env.local
+prompt-vault/.env.*.local
+prompt-vault/**/.env
+prompt-vault/**/.env.local
 
 # Python cache and compiled files
 __pycache__/
