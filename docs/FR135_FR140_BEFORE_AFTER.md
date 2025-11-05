@@ -13,6 +13,7 @@ This document provides a clear before/after comparison of the CI/CD pipeline agg
 The aggregation logic in the CI/CD pipeline had a **critical flaw** in handling the `skipped` job state, which is produced by path filtering (FR#145). This caused false failures when jobs were legitimately skipped.
 
 **Impact:**
+
 - 🔴 False failures block PRs
 - 🔴 Developers waste time debugging non-issues
 - 🔴 Path filtering (FR#145) becomes ineffective
@@ -38,6 +39,7 @@ CODE_QUALITY:
 ```
 
 **Problems:**
+
 1. ❌ No `if: always()` - Job doesn't run if upstream jobs fail or are skipped
 2. ❌ No explicit status checking - Relies on implicit GitHub Actions behavior
 3. ❌ No status reporting - Developers don't know which job failed
@@ -59,6 +61,7 @@ SECURITY_AUDIT:
 ```
 
 **Problems:**
+
 1. ❌ Same issues as CODE_QUALITY
 2. ❌ No visibility into which scan failed
 
@@ -73,18 +76,18 @@ CODE_QUALITY:
   name: CODE_QUALITY
   runs-on: ubuntu-latest
   needs: [code-quality, frontend-tests, backend-tests]
-  if: always()  # ✅ FIXED: Always run, even if upstream jobs fail/skip
+  if: always() # ✅ FIXED: Always run, even if upstream jobs fail/skip
   steps:
     - name: Aggregate Code Quality
       run: |
         echo "## 📊 CODE_QUALITY Aggregation" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         # ✅ FIXED: Capture individual job results
         CODE_QUALITY_RESULT="${{ needs.code-quality.result }}"
         FRONTEND_TESTS_RESULT="${{ needs.frontend-tests.result }}"
         BACKEND_TESTS_RESULT="${{ needs.backend-tests.result }}"
-        
+
         # ✅ FIXED: Display status table for debugging
         echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
         echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
@@ -92,30 +95,31 @@ CODE_QUALITY:
         echo "| frontend-tests | $FRONTEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
         echo "| backend-tests | $BACKEND_TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         # ✅ FIXED: Check for failure or cancelled states ONLY
         # success and skipped are both acceptable
         if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$CODE_QUALITY_RESULT" == "cancelled" ]]; then
           echo "❌ CODE_QUALITY check failed: code-quality job $CODE_QUALITY_RESULT" >> $GITHUB_STEP_SUMMARY
           exit 1
         fi
-        
+
         if [[ "$FRONTEND_TESTS_RESULT" == "failure" ]] || [[ "$FRONTEND_TESTS_RESULT" == "cancelled" ]]; then
           echo "❌ CODE_QUALITY check failed: frontend-tests job $FRONTEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
           exit 1
         fi
-        
+
         if [[ "$BACKEND_TESTS_RESULT" == "failure" ]] || [[ "$BACKEND_TESTS_RESULT" == "cancelled" ]]; then
           echo "❌ CODE_QUALITY check failed: backend-tests job $BACKEND_TESTS_RESULT" >> $GITHUB_STEP_SUMMARY
           exit 1
         fi
-        
+
         echo "✅ CODE_QUALITY: All aggregated code quality jobs completed successfully" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 ```
 
 **Improvements:**
+
 1. ✅ `if: always()` - Always runs, providing consistent status
 2. ✅ Explicit status checking - Checks only for failure/cancelled
 3. ✅ Detailed status reporting - Shows which job caused the failure
@@ -128,40 +132,41 @@ SECURITY_AUDIT:
   name: SECURITY_AUDIT
   runs-on: ubuntu-latest
   needs: [tfsec-scan, osv-scanner]
-  if: always()  # ✅ FIXED: Always run
+  if: always() # ✅ FIXED: Always run
   steps:
     - name: Aggregate Security Results
       run: |
         echo "## 🔒 SECURITY_AUDIT Aggregation" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         # ✅ FIXED: Same improvements as CODE_QUALITY
         TFSEC_RESULT="${{ needs.tfsec-scan.result }}"
         OSV_RESULT="${{ needs.osv-scanner.result }}"
-        
+
         echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
         echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
         echo "| tfsec-scan | $TFSEC_RESULT |" >> $GITHUB_STEP_SUMMARY
         echo "| osv-scanner | $OSV_RESULT |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         # ✅ FIXED: Check for failure or cancelled states ONLY
         if [[ "$TFSEC_RESULT" == "failure" ]] || [[ "$TFSEC_RESULT" == "cancelled" ]]; then
           echo "❌ SECURITY_AUDIT check failed: tfsec-scan job $TFSEC_RESULT" >> $GITHUB_STEP_SUMMARY
           exit 1
         fi
-        
+
         if [[ "$OSV_RESULT" == "failure" ]] || [[ "$OSV_RESULT" == "cancelled" ]]; then
           echo "❌ SECURITY_AUDIT check failed: osv-scanner job $OSV_RESULT" >> $GITHUB_STEP_SUMMARY
           exit 1
         fi
-        
+
         echo "✅ SECURITY_AUDIT: All aggregated security scans completed successfully" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "Note: Skipped jobs (due to path filtering) are treated as passing." >> $GITHUB_STEP_SUMMARY
 ```
 
 **Improvements:**
+
 1. ✅ Same improvements as CODE_QUALITY
 
 ---
@@ -192,12 +197,12 @@ SECURITY_AUDIT:
 
 ## State Handling Comparison
 
-| Job State | Before Behavior | After Behavior | Correct? |
-|-----------|----------------|----------------|----------|
-| `success` | ✅ Pass | ✅ Pass | ✅ Yes |
-| `failure` | ❌ Pass (no check) | ❌ Fail | ✅ Yes |
-| `skipped` | ❌ Fail (implicitly) | ✅ Pass | ✅ Yes |
-| `cancelled` | ❌ Pass (no check) | ❌ Fail | ✅ Yes |
+| Job State   | Before Behavior      | After Behavior | Correct? |
+| ----------- | -------------------- | -------------- | -------- |
+| `success`   | ✅ Pass              | ✅ Pass        | ✅ Yes   |
+| `failure`   | ❌ Pass (no check)   | ❌ Fail        | ✅ Yes   |
+| `skipped`   | ❌ Fail (implicitly) | ✅ Pass        | ✅ Yes   |
+| `cancelled` | ❌ Pass (no check)   | ❌ Fail        | ✅ Yes   |
 
 **Key Fix:** `skipped` state now correctly passes instead of failing.
 
@@ -208,6 +213,7 @@ SECURITY_AUDIT:
 ### Scenario: Path Filtering Skips Jobs
 
 **Before:**
+
 ```
 code-quality:     skipped ⏭️  (no code changes)
 frontend-tests:   skipped ⏭️  (no frontend changes)
@@ -217,9 +223,11 @@ CODE_QUALITY:     NOT RUN ❌  (upstream jobs skipped)
                   ↓
 QUALITY_GATE:     BLOCKED ❌  (CODE_QUALITY didn't run)
 ```
+
 ❌ Result: PR blocked due to path filtering
 
 **After:**
+
 ```
 code-quality:     skipped ⏭️  (no code changes)
 frontend-tests:   skipped ⏭️  (no frontend changes)
@@ -229,6 +237,7 @@ CODE_QUALITY:     success ✅  (skipped = pass)
                   ↓
 QUALITY_GATE:     success ✅  (final PASS)
 ```
+
 ✅ Result: PR correctly passes
 
 ---
@@ -270,12 +279,12 @@ Fix needed: None
 
 ## Metrics Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| False Failures | High (every path-filtered PR) | None | ✅ 100% reduction |
-| Time to Debug | 10-15 min (manual investigation) | 0 min (clear status) | ✅ 100% reduction |
-| Context Switching | High (5+ individual checks) | Low (3 aggregate checks) | ✅ 60% reduction |
-| Developer Confidence | Low (unpredictable failures) | High (reliable checks) | ✅ Major improvement |
+| Metric               | Before                           | After                    | Improvement          |
+| -------------------- | -------------------------------- | ------------------------ | -------------------- |
+| False Failures       | High (every path-filtered PR)    | None                     | ✅ 100% reduction    |
+| Time to Debug        | 10-15 min (manual investigation) | 0 min (clear status)     | ✅ 100% reduction    |
+| Context Switching    | High (5+ individual checks)      | Low (3 aggregate checks) | ✅ 60% reduction     |
+| Developer Confidence | Low (unpredictable failures)     | High (reliable checks)   | ✅ Major improvement |
 
 ---
 
@@ -288,12 +297,12 @@ Fix needed: None
 
 ### Complexity
 
-| Aspect | Before | After | Assessment |
-|--------|--------|-------|------------|
-| Logic Lines | 2 (echo statements) | 15 per job (status checking) | ✅ Acceptable for correctness |
-| Readability | Low (implicit behavior) | High (explicit logic) | ✅ Improved |
-| Maintainability | Low (hard to debug) | High (clear patterns) | ✅ Improved |
-| Testability | None | Full (validation script) | ✅ Improved |
+| Aspect          | Before                  | After                        | Assessment                    |
+| --------------- | ----------------------- | ---------------------------- | ----------------------------- |
+| Logic Lines     | 2 (echo statements)     | 15 per job (status checking) | ✅ Acceptable for correctness |
+| Readability     | Low (implicit behavior) | High (explicit logic)        | ✅ Improved                   |
+| Maintainability | Low (hard to debug)     | High (clear patterns)        | ✅ Improved                   |
+| Testability     | None                    | Full (validation script)     | ✅ Improved                   |
 
 ---
 
@@ -323,12 +332,12 @@ The validation script (`scripts/test_fr135_fr140_logic.sh`) covers:
 
 The fix correctly addresses the critical risk identified in the FR#135/FR#140 combined review:
 
-| Goal | Status |
-|------|--------|
+| Goal                     | Status      |
+| ------------------------ | ----------- |
 | Fix skipped job handling | ✅ Complete |
-| Improve velocity | ✅ Complete |
-| Enhance governance | ✅ Complete |
-| Maintain scalability | ✅ Complete |
-| Provide visibility | ✅ Complete |
+| Improve velocity         | ✅ Complete |
+| Enhance governance       | ✅ Complete |
+| Maintain scalability     | ✅ Complete |
+| Provide visibility       | ✅ Complete |
 
 **Result:** The implementation is a **net-positive improvement** that enables both FR#135 (status check optimization) and FR#140 (zero-tolerance policy) to work correctly together.

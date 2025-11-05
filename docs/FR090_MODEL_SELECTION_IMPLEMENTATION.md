@@ -9,6 +9,7 @@
 ## Overview
 
 Successfully extended FR#090 implementation to support flexible model selection between:
+
 - **Gemini** (cloud-based): Google's latest generative model via GenAI SDK
 - **Gemma** (local GPU): Open-source model on dedicated GPU service for latency-sensitive workloads
 
@@ -23,6 +24,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 **File:** `backend/agents/orchestrator_agent.py`
 
 **Changes:**
+
 - Added `model_type` parameter to `OrchestratorAgent.__init__()` (defaults to `"gemini"`)
 - Refactored `_analyze_content()` to use AI-powered analysis:
   - New `_analyze_content_with_ai()` method using `reason_with_gemini()` with configurable model type
@@ -31,6 +33,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 - All reasoning tasks now respect the model_type setting
 
 **Key Features:**
+
 - Intelligent content type detection (document vs codebase)
 - Complexity level analysis (simple, moderate, complex)
 - Topic extraction via AI reasoning
@@ -43,6 +46,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 **File:** `backend/tests/test_model_selection_integration.py`
 
 **Test Coverage:**
+
 1. **Linker Agent Tests:**
    - `test_linker_with_gemini_model` - Verifies Gemini routing ✓
    - `test_linker_with_gemma_model` - Verifies Gemma routing ✓
@@ -60,6 +64,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
    - `test_gemma_fallback_to_gemini` - Verifies auto-fallback when Gemma unavailable ✓
 
 **Configuration:**
+
 - Added `pytest-asyncio` dependency with `asyncio_mode = "auto"` in `pyproject.toml`
 - 8 total test cases covering all model selection paths
 
@@ -70,6 +75,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 **File:** `.github/workflows/ci.yml`
 
 **Changes:**
+
 - Added backend tests with both model types:
   - `AGENTNAV_MODEL_TYPE: 'gemini'` - Test cloud-based reasoning
   - `AGENTNAV_MODEL_TYPE: 'gemma'` - Test local GPU reasoning
@@ -77,13 +83,14 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 - Firestore emulator still used for all backend tests
 
 **CI Pipeline Enhancement:**
+
 ```yaml
 # Original
 - Run backend tests (all)
 
 # Now includes
 - Run backend tests (Gemini model) # with AGENTNAV_MODEL_TYPE=gemini
-- Run backend tests (Gemma model)  # with AGENTNAV_MODEL_TYPE=gemma
+- Run backend tests (Gemma model) # with AGENTNAV_MODEL_TYPE=gemma
 ```
 
 ---
@@ -91,13 +98,15 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
 ### ✅ Task 4: Update Terraform Deployment Templates
 
 **Files Modified:**
+
 1. **`terraform/variables.tf`** - New variable for model selection
+
    ```hcl
    variable "agentnav_model_type" {
      description = "Model type for reasoning tasks: 'gemini' (cloud) or 'gemma' (local GPU)"
      type        = string
      default     = "gemini"
-     
+
      validation {
        condition     = contains(["gemini", "gemma"], var.agentnav_model_type)
        error_message = "agentnav_model_type must be either 'gemini' or 'gemma'."
@@ -106,6 +115,7 @@ This allows teams to optimize for cost, latency, or compliance requirements on a
    ```
 
 2. **`terraform/cloud_run.tf`** - Added env var to backend service
+
    ```hcl
    env {
      name  = "AGENTNAV_MODEL_TYPE"
@@ -166,29 +176,29 @@ terraform apply
 
 ### Key Decoupling Benefits
 
-| Aspect | Benefit |
-|--------|---------|
-| **Configuration** | Single env var controls all reasoning tasks across all agents |
-| **Flexibility** | Switch models without code changes; deploy different configs per environment |
-| **Resilience** | Auto-fallback from Gemma → Gemini if GPU service unavailable |
-| **Cost Optimization** | Use Gemma for high-volume tasks, Gemini for complex reasoning |
-| **Testing** | CI tests both code paths to ensure consistency |
+| Aspect                | Benefit                                                                      |
+| --------------------- | ---------------------------------------------------------------------------- |
+| **Configuration**     | Single env var controls all reasoning tasks across all agents                |
+| **Flexibility**       | Switch models without code changes; deploy different configs per environment |
+| **Resilience**        | Auto-fallback from Gemma → Gemini if GPU service unavailable                 |
+| **Cost Optimization** | Use Gemma for high-volume tasks, Gemini for complex reasoning                |
+| **Testing**           | CI tests both code paths to ensure consistency                               |
 
 ---
 
 ## Files Changed (Summary)
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `backend/agents/orchestrator_agent.py` | Added model_type param, AI-powered analysis | ✓ |
-| `backend/agents/linker_agent.py` | Already had model_type support from FR#090 | ✓ |
-| `backend/tests/test_model_selection_integration.py` | 8 integration tests | ✓ |
-| `backend/pyproject.toml` | Added asyncio_mode config | ✓ |
-| `.github/workflows/ci.yml` | Added model-specific test runs | ✓ |
-| `terraform/variables.tf` | New `agentnav_model_type` variable | ✓ |
-| `terraform/cloud_run.tf` | Env var configuration | ✓ |
-| `terraform/outputs.tf` | Output for deployed model type | ✓ |
-| `docs/MODEL_SELECTION_GUIDE.md` | User documentation | ✓ |
+| File                                                | Purpose                                     | Status |
+| --------------------------------------------------- | ------------------------------------------- | ------ |
+| `backend/agents/orchestrator_agent.py`              | Added model_type param, AI-powered analysis | ✓      |
+| `backend/agents/linker_agent.py`                    | Already had model_type support from FR#090  | ✓      |
+| `backend/tests/test_model_selection_integration.py` | 8 integration tests                         | ✓      |
+| `backend/pyproject.toml`                            | Added asyncio_mode config                   | ✓      |
+| `.github/workflows/ci.yml`                          | Added model-specific test runs              | ✓      |
+| `terraform/variables.tf`                            | New `agentnav_model_type` variable          | ✓      |
+| `terraform/cloud_run.tf`                            | Env var configuration                       | ✓      |
+| `terraform/outputs.tf`                              | Output for deployed model type              | ✓      |
+| `docs/MODEL_SELECTION_GUIDE.md`                     | User documentation                          | ✓      |
 
 ---
 

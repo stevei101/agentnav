@@ -9,11 +9,13 @@
 ## 📖 Four Key Documents Created
 
 ### 1. 🎯 **NEXT_STEPS.md** (Start Here!)
+
 **Length:** 7.4 KB | **Read Time:** 5-10 minutes
 
 **Purpose:** Executive overview and quick reference for the next 2-4 weeks
 
 **Contains:**
+
 - Summary of 18 analyzed issues
 - Top 5 prioritized issues with effort estimates
 - Execution roadmap (Week-by-week breakdown)
@@ -28,11 +30,13 @@
 ---
 
 ### 2. 🔍 **OPEN_ISSUES_ANALYSIS.md** (Comprehensive Deep Dive)
+
 **Length:** 9.1 KB | **Read Time:** 15-20 minutes
 
 **Purpose:** Detailed analysis of all 18 open GitHub issues
 
 **Contains:**
+
 - Complete issue priority matrix (Critical → Low)
 - Problem statements for top 5 issues
 - Root cause analysis for each issue
@@ -48,11 +52,13 @@
 ---
 
 ### 3. ⚡ **FR165_QUICK_START.md** (Issue #132 Deep Dive)
+
 **Length:** 6.8 KB | **Read Time:** 10-15 minutes (reference)
 
 **Purpose:** Step-by-step investigation guide for Issue #132 (Cloud Run Startup Bug)
 
 **Contains:**
+
 - Problem statement and root causes
 - 5-step investigation plan with exact commands
 - Code fixes for both possible causes
@@ -69,11 +75,13 @@
 ---
 
 ### 4. 📊 **SESSION_SUMMARY.md** (Context & Background)
+
 **Length:** 9.3 KB | **Read Time:** 10-15 minutes
 
 **Purpose:** Summary of FR#090 completion + session context
 
 **Contains:**
+
 - What was accomplished in this session
 - All 18 issues analyzed
 - Priority rankings
@@ -109,22 +117,27 @@
 ## 🎯 Which Document to Read?
 
 ### If you have 5 minutes:
+
 → Read: **NEXT_STEPS.md**  
 Perfect for quick orientation and deciding what to work on
 
 ### If you have 15 minutes:
+
 → Read: **NEXT_STEPS.md** + **OPEN_ISSUES_ANALYSIS.md**  
 Get the full picture and understand dependencies
 
 ### If you have 30 minutes:
+
 → Read: **NEXT_STEPS.md** + **FR165_QUICK_START.md**  
 Get oriented + understand the first issue deeply
 
 ### If you want to start work immediately:
+
 → Read: **FR165_QUICK_START.md**  
 Jump straight to Issue #132 investigation
 
 ### If you're new to the project:
+
 → Read: **SESSION_SUMMARY.md** → **NEXT_STEPS.md**  
 Get context, then understand next steps
 
@@ -132,19 +145,20 @@ Get context, then understand next steps
 
 ## 📊 Quick Decision Matrix
 
-| Goal | Read This | Time |
-|------|-----------|------|
-| Understand next 2 weeks | NEXT_STEPS.md | 5 min |
-| Deep analysis of all issues | OPEN_ISSUES_ANALYSIS.md | 15 min |
-| Start working on #132 | FR165_QUICK_START.md | 30 min |
-| Get full context | All 4 documents | 45 min |
-| Quick reference while working | NEXT_STEPS.md (bookmark) | 2 min |
+| Goal                          | Read This                | Time   |
+| ----------------------------- | ------------------------ | ------ |
+| Understand next 2 weeks       | NEXT_STEPS.md            | 5 min  |
+| Deep analysis of all issues   | OPEN_ISSUES_ANALYSIS.md  | 15 min |
+| Start working on #132         | FR165_QUICK_START.md     | 30 min |
+| Get full context              | All 4 documents          | 45 min |
+| Quick reference while working | NEXT_STEPS.md (bookmark) | 2 min  |
 
 ---
 
 ## 🚀 Recommended Reading Order
 
 ### Option A: Jump Into Work (2 hours total)
+
 1. **NEXT_STEPS.md** (5 min) - Get oriented
 2. **FR165_QUICK_START.md** (15 min) - Understand Issue #132
 3. **Investigation** (30 min) - Follow 5-step plan
@@ -152,6 +166,7 @@ Get context, then understand next steps
 5. **Testing & PR** (30 min) - Test and push
 
 ### Option B: Comprehensive Planning (1 hour total)
+
 1. **NEXT_STEPS.md** (10 min) - Overview
 2. **OPEN_ISSUES_ANALYSIS.md** (20 min) - Full analysis
 3. **FR165_QUICK_START.md** (10 min) - First issue deep dive
@@ -159,6 +174,7 @@ Get context, then understand next steps
 5. **Planning** (10 min) - Decide 2-week roadmap
 
 ### Option C: Casual Reference (As needed)
+
 1. Use NEXT_STEPS.md as bookmark
 2. Reference FR165_QUICK_START.md when working on #132
 3. Check OPEN_ISSUES_ANALYSIS.md for other issues
@@ -169,6 +185,7 @@ Get context, then understand next steps
 ## 💡 Key Insights Across All Documents
 
 ### Issue #132 is Critical
+
 - Blocks all deployments
 - Root cause: Code not binding to `0.0.0.0` OR timeout during model load
 - Solution: Fix code binding + extend Cloud Run timeout
@@ -176,17 +193,20 @@ Get context, then understand next steps
 - Impact: Unblocks everything else
 
 ### After #132, the Path is Clear
+
 - #131 (1-2 days): Fix CI quality gates
 - #137 (1 week): Optimize deployment per Google codelab
 - #139 & #117 (parallel): Developer experience improvements
 
 ### Estimated Timeline
+
 - Week 1: Fix critical issues (#132, #131)
 - Week 1-2: Optimize deployment (#137)
 - Week 2+: Enhance developer experience (#139, #117)
 - **Total: 2-4 weeks for full impact**
 
 ### Success Criteria
+
 - Services deploy successfully to Cloud Run
 - Health checks pass
 - Quality gates enforced
@@ -198,11 +218,13 @@ Get context, then understand next steps
 ## 🔗 External References
 
 **On GitHub:**
+
 - All Issues: https://github.com/stevei101/agentnav/issues
 - Issue #132: https://github.com/stevei101/agentnav/issues/132
 - PR #136 (FR#090): https://github.com/stevei101/agentnav/pull/136
 
 **In Workspace:**
+
 - System Instruction: `docs/SYSTEM_INSTRUCTION.md`
 - GPU Guide: `docs/GPU_SETUP_GUIDE.md`
 - Testing Strategy: `docs/TESTING_STRATEGY.md`
@@ -217,7 +239,7 @@ Get context, then understand next steps
 ✅ **Complete:** All 18 issues analyzed with solutions  
 ✅ **Roadmap:** 2-4 week execution path defined  
 ✅ **Quick Reference:** Easy to bookmark and flip through  
-✅ **Decision Support:** Multiple ways to engage based on time available  
+✅ **Decision Support:** Multiple ways to engage based on time available
 
 ---
 

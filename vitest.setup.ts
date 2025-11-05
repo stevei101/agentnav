@@ -10,9 +10,9 @@ beforeAll(() => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
       url: 'http://localhost:3000',
       pretendToBeVisual: true,
-      resources: 'usable'
+      resources: 'usable',
     });
-    
+
     global.document = dom.window.document;
     global.window = dom.window as any;
     global.navigator = dom.window.navigator;
@@ -66,4 +66,3 @@ if (typeof global.DataTransfer === 'undefined') {
     setDragImage(): void {}
   } as unknown as typeof DataTransfer;
 }
-
