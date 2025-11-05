@@ -91,7 +91,8 @@ echo -n "sb_publishable_bel3_K8s8fsNbUq_SS4C-A_rBYhymNK" | \
 #   --project=${PROJECT_ID}
 
 # Add Google OAuth Client ID (after creating OAuth credentials in GCP Console)
-# echo -n "your-google-client-id" | \
+# See PROMPT_VAULT_GOOGLE_OAUTH_SETUP.md for detailed instructions
+# echo -n "your-google-client-id.apps.googleusercontent.com" | \
 #   gcloud secrets versions add GOOGLE_OAUTH_CLIENT_ID \
 #   --data-file=- \
 #   --project=${PROJECT_ID}
@@ -131,19 +132,21 @@ Add to GitHub repository settings → Secrets and variables → Actions:
 
 ## Do You Need SUPABASE_SERVICE_KEY?
 
-**Answer:** It depends on your architecture.
+**Answer:** **No, not for the current frontend-only implementation.**
 
-### ❌ **Don't Need It If:**
-- You're using **Supabase Edge Functions** for all backend logic
-- All database operations go through Row Level Security (RLS) policies
-- Frontend only uses `SUPABASE_ANON_KEY`
+### ❌ **Don't Need It (Current Setup):**
+- ✅ Frontend uses Supabase client directly with `SUPABASE_ANON_KEY`
+- ✅ All database operations go through Row Level Security (RLS) policies
+- ✅ No backend service deployed yet
+- ✅ Authentication handled by Supabase Auth
 
-### ✅ **Need It If:**
-- You have a separate backend service (e.g., `prompt-vault-backend` Cloud Run service)
-- You need to bypass RLS for admin operations
-- You're doing server-side operations that require elevated privileges
+### ✅ **Need It If You Add Later:**
+- Building a separate backend service (`prompt-vault-backend` Cloud Run service)
+- Need to bypass RLS for admin operations
+- Server-side operations that require elevated privileges
+- Batch operations or data migrations
 
-**For Prompt Vault:** Since you're using Supabase for auth and database, you likely **don't need** `SUPABASE_SERVICE_KEY` unless you plan to add a backend service later.
+**For Prompt Vault:** The current implementation is **frontend-only** and doesn't require `SUPABASE_SERVICE_KEY`. The infrastructure is set up for it (in Terraform and GitHub Actions), but you can skip adding this secret until you actually build a backend service.
 
 ---
 
@@ -193,7 +196,7 @@ gcloud secrets versions access latest --secret=SUPABASE_URL --project=${PROJECT_
 1. ✅ **Done:** Added GitHub Secrets for `SUPABASE_URL` and `SUPABASE_ANON_KEY`
 2. [ ] Run `terraform apply` to create Secret Manager secrets
 3. [ ] Add values to GCP Secret Manager (see Step 2 above)
-4. [ ] Set up Google OAuth credentials (see Issue #193)
+4. [ ] Set up Google OAuth credentials - **See [PROMPT_VAULT_GOOGLE_OAUTH_SETUP.md](./PROMPT_VAULT_GOOGLE_OAUTH_SETUP.md) for complete guide**
 5. [ ] Add Google OAuth secrets to both GitHub and GCP Secret Manager
 
 ---

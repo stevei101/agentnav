@@ -37,8 +37,11 @@ bun install
 cat > .env.local << EOF
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your_publishable_key_here
-VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 EOF
+
+# Note: You only need the Google OAuth Client ID, NOT the Client Secret!
+# The Client Secret is stored in Supabase Dashboard and used server-side by Supabase.
 
 # Start dev server
 bun run dev
