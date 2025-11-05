@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     
     # Server (Cloud Run sets PORT automatically)
     HOST: str = "0.0.0.0"
-    PORT: int = 8080
+    PORT: int = 8080  # Cloud Run sets PORT env var, Pydantic will read it
     
     # CORS
     CORS_ORIGINS: list[str] = [

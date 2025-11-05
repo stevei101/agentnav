@@ -119,10 +119,13 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    # Cloud Run sets PORT automatically, read from env
+    port = int(os.getenv("PORT", settings.PORT))
     uvicorn.run(
         "app.main:app",
         host=settings.HOST,
-        port=settings.PORT,
+        port=port,
         reload=settings.is_development,
     )
 
