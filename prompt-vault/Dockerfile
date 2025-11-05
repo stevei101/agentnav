@@ -22,8 +22,8 @@ RUN bun run build
 # Production stage with nginx
 FROM nginx:alpine
 
-# Install gettext for envsubst utility
-RUN apk add --no-cache gettext
+# Install gettext for envsubst utility and nodejs for JSON escaping
+RUN apk add --no-cache gettext nodejs npm
 
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -40,19 +40,24 @@ RUN echo 'server { \
 }' > /etc/nginx/conf.d/default.conf.template
 
 # Create startup script to inject runtime env vars into HTML
+# Use proper escaping to prevent injection vulnerabilities
 RUN echo '#!/bin/sh \
 set -e \
 # Replace PORT in nginx config \
 envsubst "\${PORT}" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
 # Inject Supabase environment variables into index.html if set \
+# Use node.js for proper JSON escaping to prevent injection vulnerabilities \
 if [ -n "$SUPABASE_URL" ]; then \
-  sed -i "s|<head>|<head><script>window.SUPABASE_URL=\"$SUPABASE_URL\";</script>|" /usr/share/nginx/html/index.html \
+  ESCAPED_URL=$(node -p "JSON.stringify('$SUPABASE_URL').slice(1, -1)") \
+  sed -i "s|<head>|<head><script>window.SUPABASE_URL=\"$ESCAPED_URL\";</script>|" /usr/share/nginx/html/index.html \
 fi \
 if [ -n "$SUPABASE_ANON_KEY" ]; then \
-  sed -i "s|<head>|<head><script>window.SUPABASE_ANON_KEY=\"$SUPABASE_ANON_KEY\";</script>|" /usr/share/nginx/html/index.html \
+  ESCAPED_KEY=$(node -p "JSON.stringify('$SUPABASE_ANON_KEY').slice(1, -1)") \
+  sed -i "s|<head>|<head><script>window.SUPABASE_ANON_KEY=\"$ESCAPED_KEY\";</script>|" /usr/share/nginx/html/index.html \
 fi \
 if [ -n "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]; then \
-  sed -i "s|<head>|<head><script>window.NEXT_PUBLIC_GOOGLE_CLIENT_ID=\"$NEXT_PUBLIC_GOOGLE_CLIENT_ID\";</script>|" /usr/share/nginx/html/index.html \
+  ESCAPED_CLIENT_ID=$(node -p "JSON.stringify('$NEXT_PUBLIC_GOOGLE_CLIENT_ID').slice(1, -1)") \
+  sed -i "s|<head>|<head><script>window.NEXT_PUBLIC_GOOGLE_CLIENT_ID=\"$ESCAPED_CLIENT_ID\";</script>|" /usr/share/nginx/html/index.html \
 fi \
 # Start nginx \
 exec nginx -g "daemon off;"' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh

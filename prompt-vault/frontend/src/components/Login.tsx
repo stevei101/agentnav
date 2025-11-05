@@ -23,9 +23,6 @@ const supabaseAnonKey = getSupabaseAnonKey()
 export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Note: googleClientId is not required for signInWithOAuth
-  // It's only needed if using Google's pre-built buttons (which we're not using)
-  const googleClientId = getGoogleClientId()
 
   const handleGoogleLogin = async () => {
     try {
@@ -34,7 +31,7 @@ export default function Login() {
 
       // According to Supabase docs, signInWithOAuth doesn't require Client ID in frontend
       // The Client ID and Secret are configured in Supabase Dashboard
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`,

@@ -205,16 +205,7 @@ resource "google_cloud_run_service_iam_member" "prompt_vault_backend_public" {
 }
 
 # IAM roles for Prompt Vault service accounts
-# Note: Prompt Vault uses Supabase, not Firestore, so no datastore.user role needed
-resource "google_project_iam_member" "prompt_vault_frontend_secret_accessor" {
-  project = var.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.prompt_vault_frontend.email}"
-}
-
-resource "google_project_iam_member" "prompt_vault_backend_secret_accessor" {
-  project = var.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.prompt_vault_backend.email}"
-}
+# Note: Secret access is granted via secret-specific IAM bindings in prompt_vault_secrets.tf
+# This ensures least-privilege access - service accounts only have access to the specific secrets they need
+# No project-level secret accessor role is needed
 
