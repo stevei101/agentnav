@@ -1,0 +1,44 @@
+feat: Integrate Prompt Management App backend into agentnav
+
+Integrate GenAI Prompt Management App functionality into agentnav's
+backend infrastructure, replacing Supabase Edge Functions with FastAPI
+routes and Supabase KV store with Firestore.
+
+Backend Changes:
+- Add prompt management API routes (GET, POST, PUT, DELETE)
+- Implement Firestore-based prompt service with version history
+- Add Pydantic models for prompts, versions, and test results
+- Fix import paths in stream_routes and event_emitter (use relative imports)
+- Update main.py to include prompt management router
+
+New Files:
+- backend/models/prompt_models.py: Data models for prompt management
+- backend/services/prompt_service.py: Firestore CRUD operations
+- backend/routes/prompt_routes.py: FastAPI REST endpoints
+- docs/PROMPT_MANAGEMENT_INTEGRATION.md: Integration documentation
+
+Infrastructure:
+- No Terraform changes required (uses existing Firestore/Cloud Run)
+- API endpoints: /api/prompts/* (compatible with original app API)
+- Authentication: Placeholder implementation (TODO: implement proper auth)
+
+Fixes:
+- Fix import errors in stream_routes.py and event_emitter.py
+  (changed from backend.* to relative imports for uvicorn compatibility)
+- Enhance .gitignore patterns for better Python cache/venv exclusion
+
+Files Changed:
+- backend/main.py: Added prompt_router
+- backend/models/__init__.py: Export prompt models
+- backend/routes/stream_routes.py: Fixed imports
+- backend/services/event_emitter.py: Fixed imports
+- .gitignore: Enhanced patterns for Python artifacts
+
+Breaking Changes: None
+Migration: Existing Supabase prompts can be migrated to Firestore
+
+Next Steps:
+- Frontend integration (add Prompt Management UI to agentnav frontend)
+- Implement proper authentication (Google OAuth recommended)
+- Deploy to Cloud Run and test in production
+
