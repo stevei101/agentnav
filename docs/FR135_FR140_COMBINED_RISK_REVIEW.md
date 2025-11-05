@@ -17,6 +17,7 @@ This document describes the implementation of the combined risk review for FR#13
 ### Original Issue
 
 The combination of FR#135 and FR#140 introduced:
+
 1. **Structural complexity** via conditional aggregation (FR#135)
 2. **Governance rigidity** via mandatory issue creation (FR#140)
 
@@ -25,11 +26,12 @@ The combination of FR#135 and FR#140 introduced:
 The most critical velocity risk identified was the **incorrect handling of the `skipped` status** within the FR#135 aggregation logic.
 
 **Original Flawed Logic:**
+
 ```yaml
 if [ "${{ needs.code-quality.result }}" != "success" ] || \
-   [ "${{ needs.frontend-tests.result }}" != "success" ] || \
-   [ "${{ needs.backend-tests.result }}" != "success" ]; then
-  exit 1
+[ "${{ needs.frontend-tests.result }}" != "success" ] || \
+[ "${{ needs.backend-tests.result }}" != "success" ]; then
+exit 1
 fi
 ```
 
@@ -44,6 +46,7 @@ fi
 **Check for failure states, not success states.**
 
 Jobs can have four possible states:
+
 - `success` - Job ran and completed successfully ✅
 - `failure` - Job ran and failed ❌
 - `cancelled` - Job was cancelled ❌
@@ -61,6 +64,7 @@ fi
 ```
 
 This approach:
+
 - ✅ Passes when jobs succeed
 - ✅ Passes when jobs are skipped (path filtering)
 - ❌ Fails when jobs fail
@@ -75,12 +79,14 @@ This approach:
 **Aggregates:** `code-quality`, `frontend-tests`, `backend-tests`
 
 **Changes:**
+
 - Added `if: always()` to ensure the job runs even if upstream jobs fail
 - Checks each dependent job for `failure` or `cancelled` states
 - Provides detailed status reporting via `$GITHUB_STEP_SUMMARY`
 - Explicitly notes that skipped jobs (from path filtering) pass
 
 **Code:**
+
 ```yaml
 CODE_QUALITY:
   name: CODE_QUALITY
@@ -92,7 +98,7 @@ CODE_QUALITY:
       run: |
         # Status reporting
         echo "## 📊 CODE_QUALITY Aggregation" >> $GITHUB_STEP_SUMMARY
-        
+
         # Individual job status check
         if [[ "$CODE_QUALITY_RESULT" == "failure" ]] || [[ "$CODE_QUALITY_RESULT" == "cancelled" ]]; then
           echo "❌ CODE_QUALITY check failed"
@@ -106,12 +112,14 @@ CODE_QUALITY:
 **Aggregates:** `tfsec-scan`, `osv-scanner`
 
 **Changes:**
+
 - Added `if: always()` to ensure the job runs even if upstream jobs fail
 - Checks each dependent job for `failure` or `cancelled` states
 - Provides detailed status reporting via `$GITHUB_STEP_SUMMARY`
 - Explicitly notes that skipped jobs (from path filtering) pass
 
 **Code:**
+
 ```yaml
 SECURITY_AUDIT:
   name: SECURITY_AUDIT
@@ -123,7 +131,7 @@ SECURITY_AUDIT:
       run: |
         # Status reporting
         echo "## 🔒 SECURITY_AUDIT Aggregation" >> $GITHUB_STEP_SUMMARY
-        
+
         # Individual job status check
         if [[ "$TFSEC_RESULT" == "failure" ]] || [[ "$TFSEC_RESULT" == "cancelled" ]]; then
           echo "❌ SECURITY_AUDIT check failed"
@@ -144,19 +152,19 @@ SECURITY_AUDIT:
 
 ### Before Implementation
 
-| Aspect | Risk Level | Issue |
-|--------|-----------|-------|
-| **Skipped Jobs** | 🔴 High | Skipped jobs (path filtering) cause false failures |
-| **Context Switching** | 🟡 Medium | Developers check 5+ individual job statuses |
-| **Time to Green** | 🟡 Medium | Multiple independent checks to review |
+| Aspect                | Risk Level | Issue                                              |
+| --------------------- | ---------- | -------------------------------------------------- |
+| **Skipped Jobs**      | 🔴 High    | Skipped jobs (path filtering) cause false failures |
+| **Context Switching** | 🟡 Medium  | Developers check 5+ individual job statuses        |
+| **Time to Green**     | 🟡 Medium  | Multiple independent checks to review              |
 
 ### After Implementation
 
-| Aspect | Risk Level | Improvement |
-|--------|-----------|-------------|
-| **Skipped Jobs** | 🟢 Low | Skipped jobs correctly treated as passing |
-| **Context Switching** | 🟢 Low | Developers check only 3 aggregate statuses |
-| **Time to Green** | 🟢 Low | Clear categorization speeds up debugging |
+| Aspect                | Risk Level | Improvement                                |
+| --------------------- | ---------- | ------------------------------------------ |
+| **Skipped Jobs**      | 🟢 Low     | Skipped jobs correctly treated as passing  |
+| **Context Switching** | 🟢 Low     | Developers check only 3 aggregate statuses |
+| **Time to Green**     | 🟢 Low     | Clear categorization speeds up debugging   |
 
 ---
 
@@ -173,6 +181,7 @@ SECURITY_AUDIT:
 ### Expected GitHub Actions Behavior
 
 When viewing the CI run in GitHub:
+
 - ✅ Individual jobs show their actual status (success/failure/skipped)
 - ✅ Aggregation jobs show clear summaries in the job summary
 - ✅ Quality gate provides final pass/fail decision
@@ -183,6 +192,7 @@ When viewing the CI run in GitHub:
 ## Branch Protection Configuration
 
 The **only required status check** in branch protection rules should be:
+
 - `AGENTIC_NAVIGATOR_QUALITY_GATE`
 
 This single check encompasses all quality and security validations.
@@ -209,10 +219,12 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
 ### Policy Refinement
 
 **Acceptable without FR:**
+
 - Known transient failures already tracked in an existing issue and documented in `docs/KNOWN_CI_ISSUES.md`
 - Failures in exempted categories (documented in exemptions list)
 
 **Requires FR:**
+
 - All new, untracked failures
 - Repeated flaky test occurrences
 - Security vulnerabilities
@@ -222,21 +234,25 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
 ## Benefits Realized
 
 ### 1. Correctness
+
 - ✅ Skipped jobs no longer cause false failures
 - ✅ Aggregation logic correctly implements AND logic across jobs
 - ✅ Clear distinction between "didn't run" (skipped) and "ran and failed" (failure)
 
 ### 2. Velocity
+
 - ✅ Reduced cognitive load: Check 3 aggregate statuses instead of 5+ individual ones
 - ✅ Faster debugging: Clear categorization (CODE_QUALITY vs SECURITY_AUDIT)
 - ✅ Path filtering works correctly: Skipped jobs don't block merges
 
 ### 3. Governance
+
 - ✅ Mandatory quality gate for all merges
 - ✅ Zero-tolerance policy enforced at CI level
 - ✅ Clear failure reporting for issue creation
 
 ### 4. Scalability
+
 - ✅ Easy to add new jobs to existing categories
 - ✅ Aggregation pattern can extend to new categories (e.g., INFRA_VERIFICATION)
 - ✅ Branch protection rules remain simple (single required check)
@@ -246,17 +262,20 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
 ## Migration Path
 
 ### Phase 1: Implementation (Completed)
+
 - [x] Update CODE_QUALITY aggregation logic
 - [x] Update SECURITY_AUDIT aggregation logic
 - [x] Add detailed status reporting
 - [x] Document changes
 
 ### Phase 2: Validation (In Progress)
+
 - [ ] Monitor CI runs for correct behavior
 - [ ] Validate skipped job handling
 - [ ] Confirm branch protection integration
 
 ### Phase 3: Policy Enforcement (Planned)
+
 - [ ] Implement automated FR creation for failures
 - [ ] Maintain known issue exemptions list
 - [ ] Document escalation procedures
@@ -273,9 +292,10 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
    - New category → Create new aggregation job
 
 2. **Update aggregation logic:**
+
    ```yaml
    NEW_JOB_RESULT="${{ needs.new-job.result }}"
-   
+
    if [[ "$NEW_JOB_RESULT" == "failure" ]] || [[ "$NEW_JOB_RESULT" == "cancelled" ]]; then
      echo "❌ Check failed: new-job $NEW_JOB_RESULT"
      exit 1
@@ -288,6 +308,7 @@ When `AGENTIC_NAVIGATOR_QUALITY_GATE` fails, the policy mandates:
    ```
 
 **Note on Code Duplication:** The aggregation logic is intentionally duplicated in each job rather than extracted to a shared script. This design choice:
+
 - ✅ Keeps all logic visible in the workflow file (no hidden external dependencies)
 - ✅ Allows per-category customization if needed in the future
 - ✅ Follows GitHub Actions best practices for inline scripts

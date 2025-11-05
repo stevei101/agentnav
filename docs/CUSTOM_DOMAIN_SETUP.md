@@ -185,4 +185,3 @@ terraform output domain_mapping_status
 - [Cloud DNS Documentation](https://cloud.google.com/dns/docs)
 - [Terraform Cloud Run Domain Mapping](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_domain_mapping)
 - [Terraform Cloud DNS Record Set](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set)
-

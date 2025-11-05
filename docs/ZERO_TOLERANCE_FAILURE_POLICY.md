@@ -34,6 +34,7 @@ The **Zero-Tolerance Failure Policy** establishes a formal governance framework 
 > **Any failed GitHub Actions status check that is not already tracked by an open, assigned issue MUST result in a new Feature Request being created immediately.**
 
 This policy is designed to:
+
 - **Eliminate Lingering Failures:** Prevent untracked bugs from accumulating
 - **Ensure Accountability:** Assign an owner to every failure
 - **Maintain CI/CD Trust:** Keep the pipeline reliable and trustworthy
@@ -46,21 +47,25 @@ This policy is designed to:
 Without a formal policy for CI failure response, several critical issues arise:
 
 ### 1. Lingering Failures
+
 - Errors are not immediately assigned, leading to stagnation in bug resolution
 - Developers lose faith in CI status when failures are ignored
 - Critical warnings may be bypassed or dismissed
 
 ### 2. Workflow Inconsistency
+
 - Developers must manually decide whether to log a bug, create an issue, or notify a colleague
 - No standard process for failure response
 - Inconsistent documentation of failure root causes
 
 ### 3. Lost Accountability
+
 - Without a formal issue, bugs are not assigned to an owner
 - Accountability becomes impossible to track
 - No deadlines or priority assignments for fixes
 
 ### 4. Risk Accumulation
+
 - Critical checks like `Terraform Security Scan` (tfsec) and `OSV Dependency Vulnerability Scan` failures introduce genuine security or IaC risk
 - Security vulnerabilities may be overlooked when not immediately tracked
 - Technical debt accumulates over time
@@ -78,6 +83,7 @@ Without a formal policy for CI failure response, several critical issues arise:
 ### Policy Scope
 
 This policy applies to:
+
 - All GitHub Actions workflows in `.github/workflows/`
 - All CI/CD status checks that appear on Pull Requests
 - All logical job failures within workflows
@@ -99,6 +105,7 @@ This policy applies to:
 ### Step 1: Detect Failure
 
 When a GitHub Actions workflow fails:
+
 1. Review the workflow run details in the **Actions** tab
 2. Identify the specific job(s) that failed
 3. Review the job logs to understand the failure reason
@@ -106,6 +113,7 @@ When a GitHub Actions workflow fails:
 ### Step 2: Search for Existing Issue
 
 Before creating a new FR:
+
 1. Search the repository issues for keywords related to the failure
 2. Confirm that no open, assigned issue already tracks this failure
 3. If an open issue exists, add a comment with the new failure details and skip FR creation
@@ -113,6 +121,7 @@ Before creating a new FR:
 ### Step 3: Create Feature Request
 
 If no existing issue is found, create a new Feature Request:
+
 1. Use the standard Feature Request template (`.github/feature_request_template.md`)
 2. Follow the **FR Creation Template** (see below)
 3. Include all required information:
@@ -141,16 +150,16 @@ If no existing issue is found, create a new Feature Request:
 
 This policy applies to **ALL** GitHub Actions status checks, including but not limited to:
 
-| Status Check / Logical Job | Workflow File | Mandatory New FR if Failing |
-|:---------------------------|:--------------|:----------------------------|
-| **Code Quality (Linting & Formatting)** | `.github/workflows/ci.yml` | ✅ Yes |
-| **Frontend Unit Tests** | `.github/workflows/ci.yml` | ✅ Yes |
-| **Backend Tests (pytest + Firestore emulator)** | `.github/workflows/ci.yml` | ✅ Yes |
-| **Terraform Security Scan (tfsec)** | `.github/workflows/ci.yml` | ✅ Yes |
-| **OSV Dependency Vulnerability Scan** | `.github/workflows/ci.yml` | ✅ Yes |
-| **Build and Deploy Containers** | `.github/workflows/build.yml` | ✅ Yes |
-| **Build Gemma Debug** | `.github/workflows/build-gemma-debug.yml` | ✅ Yes |
-| **Terraform Infrastructure** | `.github/workflows/terraform.yml` | ✅ Yes (for syntax/plan failures) |
+| Status Check / Logical Job                      | Workflow File                             | Mandatory New FR if Failing       |
+| :---------------------------------------------- | :---------------------------------------- | :-------------------------------- |
+| **Code Quality (Linting & Formatting)**         | `.github/workflows/ci.yml`                | ✅ Yes                            |
+| **Frontend Unit Tests**                         | `.github/workflows/ci.yml`                | ✅ Yes                            |
+| **Backend Tests (pytest + Firestore emulator)** | `.github/workflows/ci.yml`                | ✅ Yes                            |
+| **Terraform Security Scan (tfsec)**             | `.github/workflows/ci.yml`                | ✅ Yes                            |
+| **OSV Dependency Vulnerability Scan**           | `.github/workflows/ci.yml`                | ✅ Yes                            |
+| **Build and Deploy Containers**                 | `.github/workflows/build.yml`             | ✅ Yes                            |
+| **Build Gemma Debug**                           | `.github/workflows/build-gemma-debug.yml` | ✅ Yes                            |
+| **Terraform Infrastructure**                    | `.github/workflows/terraform.yml`         | ✅ Yes (for syntax/plan failures) |
 
 ### Special Cases
 
@@ -168,7 +177,7 @@ When creating a Feature Request for a CI failure, use the following template:
 ---
 name: Fix CI Failure
 about: Track and resolve a GitHub Actions CI failure
-title: "Fix: [Job Name] - [Brief Description]"
+title: 'Fix: [Job Name] - [Brief Description]'
 labels: bug, ci/cd, critical
 assignees: ''
 ---
@@ -183,9 +192,10 @@ assignees: ''
 ## Error Description
 
 [Paste the relevant error message or log output]
-
 ```
+
 [Full log output or link to workflow run]
+
 ```
 
 ## Root Cause Analysis (Preliminary)
@@ -236,12 +246,12 @@ Possible causes:
 
 Assign priority based on the failure's impact:
 
-| Priority | Criteria | Response Time |
-|:---------|:---------|:--------------|
-| **Critical** | • Blocks all deployments<br>• Security vulnerability (High/Critical)<br>• Production outage<br>• Data loss risk | Immediate (within 1 hour) |
-| **High** | • Blocks PRs from merging<br>• Security vulnerability (Medium)<br>• Build failures<br>• Test infrastructure broken | Within 4 hours |
-| **Medium** | • Intermittent test failures<br>• Linting/formatting issues<br>• Non-blocking warnings | Within 1 day |
-| **Low** | • Documentation issues<br>• Non-critical warnings<br>• Optimization opportunities | Within 1 week |
+| Priority     | Criteria                                                                                                           | Response Time             |
+| :----------- | :----------------------------------------------------------------------------------------------------------------- | :------------------------ |
+| **Critical** | • Blocks all deployments<br>• Security vulnerability (High/Critical)<br>• Production outage<br>• Data loss risk    | Immediate (within 1 hour) |
+| **High**     | • Blocks PRs from merging<br>• Security vulnerability (Medium)<br>• Build failures<br>• Test infrastructure broken | Within 4 hours            |
+| **Medium**   | • Intermittent test failures<br>• Linting/formatting issues<br>• Non-blocking warnings                             | Within 1 day              |
+| **Low**      | • Documentation issues<br>• Non-critical warnings<br>• Optimization opportunities                                  | Within 1 week             |
 
 ### Assignment Guidelines
 
@@ -262,6 +272,7 @@ Assign priority based on the failure's impact:
 ### Temporary Bypass (Emergency Only)
 
 In rare emergency situations (e.g., production outage requiring immediate hotfix):
+
 1. A temporary bypass of failing checks may be granted by a maintainer
 2. An FR **MUST** still be created to track the failure
 3. The FR must be labeled `urgent` and `bypass-granted`
@@ -274,6 +285,7 @@ In rare emergency situations (e.g., production outage requiring immediate hotfix
 ### Developer Responsibility
 
 Every developer is responsible for:
+
 1. Monitoring CI checks on their PRs
 2. Creating FRs for any failures they encounter
 3. Assigning appropriate priority and owner
@@ -282,6 +294,7 @@ Every developer is responsible for:
 ### Reviewer Responsibility
 
 Code reviewers must:
+
 1. Verify that all CI checks pass before approving PRs
 2. Ensure any failing checks have associated FRs
 3. Confirm that FRs are properly assigned and prioritized
@@ -289,6 +302,7 @@ Code reviewers must:
 ### Maintainer Responsibility
 
 Maintainers must:
+
 1. Audit the issue tracker regularly for untracked failures
 2. Enforce this policy during PR reviews
 3. Update this policy as CI checks evolve
@@ -307,6 +321,7 @@ Maintainers must:
 ### Monitoring
 
 Track the following metrics monthly:
+
 - Number of CI failures
 - Number of FRs created for CI failures
 - Average time from failure to FR creation
@@ -327,9 +342,9 @@ Track the following metrics monthly:
 
 ## Revision History
 
-| Date | Version | Description |
-|:-----|:--------|:------------|
-| 2024-11-02 | 1.0 | Initial policy creation (Issue #140) |
+| Date       | Version | Description                          |
+| :--------- | :------ | :----------------------------------- |
+| 2024-11-02 | 1.0     | Initial policy creation (Issue #140) |
 
 ---
 
@@ -342,6 +357,7 @@ Track the following metrics monthly:
 ### Q: What if the failure is intermittent and I can't reproduce it?
 
 **A:** Create the FR anyway and document that it's intermittent. Include:
+
 - Frequency of failure
 - Steps to reproduce (if known)
 - Any patterns observed
@@ -349,6 +365,7 @@ Track the following metrics monthly:
 ### Q: What if the failure is in a third-party dependency?
 
 **A:** Create the FR and document:
+
 - The third-party dependency
 - The version causing the issue
 - Any known workarounds
