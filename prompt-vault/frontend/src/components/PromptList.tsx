@@ -35,8 +35,6 @@ export default function PromptList() {
     }
   }
 
-  const [error, setError] = useState<string | null>(null)
-
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this prompt?')) return
 
