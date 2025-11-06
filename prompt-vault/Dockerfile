@@ -46,19 +46,22 @@ RUN echo '#!/bin/sh \
 set -e \
 # Replace PORT in nginx config \
 envsubst "\${PORT}" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
-# Inject Supabase environment variables into index.html if set \
-# Use node.js for proper JSON escaping to prevent injection vulnerabilities \
-if [ -n "$SUPABASE_URL" ]; then \
-  ESCAPED_URL=$(node -p "JSON.stringify('$SUPABASE_URL').slice(1, -1)") \
-  sed -i "s|<head>|<head><script>window.SUPABASE_URL=\"$ESCAPED_URL\";</script>|" /usr/share/nginx/html/index.html \
-fi \
-if [ -n "$SUPABASE_ANON_KEY" ]; then \
-  ESCAPED_KEY=$(node -p "JSON.stringify('$SUPABASE_ANON_KEY').slice(1, -1)") \
-  sed -i "s|<head>|<head><script>window.SUPABASE_ANON_KEY=\"$ESCAPED_KEY\";</script>|" /usr/share/nginx/html/index.html \
-fi \
-if [ -n "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]; then \
-  ESCAPED_CLIENT_ID=$(node -p "JSON.stringify('$NEXT_PUBLIC_GOOGLE_CLIENT_ID').slice(1, -1)") \
-  sed -i "s|<head>|<head><script>window.NEXT_PUBLIC_GOOGLE_CLIENT_ID=\"$ESCAPED_CLIENT_ID\";</script>|" /usr/share/nginx/html/index.html \
+# Inject Supabase environment variables via a separate config.js file for better security \
+# This approach generates a separate config file at runtime rather than modifying HTML with sed \
+if [ -n "$SUPABASE_URL" ] || [ -n "$SUPABASE_ANON_KEY" ] || [ -n "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]; then \
+  # Use node.js for proper JSON escaping to prevent injection vulnerabilities \
+  node -e " \
+    const fs = require('fs'); \
+    const config = { \
+      SUPABASE_URL: process.env.SUPABASE_URL || null, \
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || null, \
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || null \
+    }; \
+    const configScript = 'window.APP_CONFIG=' + JSON.stringify(config) + ';'; \
+    fs.writeFileSync('/usr/share/nginx/html/config.js', configScript); \
+  " \
+  # Inject script tag to load config.js in index.html \
+  sed -i 's|<head>|<head><script src="/config.js"></script>|' /usr/share/nginx/html/index.html \
 fi \
 # Start nginx \
 exec nginx -g "daemon off;"' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh

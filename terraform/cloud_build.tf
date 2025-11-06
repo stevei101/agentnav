@@ -2,7 +2,8 @@
 # Enables automatic deployments from GitHub to Cloud Run
 # This simplifies CI/CD by using Cloud Build's native GitHub integration
 
-# Frontend and Backend can use automatic deployments
+# Frontend and Backend services use automatic deployments via Cloud Build triggers
+# This enables CI/CD from GitHub to Cloud Run without manual intervention
 
 # Cloud Build Service Account (default, used by Cloud Build)
 # Grant necessary permissions

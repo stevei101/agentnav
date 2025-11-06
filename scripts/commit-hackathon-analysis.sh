@@ -7,8 +7,12 @@ echo "🔍 Checking branch..."
 CURRENT_BRANCH=$(git branch --show-current)
 echo "Current branch: $CURRENT_BRANCH"
 
-if [ "$CURRENT_BRANCH" != "feat/agentnav-hackathon-alignment" ]; then
-    echo "⚠️  Not on expected branch. Current: $CURRENT_BRANCH"
+# Allow branch name to be overridden via environment variable or argument
+EXPECTED_BRANCH="${1:-${EXPECTED_BRANCH:-feat/agentnav-hackathon-alignment}}"
+
+if [ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]; then
+    echo "⚠️  Not on expected branch. Current: $CURRENT_BRANCH, Expected: $EXPECTED_BRANCH"
+    echo "💡 Tip: Pass branch name as argument or set EXPECTED_BRANCH env var"
     read -p "Continue anyway? (y/n) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
