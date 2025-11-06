@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Import WebSocket streaming routes (FR#020)
-from routes.stream_routes import router as stream_router
+from backend.routes.stream_routes import router as stream_router
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ async def healthz_check():
 
     # Check ADK System availability
     try:
-        from agents import (
+        from backend.agents import (
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
@@ -164,8 +164,7 @@ async def healthz_check():
 
     # Check Firestore connectivity (optional - may not be required for basic health)
     try:
-        from services.firestore_client import get_firestore_client
-
+        from backend.services.firestore_client import get_firestore_client
         firestore_client = get_firestore_client()
         # Simple connectivity test - just check if client was created
         if firestore_client:
@@ -228,7 +227,7 @@ async def generate_text(request: GenerateRequest):
     This endpoint calls the Gemini cloud service for text generation.
     """
     try:
-        from services.gemini_client import reason_with_gemini
+        from backend.services.gemini_client import reason_with_gemini
 
         text = await reason_with_gemini(
             prompt=request.prompt,
@@ -285,14 +284,14 @@ async def analyze_content(request: AnalyzeRequest):
     start_time = time.time()
 
     try:
-        from agents import (
+        from backend.agents import (
             AgentWorkflow,
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
         )
-        from models.context_model import SessionContext
+        from backend.models.context_model import SessionContext
 
         logger.info("🎬 Starting ADK Multi-Agent Analysis (FR#005 Sequential Workflow)")
 
@@ -405,8 +404,7 @@ async def visualize_content(request: VisualizeRequest):
     complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-        from agents import VisualizerAgent, A2AProtocol
-
+        from backend.agents import VisualizerAgent, A2AProtocol
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
         agent = VisualizerAgent(a2a)
@@ -449,7 +447,7 @@ async def get_agent_status():
         diagnostic_info["environment_vars"][var] = "set" if value else "missing"
 
     try:
-        from agents import (
+        from backend.agents import (
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
@@ -531,8 +529,7 @@ async def get_agent_status():
         # Check Firestore connectivity if agents use it
         firestore_status = "unknown"
         try:
-            from services.firestore_client import get_firestore_client
-
+            from backend.services.firestore_client import get_firestore_client
             firestore_client = get_firestore_client()
             if firestore_client:
                 firestore_status = "connected"
