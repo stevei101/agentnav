@@ -27,6 +27,17 @@ resource "google_service_account" "cloud_run_gemma" {
   depends_on = [google_project_service.apis]
 }
 
+# Service account for Prompt Management App (FR#335)
+# This service account will be used by the Prompt Vault to call the backend
+resource "google_service_account" "cloud_run_prompt_mgmt" {
+  account_id   = "agentnav-prompt-mgmt"
+  display_name = "Agentic Navigator Prompt Management Service Account"
+  description  = "Service account for Prompt Management/Vault service to call backend with WI"
+  project      = var.project_id
+
+  depends_on = [google_project_service.apis]
+}
+
 # Service account for GitHub Actions (Workload Identity Federation)
 # Using data source to reference existing SA created manually
 data "google_service_account" "github_actions" {

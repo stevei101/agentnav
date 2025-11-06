@@ -251,7 +251,7 @@ class TestWIClientHelper:
 
         with patch.dict(os.environ, {}, clear=True):
             # No GOOGLE_APPLICATION_CREDENTIALS set
-            with pytest.raises((RuntimeError, Exception)):
+            with pytest.raises(RuntimeError, match="GOOGLE_APPLICATION_CREDENTIALS not set"):
                 fetch_id_token_for_audience("https://agentnav-backend.run.app")
 
 

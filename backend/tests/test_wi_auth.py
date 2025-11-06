@@ -1,6 +1,5 @@
 import os
 
-import pytest
 from fastapi.testclient import TestClient
 
 # Set ALLOWED_HOSTS before importing app to allow testserver
