@@ -75,12 +75,8 @@ class ErrorPayload(BaseModel):
 
     error: str = Field(..., description="Error type/name")
     error_type: ErrorType = Field(..., description="Categorized error type")
-    error_details: Optional[str] = Field(
-        default=None, description="Detailed error message"
-    )
-    recoverable: bool = Field(
-        default=False, description="Whether the error can be recovered"
-    )
+    error_details: Optional[str] = Field(default=None, description="Detailed error message")
+    recoverable: bool = Field(default=False, description="Whether the error can be recovered")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -101,9 +97,7 @@ class AgentEventPayload(BaseModel):
     summary: Optional[str] = Field(default=None, description="Generated summary text")
 
     # Linker outputs
-    entities: Optional[List[str]] = Field(
-        default=None, description="List of identified entities"
-    )
+    entities: Optional[List[str]] = Field(default=None, description="List of identified entities")
     relationships: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="List of entity relationships"
     )
@@ -156,9 +150,7 @@ class AgentStreamEvent(BaseModel):
         default_factory=lambda: datetime.utcnow().isoformat() + "Z",
         description="ISO 8601 timestamp of event",
     )
-    metadata: EventMetadata = Field(
-        ..., description="Event timing and progress metadata"
-    )
+    metadata: EventMetadata = Field(..., description="Event timing and progress metadata")
     payload: AgentEventPayload = Field(
         default_factory=AgentEventPayload,
         description="Event payload with results or error",
@@ -209,9 +201,7 @@ class WorkflowStreamRequest(BaseModel):
         pattern="^(document|codebase)$",
         description="Type of content: 'document' or 'codebase'",
     )
-    include_metadata: bool = Field(
-        default=True, description="Include detailed metadata in events"
-    )
+    include_metadata: bool = Field(default=True, description="Include detailed metadata in events")
     include_partial_results: bool = Field(
         default=True, description="Include partial results during processing"
     )
@@ -236,9 +226,7 @@ class WorkflowStreamResponse(BaseModel):
     completed_agents: List[str] = Field(
         default=[], description="List of successfully completed agents"
     )
-    total_execution_time_ms: int = Field(
-        ..., description="Total execution time in milliseconds"
-    )
+    total_execution_time_ms: int = Field(..., description="Total execution time in milliseconds")
     events_count: int = Field(default=0, description="Total events streamed")
     summary: Optional[str] = Field(default=None, description="Final summary text")
     visualization: Optional[Dict[str, Any]] = Field(
@@ -272,15 +260,11 @@ class WorkflowStreamResponse(BaseModel):
 class ClientCommand(BaseModel):
     """Commands client can send to server during streaming"""
 
-    action: str = Field(
-        ..., pattern="^(cancel|pause|resume)$", description="Action to perform"
-    )
+    action: str = Field(..., pattern="^(cancel|pause|resume)$", description="Action to perform")
     reason: Optional[str] = Field(default=None, description="Reason for the action")
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {"action": "cancel", "reason": "User clicked cancel button"}
-        }
+        json_schema_extra={"example": {"action": "cancel", "reason": "User clicked cancel button"}}
     )
 
 

@@ -24,12 +24,8 @@ class EntityRelationship(BaseModel):
         ...,
         description="Type of relationship (e.g., 'relates_to', 'inherits', 'calls')",
     )
-    label: Optional[str] = Field(
-        None, description="Human-readable label for the relationship"
-    )
-    confidence: Optional[str] = Field(
-        None, description="Confidence level (high, medium, low)"
-    )
+    label: Optional[str] = Field(None, description="Human-readable label for the relationship")
+    confidence: Optional[str] = Field(None, description="Confidence level (high, medium, low)")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -65,9 +61,7 @@ class SessionContext(BaseModel):
     content_type: str = Field(
         default="document", description="Type of content: 'document' or 'codebase'"
     )
-    timestamp: float = Field(
-        default_factory=time.time, description="Session creation timestamp"
-    )
+    timestamp: float = Field(default_factory=time.time, description="Session creation timestamp")
 
     # Input data
     raw_input: str = Field(..., description="Original document or codebase content")
@@ -104,9 +98,7 @@ class SessionContext(BaseModel):
         description="List of agents that have completed processing",
     )
     current_agent: Optional[str] = Field(None, description="Currently processing agent")
-    workflow_status: str = Field(
-        default="initializing", description="Current workflow status"
-    )
+    workflow_status: str = Field(default="initializing", description="Current workflow status")
     errors: List[Dict[str, str]] = Field(
         default_factory=list, description="List of errors encountered during workflow"
     )
@@ -158,9 +150,7 @@ class SessionContext(BaseModel):
 
     def add_error(self, agent_name: str, error_message: str):
         """Record an error from an agent"""
-        self.errors.append(
-            {"agent": agent_name, "error": error_message, "timestamp": time.time()}
-        )
+        self.errors.append({"agent": agent_name, "error": error_message, "timestamp": time.time()})
 
     def is_complete(self) -> bool:
         """

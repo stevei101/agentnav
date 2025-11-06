@@ -153,9 +153,7 @@ Create a comprehensive summary that captures the essence and key information.
 
         if content_type == "codebase":
             # Basic code analysis
-            functions = [
-                line.strip() for line in lines if "def " in line or "function" in line
-            ]
+            functions = [line.strip() for line in lines if "def " in line or "function" in line]
             classes = [line.strip() for line in lines if "class " in line]
 
             summary = f"This codebase contains {len(lines)} lines of code with {len(words)} words. "
@@ -167,17 +165,13 @@ Create a comprehensive summary that captures the essence and key information.
         else:
             # Basic document analysis
             first_lines = [line.strip() for line in lines[:5] if line.strip()]
-            summary = (
-                f"This document contains {len(lines)} lines with {len(words)} words. "
-            )
+            summary = f"This document contains {len(lines)} lines with {len(words)} words. "
             if first_lines:
                 summary += f"It begins with: {first_lines[0][:100]}..."
 
         return summary
 
-    def _extract_insights(
-        self, document: str, content_type: str, summary: str
-    ) -> Dict[str, Any]:
+    def _extract_insights(self, document: str, content_type: str, summary: str) -> Dict[str, Any]:
         """Extract key insights from the content and summary"""
         insights = {
             "word_count": len(document.split()),
@@ -196,13 +190,10 @@ Create a comprehensive summary that captures the essence and key information.
                     [
                         line
                         for line in lines
-                        if line.strip().startswith("import ")
-                        or line.strip().startswith("from ")
+                        if line.strip().startswith("import ") or line.strip().startswith("from ")
                     ]
                 ),
-                "comments": len(
-                    [line for line in lines if line.strip().startswith("#")]
-                ),
+                "comments": len([line for line in lines if line.strip().startswith("#")]),
             }
         else:
             # Document-specific insights
@@ -212,9 +203,7 @@ Create a comprehensive summary that captures the essence and key information.
                 "sentences": sentences,
                 "paragraphs": paragraphs,
                 "avg_words_per_sentence": insights["word_count"] / max(sentences, 1),
-                "reading_time_minutes": max(
-                    1, insights["word_count"] // 200
-                ),  # ~200 WPM average
+                "reading_time_minutes": max(1, insights["word_count"] // 200),  # ~200 WPM average
             }
 
         insights["summary_length"] = len(summary.split())
@@ -237,9 +226,7 @@ Create a comprehensive summary that captures the essence and key information.
                 "insights": insights,
                 "agent": "summarizer",
                 "timestamp": time.time(),
-                "session_id": insights.get(
-                    "session_id", "default"
-                ),  # Could be passed in context
+                "session_id": insights.get("session_id", "default"),  # Could be passed in context
             }
 
             # Use content hash as document ID for deduplication (deterministic across restarts)
@@ -297,9 +284,7 @@ Create a comprehensive summary that captures the essence and key information.
         if message.message_type == "task_delegation":
             task = message.data.get("task")
             if task == "create_summary":
-                self.logger.info(
-                    f"📥 Received summarization task from {message.from_agent}"
-                )
+                self.logger.info(f"📥 Received summarization task from {message.from_agent}")
                 # Task parameters are already in the message data
                 # The main process() method will handle the actual summarization
 
