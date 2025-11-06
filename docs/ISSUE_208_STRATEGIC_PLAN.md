@@ -20,6 +20,7 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 ### 1.1 DevPost Hackathon Criteria Research
 
 **Action Items:**
+
 - [ ] **Access DevPost Site:** Review official hackathon rules at https://run.devpost.com/
 - [ ] **Extract Judging Categories:** Document all categories (e.g., "Most Innovative Use of AI", "Best Use of Cloud Run Features", "Best Use of Google AI")
 - [ ] **Identify Specific Requirements:** List explicit technical requirements (e.g., "Must demonstrate auto-scaling", "Must use Structured Output", "Must showcase GPU acceleration")
@@ -28,6 +29,7 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 **Deliverable:** `docs/HACKATHON_CRITERIA_ANALYSIS.md`
 
 **Key Questions to Answer:**
+
 1. What are the exact judging categories?
 2. What specific Cloud Run features are judges looking for?
 3. What Google AI best practices are emphasized?
@@ -38,6 +40,7 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 **Current State Analysis:**
 
 **Implemented Features:**
+
 - ✅ React/TypeScript frontend
 - ✅ Supabase authentication (Google OAuth)
 - ✅ Supabase PostgreSQL database
@@ -47,6 +50,7 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 - ✅ Cloud Run deployment (frontend only, backend optional)
 
 **Planned Features (FR#260 & Agent Architecture):**
+
 - 🔄 Prompt Suggestion Agent (FR#260) - **NOT YET IMPLEMENTED**
 - 🔄 Multi-agent architecture (ADK + A2A Protocol)
 - 🔄 Prompt Optimizer Agent
@@ -55,6 +59,7 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 - 🔄 Version Comparison Agent
 
 **Current Architecture:**
+
 - **Frontend:** React + TypeScript + Supabase client
 - **Backend:** Optional FastAPI (currently minimal)
 - **Database:** Supabase (PostgreSQL)
@@ -68,21 +73,21 @@ Issue #208 calls for a strategic audit to align Prompt Vault with Google Cloud R
 
 **Analysis Framework:**
 
-| Hackathon Criterion | Current State | Gap | Priority |
-|---------------------|---------------|-----|----------|
-| **Cloud Run Features** | | | |
-| - Auto-scaling demonstration | ❌ Not showcased | **HIGH** | **HIGH** |
-| - Multi-service architecture | ⚠️ Partial (frontend only) | **MEDIUM** | **HIGH** |
-| - Workload Identity (WI) | ❌ Not used | **HIGH** | **HIGH** |
-| - Cloud Run networking | ❌ Not demonstrated | **MEDIUM** | **MEDIUM** |
-| **Google AI Features** | | | |
-| - Structured Output (Pydantic/JSON Schema) | ❌ Not implemented | **HIGH** | **HIGH** |
-| - Gemini API integration | ❌ Not directly used | **HIGH** | **HIGH** |
-| - Gemma GPU Service | ❌ Not integrated | **HIGH** | **HIGH** |
-| **Architecture Innovation** | | | |
-| - ADK multi-agent system | 🔄 Planned (not implemented) | **HIGH** | **HIGH** |
-| - A2A Protocol | 🔄 Planned (not implemented) | **HIGH** | **HIGH** |
-| - Cross-service communication | ❌ Not implemented | **HIGH** | **HIGH** |
+| Hackathon Criterion                        | Current State                | Gap        | Priority   |
+| ------------------------------------------ | ---------------------------- | ---------- | ---------- |
+| **Cloud Run Features**                     |                              |            |            |
+| - Auto-scaling demonstration               | ❌ Not showcased             | **HIGH**   | **HIGH**   |
+| - Multi-service architecture               | ⚠️ Partial (frontend only)   | **MEDIUM** | **HIGH**   |
+| - Workload Identity (WI)                   | ❌ Not used                  | **HIGH**   | **HIGH**   |
+| - Cloud Run networking                     | ❌ Not demonstrated          | **MEDIUM** | **MEDIUM** |
+| **Google AI Features**                     |                              |            |            |
+| - Structured Output (Pydantic/JSON Schema) | ❌ Not implemented           | **HIGH**   | **HIGH**   |
+| - Gemini API integration                   | ❌ Not directly used         | **HIGH**   | **HIGH**   |
+| - Gemma GPU Service                        | ❌ Not integrated            | **HIGH**   | **HIGH**   |
+| **Architecture Innovation**                |                              |            |            |
+| - ADK multi-agent system                   | 🔄 Planned (not implemented) | **HIGH**   | **HIGH**   |
+| - A2A Protocol                             | 🔄 Planned (not implemented) | **HIGH**   | **HIGH**   |
+| - Cross-service communication              | ❌ Not implemented           | **HIGH**   | **HIGH**   |
 
 **Deliverable:** `docs/PROMPT_VAULT_GAP_ANALYSIS.md`
 
@@ -122,11 +127,13 @@ class PromptSuggestionRequest(BaseModel):
 ```
 
 **Integration with Gemini:**
+
 - Use Gemini's structured output mode with Pydantic schema
 - Return JSON-schema-validated responses
 - Demonstrate Google AI best practices
 
 **Hackathon Value:**
+
 - ✅ Shows structured AI output (judging criterion)
 - ✅ Demonstrates Pydantic validation (Python best practice)
 - ✅ Showcases Gemini structured output capabilities
@@ -136,6 +143,7 @@ class PromptSuggestionRequest(BaseModel):
 **Requirement:** Formalize secure **Workload Identity (WI)** call from Prompt Vault backend to agentnav backend.
 
 **Current Gap:**
+
 - Prompt Vault backend doesn't call agentnav backend
 - No cross-service communication demonstrated
 - Workload Identity not used
@@ -150,27 +158,27 @@ import httpx
 
 class AgentnavClient:
     """Client for calling agentnav backend using Workload Identity"""
-    
+
     def __init__(self, agentnav_backend_url: str):
         self.base_url = agentnav_backend_url
         self.credentials, _ = default()  # Uses Workload Identity automatically
-    
+
     async def get_prompt_suggestions(self, prompt: str, context: str) -> dict:
         """Call agentnav's Prompt Suggestion Agent via Workload Identity"""
         # Workload Identity automatically authenticates via Service Account
         url = f"{self.base_url}/api/agents/suggest"
-        
+
         async with httpx.AsyncClient() as client:
             # Get ID token for authentication
             id_token = await self._get_id_token()
-            
+
             response = await client.post(
                 url,
                 json={"prompt": prompt, "context": context},
                 headers={"Authorization": f"Bearer {id_token}"}
             )
             return response.json()
-    
+
     async def _get_id_token(self) -> str:
         """Get ID token using Workload Identity"""
         # Uses Service Account's Workload Identity automatically
@@ -180,11 +188,12 @@ class AgentnavClient:
 ```
 
 **Terraform Configuration:**
+
 ```hcl
 # terraform/prompt_vault_cloud_run.tf
 resource "google_cloud_run_service" "prompt_vault_backend" {
   # ... existing config ...
-  
+
   # Grant Workload Identity to call agentnav backend
   service_account = google_service_account.prompt_vault_backend.email
 }
@@ -199,6 +208,7 @@ resource "google_cloud_run_service_iam_member" "prompt_vault_to_agentnav" {
 ```
 
 **Hackathon Value:**
+
 - ✅ Demonstrates Workload Identity (WI) - Cloud Run security feature
 - ✅ Shows cross-service communication
 - ✅ Showcases GCP IAM best practices
@@ -216,26 +226,26 @@ from services.gemma_service import GemmaServiceClient
 
 class PromptSuggestionService:
     """Service that uses Gemma GPU for semantic prompt analysis"""
-    
+
     def __init__(self):
         self.gemma_client = GemmaServiceClient(
             base_url=os.getenv("GEMMA_SERVICE_URL")
         )
-    
+
     async def find_similar_prompts(self, user_prompt: str, user_library: List[str]) -> List[dict]:
         """Use Gemma GPU for semantic similarity search"""
         # Generate embeddings using Gemma GPU service
         embeddings = await self.gemma_client.embed_batch(user_library)
         query_embedding = await self.gemma_client.embed(query_text=user_prompt)
-        
+
         # Semantic similarity search
         similar_prompts = self._find_similar(embeddings, query_embedding)
         return similar_prompts
-    
+
     async def optimize_with_gpu(self, prompt: str) -> str:
         """Use Gemma GPU for prompt optimization reasoning"""
         context = "Analyze this prompt for clarity, specificity, and effectiveness. Provide optimized version."
-        
+
         optimized = await self.gemma_client.reason(
             prompt=prompt,
             context=context,
@@ -246,6 +256,7 @@ class PromptSuggestionService:
 ```
 
 **Hackathon Value:**
+
 - ✅ Demonstrates GPU acceleration (hackathon category)
 - ✅ Shows specialized hardware usage
 - ✅ Highlights Cloud Run GPU support (europe-west1 region)
@@ -254,17 +265,20 @@ class PromptSuggestionService:
 ### 2.2 Implementation Priority Matrix
 
 **Priority 1 (Must Have - Hackathon Critical):**
+
 1. ✅ **Structured Output (Pydantic/JSON Schema)** - FR#240
 2. ✅ **Workload Identity Integration** - Cross-service auth
 3. ✅ **Gemma GPU Service Integration** - GPU category demonstration
 4. ✅ **FR#260 Prompt Suggestion Agent** - Primary feature vehicle
 
 **Priority 2 (Should Have - Narrative Enhancement):**
+
 1. 🔄 **ADK Multi-Agent Architecture** - Shows advanced AI patterns
 2. 🔄 **A2A Protocol Communication** - Demonstrates agent coordination
 3. 🔄 **Auto-scaling Demonstration** - Cloud Run feature showcase
 
 **Priority 3 (Nice to Have - Polish):**
+
 1. 🔄 **Prompt Optimizer Agent** - Additional AI feature
 2. 🔄 **Prompt Tester Agent** - Quality assurance demonstration
 3. 🔄 **Version Comparison Agent** - Advanced functionality
@@ -304,12 +318,14 @@ The Prompt Suggestion Agent must:
 ### 3.1 Update Documentation
 
 **Files to Update:**
+
 1. `docs/PROMPT_VAULT_AGENT_ARCHITECTURE_PLAN.md` - Add hackathon alignment section
 2. `docs/HACKATHON_SUBMISSION_GUIDE.md` - Add Prompt Vault section
 3. `docs/DUAL_CATEGORY_STRATEGY.md` - Update with Prompt Vault strategy
 4. `README.md` - Highlight hackathon-aligned features
 
 **Key Messaging:**
+
 - "Our Prompt Suggestion Agent uses Cloud Run's native Workload Identity to securely access our agentnav backend"
 - "We leverage Gemma GPU Service for semantic prompt analysis and optimization"
 - "Our structured output implementation demonstrates Google AI best practices"
@@ -318,6 +334,7 @@ The Prompt Suggestion Agent must:
 ### 3.2 Presentation Script Updates
 
 **Video Script Additions:**
+
 - [ ] **0:00-0:30:** Problem: Managing AI prompts at scale
 - [ ] **0:30-1:00:** Solution: Prompt Vault with intelligent suggestion agent
 - [ ] **1:00-2:00:** Technical Deep Dive:
@@ -336,11 +353,13 @@ The Prompt Suggestion Agent must:
 ## Success Criteria
 
 ### Phase 1 Success:
+
 - [x] Gap Analysis Report created
 - [x] Feature inventory documented
 - [x] Hackathon criteria extracted and analyzed
 
 ### Phase 2 Success:
+
 - [ ] FR#260 implementation plan updated with hackathon alignment
 - [ ] Structured Output implementation designed
 - [ ] Workload Identity integration planned
@@ -348,6 +367,7 @@ The Prompt Suggestion Agent must:
 - [ ] Priority matrix approved
 
 ### Phase 3 Success:
+
 - [ ] All documentation updated with hackathon messaging
 - [ ] Presentation script includes hackathon-aligned features
 - [ ] Architecture diagram highlights Cloud Run features
@@ -357,12 +377,15 @@ The Prompt Suggestion Agent must:
 ## Risk Mitigation
 
 ### Risk 1: DevPost Criteria Not Accessible
+
 **Mitigation:** Use general Cloud Run hackathon patterns and Google AI best practices as baseline
 
 ### Risk 2: FR#260 Implementation Too Complex
+
 **Mitigation:** Focus on MVP (Structured Output + WI + GPU) first, add complexity later
 
 ### Risk 3: Timeline Too Aggressive
+
 **Mitigation:** Prioritize Phase 1 research, Phase 2 can be iterative
 
 ---
@@ -401,4 +424,3 @@ The Prompt Suggestion Agent must:
 **Last Updated:** [Current Date]  
 **Status:** Planning  
 **Assigned To:** TBD
-

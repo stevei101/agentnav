@@ -224,39 +224,39 @@ gcloud run deploy prompt-management-app \
 
 **CRITICAL:** All services must:
 
-* Read `PORT` environment variable (Cloud Run sets this automatically)
-* Bind to `0.0.0.0` (not `127.0.0.1`)
-* Implement `/healthz` health check endpoint
-* Log to stdout/stderr (Cloud Run captures automatically)
-* Handle SIGTERM for graceful shutdown
+- Read `PORT` environment variable (Cloud Run sets this automatically)
+- Bind to `0.0.0.0` (not `127.0.0.1`)
+- Implement `/healthz` health check endpoint
+- Log to stdout/stderr (Cloud Run captures automatically)
+- Handle SIGTERM for graceful shutdown
 
 ### **Environment Variables**
 
 Backend service requires:
 
-* `PORT` \- Set by Cloud Run
-* `GEMINI_API_KEY` \- From Secret Manager
-* `GEMMA_SERVICE_URL` \- URL of Gemma GPU service
-* `FIRESTORE_PROJECT_ID`
-* `FIRESTORE_DATABASE_ID`
-* `ADK_AGENT_CONFIG_PATH`
-* `A2A_PROTOCOL_ENABLED=true`
+- `PORT` \- Set by Cloud Run
+- `GEMINI_API_KEY` \- From Secret Manager
+- `GEMMA_SERVICE_URL` \- URL of Gemma GPU service
+- `FIRESTORE_PROJECT_ID`
+- `FIRESTORE_DATABASE_ID`
+- `ADK_AGENT_CONFIG_PATH`
+- `A2A_PROTOCOL_ENABLED=true`
 
 Gen AI Prompt Management App service requires:
 
-* `PORT` \- Set by Cloud Run
-* `SUPABASE_URL` \- Base URL for the Supabase project (from Secret Manager)
-* `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (from Secret Manager)
-* `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (from Secret Manager)
+- `PORT` \- Set by Cloud Run
+- `SUPABASE_URL` \- Base URL for the Supabase project (from Secret Manager)
+- `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (from Secret Manager)
+- `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (from Secret Manager)
 
 ### **Cloud Run Service Configurations**
 
-| Service | Region | CPU | Memory | GPU | Special Config |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Agent Navigator Frontend** | us-central1 | 1 vCPU | 512Mi | None | Port 80, Nginx static serving |
-| **Agent Navigator Backend** | europe-west1 | 1 vCPU | 1Gi | None | Port 8080, Firestore access |
-| **Gemma GPU Service** | europe-west1 | GPU | 16Gi | NVIDIA L4 (1x) | Port 8080, CUDA support |
-| **Gen AI Prompt Management App** | us-central1 | 1 vCPU | 512Mi | None | Port 8080, Supabase secrets |
+| Service                          | Region       | CPU    | Memory | GPU            | Special Config                |
+| :------------------------------- | :----------- | :----- | :----- | :------------- | :---------------------------- |
+| **Agent Navigator Frontend**     | us-central1  | 1 vCPU | 512Mi  | None           | Port 80, Nginx static serving |
+| **Agent Navigator Backend**      | europe-west1 | 1 vCPU | 1Gi    | None           | Port 8080, Firestore access   |
+| **Gemma GPU Service**            | europe-west1 | GPU    | 16Gi   | NVIDIA L4 (1x) | Port 8080, CUDA support       |
+| **Gen AI Prompt Management App** | us-central1  | 1 vCPU | 512Mi  | None           | Port 8080, Supabase secrets   |
 
 ---
 
@@ -266,15 +266,15 @@ Gen AI Prompt Management App service requires:
 
 **1\. Workload Identity Federation (WIF)** \- For CI/CD
 
-* GitHub Actions authenticates to GCP without static keys
-* Service Account: Deployment SA with `roles/run.admin`, `roles/artifactregistry.writer`
-* Configured in Terraform
+- GitHub Actions authenticates to GCP without static keys
+- Service Account: Deployment SA with `roles/run.admin`, `roles/artifactregistry.writer`
+- Configured in Terraform
 
 **2\. Workload Identity (WI)** \- For Cloud Run Services
 
-* Running containers use built-in Service Accounts to access GCP services
-* Backend SA needs: `roles/datastore.user`, `roles/secretmanager.secretAccessor`
-* No credentials in container images
+- Running containers use built-in Service Accounts to access GCP services
+- Backend SA needs: `roles/datastore.user`, `roles/secretmanager.secretAccessor`
+- No credentials in container images
 
 **NEVER embed service account keys or credentials in code or containers.**
 
@@ -286,23 +286,23 @@ Gen AI Prompt Management App service requires:
 
 **sessions/** \- User session data
 
-* Document ID: `session_id`
-* Fields: `created_at`, `updated_at`, `user_input`, `agent_states` (map)
+- Document ID: `session_id`
+- Fields: `created_at`, `updated_at`, `user_input`, `agent_states` (map)
 
-**knowledge\_cache/** \- Cached analysis results
+**knowledge_cache/** \- Cached analysis results
 
-* Document ID: `content_hash`
-* Fields: `summary`, `visualization_data`, `created_at`, `expires_at`
+- Document ID: `content_hash`
+- Fields: `summary`, `visualization_data`, `created_at`, `expires_at`
 
-**agent\_context/** \- Shared agent context via A2A Protocol
+**agent_context/** \- Shared agent context via A2A Protocol
 
-* Document ID: `session_id`
-* Fields: `context_data` (map), `last_updated_by` (agent name)
+- Document ID: `session_id`
+- Fields: `context_data` (map), `last_updated_by` (agent name)
 
-**agent\_prompts/** \- Agent prompt configurations
+**agent_prompts/** \- Agent prompt configurations
 
-* Document ID: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
-* Fields: `prompt_text`, `version`, `created_at`, `updated_at`, `metadata` (map)
+- Document ID: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
+- Fields: `prompt_text`, `version`, `created_at`, `updated_at`, `metadata` (map)
 
 ---
 
@@ -318,34 +318,34 @@ Gen AI Prompt Management App service requires:
 
 ### **Frontend (React/TypeScript)**
 
-* Pure functional components with named exports
-* Use TypeScript for all type safety
-* Tailwind utility classes only (no custom CSS)
-* Error Boundaries for graceful error handling
-* Lazy load visualization components
-* Guard early: validate props/data at component entry
+- Pure functional components with named exports
+- Use TypeScript for all type safety
+- Tailwind utility classes only (no custom CSS)
+- Error Boundaries for graceful error handling
+- Lazy load visualization components
+- Guard early: validate props/data at component entry
 
 **Example Component:**
 
 interface VisualizationProps {
-  data: GraphData;
-  onError?: (error: Error) => void;
+data: GraphData;
+onError?: (error: Error) => void;
 }
 
 export function Visualization({ data, onError }: VisualizationProps) {
-  if (\!data?.nodes) {
-    return \<div\>No data available\</div\>;
-  }
-  // Component logic...
+if (\!data?.nodes) {
+return \<div\>No data available\</div\>;
+}
+// Component logic...
 }
 
 ### **Backend (Python/FastAPI)**
 
-* Use async/await for all I/O operations
-* Pydantic models for request/response validation
-* Type hints for all function signatures
-* ADK agents inherit from base `Agent` class
-* A2A Protocol for inter-agent communication
+- Use async/await for all I/O operations
+- Pydantic models for request/response validation
+- Type hints for all function signatures
+- ADK agents inherit from base `Agent` class
+- A2A Protocol for inter-agent communication
 
 **Example FastAPI Route:**
 
@@ -353,25 +353,25 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 class AnalyzeRequest(BaseModel):
-    content: str
-    content\_type: str
+content: str
+content_type: str
 
 class AnalyzeResponse(BaseModel):
-    summary: str
-    visualization: dict
+summary: str
+visualization: dict
 
-@router.post("/analyze", response\_model=AnalyzeResponse)
-async def analyze\_content(request: AnalyzeRequest):
-    \# Handler logic...
-    return AnalyzeResponse(summary="...", visualization={})
+@router.post("/analyze", response_model=AnalyzeResponse)
+async def analyze_content(request: AnalyzeRequest):
+\# Handler logic...
+return AnalyzeResponse(summary="...", visualization={})
 
 **Example ADK Agent:**
 
 from google.adk import Agent, A2AProtocol
 
 class SummarizerAgent(Agent):
-    async def process(self, context: dict) \-\> dict:
-        result \= await self.summarize(context\['document'\])
+async def process(self, context: dict) \-\> dict:
+result \= await self.summarize(context\['document'\])
 
         \# Share via A2A Protocol
         await self.a2a.send\_message({
@@ -384,10 +384,10 @@ class SummarizerAgent(Agent):
 
 ### **Terraform**
 
-* Use modules for reusable components
-* Always use variables for configurable values
-* Document all resources with comments
-* Use data sources for existing resources
+- Use modules for reusable components
+- Always use variables for configurable values
+- Document all resources with comments
+- Use data sources for existing resources
 
 ---
 
@@ -433,18 +433,18 @@ bun test \--coverage \--coverageThreshold='{"global":{"lines":70}}'
 
 ### **Test Organization**
 
-* **Frontend:** `frontend/src/__tests__/` \- Jest \+ React Testing Library
-* **Backend:** `backend/tests/` \- pytest with fixtures
-* **Integration:** `tests/integration/` \- Full workflow tests
-* **E2E:** `tests/e2e/` \- End-to-end user flows
+- **Frontend:** `frontend/src/__tests__/` \- Jest \+ React Testing Library
+- **Backend:** `backend/tests/` \- pytest with fixtures
+- **Integration:** `tests/integration/` \- Full workflow tests
+- **E2E:** `tests/e2e/` \- End-to-end user flows
 
 ### **What to Test**
 
-* All ADK agent logic and A2A Protocol handlers
-* FastAPI route handlers and Pydantic validation
-* React components with different prop combinations
-* Firestore operations with mocked clients
-* Error handling and edge cases
+- All ADK agent logic and A2A Protocol handlers
+- FastAPI route handlers and Pydantic validation
+- React components with different prop combinations
+- Firestore operations with mocked clients
+- Error handling and edge cases
 
 ---
 
@@ -452,24 +452,24 @@ bun test \--coverage \--coverageThreshold='{"global":{"lines":70}}'
 
 ### **Frontend**
 
-* Code split with Vite automatic chunking
-* Lazy load visualization components
-* Leverage Cloud Run CDN caching for static assets
-* Minimize bundle size
+- Code split with Vite automatic chunking
+- Lazy load visualization components
+- Leverage Cloud Run CDN caching for static assets
+- Minimize bundle size
 
 ### **Backend**
 
-* Use async Firestore operations
-* Cache analysis results in Firestore (check before processing)
-* Connection pooling for Firestore clients
-* Call Gemma GPU service only for complex tasks; cache results
+- Use async Firestore operations
+- Cache analysis results in Firestore (check before processing)
+- Connection pooling for Firestore clients
+- Call Gemma GPU service only for complex tasks; cache results
 
 ### **Gemma GPU Service**
 
-* Enable 8-bit quantization for memory efficiency if needed
-* Set `min-instances=0` to scale to zero when idle
-* Implement result caching to reduce redundant inference
-* Consider batching requests when possible
+- Enable 8-bit quantization for memory efficiency if needed
+- Set `min-instances=0` to scale to zero when idle
+- Implement result caching to reduce redundant inference
+- Consider batching requests when possible
 
 ---
 
@@ -500,17 +500,17 @@ Before making a pull request, always:
 
 ## **Key GitHub Actions Secrets**
 
-* `GCP_PROJECT_ID` \- Google Cloud Project ID
-* `GEMINI_API_KEY` \- API key for Gemini models
-* `FIRESTORE_CREDENTIALS` \- Service account JSON (or use WIF)
-* `TF_API_TOKEN` \- Terraform Cloud API token
-* `TF_CLOUD_ORGANIZATION` \- Terraform Cloud org name
-* `TF_WORKSPACE` \- Terraform Cloud workspace
-* `WIF_PROVIDER` \- Workload Identity Federation provider
-* `WIF_SERVICE_ACCOUNT` \- WIF service account email
-* `SUPABASE_URL` \- Base URL for the Supabase project (required for Gen AI Prompt Management App)
-* `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (required for Gen AI Prompt Management App)
-* `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (required for Gen AI Prompt Management App)
+- `GCP_PROJECT_ID` \- Google Cloud Project ID
+- `GEMINI_API_KEY` \- API key for Gemini models
+- `FIRESTORE_CREDENTIALS` \- Service account JSON (or use WIF)
+- `TF_API_TOKEN` \- Terraform Cloud API token
+- `TF_CLOUD_ORGANIZATION` \- Terraform Cloud org name
+- `TF_WORKSPACE` \- Terraform Cloud workspace
+- `WIF_PROVIDER` \- Workload Identity Federation provider
+- `WIF_SERVICE_ACCOUNT` \- WIF service account email
+- `SUPABASE_URL` \- Base URL for the Supabase project (required for Gen AI Prompt Management App)
+- `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (required for Gen AI Prompt Management App)
+- `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (required for Gen AI Prompt Management App)
 
 ---
 
@@ -528,14 +528,16 @@ Before making a pull request, always:
 
 ## **Additional Resources**
 
-* ADK Documentation: [Google ADK Docs](https://cloud.google.com/agent-development-kit)
-* A2A Protocol: [Agent2Agent Protocol](https://github.com/google/agent-development-kit)
-* Cloud Run Docs: [Cloud Run Documentation](https://cloud.google.com/run/docs)
-* Firestore Docs: [Firestore Documentation](https://firebase.google.com/docs/firestore)
-* GPU Setup: See `docs/GPU_SETUP_GUIDE.md` for detailed GPU configuration
+- ADK Documentation: [Google ADK Docs](https://cloud.google.com/agent-development-kit)
+- A2A Protocol: [Agent2Agent Protocol](https://github.com/google/agent-development-kit)
+- Cloud Run Docs: [Cloud Run Documentation](https://cloud.google.com/run/docs)
+- Firestore Docs: [Firestore Documentation](https://firebase.google.com/docs/firestore)
+- GPU Setup: See `docs/GPU_SETUP_GUIDE.md` for detailed GPU configuration
 
 ---
 
 **This is a comprehensive guide. Trust these instructions first, and only perform additional searches if information is incomplete or found to be incorrect.**
+
+```
 
 ```

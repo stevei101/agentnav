@@ -43,6 +43,7 @@ The schema creates a `prompts` table with the following features:
 ## Security Policies
 
 The schema includes RLS policies that:
+
 - Allow users to view their own prompts
 - Allow anyone to view public prompts (`is_public = true`)
 - Allow users to create, update, and delete only their own prompts
@@ -66,8 +67,8 @@ supabase db reset
 ```
 
 Then update your `.env.local` with:
+
 ```
 VITE_SUPABASE_URL=http://localhost:54321
 VITE_SUPABASE_ANON_KEY=<local-anon-key>
 ```
-

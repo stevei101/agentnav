@@ -5,6 +5,7 @@
 ## Overview
 
 Prompt Vault is a separate application that uses:
+
 - **Supabase** for authentication and database
 - **React/TypeScript** for the frontend
 - **bun** for package management
@@ -31,12 +32,14 @@ This application is completely isolated from the main `agentnav` application:
 ### Setup
 
 1. **Install dependencies:**
+
 ```bash
 cd prompt-vault/frontend
 bun install
 ```
 
 2. **Create `.env.local` file in `frontend/` directory:**
+
 ```bash
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -48,6 +51,7 @@ VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
    - Run the SQL schema in your Supabase SQL Editor
 
 4. **Start development server:**
+
 ```bash
 cd prompt-vault/frontend
 bun run dev
@@ -109,4 +113,3 @@ The following secrets are injected from Secret Manager:
 
 - [PROMPT_VAULT_ISOLATION_PLAN.md](../docs/PROMPT_VAULT_ISOLATION_PLAN.md) - Complete isolation strategy
 - [Issue #196](https://github.com/stevei101/agentnav/issues/196) - Feature request for parallel deployment
-

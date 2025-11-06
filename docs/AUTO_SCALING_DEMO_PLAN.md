@@ -16,18 +16,21 @@ Demonstrate Cloud Run's auto-scaling capabilities in the hackathon submission de
 ## Current Auto-Scaling Configuration
 
 ### Backend Service
+
 - **Min Instances:** 0 (scale to zero)
 - **Max Instances:** 10
 - **Concurrency:** 80 requests per instance
 - **Region:** europe-west1
 
 ### Frontend Service
+
 - **Min Instances:** 0 (scale to zero)
 - **Max Instances:** 10
 - **Concurrency:** 80 requests per instance
 - **Region:** us-central1
 
 ### Gemma GPU Service
+
 - **Min Instances:** 0 (scale to zero)
 - **Max Instances:** 2
 - **Concurrency:** 1 request per instance
@@ -42,9 +45,11 @@ Demonstrate Cloud Run's auto-scaling capabilities in the hackathon submission de
 ### Auto-Scaling Demonstration (30-45 seconds)
 
 **Narration:**
+
 > "Agent Navigator leverages Cloud Run's automatic scaling capabilities. Let me show you how it responds to traffic."
 
 **Visuals:**
+
 1. **Cloud Console - Cloud Run Service Page** (5 seconds)
    - Show services: `agentnav-backend`, `agentnav-frontend`, `gemma-service`
    - Highlight current instance count (likely 0 or 1)
@@ -116,6 +121,7 @@ Demonstrate Cloud Run's auto-scaling capabilities in the hackathon submission de
 ## Tools for Load Testing
 
 ### Option 1: Simple curl Loop (Recommended for Demo)
+
 ```bash
 # Simple concurrent requests
 for i in {1..50}; do
@@ -127,18 +133,21 @@ wait
 ```
 
 ### Option 2: Apache Bench (ab)
+
 ```bash
 ab -n 100 -c 10 -p payload.json -T 'application/json' \
   https://agentnav-backend.run.app/api/analyze
 ```
 
 ### Option 3: Siege
+
 ```bash
 siege -c 10 -t 30s -H 'Content-Type: application/json' \
   -f urls.txt
 ```
 
 ### Option 4: Custom Script
+
 ```python
 import asyncio
 import httpx
@@ -198,6 +207,7 @@ asyncio.run(load_test())
 ### Placement in Demo
 
 **Suggested Order:**
+
 1. Problem statement (30s)
 2. Solution overview (30s)
 3. Live demo of application (60s)
@@ -262,4 +272,3 @@ If live demo is not feasible, use static screenshots:
 **Last Updated:** [Current Date]  
 **Status:** Ready for Implementation  
 **Estimated Time:** 1 day (4-6 hours)
-

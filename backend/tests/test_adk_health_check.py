@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from fastapi.testclient import TestClient
 from backend.main import app
 
-client = TestClient(app)
+# TestClient with base_url to satisfy TrustedHostMiddleware
+client = TestClient(app, base_url="http://localhost")
 
 
 class TestHealthzEndpoint:
@@ -45,10 +46,10 @@ class TestHealthzEndpoint:
 
     def test_healthz_with_unavailable_adk(self):
         """Test healthz returns degraded when ADK agents cannot be imported"""
-        with patch.dict("sys.modules", {"agents": None}):
+        with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
                 "builtins.__import__",
-                side_effect=ImportError("No module named 'agents'"),
+                side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/healthz")
 
@@ -121,10 +122,10 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_import_error(self):
         """Test agent status handles import errors with diagnostics"""
-        with patch.dict("sys.modules", {"agents": None}):
+        with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
                 "builtins.__import__",
-                side_effect=ImportError("No module named 'agents'"),
+                side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/api/agents/status")
 

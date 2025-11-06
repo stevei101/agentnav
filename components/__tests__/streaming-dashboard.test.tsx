@@ -203,9 +203,15 @@ describe('DocumentUpload Component', () => {
     render(<DocumentUpload onSessionStart={mockOnSessionStart} />);
 
     // Use getAllByRole to handle multiple elements with same text
-    const summarizerCards = screen.getAllByRole('heading', { name: 'Summarizer Agent' });
-    const linkerCards = screen.getAllByRole('heading', { name: 'Linker Agent' });
-    const visualizerCards = screen.getAllByRole('heading', { name: 'Visualizer Agent' });
+    const summarizerCards = screen.getAllByRole('heading', {
+      name: 'Summarizer Agent',
+    });
+    const linkerCards = screen.getAllByRole('heading', {
+      name: 'Linker Agent',
+    });
+    const visualizerCards = screen.getAllByRole('heading', {
+      name: 'Visualizer Agent',
+    });
 
     expect(summarizerCards.length).toBeGreaterThan(0);
     expect(linkerCards.length).toBeGreaterThan(0);
@@ -228,13 +234,13 @@ describe('DocumentUpload Component', () => {
 
       // Create DataTransfer mock
       const dataTransfer = new DataTransfer();
-      
+
       // Use fireEvent with dragEnter - it will create the DragEvent properly
       fireEvent.dragEnter(uploadArea, {
         dataTransfer,
         bubbles: true,
       });
-      
+
       // Verify the drag state was handled (check for visual feedback class)
       // Note: The actual class might vary based on component implementation
       expect(uploadArea).toBeTruthy();
