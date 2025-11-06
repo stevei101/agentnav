@@ -60,7 +60,9 @@ class EventEmitter:
             client_queue: AsyncIO queue for sending events to client
         """
         self.connected_clients.add(client_queue)
-        self.logger.debug(f"✅ Client registered. Total clients: {len(self.connected_clients)}")
+        self.logger.debug(
+            f"✅ Client registered. Total clients: {len(self.connected_clients)}"
+        )
 
     def unregister_client(self, client_queue: asyncio.Queue) -> None:
         """
@@ -70,7 +72,9 @@ class EventEmitter:
             client_queue: Client queue to unregister
         """
         self.connected_clients.discard(client_queue)
-        self.logger.debug(f"❌ Client unregistered. Total clients: {len(self.connected_clients)}")
+        self.logger.debug(
+            f"❌ Client unregistered. Total clients: {len(self.connected_clients)}"
+        )
 
     def _calculate_elapsed_ms(self) -> int:
         """Calculate milliseconds elapsed since workflow start."""
@@ -307,7 +311,10 @@ class EventEmitterManager:
         Returns:
             Dictionary with stats for each session
         """
-        return {session_id: emitter.get_stats() for session_id, emitter in self.emitters.items()}
+        return {
+            session_id: emitter.get_stats()
+            for session_id, emitter in self.emitters.items()
+        }
 
 
 # Global singleton instance

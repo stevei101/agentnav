@@ -94,20 +94,28 @@ class A2AProtocolService:
             message_dict = message.model_dump()
 
             # Add security context
-            message_dict = self._security_service.enhance_message_with_security(message_dict)
+            message_dict = self._security_service.enhance_message_with_security(
+                message_dict
+            )
 
             # Validate security
-            validation_result = self._security_service.validate_message_security(message_dict)
+            validation_result = self._security_service.validate_message_security(
+                message_dict
+            )
 
             if not validation_result["is_valid"]:
                 logger.error(
                     f"❌ Message security validation failed: {validation_result['issues']}"
                 )
-                raise ValueError(f"Security validation failed: {validation_result['issues']}")
+                raise ValueError(
+                    f"Security validation failed: {validation_result['issues']}"
+                )
 
             # Update message with security context
             message.security.signature = message_dict["security"]["signature"]
-            message.security.service_account_id = message_dict["security"]["service_account_id"]
+            message.security.service_account_id = message_dict["security"][
+                "service_account_id"
+            ]
             message.security.verified = True
 
             # Log message with structured metadata
@@ -156,14 +164,18 @@ class A2AProtocolService:
         ]
 
         # Remove retrieved messages from queue
-        self._message_queue = [msg for msg in self._message_queue if msg not in agent_messages]
+        self._message_queue = [
+            msg for msg in self._message_queue if msg not in agent_messages
+        ]
 
         # Mark messages as processing
         for msg in agent_messages:
             msg.status = A2AMessageStatus.PROCESSING
             self._log_message_event("message_received", msg, {"recipient": agent_name})
 
-        logger.info(f"📥 Retrieved {len(agent_messages)} messages for agent '{agent_name}'")
+        logger.info(
+            f"📥 Retrieved {len(agent_messages)} messages for agent '{agent_name}'"
+        )
 
         return agent_messages
 
@@ -223,7 +235,9 @@ class A2AProtocolService:
         # Apply filters
         if agent_name:
             history = [
-                msg for msg in history if msg.from_agent == agent_name or msg.to_agent == agent_name
+                msg
+                for msg in history
+                if msg.from_agent == agent_name or msg.to_agent == agent_name
             ]
 
         if message_type:
@@ -295,14 +309,20 @@ class A2AProtocolService:
                     message.trace.correlation_id if hasattr(message, "trace") else None
                 ),
                 "parent_message_id": (
-                    message.trace.parent_message_id if hasattr(message, "trace") else None
+                    message.trace.parent_message_id
+                    if hasattr(message, "trace")
+                    else None
                 ),
             },
             "security_context": {
                 "service_account_id": (
-                    message.security.service_account_id if hasattr(message, "security") else None
+                    message.security.service_account_id
+                    if hasattr(message, "security")
+                    else None
                 ),
-                "verified": (message.security.verified if hasattr(message, "security") else False),
+                "verified": (
+                    message.security.verified if hasattr(message, "security") else False
+                ),
             },
         }
 
@@ -376,7 +396,9 @@ def create_task_delegation_message(
         expected_output=expected_output,
         depends_on=depends_on or [],
         priority=A2AMessagePriority.HIGH,
-        trace=A2ATraceContext(correlation_id=correlation_id, parent_message_id=parent_message_id),
+        trace=A2ATraceContext(
+            correlation_id=correlation_id, parent_message_id=parent_message_id
+        ),
     )
 
 
@@ -413,7 +435,9 @@ def create_knowledge_transfer_message(
         knowledge_type=knowledge_type,
         knowledge_data=knowledge_data,
         priority=priority,
-        trace=A2ATraceContext(correlation_id=correlation_id, parent_message_id=parent_message_id),
+        trace=A2ATraceContext(
+            correlation_id=correlation_id, parent_message_id=parent_message_id
+        ),
     )
 
 
@@ -452,5 +476,7 @@ def create_status_message(
         error_message=error_message,
         result_summary=result_summary,
         priority=A2AMessagePriority.MEDIUM,
-        trace=A2ATraceContext(correlation_id=correlation_id, parent_message_id=parent_message_id),
+        trace=A2ATraceContext(
+            correlation_id=correlation_id, parent_message_id=parent_message_id
+        ),
     )
