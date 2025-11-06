@@ -227,6 +227,10 @@ class WorkloadIdentityAuth:
                 "exp": expiry,
                 "iat": issued_at
             }
+        
+        except HTTPException:
+            # Re-raise HTTPException as-is
+            raise
             
         except ImportError:
             logger.error("❌ google-auth not installed - required for WI authentication")

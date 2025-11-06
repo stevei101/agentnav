@@ -38,7 +38,12 @@ class TestWorkloadIdentityAuth:
     async def test_auth_required_when_enabled_no_header(self):
         """Test that authentication fails when required but no header provided"""
         with patch.dict(os.environ, {"REQUIRE_WI_AUTH": "true"}, clear=True):
-            auth = WorkloadIdentityAuth()
+            # Import after setting env var to pick it up
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             with pytest.raises(HTTPException) as exc_info:
                 await auth.verify_id_token(None)
@@ -50,7 +55,11 @@ class TestWorkloadIdentityAuth:
     async def test_auth_invalid_header_format(self):
         """Test that invalid Authorization header format is rejected"""
         with patch.dict(os.environ, {"REQUIRE_WI_AUTH": "true"}, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             with pytest.raises(HTTPException) as exc_info:
                 await auth.verify_id_token("InvalidFormat token123")
@@ -62,7 +71,11 @@ class TestWorkloadIdentityAuth:
     async def test_auth_empty_token(self):
         """Test that empty token is rejected"""
         with patch.dict(os.environ, {"REQUIRE_WI_AUTH": "true"}, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             with pytest.raises(HTTPException) as exc_info:
                 await auth.verify_id_token("Bearer ")
@@ -78,11 +91,15 @@ class TestWorkloadIdentityAuth:
             "TRUSTED_SERVICE_ACCOUNTS": "test@project.iam.gserviceaccount.com",
             "EXPECTED_AUDIENCE": "https://backend-service.run.app"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Mock google.oauth2.id_token.verify_oauth2_token
-            with patch('services.workload_identity_auth.id_token') as mock_id_token:
-                mock_id_token.verify_oauth2_token.return_value = {
+            with patch('google.oauth2.id_token.verify_oauth2_token') as mock_verify:
+                mock_verify.return_value = {
                     "email": "test@project.iam.gserviceaccount.com",
                     "sub": "123456789",
                     "aud": "https://backend-service.run.app",
@@ -97,17 +114,21 @@ class TestWorkloadIdentityAuth:
                 assert result["email"] == "test@project.iam.gserviceaccount.com"
                 assert result["sub"] == "123456789"
                 assert result["aud"] == "https://backend-service.run.app"
-                mock_id_token.verify_oauth2_token.assert_called_once()
+                mock_verify.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_auth_invalid_token_signature(self):
         """Test that invalid token signature fails authentication"""
         with patch.dict(os.environ, {"REQUIRE_WI_AUTH": "true"}, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Mock google.oauth2.id_token to raise ValueError
-            with patch('services.workload_identity_auth.id_token') as mock_id_token:
-                mock_id_token.verify_oauth2_token.side_effect = ValueError("Invalid token signature")
+            with patch('google.oauth2.id_token.verify_oauth2_token') as mock_verify:
+                mock_verify.side_effect = ValueError("Invalid token signature")
                 
                 with pytest.raises(HTTPException) as exc_info:
                     await auth.verify_id_token("Bearer invalid_token")
@@ -122,11 +143,15 @@ class TestWorkloadIdentityAuth:
             "REQUIRE_WI_AUTH": "true",
             "TRUSTED_SERVICE_ACCOUNTS": "trusted@project.iam.gserviceaccount.com"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Mock token verification to return untrusted account
-            with patch('services.workload_identity_auth.id_token') as mock_id_token:
-                mock_id_token.verify_oauth2_token.return_value = {
+            with patch('google.oauth2.id_token.verify_oauth2_token') as mock_verify:
+                mock_verify.return_value = {
                     "email": "untrusted@project.iam.gserviceaccount.com",
                     "sub": "123456789",
                     "aud": "https://backend-service.run.app",
@@ -149,11 +174,15 @@ class TestWorkloadIdentityAuth:
             "TRUSTED_SERVICE_ACCOUNTS": "test@project.iam.gserviceaccount.com",
             "EXPECTED_AUDIENCE": "https://backend-service.run.app"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Mock token with wrong audience
-            with patch('services.workload_identity_auth.id_token') as mock_id_token:
-                mock_id_token.verify_oauth2_token.return_value = {
+            with patch('google.oauth2.id_token.verify_oauth2_token') as mock_verify:
+                mock_verify.return_value = {
                     "email": "test@project.iam.gserviceaccount.com",
                     "sub": "123456789",
                     "aud": "https://wrong-service.run.app",
@@ -173,8 +202,13 @@ class TestWorkloadIdentityAuth:
         with patch.dict(os.environ, {
             "TRUSTED_SERVICE_ACCOUNTS": "sa1@project.iam.gserviceaccount.com,sa2@project.iam.gserviceaccount.com"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
             
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
+            
+            # Should have exactly the two from environment (no defaults added)
             assert len(auth.trusted_service_accounts) == 2
             assert "sa1@project.iam.gserviceaccount.com" in auth.trusted_service_accounts
             assert "sa2@project.iam.gserviceaccount.com" in auth.trusted_service_accounts
@@ -185,7 +219,11 @@ class TestWorkloadIdentityAuth:
             "GCP_PROJECT_ID": "test-project",
             "ENVIRONMENT": "production"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Should include default service accounts for the project
             assert any("agentnav-backend" in sa for sa in auth.trusted_service_accounts)
@@ -199,7 +237,11 @@ class TestWorkloadIdentityAuth:
         with patch.dict(os.environ, {
             "ENVIRONMENT": "development"
         }, clear=True):
-            auth = WorkloadIdentityAuth()
+            import importlib
+            import services.workload_identity_auth
+            importlib.reload(services.workload_identity_auth)
+            
+            auth = services.workload_identity_auth.WorkloadIdentityAuth()
             
             # Should include dev account in development
             assert any("dev-service-account" in sa for sa in auth.trusted_service_accounts)
