@@ -129,17 +129,12 @@ async def healthz_check():
 
     # Check ADK System availability
     try:
-<<<<<<< HEAD
-        from agents import (
+        from backend.agents import (
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
             A2AProtocol,
-=======
-        from backend.agents import (
-            OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
         )
 
         # Test agent instantiation (doesn't require full initialization)
@@ -169,13 +164,7 @@ async def healthz_check():
 
     # Check Firestore connectivity (optional - may not be required for basic health)
     try:
-<<<<<<< HEAD
-        from services.firestore_client import get_firestore_client
-
-=======
         from backend.services.firestore_client import get_firestore_client
-        
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
         firestore_client = get_firestore_client()
         # Simple connectivity test - just check if client was created
         if firestore_client:
@@ -238,15 +227,9 @@ async def generate_text(request: GenerateRequest):
     This endpoint calls the Gemini cloud service for text generation.
     """
     try:
-<<<<<<< HEAD
-        from services.gemini_client import reason_with_gemini
+        from backend.services.gemini_client import reason_with_gemini
 
         text = await reason_with_gemini(
-=======
-        from backend.services.gemma_service import generate_with_gemma
-        
-        text = await generate_with_gemma(
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
             prompt=request.prompt,
             max_tokens=request.max_tokens or 500,
             temperature=request.temperature or 0.7,
@@ -301,20 +284,14 @@ async def analyze_content(request: AnalyzeRequest):
     start_time = time.time()
 
     try:
-<<<<<<< HEAD
-        from agents import (
+        from backend.agents import (
             AgentWorkflow,
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
-=======
-        from backend.agents import (
-            AgentWorkflow, OrchestratorAgent, SummarizerAgent, 
-            LinkerAgent, VisualizerAgent
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
         )
-        from models.context_model import SessionContext
+        from backend.models.context_model import SessionContext
 
         logger.info("🎬 Starting ADK Multi-Agent Analysis (FR#005 Sequential Workflow)")
 
@@ -427,13 +404,7 @@ async def visualize_content(request: VisualizeRequest):
     complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-<<<<<<< HEAD
-        from agents import VisualizerAgent, A2AProtocol
-
-=======
         from backend.agents import VisualizerAgent, A2AProtocol
-        
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
         agent = VisualizerAgent(a2a)
@@ -558,12 +529,7 @@ async def get_agent_status():
         # Check Firestore connectivity if agents use it
         firestore_status = "unknown"
         try:
-<<<<<<< HEAD
-            from services.firestore_client import get_firestore_client
-
-=======
             from backend.services.firestore_client import get_firestore_client
->>>>>>> fix(backend): align import paths to backend.*; pydantic v2 Field(pattern) in stream models\n\n- main.py: use backend.routes/backend.agents/backend.services imports\n- stream_event_model: replace Field(regex=...) with Field(pattern=...) for pydantic v2\n- unblocks test collection errors in CI (PR #169)
             firestore_client = get_firestore_client()
             if firestore_client:
                 firestore_status = "connected"
