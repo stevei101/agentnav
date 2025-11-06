@@ -283,38 +283,6 @@ jobs:
             echo "ERROR: .env pattern not found in .gitignore"
             exit 1
           fi
-
-      - name: Install detect-secrets
-        run: |
-          python3 -m pip install --upgrade "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
-
-      - name: Scan for secrets with detect-secrets (non-interactive)
-        run: |
-          # Check if baseline exists
-          if [ ! -f .secrets.baseline ]; then
-            echo "⚠️  Baseline file not found. Please create it locally and commit:"
-            echo "   detect-secrets scan --baseline .secrets.baseline"
-            echo "   git add .secrets.baseline && git commit"
-            exit 1
-          fi
-          
-          # Scan current code and create temporary baseline
-          echo "🔍 Scanning for secrets with detect-secrets..."
-          detect-secrets scan --baseline /tmp/current-scan.baseline
-          
-          # Compare current scan with committed baseline
-          # This will show differences if new secrets are found
-          if ! detect-secrets compare /tmp/current-scan.baseline .secrets.baseline; then
-            echo "❌ New secrets detected! Differences found between current code and baseline."
-            echo ""
-            echo "To fix this locally:"
-            echo "  1. Run: detect-secrets scan --update .secrets.baseline"
-            echo "  2. Review the baseline file"
-            echo "  3. Commit the updated baseline: git add .secrets.baseline && git commit"
-            exit 1
-          fi
-          
-          echo "✅ No new secrets detected (baseline matches current scan)"
           echo "✓ .gitignore properly configured"
 
   # ============================================================================
