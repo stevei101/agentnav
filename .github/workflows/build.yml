@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [frontend, backend]
+        service: [frontend, backend, proxy]
       fail-fast: false
 
     steps:
@@ -171,6 +171,44 @@ jobs:
 
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
+      - name: Build and push proxy
+        if: matrix.service == 'proxy'
+        run: |
+          set -euo pipefail
+
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-proxy"
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+
+          echo "🔨 Building proxy image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f nginx-proxy/Dockerfile \
+            ./nginx-proxy
+
+          # Tag as latest if on main branch
+          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          # Push primary tag
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+          # Push latest tag if set
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker push ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          echo "✅ Proxy image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
@@ -182,7 +220,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [frontend, backend]
+        service: [frontend, backend, proxy]
       fail-fast: false
 
     steps:
@@ -277,3 +315,9 @@ jobs:
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
+
+          echo "Proxy URL (Main Entry Point):"
+          gcloud run services describe agentnav-proxy \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)" || echo "Proxy not deployed yet"
