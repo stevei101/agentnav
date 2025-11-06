@@ -85,15 +85,15 @@ class TestGeminiContentGeneration:
     
     @patch.dict(os.environ, {"AGENTNAV_MODEL_TYPE": "gemini"})
     @patch('services.gemini_client.GeminiClient')
-    @patch('asyncio.to_thread')
-    async def test_reason_with_gemini(self, mock_to_thread, mock_client_class):
+    async def test_reason_with_gemini(self, mock_client_class):
         """Test reason_with_gemini convenience function"""
-        # Setup mocks
-        mock_client = MagicMock()
+        # Setup mocks - generate is async, so we need an async mock
+        async def mock_generate(*args, **kwargs):
+            return "Generated response"
+        
         mock_client_instance = MagicMock()
-        mock_client_instance.generate.return_value = "Generated response"
+        mock_client_instance.generate = mock_generate
         mock_client_class.return_value = mock_client_instance
-        mock_to_thread.return_value = "Generated response"
         
         # Test reason_with_gemini
         result = await reason_with_gemini(
@@ -104,6 +104,9 @@ class TestGeminiContentGeneration:
         
         # Verify result
         assert isinstance(result, str)
+        assert result == "Generated response"
+        # Verify GeminiClient was instantiated
+        mock_client_class.assert_called_once()
 
 
 class TestGeminiClientErrorHandling:
