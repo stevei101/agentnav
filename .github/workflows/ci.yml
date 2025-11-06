@@ -154,7 +154,7 @@ jobs:
           pip install black isort ruff mypy
 
       - name: Check Python formatting (Black)
-        if: needs.changes.outputs.agentnav_only == 'true' || (needs.changes.outputs.backend == 'true' && needs.changes.outputs.prompt_vault != 'true')
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: |
           if [ -d "backend" ]; then
             black --check backend/
@@ -163,7 +163,7 @@ jobs:
           fi
 
       - name: Check Python import sorting (isort)
-        if: needs.changes.outputs.agentnav_only == 'true' || (needs.changes.outputs.backend == 'true' && needs.changes.outputs.prompt_vault != 'true')
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: |
           if [ -d "backend" ]; then
             isort --check-only --profile black backend/
@@ -172,7 +172,7 @@ jobs:
           fi
 
       - name: Run Python linting (ruff)
-        if: needs.changes.outputs.agentnav_only == 'true' || (needs.changes.outputs.backend == 'true' && needs.changes.outputs.prompt_vault != 'true')
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: |
           if [ -d "backend" ]; then
             ruff check backend/
@@ -181,7 +181,7 @@ jobs:
           fi
 
       - name: Run Python type checking (mypy)
-        if: needs.changes.outputs.agentnav_only == 'true' || (needs.changes.outputs.backend == 'true' && needs.changes.outputs.prompt_vault != 'true')
+        if: needs.changes.outputs.backend == 'true' || github.event_name == 'push'
         run: |
           if [ -d "backend" ]; then
             mypy backend/ --ignore-missing-imports
