@@ -38,6 +38,11 @@ extend-exclude = '''
   | dist
 )/
 '''
+# Allowlist for files that should be formatted by black
+force-include = [
+    "main.py",
+    "tests/test_adk_health_check.py",
+]
 
 [tool.ruff]
 line-length = 100
