@@ -1,7 +1,0 @@
-# CI-friendly Gemma service dependencies (lightweight subset)
-# Used for PR builds to validate Dockerfile steps without heavy GPU packages
-fastapi>=0.95.0
-uvicorn[standard]>=0.22.0
-pydantic>=2.0.0
-python-dotenv>=1.0.0
-huggingface-hub>=0.23.0

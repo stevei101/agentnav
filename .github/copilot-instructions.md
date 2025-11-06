@@ -2,9 +2,9 @@
 
 ## **Project Overview**
 
-agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support.
+agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support. The project includes a companion application, the **Gen AI Prompt Management App**, which provides prompt management capabilities using Supabase for persistence and authentication.
 
-**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Podman, Terraform, GitHub Actions
+**Tech Stack:** TypeScript, React, Vite, Tailwind CSS, Python, FastAPI, Google ADK, A2A Protocol, Gemini/Gemma models, Firestore, Supabase, Podman, Terraform, GitHub Actions
 
 **Project Type:** Full-stack web application with AI agent orchestration
 
@@ -12,9 +12,9 @@ agentnav is a multi-agent knowledge exploration system using Google Agent Develo
 
 **Target Runtimes:**
 
-* Frontend: Node.js 20+ (via bun), deploys to Cloud Run  
-* Backend: Python 3.11+, deploys to Cloud Run with optional GPU support  
-* Infrastructure: Terraform 1.5+, managed via Terraform Cloud
+- Frontend: Node.js 20+ (via bun), deploys to Cloud Run
+- Backend: Python 3.11+, deploys to Cloud Run with optional GPU support
+- Infrastructure: Terraform 1.5+, managed via Terraform Cloud
 
 ---
 
@@ -22,45 +22,55 @@ agentnav is a multi-agent knowledge exploration system using Google Agent Develo
 
 ### **Frontend (TypeScript/React)**
 
-* **Location:** `frontend/` directory  
-* **Package Manager:** bun (fast JS runtime and package manager)  
-* **Build Tool:** Vite with TypeScript  
-* **Styling:** Tailwind CSS utility classes only  
-* **Deployment:** Static assets served via Nginx on Cloud Run (us-central1)
+- **Location:** `frontend/` directory
+- **Package Manager:** bun (fast JS runtime and package manager)
+- **Build Tool:** Vite with TypeScript
+- **Styling:** Tailwind CSS utility classes only
+- **Deployment:** Static assets served via Nginx on Cloud Run (us-central1)
 
 ### **Backend (Python/FastAPI)**
 
-* **Location:** `backend/` directory  
-* **Package Manager:** uv (fast Python package resolver)  
-* **Framework:** FastAPI with async/await  
-* **AI Orchestration:** Google ADK with A2A Protocol  
-* **Deployment:** Cloud Run serverless (europe-west1)
+- **Location:** `backend/` directory
+- **Package Manager:** uv (fast Python package resolver)
+- **Framework:** FastAPI with async/await
+- **AI Orchestration:** Google ADK with A2A Protocol
+- **Deployment:** Cloud Run serverless (europe-west1)
 
 ### **Agent Architecture**
 
 Four specialized agents coordinate via A2A Protocol:
 
-1. **Orchestrator Agent** \- Receives input, determines content type, delegates tasks  
-2. **Summarizer Agent** \- Generates comprehensive content summaries  
-3. **Linker Agent** \- Identifies entities and their relationships  
+1. **Orchestrator Agent** \- Receives input, determines content type, delegates tasks
+2. **Summarizer Agent** \- Generates comprehensive content summaries
+3. **Linker Agent** \- Identifies entities and their relationships
 4. **Visualizer Agent** \- Creates graph structures (Mind Maps/Dependency Graphs)
 
 All agents communicate asynchronously via A2A Protocol and persist state in Firestore.
 
 ### **Gemma GPU Service**
 
-* **Location:** `backend/gemma_service/`  
-* **Purpose:** GPU-accelerated model inference using Gemma open-source models  
-* **Hardware:** NVIDIA L4 GPU on Cloud Run (europe-west1)  
-* **Models:** Gemma 7B or 2B with optional 8-bit quantization
+- **Location:** `backend/gemma_service/`
+- **Purpose:** GPU-accelerated model inference using Gemma open-source models
+- **Hardware:** NVIDIA L4 GPU on Cloud Run (europe-west1)
+- **Models:** Gemma 7B or 2B with optional 8-bit quantization
+
+### **Gen AI Prompt Management App**
+
+- **Location:** `prompt-management-app/` (companion application)
+- **Purpose:** Prompt management interface with CRUD operations for AI prompts
+- **Technology Stack:** Node.js, React, TypeScript (managed by bun)
+- **Persistence:** Supabase (PostgreSQL) for prompt storage
+- **Authentication:** Google OAuth via Supabase Auth
+- **Deployment:** Cloud Run serverless (us-central1)
 
 ### **Infrastructure**
 
-* **Database:** Firestore (NoSQL) for session memory and knowledge caching  
-* **Secrets:** Google Secret Manager (never embed credentials)  
-* **Container Registry:** Google Artifact Registry (GAR)  
-* **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run  
-* **DNS/TLS:** Cloud DNS + Cloud Run managed TLS for agentnav.lornu.com
+- **Database:** Firestore (NoSQL) for session memory and knowledge caching
+- **Supabase:** External PostgreSQL/Auth service for Gen AI Prompt Management App (prompts storage and Google OAuth authentication)
+- **Secrets:** Google Secret Manager (never embed credentials)
+- **Container Registry:** Google Artifact Registry (GAR)
+- **CI/CD:** GitHub Actions → Terraform Cloud → Cloud Run
+- **DNS/TLS:** Cloud DNS + Cloud Run managed TLS for agentnav.lornu.com
 
 ---
 
@@ -68,32 +78,36 @@ All agents communicate asynchronously via A2A Protocol and persist state in Fire
 
 agentnav/  
 ├── .github/  
-│   ├── workflows/           \# GitHub Actions CI/CD  
-│   └── copilot-instructions.md  
+│ ├── workflows/ \# GitHub Actions CI/CD  
+│ └── copilot-instructions.md  
 ├── frontend/  
-│   ├── src/  
-│   │   ├── components/      \# React components  
-│   │   ├── services/        \# API clients  
-│   │   └── types/           \# TypeScript interfaces  
-│   ├── package.json  
-│   └── Containerfile        \# Podman build config  
+│ ├── src/  
+│ │ ├── components/ \# React components  
+│ │ ├── services/ \# API clients  
+│ │ └── types/ \# TypeScript interfaces  
+│ ├── package.json  
+│ └── Containerfile \# Podman build config  
 ├── backend/  
-│   ├── agents/              \# ADK agent definitions  
-│   │   ├── orchestrator.py  
-│   │   ├── summarizer.py  
-│   │   ├── linker.py  
-│   │   └── visualizer.py  
-│   ├── services/            \# External service clients  
-│   ├── gemma_service/       \# GPU-accelerated model service  
-│   ├── main.py              \# FastAPI app entry point  
-│   ├── requirements.txt     \# Python dependencies  
-│   └── Containerfile        \# Podman build config  
-├── terraform/               \# Infrastructure as Code  
-│   ├── main.tf  
-│   ├── variables.tf  
-│   └── modules/  
-├── scripts/                 \# Build and deployment scripts  
-└── docs/                    \# Additional documentation
+│ ├── agents/ \# ADK agent definitions  
+│ │ ├── orchestrator.py  
+│ │ ├── summarizer.py  
+│ │ ├── linker.py  
+│ │ └── visualizer.py  
+│ ├── services/ \# External service clients  
+│ ├── gemma_service/ \# GPU-accelerated model service  
+│ ├── main.py \# FastAPI app entry point  
+│ ├── requirements.txt \# Python dependencies  
+│ └── Containerfile \# Podman build config  
+├── prompt-management-app/ \# Gen AI Prompt Management App  
+│ ├── src/ \# Application source  
+│ ├── package.json \# Dependencies (managed by bun)  
+│ └── Containerfile \# Podman build config  
+├── terraform/ \# Infrastructure as Code  
+│ ├── main.tf  
+│ ├── variables.tf  
+│ └── modules/  
+├── scripts/ \# Build and deployment scripts  
+└── docs/ \# Additional documentation
 
 ---
 
@@ -102,28 +116,39 @@ agentnav/
 ### **Frontend Development**
 
 cd frontend  
-bun install                  \# Install dependencies  
-bun run dev                  \# Start dev server (port 5173\)  
-bun run build                \# Production build  
-bun run test                 \# Run tests  
-bun run lint                 \# Lint code
+bun install \# Install dependencies  
+bun run dev \# Start dev server (port 5173\)  
+bun run build \# Production build  
+bun run test \# Run tests  
+bun run lint \# Lint code
 
 **Important:** Always use bun, not npm/yarn. Bun is significantly faster for this codebase.
 
 ### **Backend Development**
 
 cd backend  
-uv venv                      \# Create virtual environment  
-source .venv/bin/activate    \# Activate venv  
+uv venv \# Create virtual environment  
+source .venv/bin/activate \# Activate venv  
 uv pip install \-r requirements.txt  
 PORT=8080 uvicorn main:app \--host 0.0.0.0 \--port 8080 \--reload
 
 **Important:** Backend MUST read PORT environment variable for Cloud Run compatibility.
 
+### **Gen AI Prompt Management App Development**
+
+cd prompt-management-app  
+bun install \# Install dependencies  
+bun run dev \# Start dev server (port 3000\)  
+bun run build \# Production build  
+bun run test \# Run tests  
+bun run lint \# Lint code
+
+**Important:** The app requires Supabase environment variables (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) for local development.
+
 ### **Local Testing with Firestore Emulator**
 
 gcloud emulators firestore start \--host-port=localhost:8080  
-export FIRESTORE\_EMULATOR\_HOST=localhost:8080
+export FIRESTORE_EMULATOR_HOST=localhost:8080
 
 ### **Container Builds (Podman)**
 
@@ -134,7 +159,10 @@ podman build \-t agentnav-frontend:latest \-f frontend/Containerfile frontend/
 podman build \-t agentnav-backend:latest \-f backend/Containerfile backend/
 
 \# Gemma GPU Service  
-podman build \-t gemma-service:latest \-f backend/gemma\_service/Containerfile backend/gemma\_service/
+podman build \-t gemma-service:latest \-f backend/gemma_service/Containerfile backend/gemma_service/
+
+\# Gen AI Prompt Management App  
+podman build \-t prompt-management-app:latest \-f prompt-management-app/Containerfile prompt-management-app/
 
 ### **Running Tests**
 
@@ -155,13 +183,14 @@ pytest tests/ \--cov=. \--cov-report=term \--cov-fail-under=70
 
 ### **CI/CD Flow**
 
-1. Push code to GitHub  
-2. GitHub Actions workflow triggers  
-3. Authenticate via Workload Identity Federation (WIF)  
-4. Terraform Cloud provisions/updates GCP infrastructure  
-5. Podman builds container images, pushes to GAR
+1. Push code to GitHub
+2. GitHub Actions workflow triggers
+3. Authenticate via Workload Identity Federation (WIF)
+4. Terraform Cloud provisions/updates GCP infrastructure
+5. Podman builds container images for all applications (Agent Navigator services and Gen AI Prompt Management App), pushes to GAR
+6. Deploy both Agent Navigator and Gen AI Prompt Management App to Cloud Run
 
-Deploy to Cloud Run:  
+Deploy to Cloud Run:
 
 ```bash
 # Frontend (us-central1)
@@ -183,27 +212,51 @@ gcloud run deploy gemma-service \
   --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 \
   --port 8080 --timeout 300s
 
+# Gen AI Prompt Management App (us-central1)
+gcloud run deploy prompt-management-app \
+  --image gcr.io/$PROJECT_ID/prompt-management-app:$GITHUB_SHA \
+  --region us-central1 --platform managed --port 8080 --timeout 300s \
+  --set-env-vars PORT=8080 \
+  --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest
+```
+
 ### **Cloud Run Requirements**
 
 **CRITICAL:** All services must:
 
-* Read `PORT` environment variable (Cloud Run sets this automatically)  
-* Bind to `0.0.0.0` (not `127.0.0.1`)  
-* Implement `/healthz` health check endpoint  
-* Log to stdout/stderr (Cloud Run captures automatically)  
-* Handle SIGTERM for graceful shutdown
+- Read `PORT` environment variable (Cloud Run sets this automatically)
+- Bind to `0.0.0.0` (not `127.0.0.1`)
+- Implement `/healthz` health check endpoint
+- Log to stdout/stderr (Cloud Run captures automatically)
+- Handle SIGTERM for graceful shutdown
 
 ### **Environment Variables**
 
 Backend service requires:
 
-* `PORT` \- Set by Cloud Run  
-* `GEMINI_API_KEY` \- From Secret Manager  
-* `GEMMA_SERVICE_URL` \- URL of Gemma GPU service  
-* `FIRESTORE_PROJECT_ID`  
-* `FIRESTORE_DATABASE_ID`  
-* `ADK_AGENT_CONFIG_PATH`  
-* `A2A_PROTOCOL_ENABLED=true`
+- `PORT` \- Set by Cloud Run
+- `GEMINI_API_KEY` \- From Secret Manager
+- `GEMMA_SERVICE_URL` \- URL of Gemma GPU service
+- `FIRESTORE_PROJECT_ID`
+- `FIRESTORE_DATABASE_ID`
+- `ADK_AGENT_CONFIG_PATH`
+- `A2A_PROTOCOL_ENABLED=true`
+
+Gen AI Prompt Management App service requires:
+
+- `PORT` \- Set by Cloud Run
+- `SUPABASE_URL` \- Base URL for the Supabase project (from Secret Manager)
+- `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (from Secret Manager)
+- `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (from Secret Manager)
+
+### **Cloud Run Service Configurations**
+
+| Service                          | Region       | CPU    | Memory | GPU            | Special Config                |
+| :------------------------------- | :----------- | :----- | :----- | :------------- | :---------------------------- |
+| **Agent Navigator Frontend**     | us-central1  | 1 vCPU | 512Mi  | None           | Port 80, Nginx static serving |
+| **Agent Navigator Backend**      | europe-west1 | 1 vCPU | 1Gi    | None           | Port 8080, Firestore access   |
+| **Gemma GPU Service**            | europe-west1 | GPU    | 16Gi   | NVIDIA L4 (1x) | Port 8080, CUDA support       |
+| **Gen AI Prompt Management App** | us-central1  | 1 vCPU | 512Mi  | None           | Port 8080, Supabase secrets   |
 
 ---
 
@@ -213,15 +266,15 @@ Backend service requires:
 
 **1\. Workload Identity Federation (WIF)** \- For CI/CD
 
-* GitHub Actions authenticates to GCP without static keys  
-* Service Account: Deployment SA with `roles/run.admin`, `roles/artifactregistry.writer`  
-* Configured in Terraform
+- GitHub Actions authenticates to GCP without static keys
+- Service Account: Deployment SA with `roles/run.admin`, `roles/artifactregistry.writer`
+- Configured in Terraform
 
 **2\. Workload Identity (WI)** \- For Cloud Run Services
 
-* Running containers use built-in Service Accounts to access GCP services  
-* Backend SA needs: `roles/datastore.user`, `roles/secretmanager.secretAccessor`  
-* No credentials in container images
+- Running containers use built-in Service Accounts to access GCP services
+- Backend SA needs: `roles/datastore.user`, `roles/secretmanager.secretAccessor`
+- No credentials in container images
 
 **NEVER embed service account keys or credentials in code or containers.**
 
@@ -233,23 +286,23 @@ Backend service requires:
 
 **sessions/** \- User session data
 
-* Document ID: `session_id`  
-* Fields: `created_at`, `updated_at`, `user_input`, `agent_states` (map)
+- Document ID: `session_id`
+- Fields: `created_at`, `updated_at`, `user_input`, `agent_states` (map)
 
-**knowledge\_cache/** \- Cached analysis results
+**knowledge_cache/** \- Cached analysis results
 
-* Document ID: `content_hash`  
-* Fields: `summary`, `visualization_data`, `created_at`, `expires_at`
+- Document ID: `content_hash`
+- Fields: `summary`, `visualization_data`, `created_at`, `expires_at`
 
-**agent\_context/** \- Shared agent context via A2A Protocol
+**agent_context/** \- Shared agent context via A2A Protocol
 
-* Document ID: `session_id`  
-* Fields: `context_data` (map), `last_updated_by` (agent name)
+- Document ID: `session_id`
+- Fields: `context_data` (map), `last_updated_by` (agent name)
 
-**agent\_prompts/** \- Agent prompt configurations
+**agent_prompts/** \- Agent prompt configurations
 
-* Document ID: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)  
-* Fields: `prompt_text`, `version`, `created_at`, `updated_at`, `metadata` (map)
+- Document ID: `{agent}_{prompt_type}` (e.g., `visualizer_graph_generation`)
+- Fields: `prompt_text`, `version`, `created_at`, `updated_at`, `metadata` (map)
 
 ---
 
@@ -257,84 +310,84 @@ Backend service requires:
 
 ### **General**
 
-1. **RORO Pattern:** Receive an Object, Return an Object for all functions, APIs, DTOs  
-2. **Type Safety:** Use TypeScript for frontend, Pydantic models for backend  
-3. **Error Handling:** Centralized error handlers with consistent error shape: `{code: string, message: string, details?: object}`  
-4. **Validation:** Validate all inputs early (frontend before API call, backend with Pydantic)  
+1. **RORO Pattern:** Receive an Object, Return an Object for all functions, APIs, DTOs
+2. **Type Safety:** Use TypeScript for frontend, Pydantic models for backend
+3. **Error Handling:** Centralized error handlers with consistent error shape: `{code: string, message: string, details?: object}`
+4. **Validation:** Validate all inputs early (frontend before API call, backend with Pydantic)
 5. **70% Coverage Rule:** All new/modified code MUST have ≥70% test coverage before merge
 
 ### **Frontend (React/TypeScript)**
 
-* Pure functional components with named exports  
-* Use TypeScript for all type safety  
-* Tailwind utility classes only (no custom CSS)  
-* Error Boundaries for graceful error handling  
-* Lazy load visualization components  
-* Guard early: validate props/data at component entry
+- Pure functional components with named exports
+- Use TypeScript for all type safety
+- Tailwind utility classes only (no custom CSS)
+- Error Boundaries for graceful error handling
+- Lazy load visualization components
+- Guard early: validate props/data at component entry
 
 **Example Component:**
 
-interface VisualizationProps {  
-  data: GraphData;  
-  onError?: (error: Error) => void;  
+interface VisualizationProps {
+data: GraphData;
+onError?: (error: Error) => void;
 }
 
-export function Visualization({ data, onError }: VisualizationProps) {  
-  if (\!data?.nodes) {  
-    return \<div\>No data available\</div\>;  
-  }  
-  // Component logic...  
+export function Visualization({ data, onError }: VisualizationProps) {
+if (\!data?.nodes) {
+return \<div\>No data available\</div\>;
+}
+// Component logic...
 }
 
 ### **Backend (Python/FastAPI)**
 
-* Use async/await for all I/O operations  
-* Pydantic models for request/response validation  
-* Type hints for all function signatures  
-* ADK agents inherit from base `Agent` class  
-* A2A Protocol for inter-agent communication
+- Use async/await for all I/O operations
+- Pydantic models for request/response validation
+- Type hints for all function signatures
+- ADK agents inherit from base `Agent` class
+- A2A Protocol for inter-agent communication
 
 **Example FastAPI Route:**
 
-from fastapi import APIRouter  
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-class AnalyzeRequest(BaseModel):  
-    content: str  
-    content\_type: str
+class AnalyzeRequest(BaseModel):
+content: str
+content_type: str
 
-class AnalyzeResponse(BaseModel):  
-    summary: str  
-    visualization: dict
+class AnalyzeResponse(BaseModel):
+summary: str
+visualization: dict
 
-@router.post("/analyze", response\_model=AnalyzeResponse)  
-async def analyze\_content(request: AnalyzeRequest):  
-    \# Handler logic...  
-    return AnalyzeResponse(summary="...", visualization={})
+@router.post("/analyze", response_model=AnalyzeResponse)
+async def analyze_content(request: AnalyzeRequest):
+\# Handler logic...
+return AnalyzeResponse(summary="...", visualization={})
 
 **Example ADK Agent:**
 
 from google.adk import Agent, A2AProtocol
 
-class SummarizerAgent(Agent):  
-    async def process(self, context: dict) \-\> dict:  
-        result \= await self.summarize(context\['document'\])  
-          
-        \# Share via A2A Protocol  
-        await self.a2a.send\_message({  
-            'agent': 'visualizer',  
-            'type': 'summary\_complete',  
-            'data': result  
-        })  
-          
+class SummarizerAgent(Agent):
+async def process(self, context: dict) \-\> dict:
+result \= await self.summarize(context\['document'\])
+
+        \# Share via A2A Protocol
+        await self.a2a.send\_message({
+            'agent': 'visualizer',
+            'type': 'summary\_complete',
+            'data': result
+        })
+
         return result
 
 ### **Terraform**
 
-* Use modules for reusable components  
-* Always use variables for configurable values  
-* Document all resources with comments  
-* Use data sources for existing resources
+- Use modules for reusable components
+- Always use variables for configurable values
+- Document all resources with comments
+- Use data sources for existing resources
 
 ---
 
@@ -372,26 +425,26 @@ class SummarizerAgent(Agent):
 
 **MANDATORY:** All new or modified code must achieve ≥70% test coverage as verified by:
 
-\# Backend  
+\# Backend
 pytest tests/ \--cov=. \--cov-report=term \--cov-fail-under=70
 
-\# Frontend  
+\# Frontend
 bun test \--coverage \--coverageThreshold='{"global":{"lines":70}}'
 
 ### **Test Organization**
 
-* **Frontend:** `frontend/src/__tests__/` \- Jest \+ React Testing Library  
-* **Backend:** `backend/tests/` \- pytest with fixtures  
-* **Integration:** `tests/integration/` \- Full workflow tests  
-* **E2E:** `tests/e2e/` \- End-to-end user flows
+- **Frontend:** `frontend/src/__tests__/` \- Jest \+ React Testing Library
+- **Backend:** `backend/tests/` \- pytest with fixtures
+- **Integration:** `tests/integration/` \- Full workflow tests
+- **E2E:** `tests/e2e/` \- End-to-end user flows
 
 ### **What to Test**
 
-* All ADK agent logic and A2A Protocol handlers  
-* FastAPI route handlers and Pydantic validation  
-* React components with different prop combinations  
-* Firestore operations with mocked clients  
-* Error handling and edge cases
+- All ADK agent logic and A2A Protocol handlers
+- FastAPI route handlers and Pydantic validation
+- React components with different prop combinations
+- Firestore operations with mocked clients
+- Error handling and edge cases
 
 ---
 
@@ -399,34 +452,34 @@ bun test \--coverage \--coverageThreshold='{"global":{"lines":70}}'
 
 ### **Frontend**
 
-* Code split with Vite automatic chunking  
-* Lazy load visualization components  
-* Leverage Cloud Run CDN caching for static assets  
-* Minimize bundle size
+- Code split with Vite automatic chunking
+- Lazy load visualization components
+- Leverage Cloud Run CDN caching for static assets
+- Minimize bundle size
 
 ### **Backend**
 
-* Use async Firestore operations  
-* Cache analysis results in Firestore (check before processing)  
-* Connection pooling for Firestore clients  
-* Call Gemma GPU service only for complex tasks; cache results
+- Use async Firestore operations
+- Cache analysis results in Firestore (check before processing)
+- Connection pooling for Firestore clients
+- Call Gemma GPU service only for complex tasks; cache results
 
 ### **Gemma GPU Service**
 
-* Enable 8-bit quantization for memory efficiency if needed  
-* Set `min-instances=0` to scale to zero when idle  
-* Implement result caching to reduce redundant inference  
-* Consider batching requests when possible
+- Enable 8-bit quantization for memory efficiency if needed
+- Set `min-instances=0` to scale to zero when idle
+- Implement result caching to reduce redundant inference
+- Consider batching requests when possible
 
 ---
 
 ## **Security Requirements**
 
-1. **Secrets:** Always use Secret Manager, never embed credentials  
-2. **IAM:** Least-privilege roles for all service accounts  
-3. **Authentication:** WIF for CI/CD, WI for runtime  
-4. **Input Validation:** Sanitize all user inputs (frontend and backend)  
-5. **Rate Limiting:** Implement on Cloud Run services  
+1. **Secrets:** Always use Secret Manager, never embed credentials
+2. **IAM:** Least-privilege roles for all service accounts
+3. **Authentication:** WIF for CI/CD, WI for runtime
+4. **Input Validation:** Sanitize all user inputs (frontend and backend)
+5. **Rate Limiting:** Implement on Cloud Run services
 6. **API Security:** Use authentication for backend API endpoints
 
 ---
@@ -435,50 +488,56 @@ bun test \--coverage \--coverageThreshold='{"global":{"lines":70}}'
 
 Before making a pull request, always:
 
-1. ✅ Run linters: `bun run lint` (frontend), `ruff check .` (backend)  
-2. ✅ Run tests: `bun test` (frontend), `pytest` (backend)  
-3. ✅ Verify coverage: Must be ≥70% for new/modified code  
-4. ✅ Build containers: Test Podman builds succeed  
-5. ✅ Check Cloud Run compatibility: PORT env var, 0.0.0.0 binding, /healthz  
-6. ✅ Test locally with Firestore emulator  
+1. ✅ Run linters: `bun run lint` (frontend), `ruff check .` (backend)
+2. ✅ Run tests: `bun test` (frontend), `pytest` (backend)
+3. ✅ Verify coverage: Must be ≥70% for new/modified code
+4. ✅ Build containers: Test Podman builds succeed
+5. ✅ Check Cloud Run compatibility: PORT env var, 0.0.0.0 binding, /healthz
+6. ✅ Test locally with Firestore emulator
 7. ✅ Verify no secrets in code/config files
 
 ---
 
 ## **Key GitHub Actions Secrets**
 
-* `GCP_PROJECT_ID` \- Google Cloud Project ID  
-* `GEMINI_API_KEY` \- API key for Gemini models  
-* `FIRESTORE_CREDENTIALS` \- Service account JSON (or use WIF)  
-* `TF_API_TOKEN` \- Terraform Cloud API token  
-* `TF_CLOUD_ORGANIZATION` \- Terraform Cloud org name  
-* `TF_WORKSPACE` \- Terraform Cloud workspace  
-* `WIF_PROVIDER` \- Workload Identity Federation provider  
-* `WIF_SERVICE_ACCOUNT` \- WIF service account email
+- `GCP_PROJECT_ID` \- Google Cloud Project ID
+- `GEMINI_API_KEY` \- API key for Gemini models
+- `FIRESTORE_CREDENTIALS` \- Service account JSON (or use WIF)
+- `TF_API_TOKEN` \- Terraform Cloud API token
+- `TF_CLOUD_ORGANIZATION` \- Terraform Cloud org name
+- `TF_WORKSPACE` \- Terraform Cloud workspace
+- `WIF_PROVIDER` \- Workload Identity Federation provider
+- `WIF_SERVICE_ACCOUNT` \- WIF service account email
+- `SUPABASE_URL` \- Base URL for the Supabase project (required for Gen AI Prompt Management App)
+- `SUPABASE_ANON_KEY` \- Public anonymous key for Supabase client (required for Gen AI Prompt Management App)
+- `SUPABASE_SERVICE_KEY` \- Private service role key for backend/admin tasks (required for Gen AI Prompt Management App)
 
 ---
 
 ## **Important Constraints**
 
-1. **Never use localStorage/sessionStorage** in artifacts (not supported in Claude.ai)  
-2. **Never use THREE.CapsuleGeometry** (requires r142+, we use Three.js r128)  
-3. **Always use PORT environment variable** for Cloud Run compatibility  
-4. **Never embed credentials** in code, containers, or config files  
-5. **Always achieve ≥70% test coverage** for new/modified code  
-6. **Use Tailwind utility classes only** (no custom CSS, no compiler access)  
+1. **Never use localStorage/sessionStorage** in artifacts (not supported in Claude.ai)
+2. **Never use THREE.CapsuleGeometry** (requires r142+, we use Three.js r128)
+3. **Always use PORT environment variable** for Cloud Run compatibility
+4. **Never embed credentials** in code, containers, or config files
+5. **Always achieve ≥70% test coverage** for new/modified code
+6. **Use Tailwind utility classes only** (no custom CSS, no compiler access)
 7. **Trust these instructions** \- only search/explore if instructions are incomplete or incorrect
 
 ---
 
 ## **Additional Resources**
 
-* ADK Documentation: [Google ADK Docs](https://cloud.google.com/agent-development-kit)  
-* A2A Protocol: [Agent2Agent Protocol](https://github.com/google/agent-development-kit)  
-* Cloud Run Docs: [Cloud Run Documentation](https://cloud.google.com/run/docs)  
-* Firestore Docs: [Firestore Documentation](https://firebase.google.com/docs/firestore)  
-* GPU Setup: See `docs/GPU_SETUP_GUIDE.md` for detailed GPU configuration
+- ADK Documentation: [Google ADK Docs](https://cloud.google.com/agent-development-kit)
+- A2A Protocol: [Agent2Agent Protocol](https://github.com/google/agent-development-kit)
+- Cloud Run Docs: [Cloud Run Documentation](https://cloud.google.com/run/docs)
+- Firestore Docs: [Firestore Documentation](https://firebase.google.com/docs/firestore)
+- GPU Setup: See `docs/GPU_SETUP_GUIDE.md` for detailed GPU configuration
 
 ---
 
 **This is a comprehensive guide. Trust these instructions first, and only perform additional searches if information is incomplete or found to be incorrect.**
 
+```
+
+```

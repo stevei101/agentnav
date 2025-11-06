@@ -13,6 +13,7 @@ However, you have **three options** to handle this:
 **What you need to do:**
 
 1. **GitHub Secrets** (you just did this ✅)
+
    ```
    HUGGINGFACE_TOKEN = hf_xxxxx...
    ```
@@ -23,16 +24,19 @@ However, you have **three options** to handle this:
    ```
 
 **Pros:**
+
 - ✅ Simple and straightforward
 - ✅ Decoupled (GitHub and GCP manage their own secrets)
 - ✅ No cross-platform dependencies
 - ✅ Industry standard practice
 
 **Cons:**
+
 - ❌ Manual step required
 - ❌ Must keep tokens in sync manually
 
 **Current State in agentnav:**
+
 ```
 Terraform creates the Secret Manager resource
      ↓
@@ -51,7 +55,7 @@ Terraform doesn't touch the value (safe!)
 name: Sync GitHub Secrets to GCP
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch: # Manual trigger
   # Or schedule:
   # schedule:
   #   - cron: '0 0 * * 0'  # Weekly
@@ -83,12 +87,14 @@ jobs:
 ```
 
 **Pros:**
+
 - ✅ Automated sync
 - ✅ Can run on schedule
 - ✅ Uses Workload Identity Federation (secure)
 - ✅ No hardcoded credentials
 
 **Cons:**
+
 - ❌ Extra workflow file
 - ❌ Additional GitHub Actions run time
 
@@ -121,10 +127,12 @@ resource "null_resource" "sync_github_secret" {
 ```
 
 **Pros:**
+
 - ✅ Everything in Terraform
 - ✅ Infrastructure as code
 
 **Cons:**
+
 - ❌ Requires CLI tools (gh, gcloud) on runner
 - ❌ Less secure (processes tokens in shell)
 - ❌ Harder to debug
@@ -135,14 +143,14 @@ resource "null_resource" "sync_github_secret" {
 
 ## 📊 Comparison Table
 
-| Aspect | Option 1 (Manual) | Option 2 (GH Actions) | Option 3 (Terraform) |
-|--------|-------------------|----------------------|----------------------|
-| Automation | ❌ No | ✅ Yes | ✅ Yes |
-| Security | ✅ Best | ✅ Good | ⚠️ Medium |
-| Complexity | ✅ Simple | ⚠️ Medium | ❌ Complex |
-| Error Prone | ⚠️ Manual | ✅ Automated | ❌ Shell exec |
-| Industry Std | ✅ Yes | ✅ Yes | ❌ No |
-| **Recommended** | ✅ NOW | ✅ FOR FUTURE | ❌ AVOID |
+| Aspect          | Option 1 (Manual) | Option 2 (GH Actions) | Option 3 (Terraform) |
+| --------------- | ----------------- | --------------------- | -------------------- |
+| Automation      | ❌ No             | ✅ Yes                | ✅ Yes               |
+| Security        | ✅ Best           | ✅ Good               | ⚠️ Medium            |
+| Complexity      | ✅ Simple         | ⚠️ Medium             | ❌ Complex           |
+| Error Prone     | ⚠️ Manual         | ✅ Automated          | ❌ Shell exec        |
+| Industry Std    | ✅ Yes            | ✅ Yes                | ❌ No                |
+| **Recommended** | ✅ NOW            | ✅ FOR FUTURE         | ❌ AVOID             |
 
 ---
 
@@ -203,6 +211,7 @@ EOF
 ```
 
 Then trigger it manually when GitHub secret changes:
+
 ```bash
 gh workflow run sync-secrets-gcp.yml
 ```
@@ -218,17 +227,18 @@ Your Terraform is set up correctly for **manual secret injection**:
 resource "google_secret_manager_secret" "huggingface_token" {
   secret_id = "HUGGINGFACE_TOKEN"
   project   = var.project_id
-  
+
   replication {
     auto {}
   }
-  
+
   # Note: Secret values should be added after creation via:
   # echo -n "YOUR_SECRET_VALUE" | gcloud secrets versions add SECRET_NAME --data-file=-
 }
 ```
 
 This is the **correct approach** because:
+
 - ✅ Terraform creates the infrastructure (secret container)
 - ✅ Manual secret injection (keeps credentials out of IaC)
 - ✅ Follows Google Cloud best practices
@@ -239,11 +249,13 @@ This is the **correct approach** because:
 ## 🚀 NEXT STEPS
 
 ### Now (< 5 minutes)
+
 1. Get your `HUGGINGFACE_TOKEN` from GitHub Secrets
 2. Add it to GCP Secret Manager manually
 3. Run `terraform apply`
 
 ### Later (Optional)
+
 - Set up GitHub Actions workflow for automatic syncing
 - Add scheduled sync job for key rotation
 
@@ -260,6 +272,7 @@ This is the **correct approach** because:
 ## ✅ Bottom Line
 
 **Your current setup is perfect:**
+
 - GitHub Secrets: ✅ Already have `HUGGINGFACE_TOKEN`
 - GCP Terraform: ✅ Ready to create Secret Manager resource
 - Next: Manually add secret value → `terraform apply` → Deploy! 🚀

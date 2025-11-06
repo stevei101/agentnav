@@ -18,10 +18,10 @@ resource "google_service_account" "cloud_run_frontend" {
   depends_on = [google_project_service.apis]
 }
 
-resource "google_service_account" "cloud_run_gemma" {
-  account_id   = "agentnav-gemma"
-  display_name = "Agentic Navigator Gemma GPU Service Account"
-  description  = "Service account for Gemma GPU Cloud Run service"
+resource "google_service_account" "cloud_run_prompt_mgmt" {
+  account_id   = "agentnav-prompt-mgmt"
+  display_name = "Gen AI Prompt Management App Service Account"
+  description  = "Service account for Prompt Management App Cloud Run service"
   project      = var.project_id
 
   depends_on = [google_project_service.apis]
@@ -53,11 +53,17 @@ resource "google_project_iam_member" "backend_service_invoker" {
   member  = "serviceAccount:${google_service_account.cloud_run_backend.email}"
 }
 
-# Gemma service needs GPU access and secret access
-resource "google_project_iam_member" "gemma_secret_accessor" {
+# Prompt Management App needs secret access (for Supabase keys)
+resource "google_project_iam_member" "prompt_mgmt_secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.cloud_run_gemma.email}"
+  member  = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
+}
+
+resource "google_project_iam_member" "prompt_mgmt_service_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
 }
 
 # GitHub Actions service account permissions (for CI/CD)

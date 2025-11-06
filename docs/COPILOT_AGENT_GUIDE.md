@@ -21,29 +21,34 @@ Unlike general-purpose AI assistants, the agentnav-copilot-agent:
 ✅ **Provides Context-Aware Answers:** Understands the full multi-agent architecture and can explain how components interact  
 ✅ **Generates Compliant Code:** Produces code that follows project conventions (RORO, TypeScript patterns, ADK best practices)  
 ✅ **Accelerates Onboarding:** Instantly transfers architectural knowledge to new contributors  
-✅ **Reduces Review Cycles:** Catches policy violations before code review  
+✅ **Reduces Review Cycles:** Catches policy violations before code review
 
 ## How to Invoke the Agent
 
 ### In GitHub Comments
 
 The agent can be invoked directly in:
+
 - **Pull Request comments**
 - **Issue comments**
 - **Code review comments**
 
 **Syntax:**
+
 ```
 @agentnav-gh-copilot-agent [your question or request]
 ```
 
 **Examples:**
+
 ```
 @agentnav-gh-copilot-agent Review this code for Cloud Run compatibility
 ```
+
 ```
 @agentnav-gh-copilot-agent How do I implement a new ADK agent?
 ```
+
 ```
 @agentnav-gh-copilot-agent Generate a React component for displaying agent status
 ```
@@ -63,11 +68,13 @@ If you have the GitHub Copilot extension installed:
 **Task:** Generate new code following project conventions
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent Generate a React component for the AgentCard that displays agent name, status, and progress
 ```
 
 **Expected Response:**
+
 - TypeScript code with proper type annotations
 - React functional component (not class-based)
 - RORO pattern for props
@@ -82,6 +89,7 @@ If you have the GitHub Copilot extension installed:
 **Task:** Check if code follows Cloud Run requirements
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent Review this FastAPI application for Cloud Run compatibility:
 
@@ -89,6 +97,7 @@ If you have the GitHub Copilot extension installed:
 ```
 
 **Expected Response:**
+
 - ✅ Checks if `PORT` environment variable is read
 - ✅ Checks if host binding is `0.0.0.0` (not `127.0.0.1`)
 - ✅ Checks if `/healthz` endpoint exists
@@ -101,11 +110,13 @@ If you have the GitHub Copilot extension installed:
 **Task:** Understand how components interact
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent How does the Linker Agent get its embeddings from the Gemma GPU Service?
 ```
 
 **Expected Response:**
+
 - Explanation of the Linker Agent's role in the multi-agent architecture
 - Details on the secure HTTP client call to the Gemma GPU Service
 - Information about the A2A Protocol communication
@@ -119,11 +130,13 @@ If you have the GitHub Copilot extension installed:
 **Task:** Confirm which tools to use for dependencies
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent Which tool should I use to install Python dependencies?
 ```
 
 **Expected Response:**
+
 - **uv** is the mandated tool for Python dependency management
 - Explanation: `uv` provides fast package resolution and installation
 - Example command: `uv pip install -r requirements.txt`
@@ -136,11 +149,13 @@ If you have the GitHub Copilot extension installed:
 **Task:** Understand testing policies
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent What is the required test coverage for new code?
 ```
 
 **Expected Response:**
+
 - **70% or higher code coverage** is mandatory for all new code
 - Coverage is enforced in the CI/CD pipeline via pytest (backend) and vitest (frontend)
 - Explanation of how to run tests locally:
@@ -155,11 +170,13 @@ If you have the GitHub Copilot extension installed:
 **Task:** Understand WIF vs WI
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent What's the difference between Workload Identity Federation and Workload Identity?
 ```
 
 **Expected Response:**
+
 - **Workload Identity Federation (WIF):** Used for CI/CD (GitHub Actions → GCP authentication)
   - Eliminates static Service Account keys
   - Temporary, scoped access for deployments
@@ -175,12 +192,14 @@ If you have the GitHub Copilot extension installed:
 **Task:** Understand required environment variables
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent What environment variables are required for the backend service?
 ```
 
 **Expected Response:**
 List of required environment variables for the backend:
+
 - `PORT` - Set automatically by Cloud Run (defaults to 8080)
 - `GEMINI_API_KEY` - API key for Google Gemini models (from Secret Manager)
 - `GEMMA_SERVICE_URL` - URL of the Gemma GPU service
@@ -201,6 +220,7 @@ List of required environment variables for the backend:
 ### 2. Provide Context When Needed
 
 When asking about specific code:
+
 ```
 @agentnav-gh-copilot-agent Review this Python function for Cloud Run compatibility:
 
@@ -211,6 +231,7 @@ def start_server():
 ### 3. Use the Agent for Pre-Commit Checks
 
 Before submitting a PR, ask the agent to review your changes:
+
 ```
 @agentnav-gh-copilot-agent Review these changes for compliance with project policies:
 
@@ -220,12 +241,14 @@ Before submitting a PR, ask the agent to review your changes:
 ### 4. Combine with Documentation
 
 The agent complements (not replaces) the documentation:
+
 - Use the agent for **quick questions** and **real-time guidance**
 - Refer to full documentation for **comprehensive references** and **detailed examples**
 
 ### 5. Learn from the Responses
 
 The agent's responses are educational. They often include:
+
 - **Why** certain patterns are used
 - **Alternatives** that were considered
 - **References** to relevant documentation
@@ -241,7 +264,7 @@ The agent's responses are educational. They often include:
 ✅ Review code for policy compliance  
 ✅ Explain deployment patterns and requirements  
 ✅ Provide tooling and dependency guidance  
-✅ Explain the multi-agent architecture (ADK, A2A Protocol)  
+✅ Explain the multi-agent architecture (ADK, A2A Protocol)
 
 ### What the Agent CANNOT Do:
 
@@ -249,7 +272,7 @@ The agent's responses are educational. They often include:
 ❌ Access your local environment or repository  
 ❌ Make commits or open PRs directly  
 ❌ Access secrets or sensitive information  
-❌ Replace human code review (it's a pre-review assistant)  
+❌ Replace human code review (it's a pre-review assistant)
 
 ---
 
@@ -260,6 +283,7 @@ Here's a realistic example of how you might use the agent during development:
 **Developer:** I'm adding a new endpoint to the backend. What do I need to ensure for Cloud Run compatibility?
 
 **Agent:** For Cloud Run compatibility, your FastAPI endpoint should:
+
 1. Be accessible via the `PORT` environment variable (Cloud Run sets this automatically)
 2. Use `0.0.0.0` host binding (not `127.0.0.1`) for uvicorn
 3. Include a `/healthz` health check endpoint
@@ -267,6 +291,7 @@ Here's a realistic example of how you might use the agent during development:
 5. Log to stdout/stderr (Cloud Run captures these)
 
 Example:
+
 ```python
 import os
 from fastapi import FastAPI
@@ -285,6 +310,7 @@ if __name__ == "__main__":
 **Developer:** Thanks! How do I test this locally?
 
 **Agent:** To test locally:
+
 ```bash
 # Set PORT environment variable
 export PORT=8080
@@ -307,6 +333,7 @@ For full local development setup, see `docs/local-development.md`.
 ### Agent Doesn't Respond
 
 **Possible Causes:**
+
 - Incorrect mention format (should be `@agentnav-gh-copilot-agent`)
 - Agent invocation in unsupported context
 - GitHub Copilot extension not enabled
@@ -316,6 +343,7 @@ For full local development setup, see `docs/local-development.md`.
 ### Agent Gives Generic Answers
 
 **Possible Causes:**
+
 - Query too vague
 - Missing context
 
@@ -324,6 +352,7 @@ For full local development setup, see `docs/local-development.md`.
 ### Agent Response Seems Outdated
 
 **Possible Causes:**
+
 - System instruction may have been updated recently
 
 **Solution:** The agent is loaded with the current system instruction from `.github/agents/agentnav-gh-copilot-agent.md`. If the instruction has been updated, the agent should reflect those changes. If not, mention this in the issue tracker.
@@ -334,13 +363,13 @@ For full local development setup, see `docs/local-development.md`.
 
 The agent complements (but does not replace) the automated CI/CD checks:
 
-| Check | CI/CD | Agent |
-|-------|-------|-------|
-| **Linting** | ✅ Automated (ESLint, Ruff) | ✅ Can review code style |
-| **Testing** | ✅ Automated (pytest, vitest) | ✅ Can suggest test cases |
-| **Coverage** | ✅ Enforced (70% minimum) | ✅ Reminds about requirement |
-| **Security** | ✅ Automated (tfsec, OSV) | ✅ Can explain vulnerabilities |
-| **Terraform** | ✅ Automated (plan/validate) | ✅ Can review IaC patterns |
+| Check         | CI/CD                         | Agent                          |
+| ------------- | ----------------------------- | ------------------------------ |
+| **Linting**   | ✅ Automated (ESLint, Ruff)   | ✅ Can review code style       |
+| **Testing**   | ✅ Automated (pytest, vitest) | ✅ Can suggest test cases      |
+| **Coverage**  | ✅ Enforced (70% minimum)     | ✅ Reminds about requirement   |
+| **Security**  | ✅ Automated (tfsec, OSV)     | ✅ Can explain vulnerabilities |
+| **Terraform** | ✅ Automated (plan/validate)  | ✅ Can review IaC patterns     |
 
 **Best Practice:** Use the agent as a **pre-CI check** to catch issues before pushing code.
 
@@ -351,12 +380,14 @@ The agent complements (but does not replace) the automated CI/CD checks:
 ### 1. Understanding Complex Workflows
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent Explain the full workflow from user input to visualization in the multi-agent system
 ```
 
 **Expected Response:**
 A detailed explanation of:
+
 1. User submits document or codebase via frontend
 2. Orchestrator Agent receives input and determines content type
 3. Summarizer Agent processes content and stores results in Firestore
@@ -368,6 +399,7 @@ A detailed explanation of:
 ### 2. Debugging Deployment Issues
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent My Cloud Run backend is failing to start. Here's the error:
 
@@ -378,11 +410,13 @@ What could be wrong?
 
 **Expected Response:**
 Common causes:
+
 - Backend not reading `PORT` environment variable
 - Hardcoded port (e.g., `port=8080` instead of `port=int(os.getenv("PORT", 8080))`)
 - Multiple uvicorn instances running
 
 Solution: Ensure your backend reads `PORT` from environment:
+
 ```python
 port = int(os.getenv("PORT", 8080))
 uvicorn.run(app, host="0.0.0.0", port=port)
@@ -391,6 +425,7 @@ uvicorn.run(app, host="0.0.0.0", port=port)
 ### 3. Planning New Features
 
 **Query:**
+
 ```
 @agentnav-gh-copilot-agent I want to add a new agent that performs sentiment analysis. What do I need to consider?
 ```
@@ -451,11 +486,13 @@ The **agentnav-copilot-agent** is your context-aware development assistant for t
 - ✅ Accelerate your development workflow
 
 **Quick Start:**
+
 ```
 @agentnav-gh-copilot-agent [your question]
 ```
 
 **Related Documentation:**
+
 - [System Instruction](SYSTEM_INSTRUCTION.md) - Complete architectural reference
 - [Contribution Guide](../CONTRIBUTING.md) - How to contribute
 - [Testing Strategy](TESTING_STRATEGY.md) - Testing requirements and guidelines
