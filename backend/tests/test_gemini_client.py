@@ -4,195 +4,180 @@ Unit tests for Gemini Client Service (FR#090)
 Tests verify that the Gemini client can be initialized correctly
 without hardcoded credentials, supporting both Workload Identity
 and API key authentication methods.
+
+Updated to match current gemini_client.py API:
+- Uses GeminiClient class instead of get_gemini_client function
+- Tests reason_with_gemini helper function
 """
+
 import os
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 import sys
 
 # Add backend to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from services.gemini_client import (
-    get_gemini_client,
-    generate_content,
-    generate_content_with_prompt_template,
-    reset_client
-)
+from services.gemini_client import GeminiClient, reason_with_gemini
 
 
 class TestGeminiClientInitialization:
     """Test Gemini client initialization without hardcoded credentials"""
-    
-    def setup_method(self):
-        """Reset client before each test"""
-        reset_client()
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project", "GEMINI_API_KEY": ""})
-    @patch('services.gemini_client.genai')
+
+    @patch("services.gemini_client.genai")
     def test_init_with_workload_identity(self, mock_genai):
         """Test client initialization using Workload Identity (GCP environment)"""
-        # Mock the GenerativeModel
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_genai.configure = MagicMock()
-        
-        client = get_gemini_client(model_name="gemini-1.5-flash")
-        
-        # Verify genai.configure was called (uses Application Default Credentials)
-        mock_genai.configure.assert_called_once()
-        
-        # Verify GenerativeModel was created
-        mock_genai.GenerativeModel.assert_called_once()
-        assert client == mock_model
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "", "GEMINI_API_KEY": "test-api-key-12345"})
-    @patch('services.gemini_client.genai')
-    def test_init_with_api_key(self, mock_genai):
-        """Test client initialization using API key (local development)"""
-        # Mock the GenerativeModel
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_genai.configure = MagicMock()
-        
-        client = get_gemini_client(model_name="gemini-1.5-flash")
-        
-        # Verify genai.configure was called with API key
-        mock_genai.configure.assert_called_once_with(api_key="test-api-key-12345")
-        
-        # Verify GenerativeModel was created
-        mock_genai.GenerativeModel.assert_called_once()
-        assert client == mock_model
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "", "GEMINI_API_KEY": ""}, clear=True)
-    def test_init_without_credentials_raises_error(self):
-        """Test that initialization fails gracefully when no credentials are available"""
-        with pytest.raises(ValueError, match="GEMINI_API_KEY environment variable is required"):
-            get_gemini_client()
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"})
-    @patch('services.gemini_client.genai')
-    def test_init_sets_safety_settings(self, mock_genai):
-        """Test that safety settings are configured correctly"""
-        from google.generativeai.types import HarmCategory, HarmBlockThreshold
-        
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_genai.configure = MagicMock()
-        
-        get_gemini_client()
-        
-        # Verify GenerativeModel was called with safety settings
-        call_args = mock_genai.GenerativeModel.call_args
-        assert call_args is not None
-        kwargs = call_args[1]  # Keyword arguments
-        assert "safety_settings" in kwargs
-        
-        safety_settings = kwargs["safety_settings"]
-        assert HarmCategory.HARM_CATEGORY_HATE_SPEECH in safety_settings
-        assert HarmCategory.HARM_CATEGORY_HARASSMENT in safety_settings
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"})
-    @patch('services.gemini_client.genai')
-    def test_client_reuse(self, mock_genai):
-        """Test that client instance is reused (singleton pattern)"""
-        mock_model = MagicMock()
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_genai.configure = MagicMock()
-        
-        client1 = get_gemini_client()
-        client2 = get_gemini_client()
-        
-        # Should return same instance
-        assert client1 is client2
-        
-        # Should only initialize once
-        assert mock_genai.GenerativeModel.call_count == 1
+        # Mock the Client constructor
+        mock_client = MagicMock()
+        mock_genai.Client = MagicMock(return_value=mock_client)
+
+        client = GeminiClient()
+
+        # Verify Client was created (uses Application Default Credentials)
+        mock_genai.Client.assert_called_once()
+        assert client._client == mock_client
+
+    @patch("services.gemini_client.genai")
+    def test_init_fallback_to_module(self, mock_genai):
+        """Test client initialization falls back to module when Client() fails"""
+        # Mock Client() raising an exception
+        mock_genai.Client = MagicMock(side_effect=Exception("Client init failed"))
+        mock_genai.side_effect = None  # Ensure genai module itself is available
+
+        client = GeminiClient()
+
+        # Should fall back to using genai module directly
+        assert client._client == mock_genai
+
+    @patch("services.gemini_client.genai", None)
+    def test_init_without_sdk_raises_error(self):
+        """Test that initialization fails gracefully when SDK is not installed"""
+        with pytest.raises(RuntimeError, match="google-genai SDK is not installed"):
+            GeminiClient()
+
+    @patch("services.gemini_client.genai")
+    def test_init_with_custom_client(self, mock_genai):
+        """Test client initialization with custom client (for testing)"""
+        custom_client = MagicMock()
+        client = GeminiClient(client=custom_client)
+
+        assert client._client == custom_client
+        # Should not call genai.Client when custom client is provided
+        mock_genai.Client.assert_not_called()
 
 
 @pytest.mark.asyncio
-class TestGeminiContentGeneration:
-    """Test content generation methods"""
-    
-    def setup_method(self):
-        """Reset client before each test"""
-        reset_client()
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"})
-    @patch('services.gemini_client.genai')
-    @patch('asyncio.get_event_loop')
-    async def test_generate_content(self, mock_get_loop, mock_genai):
-        """Test generate_content async method"""
-        # Setup mocks
-        mock_model = MagicMock()
-        mock_response = MagicMock()
-        mock_response.text = "Generated response text"
-        mock_model.generate_content.return_value = mock_response
-        
-        mock_genai.GenerativeModel.return_value = mock_model
-        mock_genai.configure = MagicMock()
-        
-        # Mock event loop and executor
-        mock_loop = MagicMock()
-        mock_get_loop.return_value = mock_loop
-        
-        # Create a real coroutine for the executor result
-        async def executor_wrapper():
-            return mock_response
-        
-        mock_loop.run_in_executor = MagicMock(return_value=executor_wrapper())
-        
-        # Test generate_content
-        await generate_content(
-            prompt="Test prompt",
-            temperature=0.7
+class TestGeminiClientGenerate:
+    """Test Gemini client generate method"""
+
+    @patch("services.gemini_client.genai")
+    @patch("asyncio.to_thread")
+    async def test_generate_with_models_generate(self, mock_to_thread, mock_genai):
+        """Test generate method using client.models.generate pattern"""
+        mock_client = MagicMock()
+        mock_models = MagicMock()
+        mock_client.models = mock_models
+        mock_genai.Client = MagicMock(return_value=mock_client)
+
+        # Mock the sync call result
+        mock_response = {"candidates": [{"content": {"text": "Test response"}}]}
+        mock_to_thread.return_value = mock_response
+
+        client = GeminiClient()
+        result = await client.generate(model="gemini-1", prompt="Test prompt")
+
+        assert result == mock_response
+        mock_to_thread.assert_called_once()
+
+    @patch("services.gemini_client.genai")
+    @patch("asyncio.to_thread")
+    async def test_generate_with_client_generate(self, mock_to_thread, mock_genai):
+        """Test generate method using client.generate pattern"""
+        mock_client = MagicMock()
+        # Remove models attribute to test fallback
+        del mock_client.models
+        mock_genai.Client = MagicMock(return_value=mock_client)
+
+        mock_response = "Test response"
+        mock_to_thread.return_value = mock_response
+
+        client = GeminiClient()
+        result = await client.generate(model="gemini-1", prompt="Test prompt")
+
+        assert result == mock_response
+
+
+@pytest.mark.asyncio
+class TestReasonWithGemini:
+    """Test reason_with_gemini helper function"""
+
+    @patch("services.gemini_client.GeminiClient")
+    @patch("os.environ.get")
+    async def test_reason_with_gemini_default_model(
+        self, mock_env_get, mock_client_class
+    ):
+        """Test reason_with_gemini uses default model when not specified"""
+        mock_env_get.return_value = None  # No GEMINI_MODEL env var
+        mock_client = AsyncMock()
+        mock_client.generate = AsyncMock(return_value="Test response")
+        mock_client_class.return_value = mock_client
+
+        result = await reason_with_gemini(prompt="Test prompt")
+
+        assert result == "Test response"
+        mock_client.generate.assert_called_once()
+        # Should use default model "gemini-1"
+        call_args = mock_client.generate.call_args
+        assert call_args[1]["model"] == "gemini-1"
+
+    @patch("services.gemini_client.GeminiClient")
+    @patch("os.environ.get")
+    async def test_reason_with_gemini_env_model(self, mock_env_get, mock_client_class):
+        """Test reason_with_gemini uses GEMINI_MODEL env var when set"""
+        mock_env_get.return_value = "gemini-2.0"
+        mock_client = AsyncMock()
+        mock_client.generate = AsyncMock(return_value="Test response")
+        mock_client_class.return_value = mock_client
+
+        result = await reason_with_gemini(prompt="Test prompt")
+
+        assert result == "Test response"
+        call_args = mock_client.generate.call_args
+        assert call_args[1]["model"] == "gemini-2.0"
+
+    @patch("services.gemini_client.GeminiClient")
+    async def test_reason_with_gemini_explicit_model(self, mock_client_class):
+        """Test reason_with_gemini uses explicit model parameter"""
+        mock_client = AsyncMock()
+        mock_client.generate = AsyncMock(return_value="Test response")
+        mock_client_class.return_value = mock_client
+
+        result = await reason_with_gemini(prompt="Test prompt", model="gemini-pro")
+
+        assert result == "Test response"
+        call_args = mock_client.generate.call_args
+        assert call_args[1]["model"] == "gemini-pro"
+
+    @patch("services.gemini_client.GeminiClient")
+    async def test_reason_with_gemini_dict_response(self, mock_client_class):
+        """Test reason_with_gemini handles dict response format"""
+        mock_client = AsyncMock()
+        mock_client.generate = AsyncMock(
+            return_value={"candidates": [{"content": {"text": "Extracted text"}}]}
         )
-        
-        # Note: Due to async mocking complexity, this test verifies the function structure
-        # In a real scenario, run_in_executor would execute the sync call
-        assert True  # Test passes if no exceptions
-    
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"})
-    @patch('services.gemini_client.get_prompt')
-    @patch('services.gemini_client.generate_content')
-    async def test_generate_content_with_prompt_template(self, mock_generate, mock_get_prompt):
-        """Test generate_content_with_prompt_template (FR#003 integration)"""
-        # Mock prompt template
-        mock_get_prompt.return_value = "Template with {variable}"
-        
-        # Mock generate_content
-        mock_generate.return_value = "Generated response"
-        
-        await generate_content_with_prompt_template(
-            prompt_template_id="test_template",
-            template_variables={"variable": "test_value"}
-        )
-        
-        # Verify prompt was loaded and formatted
-        mock_get_prompt.assert_called_once_with("test_template")
-        mock_generate.assert_called_once()
-        
-        # Verify formatted prompt was used
-        call_args = mock_generate.call_args
-        assert "Template with test_value" in call_args[1]["prompt"] or "Template with test_value" in call_args[0][0]
+        mock_client_class.return_value = mock_client
 
+        result = await reason_with_gemini(prompt="Test prompt")
 
-class TestGeminiClientErrorHandling:
-    """Test error handling in Gemini client"""
-    
-    def setup_method(self):
-        """Reset client before each test"""
-        reset_client()
-    
-    @pytest.mark.asyncio
-    async def test_generate_content_with_empty_prompt(self):
-        """Test that empty prompt raises ValueError"""
-        with pytest.raises(ValueError, match="Prompt cannot be empty"):
-            await generate_content(prompt="")
-    
-    @pytest.mark.asyncio
-    async def test_generate_content_with_whitespace_only_prompt(self):
-        """Test that whitespace-only prompt raises ValueError"""
-        with pytest.raises(ValueError, match="Prompt cannot be empty"):
-            await generate_content(prompt="   \n\t  ")
+        assert result == "Extracted text"
 
+    @patch("services.gemini_client.GeminiClient")
+    async def test_reason_with_gemini_string_response(self, mock_client_class):
+        """Test reason_with_gemini handles string response format"""
+        mock_client = AsyncMock()
+        mock_client.generate = AsyncMock(return_value="Direct string response")
+        mock_client_class.return_value = mock_client
+
+        result = await reason_with_gemini(prompt="Test prompt")
+
+        assert result == "Direct string response"

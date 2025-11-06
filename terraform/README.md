@@ -11,7 +11,7 @@ This Terraform configuration provisions:
 - **Artifact Registry** for container image storage
 - **Firestore** database for session memory and knowledge caching
 - **Secret Manager** secrets for API keys
-- **Cloud Run** service blueprints (frontend, backend, Gemma GPU)
+- **Cloud Run** service blueprints (frontend, backend)
 - **Staging Environment** Cloud Run services (frontend-staging, backend-staging)
 - **Cloud Build Triggers** for automatic "Connect Repo" deployments from GitHub (frontend & backend)
 
@@ -72,14 +72,6 @@ terraform apply
 
 ## Important Notes
 
-### GPU Configuration
-
-The Gemma GPU service requires GPU configuration that must be set via `gcloud` CLI after Terraform creates the service:
-
-```bash
-gcloud run services update gemma-service \
-  --region europe-west1 \
-  --add-gpu gpu-type=nvidia-l4,count=1
 ```
 
 This is because Terraform's `google` provider doesn't fully support GPU configuration in Cloud Run v2 yet.

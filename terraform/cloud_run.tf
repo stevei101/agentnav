@@ -107,11 +107,6 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name  = "GEMMA_SERVICE_URL"
-        value = google_cloud_run_v2_service.gemma.uri
-      }
-
-      env {
         name  = "FIRESTORE_PROJECT_ID"
         value = var.project_id
       }
@@ -129,11 +124,6 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "A2A_PROTOCOL_ENABLED"
         value = "true"
-      }
-
-      env {
-        name  = "AGENTNAV_MODEL_TYPE"
-        value = var.agentnav_model_type
       }
 
       resources {
@@ -169,101 +159,6 @@ resource "google_cloud_run_service_iam_member" "backend_public" {
   location = google_cloud_run_v2_service.backend.location
   project  = google_cloud_run_v2_service.backend.project
   service  = google_cloud_run_v2_service.backend.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
-
-# Gemma GPU Cloud Run Service
-resource "google_cloud_run_v2_service" "gemma" {
-  name     = "gemma-service"
-  location = var.gemma_region
-  project  = var.project_id
-
-  depends_on = [google_project_service.apis]
-
-  template {
-    service_account = google_service_account.cloud_run_gemma.email
-
-    scaling {
-      min_instance_count = 0
-      max_instance_count = 2 # GPU instances are expensive
-    }
-
-    containers {
-      name  = "gemma"
-      image = "${var.gemma_region}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/gemma-service:latest" # Placeholder
-
-      ports {
-        container_port = var.gemma_container_port
-      }
-
-      env {
-        name  = "PORT"
-        value = tostring(var.gemma_container_port)
-      }
-
-      env {
-        name  = "MODEL_NAME"
-        value = "google/gemma-7b-it"
-      }
-
-      env {
-        name = "HUGGINGFACE_TOKEN"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.huggingface_token.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name  = "USE_8BIT_QUANTIZATION"
-        value = "false"
-      }
-
-      # GPU Configuration
-      resources {
-        limits = {
-          cpu    = "4"
-          memory = "16Gi"
-        }
-        cpu_idle = false
-      }
-
-      startup_probe {
-        # Total startup window: 10s × 30 = 300 seconds
-        # Extended timeout required for GPU model loading (Gemma 7B model initialization on NVIDIA L4)
-        # This timeout aligns with system instruction recommendations for GPU-accelerated model services
-        # timeout_seconds is per-probe attempt (should be <= period_seconds)
-        timeout_seconds   = 10
-        period_seconds    = 10
-        failure_threshold = 30  # 300s total / 10s period = 30 attempts (for GPU model loading)
-        tcp_socket {
-          port = var.gemma_container_port
-        }
-      }
-    }
-
-    timeout = "300s"
-  }
-
-  traffic {
-    percent = 100
-    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
-  }
-
-  # Note: GPU configuration (gpu_type, gpu_count) must be set via gcloud CLI
-  # as Terraform google provider doesn't fully support GPU in Cloud Run v2 yet
-  # The deployment script should include: --gpu-type=nvidia-l4 --gpu-count=1
-}
-
-# GPU annotation for Gemma service (using annotation since Terraform doesn't support GPU directly)
-# This requires gcloud CLI to set GPU after creation
-resource "google_cloud_run_service_iam_member" "gemma_public" {
-  location = google_cloud_run_v2_service.gemma.location
-  project  = google_cloud_run_v2_service.gemma.project
-  service  = google_cloud_run_v2_service.gemma.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
@@ -462,11 +357,6 @@ resource "google_cloud_run_v2_service" "backend_staging" {
             version = "latest"
           }
         }
-      }
-
-      env {
-        name  = "GEMMA_SERVICE_URL"
-        value = google_cloud_run_v2_service.gemma.uri
       }
 
       env {
