@@ -59,6 +59,7 @@ The system consists of the following agents:
 - ?? **GitHub Actions** ? automated testing and Cloud Run deployment
 - ??? **Terraform Cloud** ? infrastructure as code provisioning
 - ?? **Workload Identity Federation (WIF)** ? secure GitHub Actions authentication
+- ?? **Workload Identity (WI)** ? secure Cloud Run service-to-service authentication
 
 **Other Utilities**
 

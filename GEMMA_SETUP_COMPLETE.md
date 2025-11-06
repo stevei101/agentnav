@@ -41,17 +41,20 @@
 ## 🎯 What's Been Done
 
 ### GitHub Integration ✅
+
 - HUGGINGFACE_TOKEN added to GitHub Secrets
 - CI/CD pipeline can now build Gemma container
 - Tests will download model during build
 
 ### Infrastructure ✅
+
 - All Terraform templates created
 - Secret Manager schema defined
 - IAM policies configured
 - Cloud Run service definitions ready
 
 ### Application Layer ✅
+
 - Gemma service Docker container ready
 - Model loader with HF token support
 - FastAPI endpoints configured
@@ -62,12 +65,14 @@
 ## ⏳ What's Left
 
 ### Step 1: GCP Secret Manager (1 minute)
+
 ```bash
 # Create the secret with your token
 echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
 ```
 
 ### Step 2: Grant Permissions (1 minute)
+
 ```bash
 # Grant Gemma service account access
 gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
@@ -76,12 +81,14 @@ gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
 ```
 
 ### Step 3: Deploy (5-10 minutes)
+
 ```bash
 # Deploy everything to Cloud Run
 cd terraform && terraform apply
 ```
 
 ### Step 4: Verify (2-5 minutes)
+
 ```bash
 # Test the deployment
 GEMMA_URL=$(gcloud run services describe gemma-service \
@@ -94,12 +101,14 @@ curl ${GEMMA_URL}/healthz
 ## 📋 Token Reference
 
 ### Your HuggingFace Token
+
 - **Format:** `hf_` + ~37 alphanumeric characters
 - **Example:** `hf_cTxDweFgHiJkLmNoPqRsT_UvWxYzAbCdEfG`
 - **Status:** You already have this (added to GitHub)
 - **Reuse:** Same token for GCP deployment
 
 ### Environment Variables
+
 ```
 GitHub Actions:     HUGGINGFACE_TOKEN (secret)
 GCP Secret Manager: HUGGINGFACE_TOKEN (encrypted)
@@ -116,36 +125,39 @@ Cloud Run:          HUGGINGFACE_TOKEN (injected from secret)
 ✅ Token access logged and auditable  
 ✅ Token injection only at runtime  
 ✅ Token expiration configurable  
-✅ Token can be rotated anytime  
+✅ Token can be rotated anytime
 
 ---
 
 ## 📚 Documentation Created
 
-| File | Purpose |
-|------|---------|
-| `GEMMA_CREDENTIALS_SUMMARY.md` | Quick overview |
-| `GEMMA_QUICK_SETUP.txt` | Visual checklist |
-| `DEPLOYMENT_CHECKLIST.md` | Status tracker |
-| `docs/GEMMA_CREDENTIALS_SETUP.md` | Full guide |
-| `docs/GEMMA_CREDENTIALS_DEPLOYMENT_FLOW.md` | Architecture |
-| `docs/GPU_SETUP_GUIDE.md` | Deployment details |
+| File                                        | Purpose            |
+| ------------------------------------------- | ------------------ |
+| `GEMMA_CREDENTIALS_SUMMARY.md`              | Quick overview     |
+| `GEMMA_QUICK_SETUP.txt`                     | Visual checklist   |
+| `DEPLOYMENT_CHECKLIST.md`                   | Status tracker     |
+| `docs/GEMMA_CREDENTIALS_SETUP.md`           | Full guide         |
+| `docs/GEMMA_CREDENTIALS_DEPLOYMENT_FLOW.md` | Architecture       |
+| `docs/GPU_SETUP_GUIDE.md`                   | Deployment details |
 
 ---
 
 ## 🚀 Quick Command Reference
 
 ### Get Your Project ID
+
 ```bash
 gcloud config get-value project
 ```
 
 ### Create GCP Secret (Copy & Paste)
+
 ```bash
 echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
 ```
 
 ### Grant Permission (Copy & Paste)
+
 ```bash
 gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
   --member="serviceAccount:gemma-service@$(gcloud config get-value project).iam.gserviceaccount.com" \
@@ -153,11 +165,13 @@ gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
 ```
 
 ### Deploy Everything
+
 ```bash
 cd terraform && terraform apply
 ```
 
 ### Verify Deployment
+
 ```bash
 GEMMA_URL=$(gcloud run services describe gemma-service \
   --region europe-west1 --format='value(status.url)')
@@ -189,18 +203,21 @@ curl https://gemma-service-XXXXX.run.app/healthz
 ## 💡 Tips
 
 ### Token Already Valid?
+
 - You created it on HuggingFace
 - You added it to GitHub Secrets
 - It's the same token for GCP
 - No need to create a new one
 
 ### Don't Have the Token Saved?
+
 - Go to: https://huggingface.co/settings/tokens
 - Find the "agentnav-gemma" token
 - Click to view (if still showing)
 - Or create a new one
 
 ### Lost the Token?
+
 - Create a new one at: https://huggingface.co/settings/tokens
 - Old one becomes invalid
 - Just use the new one in GCP
@@ -210,17 +227,20 @@ curl https://gemma-service-XXXXX.run.app/healthz
 ## 📊 Timeline
 
 **Today (Nov 2):**
+
 - ✅ GitHub Secret configured
 - ✅ All documentation created
 - ✅ Ready for GCP setup
 
 **Next 15-20 minutes:**
+
 - ⏳ Create GCP secret
 - ⏳ Grant IAM permissions
 - ⏳ Run terraform apply
 - ⏳ Verify deployment
 
 **After deployment:**
+
 - ✨ Gemma service live on Cloud Run
 - ✨ Backend can call Gemma for reasoning
 - ✨ Model selection (Gemini vs Gemma) fully functional
@@ -256,13 +276,14 @@ You're 80% there! Just run the commands above and you'll have:
 ✅ Credentials securely managed  
 ✅ Model selection working (FR#090)  
 ✅ Backend integrated with GPU service  
-✅ Full CI/CD pipeline operational  
+✅ Full CI/CD pipeline operational
 
 **Let's finish this! 🚀**
 
 ---
 
 **Next Command to Run:**
+
 ```bash
 echo -n "hf_YOUR_TOKEN_HERE" | gcloud secrets create HUGGINGFACE_TOKEN --data-file=-
 ```

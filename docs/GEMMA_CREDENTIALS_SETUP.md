@@ -10,21 +10,23 @@
 
 For `google/gemma-7b-it` on HuggingFace, you need **one** credential:
 
-| Credential | Purpose | Required | How to Get |
-|------------|---------|----------|-----------|
-| **HUGGINGFACE_TOKEN** | Download Gemma model from HuggingFace | ⚠️ **Optional** | [HuggingFace Tokens Page](https://huggingface.co/settings/tokens) |
-| GEMINI_API_KEY | For Gemini cloud reasoning | ✅ **Already Configured** | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
+| Credential            | Purpose                               | Required                  | How to Get                                                                |
+| --------------------- | ------------------------------------- | ------------------------- | ------------------------------------------------------------------------- |
+| **HUGGINGFACE_TOKEN** | Download Gemma model from HuggingFace | ⚠️ **Optional**           | [HuggingFace Tokens Page](https://huggingface.co/settings/tokens)         |
+| GEMINI_API_KEY        | For Gemini cloud reasoning            | ✅ **Already Configured** | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 
 ---
 
 ## 🤔 Do You Actually Need the HuggingFace Token?
 
 ### ✅ You DON'T Need It If:
+
 - Model is **public** (✓ `google/gemma-7b-it` is public)
 - You accept the **HuggingFace Terms** (one-time)
 - No special rate limiting concerns
 
 ### ⚠️ You SHOULD Get It If:
+
 - You want **higher rate limits** (especially in production)
 - You're accessing **private models** (future use case)
 - You want **usage tracking** in HuggingFace dashboard
@@ -37,17 +39,20 @@ For `google/gemma-7b-it` on HuggingFace, you need **one** credential:
 Even though optional, having a token is best practice for production. Here's how:
 
 ### Step 1: Create HuggingFace Account (if needed)
+
 1. Go to [HuggingFace.co](https://huggingface.co)
 2. Click **Sign Up** (or Sign In if you have account)
 3. Complete email verification
 
 ### Step 2: Accept Gemma Model License
+
 1. Visit [google/gemma-7b-it Model Card](https://huggingface.co/google/gemma-7b-it)
 2. Click **"Agree and access repository"**
 3. Accept Google's license agreement
 4. You now have access!
 
 ### Step 3: Create HuggingFace API Token
+
 1. Go to [HuggingFace Tokens Settings](https://huggingface.co/settings/tokens)
 2. Click **"New token"**
 3. Configure:
@@ -138,7 +143,7 @@ gcloud run services update gemma-service \
 
 # Option B: Via Terraform (already configured!)
 # The secret is already in terraform/cloud_run.tf:
-# 
+#
 #   env {
 #     name = "HUGGINGFACE_TOKEN"
 #     value_source {
@@ -159,9 +164,9 @@ terraform apply
 
 ### Already Configured ✅
 
-| Secret | Status | Location | Used By |
-|--------|--------|----------|---------|
-| `GEMINI_API_KEY` | ✅ Configured | Secret Manager | Backend Agent Reasoning |
+| Secret              | Status         | Location       | Used By                      |
+| ------------------- | -------------- | -------------- | ---------------------------- |
+| `GEMINI_API_KEY`    | ✅ Configured  | Secret Manager | Backend Agent Reasoning      |
 | `HUGGINGFACE_TOKEN` | ⏳ Placeholder | Secret Manager | Gemma GPU Service (optional) |
 
 ### Terraform Configuration
@@ -246,6 +251,7 @@ curl ${GEMMA_URL}/healthz
 ## 🔒 Security Best Practices
 
 ### ✅ DO:
+
 - ✅ Use **Secret Manager** (not environment variables in code)
 - ✅ Grant **minimal permissions** (only Gemma service needs HF token access)
 - ✅ **Rotate tokens** periodically (HuggingFace > Settings > Tokens)
@@ -254,6 +260,7 @@ curl ${GEMMA_URL}/healthz
 - ✅ Monitor **token usage** in HuggingFace dashboard
 
 ### ❌ DON'T:
+
 - ❌ Commit tokens to Git (even in `.env` files!)
 - ❌ Use **Write tokens** for deployment (only download needed)
 - ❌ Set infinite token expiration
@@ -310,6 +317,7 @@ curl -v ${GEMMA_URL}/healthz
 **Cause:** HuggingFace token not accepted or incorrect format
 
 **Fix:**
+
 ```bash
 # 1. Verify token format (should start with hf_)
 echo $HUGGINGFACE_TOKEN | head -c 10
@@ -326,6 +334,7 @@ echo -n "hf_NEW_TOKEN" | gcloud secrets versions add HUGGINGFACE_TOKEN --data-fi
 **Cause:** Token lacks access to Gemma model or license not accepted
 
 **Fix:**
+
 ```bash
 # 1. Go to https://huggingface.co/google/gemma-7b-it
 # 2. Ensure you're logged in
@@ -346,6 +355,7 @@ print('✅ License accepted!')
 **Cause:** Service account doesn't have permission to read secret
 
 **Fix:**
+
 ```bash
 # Verify service account has permission
 gcloud secrets get-iam-policy HUGGINGFACE_TOKEN
@@ -364,6 +374,7 @@ gcloud secrets add-iam-policy-binding HUGGINGFACE_TOKEN \
 **Cause:** Network issue or slow region
 
 **Fix:**
+
 ```bash
 # 1. Increase timeout in gemma_service/main.py
 # 2. Pre-download model to custom location
@@ -388,6 +399,7 @@ gcloud run services logs read gemma-service --region europe-west1 --limit 50
 ## 💡 Quick Reference
 
 ### HuggingFace Token Format
+
 ```
 hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   │   └─ 37 alphanumeric characters
@@ -395,16 +407,19 @@ hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### Environment Variable
+
 ```bash
 export HUGGINGFACE_TOKEN="hf_YOUR_TOKEN_HERE"
 ```
 
 ### Secret Manager Query
+
 ```bash
 gcloud secrets versions access latest --secret="HUGGINGFACE_TOKEN"
 ```
 
 ### Verify Gemma Service Has Access
+
 ```bash
 gcloud run services describe gemma-service \
   --region europe-west1 \

@@ -34,6 +34,7 @@ We provide a custom GitHub Copilot agent (`@agentnav-gh-copilot-agent`) that is 
 - **Get tooling guidance** (e.g., "use uv for Python dependencies", "use bun for frontend")
 
 **Quick Start:**
+
 ```
 @agentnav-gh-copilot-agent How do I implement a new ADK agent?
 ```

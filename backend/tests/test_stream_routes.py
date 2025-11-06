@@ -34,7 +34,9 @@ class TestWebSocketConnectionLifecycle:
     async def test_websocket_connection_acceptance(self):
         """Test that WebSocket connection is properly accepted"""
         # This is a mock-based test since TestClient has limited WebSocket support
-        with patch("backend.routes.stream_routes.get_event_emitter_manager") as mock_emitter_manager:
+        with patch(
+            "backend.routes.stream_routes.get_event_emitter_manager"
+        ) as mock_emitter_manager:
             mock_emitter = AsyncMock()
             mock_manager = Mock()
             mock_manager.create_emitter.return_value = mock_emitter
@@ -44,9 +46,7 @@ class TestWebSocketConnectionLifecycle:
 
             # Create a mock WebSocket
             mock_ws = AsyncMock()
-            mock_ws.receive_json = AsyncMock(
-                side_effect=Exception("Connection closed")
-            )
+            mock_ws.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
 
             try:
                 await stream_workflow(mock_ws)
@@ -59,7 +59,9 @@ class TestWebSocketConnectionLifecycle:
     @pytest.mark.asyncio
     async def test_websocket_disconnection_cleanup(self):
         """Test cleanup on WebSocket disconnection"""
-        with patch("backend.routes.stream_routes.get_event_emitter_manager") as mock_emitter_manager:
+        with patch(
+            "backend.routes.stream_routes.get_event_emitter_manager"
+        ) as mock_emitter_manager:
             mock_emitter = AsyncMock()
             mock_manager = Mock()
             mock_manager.create_emitter.return_value = mock_emitter
@@ -68,9 +70,7 @@ class TestWebSocketConnectionLifecycle:
             from backend.routes.stream_routes import stream_workflow
 
             mock_ws = AsyncMock()
-            mock_ws.receive_json = AsyncMock(
-                side_effect=Exception("Connection closed")
-            )
+            mock_ws.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
             mock_ws.send_json = AsyncMock()
 
             try:
@@ -314,7 +314,9 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_invalid_request_format_error(self):
         """Test handling of invalid request format"""
-        with patch("backend.routes.stream_routes.get_event_emitter_manager") as mock_emitter_manager:
+        with patch(
+            "backend.routes.stream_routes.get_event_emitter_manager"
+        ) as mock_emitter_manager:
             mock_emitter = AsyncMock()
             mock_manager = Mock()
             mock_manager.create_emitter.return_value = mock_emitter

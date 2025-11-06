@@ -59,12 +59,6 @@ variable "backend_region" {
   default     = "europe-west1"
 }
 
-variable "gemma_region" {
-  description = "Region for Gemma GPU Cloud Run service (must support GPUs)"
-  type        = string
-  default     = "europe-west1"
-}
-
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
@@ -95,27 +89,16 @@ variable "backend_container_port" {
   default     = 8080
 }
 
-variable "gemma_container_port" {
-  description = "Container port for Gemma GPU Cloud Run service"
+variable "prompt_mgmt_container_port" {
+  description = "Container port for Prompt Management App Cloud Run service"
   type        = number
-  default     = 8080
+  default     = 80
 }
 
 variable "enable_staging_environment" {
   description = "Enable staging environment Cloud Run services for PR testing and validation."
   type        = bool
   default     = true # Enabled to support staging deployments for PRs
-}
-
-variable "agentnav_model_type" {
-  description = "Model type for reasoning tasks: 'gemini' (cloud) or 'gemma' (local GPU). Controls AGENTNAV_MODEL_TYPE env var."
-  type        = string
-  default     = "gemini"
-  
-  validation {
-    condition     = contains(["gemini", "gemma"], var.agentnav_model_type)
-    error_message = "agentnav_model_type must be either 'gemini' or 'gemma'."
-  }
 }
 
 variable "custom_domain_name" {

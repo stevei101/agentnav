@@ -10,13 +10,13 @@
 
 After analyzing all 18 open GitHub issues, I've identified and prioritized the work for the next 2-4 weeks:
 
-| Priority | Issue | Status | Effort | Impact |
-|----------|-------|--------|--------|--------|
-| 🔥 CRITICAL | #132 FR#165 | Ready | 3 days | Blocks all deployments |
-| 🟠 HIGH | #131 FR#160 | Ready | 1-2 days | Quality gates |
-| 🟠 HIGH | #137 FR#175 | Ready | 1 week | Deployment optimization |
-| 💡 MEDIUM | #139 FR#130 | Ready | 3 days | Developer experience |
-| 💡 MEDIUM | #117 FR#145 | Ready | 2-3 days | CI/CD optimization |
+| Priority    | Issue       | Status | Effort   | Impact                  |
+| ----------- | ----------- | ------ | -------- | ----------------------- |
+| 🔥 CRITICAL | #132 FR#165 | Ready  | 3 days   | Blocks all deployments  |
+| 🟠 HIGH     | #131 FR#160 | Ready  | 1-2 days | Quality gates           |
+| 🟠 HIGH     | #137 FR#175 | Ready  | 1 week   | Deployment optimization |
+| 💡 MEDIUM   | #139 FR#130 | Ready  | 3 days   | Developer experience    |
+| 💡 MEDIUM   | #117 FR#145 | Ready  | 2-3 days | CI/CD optimization      |
 
 **Total Effort (Critical Path):** ~2-3 weeks
 
@@ -25,16 +25,19 @@ After analyzing all 18 open GitHub issues, I've identified and prioritized the w
 ## 🚀 Recommended Starting Point: Issue #132
 
 ### The Problem
+
 ```
 Cloud Run deployment fails:
 "Container failed to start and listen on PORT=8080 within timeout"
 ```
 
 ### Two Possible Root Causes
+
 1. **Code Issue:** App not binding to `0.0.0.0` (defaulting to `127.0.0.1`)
 2. **Timeout Issue:** Gemma GPU service takes too long to load model
 
 ### Why Start Here?
+
 - ✅ **Blocking:** Nothing deploys without this fix
 - ✅ **Specific:** Clear problem statement
 - ✅ **Unblocks:** All other work depends on this
@@ -45,11 +48,13 @@ Cloud Run deployment fails:
 ## 📋 Quick Reference
 
 ### For Issue #132 (Start Here!)
+
 - **Quick Start Guide:** `FR165_QUICK_START.md` ← Open this first
 - **Investigation Steps:** 5 files to check (5-10 min each)
 - **GitHub Issue:** https://github.com/stevei101/agentnav/issues/132
 
 ### For All Issues
+
 - **Full Analysis:** `OPEN_ISSUES_ANALYSIS.md`
 - **Priority Matrix:** See table above
 - **Execution Path:** Week-by-week breakdown
@@ -59,6 +64,7 @@ Cloud Run deployment fails:
 ## ⚡ Getting Started
 
 ### Option 1: Deep Dive into Issue #132 (Recommended)
+
 ```bash
 # Create feature branch
 git checkout -b fix/fr165-cloud-run-startup
@@ -71,6 +77,7 @@ cat FR165_QUICK_START.md
 ```
 
 ### Option 2: Review All Issues First
+
 ```bash
 # Read comprehensive analysis
 cat OPEN_ISSUES_ANALYSIS.md
@@ -96,23 +103,25 @@ cat OPEN_ISSUES_ANALYSIS.md
 ## 🎯 Execution Roadmap
 
 ### Week 1: Stabilization
+
 ```
 Day 1-3:   Issue #132 (FR#165) - Cloud Run startup
            ↓ Fix container binding and timeout issues
-           
+
 Day 4-5:   Issue #131 (FR#160) - CI quality gates
            ↓ Verify all checks are running
-           
+
 Day 6-10:  Issue #137 (FR#175) - Deployment optimization
            ↓ Refactor Dockerfiles and CI/CD per codelab
 ```
 
 ### Week 2-3: Enhancement (Parallel)
+
 ```
 Day 11-13: Issue #139 (FR#130) - Custom Copilot Agent
            OR
            Issue #117 (FR#145) - Conditional CI Execution
-           
+
 Day 14+:   Remaining enhancements and documentation
 ```
 
@@ -121,6 +130,7 @@ Day 14+:   Remaining enhancements and documentation
 ## 🔍 Quick Issue Reference
 
 ### Issue #132: FR#165 - Cloud Run Startup Bug (CRITICAL)
+
 - **Blocks:** All deployments
 - **Effort:** 3 days
 - **Start:** `FR165_QUICK_START.md`
@@ -128,24 +138,28 @@ Day 14+:   Remaining enhancements and documentation
 - **Impact:** Unblocks everything
 
 ### Issue #131: FR#160 - Skipped CI Checks (HIGH)
+
 - **Blocks:** Code quality enforcement
 - **Effort:** 1-2 days
 - **Fix:** Verify GitHub Actions workflow conditions
 - **Impact:** Ensures quality gates work
 
 ### Issue #137: FR#175 - Deployment Optimization (HIGH)
+
 - **Depends on:** #132
 - **Effort:** 1 week
 - **Fix:** Refactor Dockerfiles, optimize Uvicorn, review CI/CD
 - **Impact:** Follow Google Cloud best practices
 
 ### Issue #139: FR#130 - Copilot Agent (MEDIUM)
+
 - **Effort:** 3 days
 - **Parallel:** Can start after #132
 - **Feature:** Custom AI agent with System Instruction
 - **Impact:** Developer experience multiplier
 
 ### Issue #117: FR#145 - Conditional CI (MEDIUM)
+
 - **Effort:** 2-3 days
 - **Parallel:** Can start after #132
 - **Feature:** Skip tests based on changed files
@@ -168,28 +182,33 @@ By working through these issues in order:
 ## ✨ Success Metrics
 
 ### After Issue #132: ✅ Services Deploy
+
 - Backend service starts successfully on Cloud Run
 - Gemma GPU service loads models and responds
 - Health checks pass: `/healthz`
 - Logs show "Ready" state (not "Failed")
 
 ### After Issue #131: ✅ Quality Gates Work
+
 - All 3 CI checks run: CODE_QUALITY, SECURITY_AUDIT, INFRA_VERIFICATION
 - Failed checks block PRs (as intended)
 - All PRs must pass before merge
 
 ### After Issue #137: ✅ Deployment Optimized
+
 - Dockerfiles smaller and faster to build
 - Uvicorn optimized for Cloud Run
 - CI/CD steps use latest `gcloud` syntax
 - Security headers in place
 
 ### After Issue #139: ✅ Developer Experience
+
 - Custom Copilot agent available and functional
 - Agent correctly enforces 70% coverage rule
 - Developers reference agent for architecture guidance
 
 ### After Issue #117: ✅ CI/CD Faster
+
 - Frontend-only changes skip backend tests
 - Backend-only changes skip frontend tests
 - Overall CI time reduced by 30-40%
@@ -198,25 +217,27 @@ By working through these issues in order:
 
 ## 🎁 Deliverables per Issue
 
-| Issue | Deliverables | PR Size |
-|-------|--------------|---------|
-| #132 | Code fix (binding/timeout), docs | Medium |
-| #131 | Workflow fix, verification guide | Small |
-| #137 | Dockerfile refactor, CI/CD updates, docs | Large |
-| #139 | Agent setup guide, documentation | Small |
-| #117 | GitHub Actions config, docs | Small |
+| Issue | Deliverables                             | PR Size |
+| ----- | ---------------------------------------- | ------- |
+| #132  | Code fix (binding/timeout), docs         | Medium  |
+| #131  | Workflow fix, verification guide         | Small   |
+| #137  | Dockerfile refactor, CI/CD updates, docs | Large   |
+| #139  | Agent setup guide, documentation         | Small   |
+| #117  | GitHub Actions config, docs              | Small   |
 
 ---
 
 ## 📞 Support & References
 
 **Need help?**
+
 1. Check `OPEN_ISSUES_ANALYSIS.md` for detailed issue information
 2. Check `FR165_QUICK_START.md` for Issue #132 step-by-step
 3. Reference `docs/SYSTEM_INSTRUCTION.md` for project standards
 4. Review GitHub issue #132 for latest context
 
 **Key Resources:**
+
 - GitHub Issues: https://github.com/stevei101/agentnav/issues
 - System Instruction: docs/SYSTEM_INSTRUCTION.md
 - GPU Guide: docs/GPU_SETUP_GUIDE.md
@@ -228,6 +249,7 @@ By working through these issues in order:
 ## 🎯 Decision: What to Do Next?
 
 ### ✅ RECOMMENDED: Start with Issue #132
+
 1. Open `FR165_QUICK_START.md`
 2. Follow 5-step investigation plan (30-60 min)
 3. Identify root cause
@@ -237,6 +259,7 @@ By working through these issues in order:
 **Time to first PR:** ~1 day
 
 ### 🆗 ALTERNATIVE: Review All Issues First
+
 1. Read `OPEN_ISSUES_ANALYSIS.md` completely
 2. Decide which issue appeals to you
 3. Start investigation

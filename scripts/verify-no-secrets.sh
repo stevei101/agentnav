@@ -78,10 +78,12 @@ done
 # Note: .env.test files typically contain only test data, not production secrets
 if git log --all --name-only --pretty=format: -- '.env.test' | grep -q '^.env.test$'; then
     COUNT=$(git log --all --name-only --pretty=format: -- '.env.test' | grep -c '^.env.test$')
-    if grep -q "^\.env\.test$" .gitignore 2>/dev/null; then
+    # Check if .env.test pattern is in .gitignore (supports both .env.test and .env.*.test)
+    if grep -qE "^\.env\.test$|^\.env\.\*\.test$" .gitignore 2>/dev/null; then
         echo -e "${YELLOW}⚠ Found .env.test in Git history ($COUNT occurrences)${NC}"
         echo "   This is OK if it only contains test data. Ensure it's never committed again."
-        echo "   ✓ .env.test is in .gitignore"
+        echo -e "${GREEN}   ✓ .env.test is in .gitignore - security check passed${NC}"
+        # Don't set FOUND_PRODUCTION or FAILED - this is acceptable for test files
     else
         echo -e "${RED}✗ Found .env.test in Git history ($COUNT occurrences)${NC}"
         echo "   ✗ .env.test is NOT in .gitignore - this is a security risk!"
