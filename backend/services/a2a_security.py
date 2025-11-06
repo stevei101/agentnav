@@ -139,7 +139,6 @@ class A2ASecurityService:
         default_accounts = [
             f"backend@{self.identity.project_id}.iam.gserviceaccount.com",
             f"frontend@{self.identity.project_id}.iam.gserviceaccount.com",
-            f"gemma-service@{self.identity.project_id}.iam.gserviceaccount.com",
         ]
         
         # Only add dev account in actual development environment

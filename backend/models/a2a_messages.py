@@ -377,7 +377,7 @@ class VisualizationReadyMessage(A2AMessageBase):
                 },
                 "node_count": 12,
                 "edge_count": 18,
-                "generation_method": "gemma-gpu-service"
+                "generation_method": "gemini-service"
             }
         }
     )

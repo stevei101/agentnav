@@ -188,50 +188,44 @@ async def api_docs():
     return {"docs_url": "/docs"}
 
 
-# Gemma Service Integration
-# Endpoint to call Gemma GPU service for text generation
+# Text Generation Integration
+# Endpoint to call Gemini for text generation
 
 class GenerateRequest(BaseModel):
-    """Request model for Gemma text generation"""
+    """Request model for text generation"""
     prompt: str
     max_tokens: Optional[int] = 500
     temperature: Optional[float] = 0.7
 
 
 class GenerateResponse(BaseModel):
-    """Response model for Gemma generation"""
+    """Response model for text generation"""
     generated_text: str
-    service_used: str = "gemma-gpu-service"
+    service_used: str = "gemini-service"
 
 
 @app.post("/api/generate", tags=["agents"], response_model=GenerateResponse)
-async def generate_text(request: GenerateRequest):
+async def generate_text(request:GenerateRequest):
     """
-    Generate text using Gemma GPU service
+    Generate text using Gemini service
     
-    This endpoint calls the Gemma GPU service deployed on Cloud Run.
-    Requires GEMMA_SERVICE_URL environment variable to be set.
+    This endpoint calls the Gemini cloud service for text generation.
     """
     try:
-        from services.gemma_service import generate_with_gemma
+        from services.gemini_client import reason_with_gemini
         
-        text = await generate_with_gemma(
+        text = await reason_with_gemini(
             prompt=request.prompt,
             max_tokens=request.max_tokens or 500,
             temperature=request.temperature or 0.7,
         )
         return GenerateResponse(generated_text=text)
         
-    except ImportError:
-        raise HTTPException(
-            status_code=503,
-            detail="Gemma service client not available. Check your Python environment and ensure all dependencies are installed."
-        )
     except Exception as e:
-        logger.error(f"Gemma service error: {e}")
+        logger.error(f"Gemini service error: {e}")
         raise HTTPException(
             status_code=503,
-            detail=f"Gemma service unavailable: {str(e)}. Check GEMMA_SERVICE_URL environment variable."
+            detail=f"Text generation service unavailable: {str(e)}"
         )
 
 

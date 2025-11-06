@@ -2,7 +2,6 @@
 # Enables automatic deployments from GitHub to Cloud Run
 # This simplifies CI/CD by using Cloud Build's native GitHub integration
 
-# Note: Gemma GPU service is NOT included here as it requires manual GPU configuration
 # Frontend and Backend can use automatic deployments
 
 # Cloud Build Service Account (default, used by Cloud Build)
@@ -90,7 +89,6 @@ resource "google_cloudbuild_trigger" "backend" {
     _PROJECT_ID      = var.project_id
     _ARTIFACT_REGION = var.artifact_registry_location
     _GAR_REPO        = var.artifact_registry_repository_id
-    _GEMMA_URL       = google_cloud_run_v2_service.gemma.uri
     _SERVICE_ACCOUNT = google_service_account.cloud_run_backend.email
   }
 
@@ -99,7 +97,6 @@ resource "google_cloudbuild_trigger" "backend" {
   depends_on = [
     google_project_service.apis,
     google_cloud_run_v2_service.backend,
-    google_cloud_run_v2_service.gemma,
     google_artifact_registry_repository.main,
   ]
 }

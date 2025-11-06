@@ -35,7 +35,6 @@ class ErrorType(str, Enum):
     TIMEOUT = "timeout"                          # Agent exceeded time limit
     VALIDATION_ERROR = "validation_error"        # Invalid input
     WORKFLOW_ERROR = "workflow_error"            # Inter-agent communication failed
-    GEMMA_ERROR = "gemma_error"                 # Gemma GPU service error
     FIRESTORE_ERROR = "firestore_error"         # Firestore access failed
     UNKNOWN = "unknown"                         # Unknown error
 
@@ -99,7 +98,7 @@ class ErrorPayload(BaseModel):
             "example": {
                 "error": "SummarizationError",
                 "error_type": "timeout",
-                "error_details": "Gemma service timeout after 30 seconds",
+                "error_details": "Service timeout after 30 seconds",
                 "recoverable": False
             }
         }

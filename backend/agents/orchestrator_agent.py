@@ -22,12 +22,10 @@ class OrchestratorAgent(Agent):
     - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None, model_type: str = "gemini"):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("orchestrator", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
-        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
-        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -119,7 +117,7 @@ Determine:
             return self._analyze_content_with_heuristics(document)
     
     async def _analyze_content_with_ai(self, document: str) -> Dict[str, Any]:
-        """Use Gemini/Gemma to analyze content type and characteristics"""
+        """Use Gemini to analyze content type and characteristics"""
         from services.gemini_client import reason_with_gemini
         
         analysis_prompt = f"""
@@ -138,8 +136,7 @@ Content to analyze:
         response = await reason_with_gemini(
             prompt=analysis_prompt,
             max_tokens=300,
-            temperature=0.3,
-            model_type=self.model_type
+            temperature=0.3
         )
         
         # Parse structured response

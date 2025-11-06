@@ -40,31 +40,13 @@ def test_backend_dockerfile_uses_port_env():
     
 
 def test_gemma_dockerfile_uses_port_env():
-    """Verify Gemma Dockerfile CMD reads PORT environment variable"""
-    dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'Dockerfile.gemma')
-    
-    with open(dockerfile_path, 'r') as f:
-        content = f.read()
-    
-    # Check that Dockerfile:
-    # 1. Uses host='0.0.0.0' (not 127.0.0.1)
-    # 2. Reads PORT from environment with default fallback
-    assert "host='0.0.0.0'" in content, "Gemma service must bind to 0.0.0.0 for Cloud Run"
-    assert 'os.getenv' in content, "Gemma service must read PORT from environment"
-    assert 'PORT' in content, "Gemma service must use PORT environment variable"
-    
+    """Verify Gemma Dockerfile CMD reads PORT environment variable (DISABLED - Gemma rolled back)"""
+    pytest.skip("Gemma service rolled back (Issue #132) - Dockerfile removed")
+
 
 def test_gemma_service_dockerfile_uses_port_env():
-    """Verify Gemma service Dockerfile (gemma_service/Dockerfile) reads PORT"""
-    dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'gemma_service', 'Dockerfile')
-    
-    with open(dockerfile_path, 'r') as f:
-        content = f.read()
-    
-    # Check CMD uses 0.0.0.0 and reads PORT
-    assert "host='0.0.0.0'" in content, "Gemma service must bind to 0.0.0.0"
-    assert 'os.getenv' in content, "Gemma service must read PORT from environment"
-    assert 'PORT' in content, "Gemma service must use PORT environment variable"
+    """Verify Gemma service Dockerfile (gemma_service/Dockerfile) reads PORT (DISABLED - Gemma rolled back)"""
+    pytest.skip("Gemma service rolled back (Issue #132) - service directory removed")
 
 
 @pytest.mark.asyncio
@@ -178,16 +160,17 @@ def test_backend_uses_correct_uvicorn_params():
 
 
 def test_gemma_main_has_port_compatibility():
-    """Verify gemma_service/main.py has Cloud Run port compatibility"""
-    main_path = os.path.join(os.path.dirname(__file__), '..', 'gemma_service', 'main.py')
-    
-    with open(main_path, 'r') as f:
-        content = f.read()
-    
-    # Check that main.py reads PORT from environment in __main__ block
-    assert 'PORT' in content, "Gemma main.py must reference PORT"
-    assert 'os.getenv' in content or 'getenv' in content, "Must read PORT from environment"
-    assert '0.0.0.0' in content, "Must bind to 0.0.0.0"
+    """Verify gemma_service/main.py has Cloud Run port compatibility (DISABLED - Gemma rolled back)"""
+    pytest.skip("Gemma service rolled back (Issue #132) - service directory removed")
+    # main_path = os.path.join(os.path.dirname(__file__), '..', 'gemma_service', 'main.py')
+    # 
+    # with open(main_path, 'r') as f:
+    #     content = f.read()
+    # 
+    # # Check that main.py reads PORT from environment in __main__ block
+    # assert 'PORT' in content, "Gemma main.py must reference PORT"
+    # assert 'os.getenv' in content or 'getenv' in content, "Must read PORT from environment"
+    # assert '0.0.0.0' in content, "Must bind to 0.0.0.0"
 
 
 if __name__ == "__main__":

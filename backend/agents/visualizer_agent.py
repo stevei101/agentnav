@@ -1,6 +1,6 @@
 """
 Visualizer Agent - ADK Implementation
-Uses Gemma GPU service for complex graph generation tasks
+Generates knowledge graphs using Gemini
 Integrates with Linker and Summarizer agents via A2A Protocol
 """
 import os
@@ -36,13 +36,12 @@ class VisualizerAgent(Agent):
     Responsibilities:
     - Generate knowledge graphs (Mind Maps for documents, Dependency Graphs for codebases) 
     - Use data from Summarizer and Linker agents via A2A Protocol
-    - Enhance visualizations using Gemma GPU-accelerated service
+    - Enhance visualizations using Gemini
     - Render visualization-ready JSON
     """
     
-    def __init__(self, a2a_protocol, gemma_service_url: Optional[str] = None, event_emitter=None):
+    def __init__(self, a2a_protocol, event_emitter=None):
         super().__init__("visualizer", a2a_protocol)
-        self.gemma_service_url = gemma_service_url or os.getenv("GEMMA_SERVICE_URL")
         self.event_emitter = event_emitter
         self._prompt_template: Optional[str] = None
         self._linked_data: Optional[Dict[str, Any]] = None
@@ -126,8 +125,8 @@ class VisualizerAgent(Agent):
                 )
             else:
                 # Fallback to original implementation if no linked data
-                self.logger.info("⚙️ Fallback: Generating visualization directly with Gemma")
-                result = await self._create_visualization_with_gemma(document, content_type)
+                self.logger.info("⚙️ Fallback: Generating visualization directly with Gemini")
+                result = await self._create_visualization_with_gemini(document, content_type)
             
             # Emit completion event with metrics
             if self.event_emitter:
@@ -189,34 +188,33 @@ class VisualizerAgent(Agent):
             return result
         else:
             # Fallback if linked data is incomplete
-            return await self._create_visualization_with_gemma(document, content_type)
+            return await self._create_visualization_with_gemini(document, content_type)
     
-    async def _create_visualization_with_gemma(self, document: str, content_type: str) -> Dict[str, Any]:
-        """Original visualization method using Gemma directly"""
+    async def _create_visualization_with_gemini(self, document: str, content_type: str) -> Dict[str, Any]:
+        """Visualization method using Gemini"""
         # Determine visualization type
         viz_type = "MIND_MAP" if content_type == "document" else "DEPENDENCY_GRAPH"
         
         # Get prompt template from Firestore (or fallback)
         prompt_template = self._get_prompt_template()
         
-        # Create prompt for Gemma to generate graph structure
+        # Create prompt for Gemini to generate graph structure
         graph_prompt = prompt_template.format(
             viz_type=viz_type,
             content=document[:MAX_PROMPT_LENGTH]
         )
 
         try:
-            # Call Gemma GPU service for complex graph generation
-            from services.gemma_service import generate_with_gemma
+            from services.gemini_client import reason_with_gemini
             
-            logger.info(f"Calling Gemma GPU service for {viz_type} generation...")
-            graph_text = await generate_with_gemma(
+            logger.info(f"Calling Gemini service for {viz_type} generation...")
+            graph_text = await reason_with_gemini(
                 prompt=graph_prompt,
                 max_tokens=1000,
                 temperature=0.7,
             )
             
-            # Parse the response (Gemma should return JSON)
+            # Parse the response (Gemini should return JSON)
             try:
                 # Try to extract JSON from the response
                 graph_data = json.loads(graph_text)
@@ -227,7 +225,7 @@ class VisualizerAgent(Agent):
                     graph_data = json.loads(json_match.group())
                 else:
                     # Fallback: create basic structure
-                    logger.warning("Could not parse JSON from Gemma response, using fallback")
+                    logger.warning("Could not parse JSON from Gemini response, using fallback")
                     return self._create_fallback_graph(document, viz_type)
             
             result = {
@@ -235,7 +233,7 @@ class VisualizerAgent(Agent):
                 "title": f"{viz_type} Visualization",
                 "nodes": graph_data.get("nodes", []),
                 "edges": graph_data.get("edges", []),
-                "generated_by": "gemma-gpu-service",
+                "generated_by": "gemini-service",
             }
             
             # Notify completion via A2A Protocol
@@ -245,7 +243,7 @@ class VisualizerAgent(Agent):
             
         except Exception as e:
             logger.error(f"Error in Visualizer Agent: {e}")
-            # Fallback to basic structure if Gemma service unavailable
+            # Fallback to basic structure if Gemini service unavailable
             fallback_result = self._create_fallback_graph(document, viz_type)
             await self._notify_visualization_complete(fallback_result)
             return fallback_result
@@ -253,7 +251,7 @@ class VisualizerAgent(Agent):
     
     async def _enhance_visualization(self, graph_data: Dict[str, Any], 
                                    document: str, content_type: str) -> Dict[str, Any]:
-        """Enhance visualization using Gemma GPU service and summary context"""
+        """Enhance visualization using Gemini and summary context"""
         try:
             # Use summary data if available
             summary_context = ""
@@ -275,9 +273,9 @@ Suggest improvements to make the visualization clearer and more informative.
 Return enhanced node groups and edge labels.
 """
             
-            from services.gemma_service import generate_with_gemma
+            from services.gemini_client import reason_with_gemini
             
-            enhancement_text = await generate_with_gemma(
+            enhancement_text = await reason_with_gemini(
                 prompt=enhancement_prompt,
                 max_tokens=400,
                 temperature=0.5
