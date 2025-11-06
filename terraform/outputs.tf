@@ -103,3 +103,9 @@ output "domain_mapping_status" {
   sensitive   = false
 }
 
+# Nginx Proxy Output
+output "proxy_service_url" {
+  description = "URL of the nginx proxy service (main entry point)"
+  value       = google_cloud_run_v2_service.nginx_proxy.uri
+}
+

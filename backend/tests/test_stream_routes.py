@@ -113,24 +113,24 @@ class TestEventModelValidation:
 
     def test_agent_stream_event_validation(self):
         """Test AgentStreamEvent model validation"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import AgentStreamEvent, EventMetadata, AgentTypeEnum, AgentStatusEnum
 
         event = AgentStreamEvent(
             id="evt-123",
-            agent="summarizer",
-            status="processing",
+            agent=AgentTypeEnum.SUMMARIZER,
+            status=AgentStatusEnum.PROCESSING,
             timestamp="2024-01-01T00:00:00Z",
-            metadata={"session_id": "sess-123"},
+            metadata=EventMetadata(elapsed_ms=100, step=1),
         )
         assert event.id == "evt-123"
-        assert event.agent == "summarizer"
-        assert event.status == "processing"
+        assert event.agent == AgentTypeEnum.SUMMARIZER
+        assert event.status == AgentStatusEnum.PROCESSING
 
     def test_event_payload_with_metrics(self):
-        """Test EventPayload with metrics"""
-        from backend.models.stream_event_model import EventPayload
+        """Test AgentEventPayload with metrics"""
+        from backend.models.stream_event_model import AgentEventPayload
 
-        payload = EventPayload(
+        payload = AgentEventPayload(
             summary="Test summary",
             metrics={
                 "processingTime": 1500,
@@ -142,15 +142,18 @@ class TestEventModelValidation:
         assert payload.metrics["processingTime"] == 1500
 
     def test_event_payload_with_error(self):
-        """Test EventPayload with error handling"""
-        from backend.models.stream_event_model import EventPayload
+        """Test AgentEventPayload with error handling"""
+        from backend.models.stream_event_model import AgentEventPayload, ErrorPayload, ErrorType
 
-        payload = EventPayload(
-            error_message="Failed to process document",
-            error_type="ProcessingError",
+        payload = AgentEventPayload(
+            error=ErrorPayload(
+                error="Failed to process document",
+                error_type=ErrorType.UNKNOWN,
+            ),
         )
-        assert payload.error_message == "Failed to process document"
-        assert payload.error_type == "ProcessingError"
+        assert payload.error is not None
+        assert payload.error.error == "Failed to process document"
+        assert payload.error.error_type == ErrorType.UNKNOWN
 
 
 class TestEventStreaming:
@@ -179,13 +182,16 @@ class TestEventStreaming:
         client_queue = asyncio.Queue()
         emitter.register_client(client_queue)
 
-        # Emit an event
-        test_event = {
-            "id": "evt-001",
-            "agent": "summarizer",
-            "status": "processing",
-            "timestamp": "2024-01-01T00:00:00Z",
-        }
+        # Emit an event (using Pydantic model)
+        from backend.models.stream_event_model import AgentStreamEvent, AgentTypeEnum, AgentStatusEnum, EventMetadata
+        
+        test_event = AgentStreamEvent(
+            id="evt-001",
+            agent=AgentTypeEnum.SUMMARIZER,
+            status=AgentStatusEnum.PROCESSING,
+            timestamp="2024-01-01T00:00:00Z",
+            metadata=EventMetadata(elapsed_ms=100, step=1),
+        )
         await emitter.emit_event(test_event)
 
         # Verify event was queued
@@ -207,13 +213,16 @@ class TestEventStreaming:
         emitter.register_client(queue1)
         emitter.register_client(queue2)
 
-        # Emit an event
-        test_event = {
-            "id": "evt-002",
-            "agent": "linker",
-            "status": "complete",
-            "timestamp": "2024-01-01T00:00:01Z",
-        }
+        # Emit an event (using Pydantic model)
+        from backend.models.stream_event_model import AgentStreamEvent, AgentTypeEnum, AgentStatusEnum, EventMetadata
+        
+        test_event = AgentStreamEvent(
+            id="evt-002",
+            agent=AgentTypeEnum.LINKER,
+            status=AgentStatusEnum.COMPLETE,
+            timestamp="2024-01-01T00:00:01Z",
+            metadata=EventMetadata(elapsed_ms=200, step=2),
+        )
         await emitter.emit_event(test_event)
 
         # Verify both queues receive the event
@@ -239,13 +248,16 @@ class TestEventStreaming:
         # Unregister queue1
         emitter.unregister_client(queue1)
 
-        # Emit an event
-        test_event = {
-            "id": "evt-003",
-            "agent": "visualizer",
-            "status": "processing",
-            "timestamp": "2024-01-01T00:00:02Z",
-        }
+        # Emit an event (using Pydantic model)
+        from backend.models.stream_event_model import AgentStreamEvent, AgentTypeEnum, AgentStatusEnum, EventMetadata
+        
+        test_event = AgentStreamEvent(
+            id="evt-003",
+            agent=AgentTypeEnum.VISUALIZER,
+            status=AgentStatusEnum.PROCESSING,
+            timestamp="2024-01-01T00:00:02Z",
+            metadata=EventMetadata(elapsed_ms=300, step=3),
+        )
         await emitter.emit_event(test_event)
 
         # queue2 should receive event
@@ -265,20 +277,14 @@ class TestAgentEventEmission:
         """Test agent emits processing event"""
         from backend.agents.summarizer_agent import SummarizerAgent
         from backend.services.event_emitter import EventEmitterManager
+        from backend.agents.base_agent import A2AProtocol
 
         manager = EventEmitterManager()
         emitter = manager.create_emitter("test-session")
 
-        # Create a mock event emitter callback
-        events = []
-
-        async def capture_event(event):
-            events.append(event)
-
-        emitter._emit_callback = capture_event
-
-        # Create agent with emitter
-        agent = SummarizerAgent(event_emitter=emitter)
+        # Create agent with emitter and A2A protocol
+        a2a = A2AProtocol()
+        agent = SummarizerAgent(a2a_protocol=a2a, event_emitter=emitter)
 
         # Process a document
         result = await agent.process(
@@ -297,11 +303,13 @@ class TestAgentEventEmission:
         """Test agent emits error event when processing fails"""
         from backend.agents.summarizer_agent import SummarizerAgent
         from backend.services.event_emitter import EventEmitterManager
+        from backend.agents.base_agent import A2AProtocol
 
         manager = EventEmitterManager()
         emitter = manager.create_emitter("test-session")
 
-        agent = SummarizerAgent(event_emitter=emitter)
+        a2a = A2AProtocol()
+        agent = SummarizerAgent(a2a_protocol=a2a, event_emitter=emitter)
 
         # Try to process invalid input
         with pytest.raises(Exception):
@@ -339,13 +347,16 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_workflow_execution_error_event(self):
         """Test that workflow errors are sent as error events"""
-        from backend.models.stream_event_model import EventPayload
+        from backend.models.stream_event_model import AgentEventPayload, ErrorPayload, ErrorType
 
-        payload = EventPayload(
-            error_message="Workflow execution failed",
-            error_type="WorkflowError",
+        payload = AgentEventPayload(
+            error=ErrorPayload(
+                error="Workflow execution failed",
+                error_type=ErrorType.WORKFLOW_ERROR,
+            ),
         )
-        assert payload.error_message is not None
+        assert payload.error is not None
+        assert payload.error.error == "Workflow execution failed"
 
     def test_websocket_timeout_handling(self):
         """Test timeout handling in WebSocket communication"""
@@ -359,13 +370,18 @@ class TestPayloadParsing:
 
     def test_parse_agent_stream_event(self):
         """Test parsing agent stream events"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import AgentStreamEvent, AgentTypeEnum, AgentStatusEnum, EventMetadata, AgentEventPayload
 
         raw_event = {
             "id": "evt-100",
             "agent": "summarizer",
             "status": "complete",
             "timestamp": "2024-01-01T00:00:10Z",
+            "metadata": {
+                "elapsed_ms": 2000,
+                "step": 2,
+                "total_steps": 4,
+            },
             "payload": {
                 "summary": "Key findings",
                 "metrics": {
@@ -383,16 +399,22 @@ class TestPayloadParsing:
 
     def test_parse_multiple_event_types(self):
         """Test parsing different agent event types"""
-        from backend.models.stream_event_model import AgentStreamEvent
+        from backend.models.stream_event_model import AgentStreamEvent, AgentTypeEnum, AgentStatusEnum, EventMetadata
 
-        event_types = ["queued", "processing", "complete", "error"]
+        event_types = [
+            AgentStatusEnum.QUEUED,
+            AgentStatusEnum.PROCESSING,
+            AgentStatusEnum.COMPLETE,
+            AgentStatusEnum.ERROR,
+        ]
 
         for status in event_types:
             event = AgentStreamEvent(
-                id=f"evt-{status}",
-                agent="visualizer",
+                id=f"evt-{status.value}",
+                agent=AgentTypeEnum.VISUALIZER,
                 status=status,
                 timestamp="2024-01-01T00:00:00Z",
+                metadata=EventMetadata(elapsed_ms=100, step=1),
             )
             assert event.status == status
 
@@ -407,12 +429,12 @@ class TestStreamingStateManagement:
 
         session = SessionContext(
             session_id="test-session-001",
-            document="Test document",
+            raw_input="Test document",
             content_type="document",
         )
 
         assert session.session_id == "test-session-001"
-        assert session.document == "Test document"
+        assert session.raw_input == "Test document"
 
     @pytest.mark.asyncio
     async def test_session_state_updates_during_stream(self):
@@ -421,16 +443,16 @@ class TestStreamingStateManagement:
 
         session = SessionContext(
             session_id="test-session-002",
-            document="Content",
+            raw_input="Content",
             content_type="codebase",
         )
 
-        # Simulate state updates
-        session.agent_states["summarizer"] = {"status": "processing"}
-        session.agent_states["linker"] = {"status": "queued"}
+        # Simulate state updates by marking agents complete
+        session.mark_agent_complete("summarizer")
+        session.set_current_agent("linker")
 
-        assert len(session.agent_states) == 2
-        assert session.agent_states["summarizer"]["status"] == "processing"
+        assert "summarizer" in session.completed_agents
+        assert session.current_agent == "linker"
 
 
 # Integration-style tests (may require real services or mocking)

@@ -113,3 +113,15 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
+variable "proxy_region" {
+  description = "Region for nginx proxy service (defaults to frontend_region)"
+  type        = string
+  default     = null
+}
+
+variable "proxy_container_port" {
+  description = "Container port for proxy service"
+  type        = number
+  default     = 8080
+}
+
