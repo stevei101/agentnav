@@ -126,10 +126,14 @@ jobs:
     name: Build and Push Prompt Vault Container
     runs-on: ubuntu-latest
     needs: [changes, prompt-vault-lint, prompt-vault-tests]
+    # Run if prompt-vault changed and all tests passed or were skipped
+    # Don't run if tests were cancelled to allow graceful cancellation
     if: |
       needs.changes.outputs.prompt_vault == 'true' &&
       (needs.prompt-vault-lint.result == 'success' || needs.prompt-vault-lint.result == 'skipped') &&
-      (needs.prompt-vault-tests.result == 'success' || needs.prompt-vault-tests.result == 'skipped')
+      (needs.prompt-vault-tests.result == 'success' || needs.prompt-vault-tests.result == 'skipped') &&
+      needs.prompt-vault-lint.result != 'cancelled' &&
+      needs.prompt-vault-tests.result != 'cancelled'
     permissions:
       contents: read
       id-token: write # Required for Workload Identity Federation
@@ -287,6 +291,10 @@ jobs:
           echo "   Service Account: ${SERVICE_ACCOUNT}"
 
           # Modern gcloud run deploy with Cloud Run best practices
+          # Required secrets (must exist in Secret Manager):
+          #   - SUPABASE_URL: Supabase project URL (https://your-project.supabase.co)
+          #   - SUPABASE_ANON_KEY: Public anonymous key for Supabase client
+          #   - SUPABASE_SERVICE_KEY: Private service role key (server-side only)
           gcloud run deploy prompt-vault-frontend \
             --image ${IMAGE} \
             --region us-central1 \

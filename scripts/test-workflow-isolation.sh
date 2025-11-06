@@ -103,12 +103,17 @@ EXPLICIT_INCLUDES=0
 
 for workflow in ci.yml build.yml terraform.yml; do
     if [ -f "$REPO_ROOT/.github/workflows/$workflow" ]; then
-        # Check if prompt-vault is explicitly included in paths (not paths-ignore)
-        # Look for paths: section followed by prompt-vault (not in paths-ignore:)
-        if grep -B 1 "prompt-vault" "$REPO_ROOT/.github/workflows/$workflow" | grep -q "paths:" && \
-           ! grep -A 1 "paths-ignore:" "$REPO_ROOT/.github/workflows/$workflow" | grep -q "prompt-vault"; then
-            echo -e "${RED}  ✗ $workflow explicitly includes prompt-vault in paths${NC}"
-            ((EXPLICIT_INCLUDES++))
+        # Extract paths: sections (not paths-ignore:) and check for prompt-vault references
+        # This verifies that prompt-vault is not explicitly included in the paths filter
+        PATHS_SECTION=$(grep -A 10 "^  paths:" "$REPO_ROOT/.github/workflows/$workflow" || true)
+        IGNORE_SECTION=$(grep -A 5 "^  paths-ignore:" "$REPO_ROOT/.github/workflows/$workflow" || true)
+        
+        # If paths section contains prompt-vault but ignore section doesn't, it's an explicit include
+        if echo "$PATHS_SECTION" | grep -q "prompt-vault"; then
+            if ! echo "$IGNORE_SECTION" | grep -q "prompt-vault"; then
+                echo -e "${RED}  ✗ $workflow explicitly includes prompt-vault in paths${NC}"
+                ((EXPLICIT_INCLUDES++))
+            fi
         fi
     fi
 done
