@@ -3,6 +3,7 @@ Knowledge Cache Service
 Manages knowledge cache in Firestore 'knowledge_cache/' collection
 Implements content hash-based caching to avoid redundant processing
 """
+
 import hashlib
 import logging
 import time
@@ -37,6 +38,7 @@ class KnowledgeCacheService:
         """Get Firestore client (lazy initialization)"""
         if self.firestore_client is None:
             from services.firestore_client import get_firestore_client
+
             self.firestore_client = get_firestore_client()
         return self.firestore_client
 
@@ -53,12 +55,10 @@ class KnowledgeCacheService:
         """
         # Combine content and type for hash to differentiate same text analyzed differently
         hash_input = f"{content_type}:{content}"
-        return hashlib.sha256(hash_input.encode('utf-8')).hexdigest()
+        return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
     async def check_cache(
-        self,
-        content: str,
-        content_type: str = "document"
+        self, content: str, content_type: str = "document"
     ) -> Optional[Dict[str, Any]]:
         """
         Check if cached result exists for content
@@ -108,7 +108,7 @@ class KnowledgeCacheService:
         visualization_data: Dict[str, Any],
         key_entities: list = None,
         relationships: list = None,
-        ttl_hours: Optional[int] = None
+        ttl_hours: Optional[int] = None,
     ) -> bool:
         """
         Store analysis results in cache
@@ -146,7 +146,7 @@ class KnowledgeCacheService:
                 "created_at": current_time,
                 "expires_at": expires_at,
                 "ttl_hours": ttl,
-                "hit_count": 0  # Track cache hits
+                "hit_count": 0,  # Track cache hits
             }
 
             doc_ref.set(cache_data)
@@ -225,10 +225,7 @@ class KnowledgeCacheService:
             # Query for expired entries
             current_time = time.time()
             expired_docs = (
-                collection
-                .where("expires_at", "<", current_time)
-                .limit(batch_size)
-                .stream()
+                collection.where("expires_at", "<", current_time).limit(batch_size).stream()
             )
 
             deleted_count = 0
@@ -278,7 +275,7 @@ class KnowledgeCacheService:
                 "total_entries": total_entries,
                 "total_hits": total_hits,
                 "expired_entries": expired_entries,
-                "active_entries": total_entries - expired_entries
+                "active_entries": total_entries - expired_entries,
             }
 
         except Exception as e:
@@ -288,7 +285,7 @@ class KnowledgeCacheService:
                 "total_hits": 0,
                 "expired_entries": 0,
                 "active_entries": 0,
-                "error": str(e)
+                "error": str(e),
             }
 
 

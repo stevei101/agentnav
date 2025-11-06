@@ -57,9 +57,7 @@ async def add_security_headers(request: Request, call_next):
 
     # HSTS (HTTP Strict Transport Security) - Cloud Run best practice
     # Force HTTPS for 1 year
-    response.headers["Strict-Transport-Security"] = (
-        "max-age=31536000; includeSubDomains"
-    )
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
     # Prevent clickjacking
     response.headers["X-Frame-Options"] = "DENY"
@@ -547,16 +545,12 @@ async def get_agent_status():
                 firestore_status = "disconnected"
         except Exception as e:
             firestore_status = f"error: {str(e)}"
-            diagnostic_info["initialization_errors"].append(
-                f"Firestore check failed: {str(e)}"
-            )
+            diagnostic_info["initialization_errors"].append(f"Firestore check failed: {str(e)}")
 
         response = {
             "total_agents": len(agents),
             "agents": agent_status,
-            "adk_system": (
-                "operational" if len(agents) == len(agent_classes) else "degraded"
-            ),
+            "adk_system": ("operational" if len(agents) == len(agent_classes) else "degraded"),
             "a2a_protocol": "enabled",
             "firestore_status": firestore_status,
         }

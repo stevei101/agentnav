@@ -2,6 +2,7 @@
 Session Service
 Manages session metadata in Firestore 'sessions/' collection
 """
+
 import logging
 import time
 from typing import Optional, Dict, Any
@@ -32,6 +33,7 @@ class SessionService:
         """Get Firestore client (lazy initialization)"""
         if self.firestore_client is None:
             from services.firestore_client import get_firestore_client
+
             self.firestore_client = get_firestore_client()
         return self.firestore_client
 
@@ -40,7 +42,7 @@ class SessionService:
         session_id: str,
         user_input: str,
         content_type: str = "document",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Create a new session document in Firestore
@@ -67,7 +69,7 @@ class SessionService:
                 "content_type": content_type,
                 "agent_states": {},  # Will be updated as agents complete
                 "workflow_status": "initializing",
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
             doc_ref.set(session_data)
@@ -83,11 +85,7 @@ class SessionService:
             logger.warning("⚠️  Continuing without session persistence")
             return False
 
-    async def update_session(
-        self,
-        session_id: str,
-        updates: Dict[str, Any]
-    ) -> bool:
+    async def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
         """
         Update session document with new data
 
@@ -116,10 +114,7 @@ class SessionService:
             return False
 
     async def update_agent_state(
-        self,
-        session_id: str,
-        agent_name: str,
-        state: Dict[str, Any]
+        self, session_id: str, agent_name: str, state: Dict[str, Any]
     ) -> bool:
         """
         Update agent state in session document
@@ -142,17 +137,14 @@ class SessionService:
                 "status": state.get("status", "completed"),
                 "timestamp": time.time(),
             }
-            
+
             # Only include non-None values
             if state.get("execution_time") is not None:
                 agent_state_data["execution_time"] = state.get("execution_time")
             if state.get("result_summary") is not None:
                 agent_state_data["result_summary"] = state.get("result_summary")
-            
-            updates = {
-                f"agent_states.{agent_name}": agent_state_data,
-                "updated_at": time.time()
-            }
+
+            updates = {f"agent_states.{agent_name}": agent_state_data, "updated_at": time.time()}
 
             doc_ref.update(updates)
 
@@ -214,11 +206,7 @@ class SessionService:
             logger.error(f"❌ Failed to delete session from Firestore: {e}")
             return False
 
-    async def list_sessions(
-        self,
-        limit: int = 10,
-        order_by: str = "created_at"
-    ) -> list:
+    async def list_sessions(self, limit: int = 10, order_by: str = "created_at") -> list:
         """
         List recent sessions
 

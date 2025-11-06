@@ -2,6 +2,7 @@
 Orchestrator Agent - ADK Implementation
 Team lead that determines content type and delegates tasks to specialized agents
 """
+
 import logging
 from typing import Dict, Any, Optional
 from .base_agent import Agent, A2AMessage
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class OrchestratorAgent(Agent):
     """
     Orchestrator Agent using ADK and A2A Protocol
-    
+
     Responsibilities:
     - Receive user input
     - Determine content type (document vs codebase)
@@ -21,19 +22,20 @@ class OrchestratorAgent(Agent):
     - Coordinate the overall analysis workflow
     - Emit real-time events for FR#020 streaming dashboard
     """
-    
+
     def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("orchestrator", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
-    
+
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
         if self._prompt_template:
             return self._prompt_template
-        
+
         try:
             from services.prompt_loader import get_prompt
+
             self._prompt_template = get_prompt("orchestrator_system_instruction")
             logger.info("✅ Loaded orchestrator prompt from Firestore")
             return self._prompt_template
@@ -58,7 +60,7 @@ Determine:
 - key_topics: List of main topics/themes identified
 """
             return self._prompt_template
-    
+
     async def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Orchestrator processing: analyze content and delegate to specialized agents
@@ -66,26 +68,24 @@ Determine:
         document = context.get("document", "")
         if not document:
             raise ValueError("Document content is required for orchestration")
-        
+
         self.logger.info("🎯 Orchestrator analyzing content and planning workflow")
-        
+
         # Emit processing event for FR#020
         if self.event_emitter:
             await self.event_emitter.emit_agent_processing(
-                agent="orchestrator",
-                step=1,
-                partial_results={"status": "analyzing content"}
+                agent="orchestrator", step=1, partial_results={"status": "analyzing content"}
             )
-        
+
         # Step 1: Analyze content type and characteristics
         content_analysis = await self._analyze_content(document)
-        
+
         # Step 2: Send delegation messages to specialized agents via A2A Protocol
         await self._delegate_to_agents(content_analysis, document)
-        
+
         # Step 3: Set up workflow coordination
         workflow_plan = self._create_workflow_plan(content_analysis)
-        
+
         # Emit complete event for FR#020
         if self.event_emitter:
             await self.event_emitter.emit_agent_complete(
@@ -94,28 +94,28 @@ Determine:
                 metrics={
                     "content_type": content_analysis["content_type"],
                     "complexity": content_analysis["complexity_level"],
-                    "topics_identified": len(content_analysis["key_topics"])
-                }
+                    "topics_identified": len(content_analysis["key_topics"]),
+                },
             )
-        
+
         return {
             "agent": "orchestrator",
             "content_analysis": content_analysis,
             "workflow_plan": workflow_plan,
             "delegated_agents": ["summarizer", "linker", "visualizer"],
-            "orchestration_complete": True
+            "orchestration_complete": True,
         }
-    
+
     async def _analyze_content(self, document: str) -> Dict[str, Any]:
         """
         Analyze content to determine type and characteristics
-        
+
         Uses Gemini for sophisticated analysis (FR#090) with fallback to heuristics.
         """
         # Try Gemini-based analysis first (FR#090)
         try:
             from services.gemini_client import generate_content_with_prompt_template
-            
+
             # Use prompt template from Firestore if available (FR#003 integration)
             try:
                 analysis_response = await generate_content_with_prompt_template(
@@ -123,17 +123,17 @@ Determine:
                     template_variables={
                         "content": document[:3000],  # Limit for prompt size
                         "content_length": len(document),
-                        "line_count": len(document.split('\n'))
+                        "line_count": len(document.split("\n")),
                     },
                     temperature=0.3,
-                    max_output_tokens=500
+                    max_output_tokens=500,
                 )
-                
+
                 # Parse Gemini response (expecting structured output)
                 # Gemini will provide JSON-like analysis
                 self.logger.info("✅ Used Gemini for content analysis")
                 return self._parse_gemini_analysis(analysis_response, document)
-                
+
             except (ValueError, RuntimeError):
                 # Fallback to direct prompt
                 prompt = f"""
@@ -148,126 +148,142 @@ Content (first 3000 chars):
 Provide your analysis:
 """
                 from services.gemini_client import generate_content
+
                 analysis_response = await generate_content(
-                    prompt=prompt,
-                    temperature=0.3,
-                    max_output_tokens=500
+                    prompt=prompt, temperature=0.3, max_output_tokens=500
                 )
                 return self._parse_gemini_analysis(analysis_response, document)
-                
+
         except Exception as e:
             self.logger.warning(f"⚠️  Gemini analysis failed: {e}, using heuristic fallback")
             return self._analyze_content_heuristic(document)
-    
+
     def _parse_gemini_analysis(self, response: str, document: str) -> Dict[str, Any]:
         """
         Parse Gemini's analysis response into structured format
-        
+
         Args:
             response: Gemini's text response
             document: Original document (for fallback parsing)
-            
+
         Returns:
             Structured analysis dictionary
         """
         import re
-        
+
         # Extract content_type
-        content_type_match = re.search(r'(?:content_type|Content Type)[:]\s*(document|codebase)', response, re.IGNORECASE)
+        content_type_match = re.search(
+            r"(?:content_type|Content Type)[:]\s*(document|codebase)", response, re.IGNORECASE
+        )
         content_type = content_type_match.group(1).lower() if content_type_match else "document"
-        
+
         # Extract complexity
-        complexity_match = re.search(r'(?:complexity|Complexity)[:]\s*(simple|moderate|complex)', response, re.IGNORECASE)
+        complexity_match = re.search(
+            r"(?:complexity|Complexity)[:]\s*(simple|moderate|complex)", response, re.IGNORECASE
+        )
         complexity_level = complexity_match.group(1).lower() if complexity_match else "moderate"
-        
+
         # Extract topics (look for list items or numbered list)
         topics = []
         topic_patterns = [
-            r'key_topics[:\s]*(.+?)(?:\n\n|\n[A-Z]|$)',
-            r'(?:topic|Topic)s?:?\s*\n((?:[-*•]\s*.+\n?)+)',
-            r'\d+[.)]\s*(.+?)(?:\n|$)'
+            r"key_topics[:\s]*(.+?)(?:\n\n|\n[A-Z]|$)",
+            r"(?:topic|Topic)s?:?\s*\n((?:[-*•]\s*.+\n?)+)",
+            r"\d+[.)]\s*(.+?)(?:\n|$)",
         ]
-        
+
         for pattern in topic_patterns:
             matches = re.findall(pattern, response, re.IGNORECASE | re.MULTILINE)
             if matches:
                 for match in matches[:5]:  # Limit to 5 topics
-                    topic = re.sub(r'^[-*•\d.)\s]+', '', match.strip())
+                    topic = re.sub(r"^[-*•\d.)\s]+", "", match.strip())
                     if topic and len(topic) > 2:
                         topics.append(topic)
                 break
-        
+
         # Fallback topic extraction if none found
         if not topics:
-            lines = document.split('\n')
+            lines = document.split("\n")
             for line in lines[:10]:
                 line = line.strip()
-                if line and (line.startswith('#') or (len(line) < 100 and len(line) > 5)):
-                    topics.append(line.replace('#', '').strip()[:50])
-        
+                if line and (line.startswith("#") or (len(line) < 100 and len(line) > 5)):
+                    topics.append(line.replace("#", "").strip()[:50])
+
         return {
             "content_type": content_type,
             "content_summary": response[:200] if len(response) > 200 else response,
             "complexity_level": complexity_level,
             "key_topics": topics[:5],
             "analysis_timestamp": time.time(),
-            "analysis_method": "gemini"
+            "analysis_method": "gemini",
         }
-    
+
     def _analyze_content_heuristic(self, document: str) -> Dict[str, Any]:
         """
         Fallback heuristic-based content analysis
-        
+
         Used when Gemini is unavailable.
         """
         code_indicators = [
-            'import ', 'from ', 'class ', 'def ', 'function', 'var ', 'let ', 'const ',
-            '#!/', '<?php', '<html', '<script', 'package ', 'public class', 'void main'
+            "import ",
+            "from ",
+            "class ",
+            "def ",
+            "function",
+            "var ",
+            "let ",
+            "const ",
+            "#!/",
+            "<?php",
+            "<html",
+            "<script",
+            "package ",
+            "public class",
+            "void main",
         ]
-        
+
         document_lower = document.lower()
         code_score = sum(1 for indicator in code_indicators if indicator in document_lower)
-        
+
         # Determine content type
         content_type = "codebase" if code_score >= 2 else "document"
-        
+
         # Analyze complexity based on length and structure
         complexity_level = "simple"
         if len(document) > 5000:
             complexity_level = "complex"
         elif len(document) > 1000:
             complexity_level = "moderate"
-        
+
         # Extract key topics (simple keyword extraction)
-        lines = document.split('\n')
+        lines = document.split("\n")
         key_topics = []
-        
+
         if content_type == "codebase":
             # Look for function/class names
             for line in lines[:20]:  # Check first 20 lines
                 line = line.strip()
-                if line.startswith('def ') or line.startswith('class '):
-                    key_topics.append(line.split()[1].split('(')[0])
+                if line.startswith("def ") or line.startswith("class "):
+                    key_topics.append(line.split()[1].split("(")[0])
         else:
             # Look for headings and important phrases
             for line in lines[:10]:  # Check first 10 lines
                 line = line.strip()
-                if line and (line.startswith('#') or len(line) < 100):
-                    key_topics.append(line.replace('#', '').strip())
-        
+                if line and (line.startswith("#") or len(line) < 100):
+                    key_topics.append(line.replace("#", "").strip())
+
         return {
             "content_type": content_type,
             "content_summary": f"{content_type.title()} with {len(lines)} lines, {len(document.split())} words",
             "complexity_level": complexity_level,
             "key_topics": key_topics[:5],  # Top 5 topics
             "analysis_timestamp": time.time(),
-            "analysis_method": "heuristic"
+            "analysis_method": "heuristic",
         }
-    
+
     async def _delegate_to_agents(self, content_analysis: Dict[str, Any], document: str):
         """
         Send delegation messages to specialized agents via A2A Protocol
-        
+
         FR#027: Uses typed TaskDelegationMessage when enhanced A2A is available
         """
         # Check if using enhanced A2A Protocol
@@ -275,27 +291,24 @@ Provide your analysis:
             await self._delegate_with_typed_messages(content_analysis, document)
         else:
             await self._delegate_with_legacy_messages(content_analysis, document)
-    
+
     async def _delegate_with_typed_messages(self, content_analysis: Dict[str, Any], document: str):
         """Send typed delegation messages (FR#027)"""
         from services.a2a_protocol import create_task_delegation_message
-        
-        correlation_id = getattr(self.a2a, 'correlation_id', 'unknown')
-        
+
+        correlation_id = getattr(self.a2a, "correlation_id", "unknown")
+
         # Message to Summarizer Agent
         summarizer_message = create_task_delegation_message(
             from_agent=self.name,
             to_agent="summarizer",
             task_name="create_summary",
-            task_parameters={
-                "content": document,
-                "content_type": content_analysis["content_type"]
-            },
+            task_parameters={"content": document, "content_type": content_analysis["content_type"]},
             expected_output="comprehensive_summary",
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )
         await self.a2a.send_message(summarizer_message)
-        
+
         # Message to Linker Agent
         linker_message = create_task_delegation_message(
             from_agent=self.name,
@@ -304,13 +317,13 @@ Provide your analysis:
             task_parameters={
                 "content": document,
                 "content_type": content_analysis["content_type"],
-                "key_topics": content_analysis["key_topics"]
+                "key_topics": content_analysis["key_topics"],
             },
             expected_output="entity_relationships",
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )
         await self.a2a.send_message(linker_message)
-        
+
         # Message to Visualizer Agent
         visualizer_message = create_task_delegation_message(
             from_agent=self.name,
@@ -319,20 +332,20 @@ Provide your analysis:
             task_parameters={
                 "content": document,
                 "content_type": content_analysis["content_type"],
-                "complexity_level": content_analysis["complexity_level"]
+                "complexity_level": content_analysis["complexity_level"],
             },
             expected_output="interactive_graph",
             correlation_id=correlation_id,
-            depends_on=["summarizer", "linker"]
+            depends_on=["summarizer", "linker"],
         )
         await self.a2a.send_message(visualizer_message)
-        
+
         self.logger.info("📨 Sent typed delegation messages to all specialized agents (FR#027)")
-    
+
     async def _delegate_with_legacy_messages(self, content_analysis: Dict[str, Any], document: str):
         """Send legacy delegation messages (backward compatibility)"""
         from .base_agent import A2AMessage
-        
+
         # Message to Summarizer Agent
         summarizer_message = A2AMessage(
             message_id=f"orchestrator_to_summarizer_{int(time.time())}",
@@ -344,12 +357,12 @@ Provide your analysis:
                 "content": document,
                 "content_type": content_analysis["content_type"],
                 "priority": "high",
-                "expected_output": "comprehensive_summary"
+                "expected_output": "comprehensive_summary",
             },
-            priority=4
+            priority=4,
         )
         await self.a2a.send_message(summarizer_message)
-        
+
         # Message to Linker Agent
         linker_message = A2AMessage(
             message_id=f"orchestrator_to_linker_{int(time.time())}",
@@ -361,12 +374,12 @@ Provide your analysis:
                 "content": document,
                 "content_type": content_analysis["content_type"],
                 "key_topics": content_analysis["key_topics"],
-                "expected_output": "entity_relationships"
+                "expected_output": "entity_relationships",
             },
-            priority=3
+            priority=3,
         )
         await self.a2a.send_message(linker_message)
-        
+
         # Message to Visualizer Agent
         visualizer_message = A2AMessage(
             message_id=f"orchestrator_to_visualizer_{int(time.time())}",
@@ -379,68 +392,70 @@ Provide your analysis:
                 "content_type": content_analysis["content_type"],
                 "complexity_level": content_analysis["complexity_level"],
                 "depends_on": ["summarizer", "linker"],  # Visualizer should wait for these
-                "expected_output": "interactive_graph"
+                "expected_output": "interactive_graph",
             },
-            priority=2
+            priority=2,
         )
         await self.a2a.send_message(visualizer_message)
-        
+
         self.logger.info("📨 Sent delegation messages to all specialized agents")
-    
+
     def _create_workflow_plan(self, content_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Create a workflow execution plan based on content analysis"""
-        
+
         # Determine optimal execution order
         if content_analysis["complexity_level"] == "simple":
             execution_strategy = "parallel"
         else:
             execution_strategy = "sequential"
-        
+
         return {
             "execution_strategy": execution_strategy,
             "estimated_duration": self._estimate_processing_time(content_analysis),
-            "visualization_type": "DEPENDENCY_GRAPH" if content_analysis["content_type"] == "codebase" else "MIND_MAP",
+            "visualization_type": (
+                "DEPENDENCY_GRAPH" if content_analysis["content_type"] == "codebase" else "MIND_MAP"
+            ),
             "agent_priorities": {
                 "summarizer": 4,  # High priority
-                "linker": 3,      # Medium priority
-                "visualizer": 2   # Lower priority (depends on others)
-            }
+                "linker": 3,  # Medium priority
+                "visualizer": 2,  # Lower priority (depends on others)
+            },
         }
-    
+
     def _estimate_processing_time(self, content_analysis: Dict[str, Any]) -> int:
         """Estimate processing time in seconds based on content analysis"""
         base_time = 10  # Base processing time
-        
+
         # Adjust based on complexity
-        complexity_multiplier = {
-            "simple": 1.0,
-            "moderate": 1.5,
-            "complex": 2.0
-        }
-        
+        complexity_multiplier = {"simple": 1.0, "moderate": 1.5, "complex": 2.0}
+
         multiplier = complexity_multiplier.get(content_analysis["complexity_level"], 1.0)
         estimated_time = int(base_time * multiplier)
-        
+
         return estimated_time
-    
+
     async def _handle_a2a_message(self, message: A2AMessage):
         """Handle incoming A2A messages specific to Orchestrator"""
         await super()._handle_a2a_message(message)
-        
+
         if message.message_type == "agent_complete":
             agent_name = message.data.get("agent")
             self.logger.info(f"📋 Received completion notification from {agent_name}")
-            
+
             # Update workflow progress in shared context
-            self.a2a.update_shared_context("workflow_progress", {
-                "completed_agents": self.a2a.get_shared_context().get("completed_agents", []) + [agent_name],
-                "last_update": time.time()
-            })
-        
+            self.a2a.update_shared_context(
+                "workflow_progress",
+                {
+                    "completed_agents": self.a2a.get_shared_context().get("completed_agents", [])
+                    + [agent_name],
+                    "last_update": time.time(),
+                },
+            )
+
         elif message.message_type == "agent_error":
             agent_name = message.data.get("agent")
             error = message.data.get("error")
             self.logger.warning(f"⚠️ Agent {agent_name} reported error: {error}")
-            
+
             # Could implement error recovery strategies here
             # For now, just log and continue

@@ -1,6 +1,7 @@
 """
 WebSocket Models for Real-time Agent Status Communication
 """
+
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict, Any
@@ -9,6 +10,7 @@ from pydantic import BaseModel, Field
 
 class AgentName(str, Enum):
     """Agent names matching frontend types"""
+
     ORCHESTRATOR = "Orchestrator"
     SUMMARIZER = "Summarizer"
     LINKER = "Linker"
@@ -17,6 +19,7 @@ class AgentName(str, Enum):
 
 class AgentStatus(str, Enum):
     """Agent status values matching frontend types"""
+
     IDLE = "Idle"
     PROCESSING = "Processing"
     DONE = "Done"
@@ -25,6 +28,7 @@ class AgentStatus(str, Enum):
 
 class MessageType(str, Enum):
     """WebSocket message types"""
+
     AGENT_STATUS_UPDATE = "agent_status_update"
     AGENT_HANDOFF = "agent_handoff"
     NAVIGATION_START = "navigation_start"
@@ -36,6 +40,7 @@ class MessageType(str, Enum):
 
 class AgentStatusMessage(BaseModel):
     """Agent status update message"""
+
     message_type: MessageType = MessageType.AGENT_STATUS_UPDATE
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     agent_name: AgentName
@@ -48,6 +53,7 @@ class AgentStatusMessage(BaseModel):
 
 class AgentHandoffMessage(BaseModel):
     """Agent-to-agent handoff message"""
+
     message_type: MessageType = MessageType.AGENT_HANDOFF
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     from_agent: AgentName
@@ -58,6 +64,7 @@ class AgentHandoffMessage(BaseModel):
 
 class NavigationStartMessage(BaseModel):
     """Navigation session start message"""
+
     message_type: MessageType = MessageType.NAVIGATION_START
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     session_id: str
@@ -67,6 +74,7 @@ class NavigationStartMessage(BaseModel):
 
 class NavigationCompleteMessage(BaseModel):
     """Navigation session complete message"""
+
     message_type: MessageType = MessageType.NAVIGATION_COMPLETE
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     session_id: str
@@ -76,6 +84,7 @@ class NavigationCompleteMessage(BaseModel):
 
 class NavigationErrorMessage(BaseModel):
     """Navigation session error message"""
+
     message_type: MessageType = MessageType.NAVIGATION_ERROR
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     session_id: str
@@ -85,6 +94,7 @@ class NavigationErrorMessage(BaseModel):
 
 class ConnectionAckMessage(BaseModel):
     """WebSocket connection acknowledgment"""
+
     message_type: MessageType = MessageType.CONNECTION_ACK
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     client_id: str
@@ -93,6 +103,7 @@ class ConnectionAckMessage(BaseModel):
 
 class HeartbeatMessage(BaseModel):
     """WebSocket heartbeat message"""
+
     message_type: MessageType = MessageType.HEARTBEAT
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
@@ -111,6 +122,7 @@ WebSocketMessage = (
 
 class NavigationRequest(BaseModel):
     """WebSocket navigation request from client"""
+
     document: str
     content_type: Optional[str] = "document"  # 'document' or 'codebase'
     client_id: Optional[str] = None
@@ -118,6 +130,7 @@ class NavigationRequest(BaseModel):
 
 class WebSocketResponse(BaseModel):
     """Standard WebSocket response wrapper"""
+
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None

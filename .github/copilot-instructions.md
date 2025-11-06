@@ -392,10 +392,16 @@ Firestore is used for persistent session memory, knowledge caching, and agent pr
 
 ### Local Development
 
-1. **Frontend:** `cd frontend && bun install && bun run dev`
+1. **Frontend (agentnav ONLY):** `cd frontend && bun install && bun run dev`
 2. **Backend:** `cd backend && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt && PORT=8080 uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --reload`
 3. **Firestore Emulator:** Use Firestore emulator for local development (port 8080 for API, port 4000 for UI).
 4. **ADK Testing:** Use ADK's local testing utilities for agent development.
+
+**Package Manager Strategy:**
+- **agentnav frontend:** Use **bun ONLY** (no npm/yarn)
+- **prompt-vault frontend:** Uses npm (different project, different requirements)
+- **agentnav backend:** Use **uv ONLY** (no pip directly)
+- **CI/CD support:** GitHub Actions supports both bun and npm to handle both projects
 
 **Cloud Run Compatibility Notes:**
 
