@@ -219,9 +219,13 @@ export default function PromptList() {
                 </div>
                 <div className="flex items-center gap-1 ml-2">
                   {prompt.is_public ? (
-                    <Eye className="w-4 h-4 text-green-400" title="Public" />
+                    <span title="Public">
+                      <Eye className="w-4 h-4 text-green-400" />
+                    </span>
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-500" title="Private" />
+                    <span title="Private">
+                      <EyeOff className="w-4 h-4 text-gray-500" />
+                    </span>
                   )}
                 </div>
               </div>
@@ -299,9 +303,13 @@ export default function PromptList() {
                       </span>
                     )}
                     {prompt.is_public ? (
-                      <Eye className="w-4 h-4 text-green-400" title="Public" />
+                      <span title="Public">
+                        <Eye className="w-4 h-4 text-green-400" />
+                      </span>
                     ) : (
-                      <EyeOff className="w-4 h-4 text-gray-500" title="Private" />
+                      <span title="Private">
+                        <EyeOff className="w-4 h-4 text-gray-500" />
+                      </span>
                     )}
                   </div>
                   {prompt.description && (
