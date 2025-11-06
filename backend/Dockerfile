@@ -56,6 +56,12 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')" || exit 1
 
-# Run FastAPI app directly (Cloud Run sets PORT env var automatically)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run FastAPI app with Cloud Run optimizations
+# Using exec form with sh -c to support PORT environment variable and proper signal handling
+# Cloud Run optimizations from start.sh:
+# - --timeout-keep-alive 65: Prevents load balancer from closing idle connections (default: 5s)
+# - --timeout-graceful-shutdown 30: Allows graceful shutdown on SIGTERM
+# - --no-access-log: Reduces log volume (Cloud Run captures all logs)
+# - --log-level info: Production logging level
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --timeout-keep-alive 65 --timeout-graceful-shutdown 30 --log-level info --no-access-log"]
 
