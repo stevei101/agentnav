@@ -75,7 +75,9 @@ class VisualizerAgent(Agent):
 
             if environment in ["production", "staging"]:
                 # Critical error in production - enforce prompt management
-                error_msg = f"CRITICAL: Failed to load prompt from Firestore in {environment} environment"
+                error_msg = (
+                    f"CRITICAL: Failed to load prompt from Firestore in {environment} environment"
+                )
                 logger.error(error_msg)
                 logger.error(f"   Error: {e}")
                 raise RuntimeError(error_msg)
@@ -98,9 +100,7 @@ class VisualizerAgent(Agent):
         """
         start_time = time.time()
         document = context.get("document", "")
-        content_type = context.get(
-            "content_type", "document"
-        )  # 'document' or 'codebase'
+        content_type = context.get("content_type", "document")  # 'document' or 'codebase'
 
         if not document:
             raise ValueError("Document content is required")
@@ -123,20 +123,14 @@ class VisualizerAgent(Agent):
 
             # Use linked data if available from Linker Agent
             if self._linked_data:
-                self.logger.info(
-                    "📊 Using entity and relationship data from Linker Agent"
-                )
+                self.logger.info("📊 Using entity and relationship data from Linker Agent")
                 result = await self._create_visualization_from_linked_data(
                     self._linked_data, content_type, document
                 )
             else:
                 # Fallback to original implementation if no linked data
-                self.logger.info(
-                    "⚙️ Fallback: Generating visualization directly with Gemini"
-                )
-                result = await self._create_visualization_with_gemini(
-                    document, content_type
-                )
+                self.logger.info("⚙️ Fallback: Generating visualization directly with Gemini")
+                result = await self._create_visualization_with_gemini(document, content_type)
 
             # Emit completion event with metrics
             if self.event_emitter:
@@ -176,15 +170,11 @@ class VisualizerAgent(Agent):
 
         if graph_data and graph_data.get("nodes") and graph_data.get("edges"):
             # Enhance the visualization with additional processing
-            enhanced_graph = await self._enhance_visualization(
-                graph_data, document, content_type
-            )
+            enhanced_graph = await self._enhance_visualization(graph_data, document, content_type)
 
             result = {
                 "type": enhanced_graph.get("type", "MIND_MAP"),
-                "title": enhanced_graph.get(
-                    "title", f"{content_type.title()} Visualization"
-                ),
+                "title": enhanced_graph.get("title", f"{content_type.title()} Visualization"),
                 "nodes": enhanced_graph["nodes"],
                 "edges": enhanced_graph["edges"],
                 "generated_by": "adk_multi_agent",
@@ -240,9 +230,7 @@ class VisualizerAgent(Agent):
                     graph_data = json.loads(json_match.group())
                 else:
                     # Fallback: create basic structure
-                    logger.warning(
-                        "Could not parse JSON from Gemini response, using fallback"
-                    )
+                    logger.warning("Could not parse JSON from Gemini response, using fallback")
                     return self._create_fallback_graph(document, viz_type)
 
             result = {
@@ -327,9 +315,7 @@ Return enhanced node groups and edge labels.
         )
         await self.a2a.send_message(message)
 
-        self.logger.info(
-            "📤 Sent visualization completion notification via A2A Protocol"
-        )
+        self.logger.info("📤 Sent visualization completion notification via A2A Protocol")
 
     async def _handle_a2a_message(self, message: A2AMessage):
         """Handle incoming A2A messages specific to Visualizer"""
@@ -347,9 +333,7 @@ Return enhanced node groups and edge labels.
         elif message.message_type == "task_delegation":
             task = message.data.get("task")
             if task == "create_visualization":
-                self.logger.info(
-                    f"📥 Received visualization task from {message.from_agent}"
-                )
+                self.logger.info(f"📥 Received visualization task from {message.from_agent}")
                 depends_on = message.data.get("depends_on", [])
                 if depends_on:
                     self.logger.info(f"📋 Visualization depends on: {depends_on}")

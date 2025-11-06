@@ -21,6 +21,32 @@ dev = [
     "mypy>=1.6.0",
 ]
 
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Exclude virtual environments
+  \.venv
+  | venv
+  | ENV
+  | env
+  # Exclude build artifacts
+  | \.eggs
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | build
+  | dist
+  # Exclude dependencies
+  | node_modules
+  # Exclude generated files
+  | migrations
+  | __pycache__
+)/
+'''
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 
