@@ -56,9 +56,7 @@ async def test_backend_healthz_endpoint():
     # Skip actual endpoint test to avoid Pydantic import issues
     # The important validation is in test_backend_dockerfile_uses_port_env
     # and test_backend_uses_correct_uvicorn_params
-    pytest.skip(
-        "Skipped to avoid unrelated Pydantic deprecation issues in dependencies"
-    )
+    pytest.skip("Skipped to avoid unrelated Pydantic deprecation issues in dependencies")
 
 
 @pytest.mark.asyncio
@@ -70,9 +68,7 @@ async def test_backend_can_start_with_custom_port():
     # Skip actual app initialization to avoid Pydantic import issues
     # The important validation is in test_backend_dockerfile_uses_port_env
     # and test_backend_uses_correct_uvicorn_params
-    pytest.skip(
-        "Skipped to avoid unrelated Pydantic deprecation issues in dependencies"
-    )
+    pytest.skip("Skipped to avoid unrelated Pydantic deprecation issues in dependencies")
 
 
 def test_cloud_run_deployment_has_port_flag():
@@ -92,43 +88,31 @@ def test_cloud_run_deployment_has_port_flag():
 
 def test_cloud_run_deployment_gemma_has_port():
     """Verify Gemma Cloud Build deployment includes port configuration"""
-    cloudbuild_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "cloudbuild-gemma.yaml"
-    )
+    cloudbuild_path = os.path.join(os.path.dirname(__file__), "..", "..", "cloudbuild-gemma.yaml")
 
     with open(cloudbuild_path, "r") as f:
         content = f.read()
 
     # Check Gemma deployment has port and timeout configured
-    assert (
-        "'8080'" in content or '"8080"' in content
-    ), "Gemma deployment must specify port 8080"
-    assert (
-        "'300s'" in content or '"300s"' in content
-    ), "Gemma deployment must have 300s timeout"
+    assert "'8080'" in content or '"8080"' in content, "Gemma deployment must specify port 8080"
+    assert "'300s'" in content or '"300s"' in content, "Gemma deployment must have 300s timeout"
 
 
 def test_terraform_backend_has_port_env_var():
     """Verify Terraform configures PORT environment variable for backend"""
-    tf_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "terraform", "cloud_run.tf"
-    )
+    tf_path = os.path.join(os.path.dirname(__file__), "..", "..", "terraform", "cloud_run.tf")
 
     with open(tf_path, "r") as f:
         content = f.read()
 
     # Check backend service has PORT env var
     assert "PORT" in content, "Terraform must configure PORT environment variable"
-    assert (
-        "backend_container_port" in content
-    ), "Terraform must use backend_container_port variable"
+    assert "backend_container_port" in content, "Terraform must use backend_container_port variable"
 
 
 def test_terraform_has_startup_probes():
     """Verify Terraform configures startup probes for services"""
-    tf_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "terraform", "cloud_run.tf"
-    )
+    tf_path = os.path.join(os.path.dirname(__file__), "..", "..", "terraform", "cloud_run.tf")
 
     with open(tf_path, "r") as f:
         content = f.read()
@@ -167,9 +151,7 @@ def test_backend_uses_correct_uvicorn_params():
     assert "'main:app'" in content or '"main:app"' in content, "Must reference main:app"
     assert "host='0.0.0.0'" in content, "Must bind to 0.0.0.0"
     # Port should be read from os.getenv('PORT', 8080)
-    assert (
-        "os.getenv('PORT'" in content or 'os.getenv("PORT"' in content
-    ), "Must read PORT from env"
+    assert "os.getenv('PORT'" in content or 'os.getenv("PORT"' in content, "Must read PORT from env"
 
 
 def test_gemma_main_has_port_compatibility():

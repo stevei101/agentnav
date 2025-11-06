@@ -45,9 +45,7 @@ class FirestoreClient:
             if emulator_host:
                 # Use emulator for local development
                 logger.info(f"🔧 Using Firestore emulator: {emulator_host}")
-                logger.info(
-                    f"   Project: {self._project_id}, Database: {self._database_id}"
-                )
+                logger.info(f"   Project: {self._project_id}, Database: {self._database_id}")
 
                 # Note: Firestore client for emulator doesn't require explicit connection
                 # The emulator_host environment variable is sufficient
@@ -57,9 +55,7 @@ class FirestoreClient:
             else:
                 # Use production Firestore
                 logger.info(f"☁️  Using production Firestore")
-                logger.info(
-                    f"   Project: {self._project_id}, Database: {self._database_id}"
-                )
+                logger.info(f"   Project: {self._project_id}, Database: {self._database_id}")
 
                 self._client = firestore.Client(
                     project=self._project_id, database=self._database_id

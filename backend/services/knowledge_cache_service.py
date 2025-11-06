@@ -42,9 +42,7 @@ class KnowledgeCacheService:
             self.firestore_client = get_firestore_client()
         return self.firestore_client
 
-    def generate_content_hash(
-        self, content: str, content_type: str = "document"
-    ) -> str:
+    def generate_content_hash(self, content: str, content_type: str = "document") -> str:
         """
         Generate SHA256 hash for content
 
@@ -227,9 +225,7 @@ class KnowledgeCacheService:
             # Query for expired entries
             current_time = time.time()
             expired_docs = (
-                collection.where("expires_at", "<", current_time)
-                .limit(batch_size)
-                .stream()
+                collection.where("expires_at", "<", current_time).limit(batch_size).stream()
             )
 
             deleted_count = 0
