@@ -82,6 +82,8 @@ terraform/
 
 # Scripts
 scripts/
+backend/start.sh
+backend/entrypoint.sh
 
 # Temporary files
 *.tmp
