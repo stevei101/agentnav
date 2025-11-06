@@ -40,9 +40,9 @@ resource "google_secret_manager_secret" "supabase_anon_key" {
   }
 
   labels = {
-    app         = "prompt-vault"
-    environment = var.environment
-    type        = "publishable-key"
+    app               = "prompt-vault"
+    environment       = var.environment
+    type              = "publishable-key"
     supabase_key_type = "publishable"
   }
 }
@@ -64,9 +64,9 @@ resource "google_secret_manager_secret" "supabase_service_key" {
   }
 
   labels = {
-    app         = "prompt-vault"
-    environment = var.environment
-    type        = "secret-key"
+    app               = "prompt-vault"
+    environment       = var.environment
+    type              = "secret-key"
     supabase_key_type = "secret"
   }
 }

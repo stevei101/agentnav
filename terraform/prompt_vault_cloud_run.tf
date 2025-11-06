@@ -24,7 +24,7 @@ resource "google_service_account" "prompt_vault_backend" {
 # Prompt Vault Frontend Cloud Run Service
 resource "google_cloud_run_v2_service" "prompt_vault_frontend" {
   name     = "prompt-vault-frontend"
-  location = var.frontend_region  # Use same region as agentnav-frontend (us-central1)
+  location = var.frontend_region # Use same region as agentnav-frontend (us-central1)
   project  = var.project_id
 
   depends_on = [google_project_service.apis]
@@ -39,10 +39,10 @@ resource "google_cloud_run_v2_service" "prompt_vault_frontend" {
 
     containers {
       name  = "frontend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/prompt-vault-frontend:latest" # Placeholder - updated by CI/CD
+      image = "${var.prompt_vault_artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.prompt_vault_artifact_registry_repository_id}/prompt-vault-frontend:latest" # Placeholder - updated by CI/CD
 
       ports {
-        container_port = var.frontend_container_port  # Port 80
+        container_port = var.frontend_container_port # Port 80
       }
 
       env {
@@ -92,7 +92,7 @@ resource "google_cloud_run_v2_service" "prompt_vault_frontend" {
       startup_probe {
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total startup window
+        failure_threshold = 24 # 240s total startup window
         tcp_socket {
           port = var.frontend_container_port
         }
@@ -121,7 +121,7 @@ resource "google_cloud_run_service_iam_member" "prompt_vault_frontend_public" {
 # Note: If using Supabase Edge Functions exclusively, this may not be needed
 resource "google_cloud_run_v2_service" "prompt_vault_backend" {
   name     = "prompt-vault-backend"
-  location = var.backend_region  # Use same region as agentnav-backend (europe-west1)
+  location = var.backend_region # Use same region as agentnav-backend (europe-west1)
   project  = var.project_id
 
   depends_on = [google_project_service.apis]
@@ -136,10 +136,10 @@ resource "google_cloud_run_v2_service" "prompt_vault_backend" {
 
     containers {
       name  = "backend"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/prompt-vault-backend:latest" # Placeholder - updated by CI/CD
+      image = "${var.prompt_vault_artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.prompt_vault_artifact_registry_repository_id}/prompt-vault-backend:latest" # Placeholder - updated by CI/CD
 
       ports {
-        container_port = var.backend_container_port  # Port 8080
+        container_port = var.backend_container_port # Port 8080
       }
 
       env {

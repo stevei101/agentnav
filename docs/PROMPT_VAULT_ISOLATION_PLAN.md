@@ -26,17 +26,17 @@ This document outlines the strategy for integrating the new **"Prompt Vault"** (
 - `prompt-vault-backend` (or `promptvault-backend`)
 
 **GAR Repository Strategy:**
-- **Option A (Recommended):** Use the same GAR repository (`agentnav-containers`) with different image names
-  - **Pros:** Single repository, simpler IAM management, shared infrastructure
-  - **Cons:** Images mixed in same repo (but clearly named)
-  - **Location:** `europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:${TAG}`
+- **Option A (Implemented):** Provision dedicated GAR repository (`prompt-vault`) in `us-central1`
+  - **Pros:** Eliminates cross-region pushes for Prompt Vault deployments, clear ownership, independent lifecycle
+  - **Cons:** Slightly more Terraform/IAM configuration
+  - **Location:** `us-central1-docker.pkg.dev/${PROJECT_ID}/prompt-vault/prompt-vault-frontend:${TAG}`
   
-- **Option B:** Create separate GAR repository (`prompt-vault-containers`)
-  - **Pros:** Complete isolation, clearer separation
-  - **Cons:** Additional Terraform resource, separate IAM policies needed
-  - **Location:** `europe-west1-docker.pkg.dev/${PROJECT_ID}/prompt-vault-containers/prompt-vault-frontend:${TAG}`
+- **Option B:** Reuse shared GAR repository (`agentnav-containers`) in `europe-west1`
+  - **Pros:** Single repository, no extra Terraform
+  - **Cons:** Cross-region image pulls for Prompt Vault, less isolation
+  - **Location:** `europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:${TAG}`
 
-**Recommendation:** **Option A** - Use same repository with prefixed image names. This maintains simplicity while ensuring clear separation through naming.
+**Recommendation:** **Option A** - Dedicated us-central1 repository aligns with Prompt Vault's deployment region and avoids cross-region latency/cost.
 
 ---
 
@@ -74,7 +74,7 @@ This document outlines the strategy for integrating the new **"Prompt Vault"** (
 - Create `.github/workflows/build-prompt-vault.yml`
 - Completely independent workflow
 - Same tagging strategy (pr-{number}, {sha}, latest)
-- Uses same GAR repository with different image names
+- Publishes to dedicated Prompt Vault GAR repository
 
 #### Option B: Matrix Expansion in Existing Workflow
 - Add `prompt-vault-frontend` and `prompt-vault-backend` to matrix
@@ -99,9 +99,9 @@ This document outlines the strategy for integrating the new **"Prompt Vault"** (
 
 **Example Tags:**
 ```
-europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:pr-195
-europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:abc123def456...
-europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:latest
+us-central1-docker.pkg.dev/${PROJECT_ID}/prompt-vault/prompt-vault-frontend:pr-195
+us-central1-docker.pkg.dev/${PROJECT_ID}/prompt-vault/prompt-vault-frontend:abc123def456...
+us-central1-docker.pkg.dev/${PROJECT_ID}/prompt-vault/prompt-vault-frontend:latest
 ```
 
 **Key Point:** Tagging logic is identical, but applied to different image names. This ensures consistency and traceability.
@@ -113,12 +113,12 @@ europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-front
 **Current Terraform Resources:**
 - Cloud Run services: `agentnav-frontend`, `agentnav-backend`, `gemma-service`
 - Service accounts: `agentnav-frontend`, `agentnav-backend`, `agentnav-gemma`
-- Artifact Registry: `agentnav-containers` (shared)
+- Artifact Registry: `agentnav-containers` (europe-west1, shared for agentnav services)
 
 **New Terraform Resources:**
 - Cloud Run services: `prompt-vault-frontend`, `prompt-vault-backend`
 - Service accounts: `prompt-vault-frontend`, `prompt-vault-backend`
-- **Artifact Registry:** Use existing `agentnav-containers` (no new resource needed if using Option A)
+- **Artifact Registry:** `prompt-vault` (us-central1 dedicated repository for Prompt Vault)
 
 **Terraform File Organization:**
 - Option A: Add to existing `terraform/cloud_run.tf` with clear section comments

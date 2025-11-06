@@ -41,6 +41,18 @@ variable "artifact_registry_repository_id" {
   default     = "agentnav-containers"
 }
 
+variable "prompt_vault_artifact_registry_location" {
+  description = "Dedicated Artifact Registry location for Prompt Vault images"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "prompt_vault_artifact_registry_repository_id" {
+  description = "Artifact Registry repository ID for Prompt Vault images"
+  type        = string
+  default     = "prompt-vault"
+}
+
 variable "firestore_database_id" {
   description = "Firestore database ID"
   type        = string
@@ -111,7 +123,7 @@ variable "agentnav_model_type" {
   description = "Model type for reasoning tasks: 'gemini' (cloud) or 'gemma' (local GPU). Controls AGENTNAV_MODEL_TYPE env var."
   type        = string
   default     = "gemini"
-  
+
   validation {
     condition     = contains(["gemini", "gemma"], var.agentnav_model_type)
     error_message = "agentnav_model_type must be either 'gemini' or 'gemma'."
