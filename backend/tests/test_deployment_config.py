@@ -103,7 +103,8 @@ class TestStartupConfiguration:
             content = f.read()
 
         # Check for PORT environment variable handling in CMD
-        assert "${PORT" in content or "--port ${PORT" in content
+        # Look for the specific pattern used in CMD: --port ${PORT:-8080}
+        assert "--port ${PORT:-8080}" in content
 
     def test_dockerfile_cmd_uses_uvicorn(self):
         """Verify Dockerfile CMD uses uvicorn directly"""
@@ -336,7 +337,7 @@ class TestDeploymentBestPractices:
 
         # Check for CMD instruction with uvicorn (Cloud Run best practice)
         assert "CMD" in content
-        assert "uvicorn" in content.lower()
+        assert "uvicorn main:app" in content
 
     def test_dockerfile_exposes_port(self):
         """Verify Dockerfile exposes the correct port"""
