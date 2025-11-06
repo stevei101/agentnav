@@ -71,17 +71,31 @@ def test_reason_with_gemini_basic(monkeypatch):
 
     fake_genai = types.SimpleNamespace(Client=FakeClient)
     
-    # Clear any existing genai modules and gemini_client from cache before patching
-    modules_to_clear = ["genai", "google.genai", "services.gemini_client", "backend.services.gemini_client"]
+    # Clear any existing genai modules and gemini_client from cache
+    # This must happen BEFORE setting up the fake to ensure clean state
+    modules_to_clear = []
     for module_name in list(sys.modules.keys()):
-        if module_name in modules_to_clear or module_name.startswith("google.genai"):
-            del sys.modules[module_name]
+        if (module_name in ["genai", "google.genai", "services.gemini_client", "backend.services.gemini_client"] or 
+            module_name.startswith("google.genai.") or 
+            module_name.startswith("services.gemini_client")):
+            modules_to_clear.append(module_name)
     
-    # Patch modules before importing gemini_client (must be done in this order)
-    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)  # Try google.genai first (as gemini_client does)
-    monkeypatch.setitem(sys.modules, "genai", fake_genai)  # Fallback to genai
+    for module_name in modules_to_clear:
+        del sys.modules[module_name]
+    
+    # Set up fake modules BEFORE importing gemini_client
+    # gemini_client.py tries google.genai first, then genai
+    # Use monkeypatch.delitem to ensure clean removal, then setitem to add fake
+    if "google.genai" in sys.modules:
+        monkeypatch.delitem(sys.modules, "google.genai", raising=False)
+    if "genai" in sys.modules:
+        monkeypatch.delitem(sys.modules, "genai", raising=False)
+    
+    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)
+    monkeypatch.setitem(sys.modules, "genai", fake_genai)
 
     # Import gemini_client directly from file to avoid package side-effects
+    # This will use our fake modules since they're already in sys.modules
     base = os.path.dirname(os.path.dirname(__file__))
     gemini_path = os.path.join(base, "services", "gemini_client.py")
     spec = spec_from_file_location("services.gemini_client_model_test", gemini_path)
