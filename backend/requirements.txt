@@ -3,6 +3,7 @@ uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
 python-dotenv>=1.0.0
 google-cloud-firestore>=2.13.0
+google-auth>=2.23.0  # For Workload Identity ID token verification (FR#335)
 httpx>=0.25.0
 requests>=2.31.0  # For Workload Identity ID token fetching (FR#080)
 google-genai>=0.3.0  # Official Google GenAI Python SDK for Gemini model interaction (FR#090)

@@ -27,6 +27,16 @@ resource "google_service_account" "cloud_run_gemma" {
   depends_on = [google_project_service.apis]
 }
 
+# Service Account for Prompt Vault (Feature Request #335)
+resource "google_service_account" "cloud_run_prompt_vault" {
+  account_id   = "prompt-vault"
+  display_name = "Prompt Vault Service Account"
+  description  = "Service account for Prompt Vault Cloud Run service - requires access to Agent Navigator Backend"
+  project      = var.project_id
+
+  depends_on = [google_project_service.apis]
+}
+
 # Service account for GitHub Actions (Workload Identity Federation)
 # Using data source to reference existing SA created manually
 data "google_service_account" "github_actions" {
@@ -58,6 +68,21 @@ resource "google_project_iam_member" "gemma_secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.cloud_run_gemma.email}"
+}
+
+# ============================================
+# Feature Request #335: Workload Identity (WI) Integration
+# Prompt Vault → Agent Navigator Backend secure communication
+# ============================================
+
+# Grant Prompt Vault service account permission to invoke Agent Navigator Backend
+# This enables secure service-to-service authentication using WI ID tokens
+resource "google_cloud_run_service_iam_member" "prompt_vault_backend_invoker" {
+  location = google_cloud_run_v2_service.backend.location
+  project  = google_cloud_run_v2_service.backend.project
+  service  = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.cloud_run_prompt_vault.email}"
 }
 
 # GitHub Actions service account permissions (for CI/CD)

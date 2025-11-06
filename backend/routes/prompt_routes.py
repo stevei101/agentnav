@@ -1,55 +1,64 @@
 """
-Prompt Management API Routes
-FastAPI routes for prompt CRUD operations
+Prompt Management API Routes (Feature Request #335 - WI Secured)
+FastAPI routes for prompt CRUD operations with Workload Identity authentication
 """
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Header, Depends
 from models.prompt_models import (
     Prompt, PromptCreate, PromptUpdate, PromptVersion, 
     TestResultCreate, UserInfo
 )
 from services.prompt_service import get_prompt_service
+from services.workload_identity_auth import verify_workload_identity
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/prompts", tags=["prompts"])
 
 
-async def get_user_from_header(
-    authorization: Optional[str] = Header(None)
-) -> Optional[UserInfo]:
+async def get_user_from_wi_token(
+    auth_info: Dict[str, Any] = Depends(verify_workload_identity)
+) -> UserInfo:
     """
-    Extract user info from authorization header
+    Extract user info from Workload Identity token (Feature Request #335)
     
-    For now, we'll use a simple approach:
-    - In production, this would verify JWT tokens
-    - For fast-track, we accept user info in a custom header or JWT payload
-    - TODO: Implement proper Google OAuth verification
+    In production with WI enabled, this uses the service account email as the user ID.
+    In development mode, this returns a default user.
     
-    For now, we'll use a simple user_id header for development
+    Args:
+        auth_info: Authenticated identity from WI token (injected by FastAPI)
+        
+    Returns:
+        UserInfo with service account details
     """
-    # TODO: Implement proper authentication
-    # For now, accept user info from headers or use default
-    # In production, verify JWT token from Google OAuth
+    # Extract service account email from WI token
+    email = auth_info.get("email", "unknown@unknown.iam.gserviceaccount.com")
     
-    # Temporary: Use default user for development
-    # In production, decode JWT from Authorization header
+    # Use service account email as user ID
+    # Format: "service-account-name@project.iam.gserviceaccount.com"
+    # Extract service account name for display
+    name = email.split("@")[0] if "@" in email else email
+    
     return UserInfo(
-        id=authorization or "default-user",
-        email="user@example.com",
-        name="User"
+        id=email,
+        email=email,
+        name=name
     )
 
 
 @router.get("/", response_model=List[Prompt])
 async def list_prompts(
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """List all prompts"""
+    """
+    List all prompts (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
-        prompts = service.list_prompts(user_id=user.id if user else None)
+        prompts = service.list_prompts(user_id=user.id)
         return prompts
     except Exception as e:
         logger.error(f"Error listing prompts: {e}")
@@ -59,9 +68,13 @@ async def list_prompts(
 @router.get("/{prompt_id}", response_model=Prompt)
 async def get_prompt(
     prompt_id: str,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Get a prompt by ID"""
+    """
+    Get a prompt by ID (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         prompt = service.get_prompt(prompt_id)
@@ -80,15 +93,19 @@ async def get_prompt(
 @router.post("/", response_model=Prompt, status_code=201)
 async def create_prompt(
     prompt_data: PromptCreate,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Create a new prompt"""
+    """
+    Create a new prompt (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         prompt = service.create_prompt(
             prompt_data.dict(),
-            user_id=user.id if user else "anonymous",
-            user_name=user.name if user else "Anonymous"
+            user_id=user.id,
+            user_name=user.name
         )
         return prompt
     except Exception as e:
@@ -100,9 +117,13 @@ async def create_prompt(
 async def update_prompt(
     prompt_id: str,
     prompt_data: PromptUpdate,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Update a prompt"""
+    """
+    Update a prompt (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         
@@ -119,8 +140,8 @@ async def update_prompt(
         prompt = service.update_prompt(
             prompt_id,
             updates,
-            user_id=user.id if user else "anonymous",
-            user_name=user.name if user else "Anonymous"
+            user_id=user.id,
+            user_name=user.name
         )
         
         if not prompt:
@@ -137,9 +158,13 @@ async def update_prompt(
 @router.delete("/{prompt_id}", status_code=204)
 async def delete_prompt(
     prompt_id: str,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Delete a prompt"""
+    """
+    Delete a prompt (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         success = service.delete_prompt(prompt_id)
@@ -158,9 +183,13 @@ async def delete_prompt(
 @router.get("/{prompt_id}/versions", response_model=List[PromptVersion])
 async def get_versions(
     prompt_id: str,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Get version history for a prompt"""
+    """
+    Get version history for a prompt (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         versions = service.get_versions(prompt_id)
@@ -174,16 +203,20 @@ async def get_versions(
 async def add_test_result(
     prompt_id: str,
     test_data: TestResultCreate,
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Add a test result to a prompt"""
+    """
+    Add a test result to a prompt (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    """
     try:
         service = get_prompt_service()
         prompt = service.add_test_result(
             prompt_id,
             test_data.dict(),
-            user_id=user.id if user else "anonymous",
-            user_name=user.name if user else "Anonymous"
+            user_id=user.id,
+            user_name=user.name
         )
         
         if not prompt:
@@ -199,10 +232,13 @@ async def add_test_result(
 
 @router.get("/user/info", response_model=UserInfo)
 async def get_user_info(
-    user: Optional[UserInfo] = Depends(get_user_from_header)
+    user: UserInfo = Depends(get_user_from_wi_token)
 ):
-    """Get current user information"""
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    """
+    Get current user information (WI Authenticated - FR#335)
+    
+    Requires valid Workload Identity ID token from authorized service account.
+    Returns the authenticated service account information.
+    """
     return user
 
