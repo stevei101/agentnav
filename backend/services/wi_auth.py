@@ -52,8 +52,6 @@ def require_wi_token(audience_env: str = "AGENTNAV_URL"):
     checks that the `sub` or `email` claim is in TRUSTED_CALLERS.
     """
 
-    trusted_callers = _get_trusted_callers()
-
     async def _dependency(request: Request):
         auth: str = request.headers.get("authorization") or request.headers.get("Authorization")
         if not auth or not auth.lower().startswith("bearer "):
@@ -77,6 +75,8 @@ def require_wi_token(audience_env: str = "AGENTNAV_URL"):
             raise HTTPException(status_code=401, detail="Invalid or expired ID token")
 
         # If trust list is configured, enforce that the caller matches
+        # Get trusted callers at request time to support dynamic configuration
+        trusted_callers = _get_trusted_callers()
         if trusted_callers:
             # service account identity may appear in 'email' or 'sub'
             caller_identity = payload.get("email") or payload.get("sub")

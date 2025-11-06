@@ -3,6 +3,8 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+# Set ALLOWED_HOSTS before importing app to allow testserver
+os.environ["ALLOWED_HOSTS"] = "testserver,localhost"
 
 from backend.main import app
 

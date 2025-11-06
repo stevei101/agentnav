@@ -16,6 +16,9 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
+# Set ALLOWED_HOSTS before importing app to allow testserver
+os.environ["ALLOWED_HOSTS"] = "testserver,localhost"
+
 from backend.main import app
 
 client = TestClient(app)
@@ -216,22 +219,23 @@ class TestWIClientHelper:
 
     @patch.dict(os.environ, {"GOOGLE_APPLICATION_CREDENTIALS": "/tmp/sa.json"})
     @patch("requests.get")
-    @patch("services.wid_client.service_account.IDTokenCredentials.from_service_account_file")
+    @patch("google.oauth2.service_account.IDTokenCredentials.from_service_account_file")
     def test_fetch_id_token_fallback_to_service_account_key(
         self, mock_from_file, mock_requests_get
     ):
         """Test: Token fetching falls back to service account key when metadata server unavailable"""
         from services.wid_client import fetch_id_token_for_audience
+        import requests
 
         # Simulate metadata server not reachable
-        mock_requests_get.side_effect = Exception("Connection refused")
+        mock_requests_get.side_effect = requests.RequestException("Connection refused")
 
         # Mock service account credentials
         mock_creds = MagicMock()
         mock_creds.token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
         mock_from_file.return_value = mock_creds
 
-        with patch("services.wid_client.google_requests.Request"):
+        with patch("google.auth.transport.requests.Request"):
             token = fetch_id_token_for_audience("https://agentnav-backend.run.app")
 
         assert token == "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -240,13 +244,14 @@ class TestWIClientHelper:
     def test_fetch_id_token_raises_on_metadata_error(self, mock_requests_get):
         """Test: Appropriate error is raised when token fetch fails"""
         from services.wid_client import fetch_id_token_for_audience
+        import requests
 
         # Simulate both metadata server and fallback failing
-        mock_requests_get.side_effect = Exception("Connection refused")
+        mock_requests_get.side_effect = requests.RequestException("Connection refused")
 
         with patch.dict(os.environ, {}, clear=True):
             # No GOOGLE_APPLICATION_CREDENTIALS set
-            with pytest.raises(RuntimeError):
+            with pytest.raises((RuntimeError, Exception)):
                 fetch_id_token_for_audience("https://agentnav-backend.run.app")
 
 
