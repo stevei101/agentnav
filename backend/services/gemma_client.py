@@ -269,9 +269,21 @@ class GemmaServiceClient:
 _gemma_client: Optional[GemmaServiceClient] = None
 
 
-def get_gemma_client() -> GemmaServiceClient:
-    """Get or create Gemma service client"""
+def get_gemma_client() -> Optional[GemmaServiceClient]:
+    """
+    Get or create Gemma service client
+    
+    Returns:
+        GemmaServiceClient if GEMMA_SERVICE_URL is configured, None otherwise
+    """
     global _gemma_client
+    
+    # Check if Gemma service URL is configured
+    gemma_url = os.getenv("GEMMA_SERVICE_URL")
+    if not gemma_url:
+        logger.debug("GEMMA_SERVICE_URL not configured, Gemma service unavailable")
+        return None
+    
     if _gemma_client is None:
         _gemma_client = GemmaServiceClient()
     return _gemma_client
@@ -284,8 +296,18 @@ async def reason_with_gemma(
     max_tokens: int = 500,
     temperature: float = 0.7,
 ) -> str:
-    """Generate reasoning text using Gemma (convenience function)"""
+    """
+    Generate reasoning text using Gemma (convenience function)
+    
+    Returns:
+        Generated text from Gemma service
+        
+    Raises:
+        RuntimeError: If Gemma service is not available
+    """
     client = get_gemma_client()
+    if client is None:
+        raise RuntimeError("Gemma service is not available (GEMMA_SERVICE_URL not configured)")
     return await client.reason(
         prompt=prompt,
         context=context,
@@ -295,8 +317,18 @@ async def reason_with_gemma(
 
 
 async def embed_with_gemma(texts: List[str]) -> List[List[float]]:
-    """Generate embeddings using Gemma (convenience function)"""
+    """
+    Generate embeddings using Gemma (convenience function)
+    
+    Returns:
+        List of embedding vectors
+        
+    Raises:
+        RuntimeError: If Gemma service is not available
+    """
     client = get_gemma_client()
+    if client is None:
+        raise RuntimeError("Gemma service is not available (GEMMA_SERVICE_URL not configured)")
     return await client.embed(texts)
 
 
@@ -306,8 +338,18 @@ async def generate_with_gemma(
     max_tokens: int = 500,
     temperature: float = 0.7,
 ) -> str:
-    """Generate text using Gemma (legacy function, use reason_with_gemma() instead)"""
+    """
+    Generate text using Gemma (legacy function, use reason_with_gemma() instead)
+    
+    Returns:
+        Generated text from Gemma service
+        
+    Raises:
+        RuntimeError: If Gemma service is not available
+    """
     client = get_gemma_client()
+    if client is None:
+        raise RuntimeError("Gemma service is not available (GEMMA_SERVICE_URL not configured)")
     return await client.generate(
         prompt=prompt,
         max_tokens=max_tokens,
