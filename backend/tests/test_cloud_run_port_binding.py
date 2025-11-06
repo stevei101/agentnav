@@ -31,12 +31,12 @@ def test_backend_dockerfile_uses_port_env():
     with open(dockerfile_path, "r") as f:
         content = f.read()
 
-    # Check that Dockerfile:
-    # 1. Uses host='0.0.0.0' (not 127.0.0.1)
-    # 2. Reads PORT from environment with default fallback
-    assert "host='0.0.0.0'" in content, "Backend must bind to 0.0.0.0 for Cloud Run"
-    assert "os.getenv" in content, "Backend must read PORT from environment"
-    assert "PORT" in content, "Backend must use PORT environment variable"
+    # Check that Dockerfile CMD:
+    # 1. Uses --host 0.0.0.0 (not 127.0.0.1) for Cloud Run
+    # 2. Reads PORT from environment with default fallback using ${PORT:-8080}
+    assert "--host 0.0.0.0" in content, "Backend must bind to 0.0.0.0 for Cloud Run"
+    assert "${PORT" in content, "Backend must read PORT from environment variable"
+    assert "8080" in content, "Backend must have default port fallback"
 
 
 @pytest.mark.asyncio
@@ -128,14 +128,11 @@ def test_backend_uses_correct_uvicorn_params():
     with open(dockerfile_path, "r") as f:
         content = f.read()
 
-    # Validate uvicorn.run parameters
-    assert "uvicorn.run" in content, "Must use uvicorn.run to start"
-    assert "'main:app'" in content or '"main:app"' in content, "Must reference main:app"
-    assert "host='0.0.0.0'" in content, "Must bind to 0.0.0.0"
-    # Port should be read from os.getenv('PORT', 8080)
-    assert (
-        "os.getenv('PORT'" in content or 'os.getenv("PORT"' in content
-    ), "Must read PORT from env"
+    # Validate uvicorn command-line parameters in CMD
+    assert "uvicorn main:app" in content, "Must use uvicorn main:app to start"
+    assert "--host 0.0.0.0" in content, "Must bind to 0.0.0.0 for Cloud Run"
+    # Port should be read from ${PORT:-8080} (shell syntax)
+    assert "${PORT:-8080}" in content or "--port ${PORT" in content, "Must read PORT from environment with fallback"
 
 
 if __name__ == "__main__":
