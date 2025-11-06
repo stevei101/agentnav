@@ -52,7 +52,7 @@ def test_reason_with_gemini_basic(monkeypatch):
     import asyncio
 
     # Fake genai module for Gemini tests - must match the expected interface
-    # The client needs to support both models.generate() and direct generate()
+    # The client needs to support models.generate() pattern (first check in _sync_call)
     # The code checks: hasattr(self._client, "models") and hasattr(self._client.models, "generate")
     class FakeModels:
         def generate(self, model=None, prompt=None, max_tokens=None, temperature=None, **kwargs):
@@ -61,10 +61,10 @@ def test_reason_with_gemini_basic(monkeypatch):
 
     class FakeClient:
         def __init__(self):
-            # Must have models attribute with generate method
+            # Must have models attribute with generate method (this is the first check in _sync_call)
             self.models = FakeModels()
         
-        # Also provide direct generate method as fallback
+        # Also provide direct generate method as fallback (second check in _sync_call)
         def generate(self, model=None, prompt=None, max_tokens=None, temperature=None, **kwargs):
             # Direct generate method - return full response
             return {"candidates": [{"content": {"text": "gemini_response"}}]}
@@ -107,7 +107,11 @@ def test_reason_with_gemini_basic(monkeypatch):
     reason_with_gemini = getattr(module, "reason_with_gemini")
 
     # Test: Gemini service (cloud-based)
+    # reason_with_gemini() creates its own GeminiClient() internally
+    # which will call ClientCtor() (FakeClient) to create the client instance
     async def test_gemini():
+        # Test reason_with_gemini helper - it creates GeminiClient() internally
+        # which will use our FakeClient via ClientCtor()
         result = await reason_with_gemini(
             prompt="Test prompt", max_tokens=100, temperature=0.5
         )
