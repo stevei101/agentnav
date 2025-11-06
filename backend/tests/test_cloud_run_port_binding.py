@@ -3,9 +3,8 @@ Tests for Cloud Run port binding compliance (FR#165 - Critical Bugfix)
 
 Validates that:
 1. Backend service binds to 0.0.0.0 and reads PORT environment variable
-2. Gemma service binds to 0.0.0.0 and reads PORT environment variable
-3. Services can start successfully with PORT=8080
-4. Healthz endpoints are accessible on the configured port
+2. Services can start successfully with PORT=8080
+3. Healthz endpoints are accessible on the configured port
 
 This addresses the critical Cloud Run deployment failure:
 "The user-provided container failed to start and listen on the port
@@ -38,16 +37,6 @@ def test_backend_dockerfile_uses_port_env():
     assert "host='0.0.0.0'" in content, "Backend must bind to 0.0.0.0 for Cloud Run"
     assert "os.getenv" in content, "Backend must read PORT from environment"
     assert "PORT" in content, "Backend must use PORT environment variable"
-
-
-def test_gemma_dockerfile_uses_port_env():
-    """Verify Gemma Dockerfile CMD reads PORT environment variable (DISABLED - Gemma rolled back)"""
-    pytest.skip("Gemma service rolled back (Issue #132) - Dockerfile removed")
-
-
-def test_gemma_service_dockerfile_uses_port_env():
-    """Verify Gemma service Dockerfile (gemma_service/Dockerfile) reads PORT (DISABLED - Gemma rolled back)"""
-    pytest.skip("Gemma service rolled back (Issue #132) - service directory removed")
 
 
 @pytest.mark.asyncio
@@ -90,24 +79,6 @@ def test_cloud_run_deployment_has_port_flag():
     assert "PORT=8080" in content, "Backend deployment must set PORT=8080 env var"
 
 
-def test_cloud_run_deployment_gemma_has_port():
-    """Verify Gemma Cloud Build deployment includes port configuration"""
-    cloudbuild_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "cloudbuild-gemma.yaml"
-    )
-
-    with open(cloudbuild_path, "r") as f:
-        content = f.read()
-
-    # Check Gemma deployment has port and timeout configured
-    assert (
-        "'8080'" in content or '"8080"' in content
-    ), "Gemma deployment must specify port 8080"
-    assert (
-        "'300s'" in content or '"300s"' in content
-    ), "Gemma deployment must have 300s timeout"
-
-
 def test_terraform_backend_has_port_env_var():
     """Verify Terraform configures PORT environment variable for backend"""
     tf_path = os.path.join(
@@ -140,19 +111,14 @@ def test_terraform_has_startup_probes():
 
 
 def test_dockerfile_exposes_correct_ports():
-    """Verify Dockerfiles expose the correct ports"""
+    """Verify Dockerfile exposes the correct port"""
     backend_dockerfile = os.path.join(os.path.dirname(__file__), "..", "Dockerfile")
-    gemma_dockerfile = os.path.join(os.path.dirname(__file__), "..", "Dockerfile.gemma")
 
     with open(backend_dockerfile, "r") as f:
         backend_content = f.read()
 
-    with open(gemma_dockerfile, "r") as f:
-        gemma_content = f.read()
-
-    # Both should expose 8080
+    # Backend should expose 8080
     assert "EXPOSE 8080" in backend_content, "Backend must EXPOSE 8080"
-    assert "EXPOSE 8080" in gemma_content, "Gemma must EXPOSE 8080"
 
 
 def test_backend_uses_correct_uvicorn_params():
@@ -170,20 +136,6 @@ def test_backend_uses_correct_uvicorn_params():
     assert (
         "os.getenv('PORT'" in content or 'os.getenv("PORT"' in content
     ), "Must read PORT from env"
-
-
-def test_gemma_main_has_port_compatibility():
-    """Verify gemma_service/main.py has Cloud Run port compatibility (DISABLED - Gemma rolled back)"""
-    pytest.skip("Gemma service rolled back (Issue #132) - service directory removed")
-    # main_path = os.path.join(os.path.dirname(__file__), '..', 'gemma_service', 'main.py')
-    #
-    # with open(main_path, 'r') as f:
-    #     content = f.read()
-    #
-    # # Check that main.py reads PORT from environment in __main__ block
-    # assert 'PORT' in content, "Gemma main.py must reference PORT"
-    # assert 'os.getenv' in content or 'getenv' in content, "Must read PORT from environment"
-    # assert '0.0.0.0' in content, "Must bind to 0.0.0.0"
 
 
 if __name__ == "__main__":
