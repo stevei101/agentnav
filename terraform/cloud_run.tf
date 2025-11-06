@@ -164,13 +164,15 @@ resource "google_cloud_run_v2_service" "backend" {
   }
 }
 
-# Allow unauthenticated access to backend (or configure auth as needed)
+# Restrict backend invocation to the Prompt Management App service account.
+# For Workload Identity integration, the Prompt Vault (prompt-management-app)
+# service account is granted roles/run.invoker on the backend Cloud Run service.
 resource "google_cloud_run_service_iam_member" "backend_public" {
   location = google_cloud_run_v2_service.backend.location
   project  = google_cloud_run_v2_service.backend.project
   service  = google_cloud_run_v2_service.backend.name
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
 }
 
 # Gemma GPU Cloud Run Service

@@ -5,8 +5,8 @@ Multi-agent system with ADK and A2A Protocol
 """
 import os
 import logging
-from typing import Optional, Dict, Any
-from fastapi import FastAPI, HTTPException, Request
+from typing import Optional, Dict, Any, List
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -24,6 +24,17 @@ app = FastAPI(
     description="Multi-agent knowledge exploration system",
     version="0.1.0"
 )
+
+# Workload Identity / ID token verification dependency
+try:
+    from services.wi_auth import require_wi_token
+except Exception:
+    # If import fails in some environments (tests) we still want the app to start.
+    def require_wi_token(*args, **kwargs):
+        def _noop():
+            return {}
+        return _noop
+
 
 # Security: Trusted Host Middleware (Cloud Run best practice)
 # Allow Cloud Run service URLs and custom domain
@@ -370,6 +381,50 @@ async def analyze_content(request: AnalyzeRequest):
             status_code=500,
             detail=f"Analysis failed after {processing_time:.2f}s: {str(e)}"
         )
+
+
+# Suggestion API (protected via Workload Identity ID Token)
+class SuggestRequest(BaseModel):
+    """Request model for simple suggestion endpoint"""
+    document: str
+    max_suggestions: Optional[int] = 3
+
+
+class SuggestResponse(BaseModel):
+    suggestions: List[str]
+    caller: Optional[str] = None
+
+
+@app.post("/api/suggest", tags=["agents"], response_model=SuggestResponse)
+async def suggest_content(request: SuggestRequest, claims=Depends(require_wi_token())):
+    """Provide simple suggestions for improving a document.
+
+    This endpoint is an example protected endpoint implementing the
+    Workload Identity ID token verification. It demonstrates how a
+    caller (Prompt Vault) must fetch an ID token for the Agent Navigator
+    URL and present it in the Authorization header.
+    """
+    # Very lightweight heuristic suggestions (placeholder for real Suggestion Agent)
+    text = request.document or ""
+    suggestions = []
+    if len(text) < 100:
+        suggestions.append("Expand the document with more details and examples.")
+    else:
+        suggestions.append("Add a short summary paragraph at the top to improve skimmability.")
+
+    if "\n\n" not in text and len(text) > 200:
+        suggestions.append("Break the document into paragraphs or headings for readability.")
+
+    if len(suggestions) == 0:
+        suggestions.append("No suggestions available. The document looks concise.")
+
+    caller = None
+    try:
+        caller = claims.get("email") or claims.get("sub")
+    except Exception:
+        caller = None
+
+    return SuggestResponse(suggestions=suggestions[: request.max_suggestions], caller=caller)
 
 
 # Legacy endpoints for backward compatibility
