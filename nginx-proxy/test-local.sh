@@ -88,7 +88,8 @@ podman rm agentnav-proxy-local 2>/dev/null || docker rm agentnav-proxy-local 2>/
 # Determine host address (for Docker/Podman to access host services)
 # macOS/Windows use host.docker.internal, Linux may need different approach
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    HOST_ADDR="172.17.0.1"  # Default Docker bridge IP on Linux
+    # Try to dynamically find the docker bridge IP, fallback to a common default
+    HOST_ADDR=$(ip -4 addr show docker0 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "172.17.0.1")
 else
     HOST_ADDR="host.docker.internal"
 fi

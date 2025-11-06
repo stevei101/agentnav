@@ -98,7 +98,7 @@ if [ -d "$(dirname "$0")/../prompt-vault" ]; then
     if [ -f "package.json" ]; then
         echo "  Testing frontend..."
         if command -v bun >/dev/null 2>&1; then
-            if bun test --run >/tmp/prompt-vault-tests.log 2>&1 2>/dev/null; then
+            if bun test --run >/tmp/prompt-vault-tests.log 2>&1; then
                 test_result "Prompt Vault Frontend Tests" 0
             else
                 echo -e "${YELLOW}⚠️  No tests configured or tests failed${NC}"
