@@ -228,18 +228,9 @@ jobs:
         env:
           FIRESTORE_EMULATOR_HOST: 'localhost:8081'
           FIRESTORE_PROJECT_ID: 'agentnav-dev'
-          AGENTNAV_MODEL_TYPE: 'gemini'
         run: |
-          pytest -q backend/tests/test_model_selection_integration.py
+          pytest -q backend/tests/
 
-      # Gemma model tests disabled (rollback for Issue #132)
-      # - name: Run backend tests (Gemma model)
-      #   env:
-      #     FIRESTORE_EMULATOR_HOST: 'localhost:8081'
-      #     FIRESTORE_PROJECT_ID: 'agentnav-dev'
-      #     AGENTNAV_MODEL_TYPE: 'gemma'
-      #   run: |
-      #     pytest -q backend/tests/test_model_selection_integration.py
 
       - name: Stop Firestore emulator
         if: always()
