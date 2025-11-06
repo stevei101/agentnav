@@ -73,8 +73,11 @@ class WorkloadIdentityClient:
         
         # Development mode - return mock token
         if not self.is_cloud_run:
-            logger.warning(f"⚠️  Development mode - using mock ID token for: {audience}")
-            mock_token = f"dev_token_{audience}"
+            logger.warning(f"⚠️  Development mode - using mock ID token")
+            # Use hash of audience to avoid leaking service URLs in logs
+            import hashlib
+            audience_hash = hashlib.sha256(audience.encode()).hexdigest()[:16]
+            mock_token = f"dev_token_{audience_hash}"
             self._cache_token(audience, mock_token, expires_in=3600)
             return mock_token
         

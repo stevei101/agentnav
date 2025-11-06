@@ -219,7 +219,7 @@ python3 -m pytest tests/test_workload_identity_auth.py tests/test_workload_ident
 
 Coverage:
 - ✅ 29 tests passing
-- ✅ 96.7% pass rate
+- ✅ 30 total tests, 29 passing, 1 skipped
 - ✅ All major code paths tested
 
 ### Integration Testing

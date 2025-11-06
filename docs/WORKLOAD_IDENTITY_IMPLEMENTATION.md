@@ -30,7 +30,7 @@ This feature implements secure service-to-service authentication using Google Cl
 - IAM policy for secure service-to-service communication
 
 ### 5. **Comprehensive Test Suite**
-- 29 automated tests with 96.7% pass rate
+- 29 automated tests with 30 total tests, 29 passing, 1 skipped
 - Tests cover:
   - Token verification (valid/invalid/expired)
   - Service Account authorization
@@ -131,7 +131,7 @@ python3 -m pytest tests/test_workload_identity_auth.py tests/test_workload_ident
 Results:
 - ✅ 29 tests passing
 - ✅ 1 skipped (non-deterministic test)
-- ✅ 96.7% pass rate
+- ✅ 30 total tests, 29 passing, 1 skipped
 
 ## Files Changed
 
