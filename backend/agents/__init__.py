@@ -8,6 +8,7 @@ from .orchestrator_agent import OrchestratorAgent
 from .summarizer_agent import SummarizerAgent
 from .linker_agent import LinkerAgent
 from .visualizer_agent import VisualizerAgent
+from .suggestion_agent import SuggestionAgent
 
 __all__ = [
     "Agent",
@@ -19,4 +20,5 @@ __all__ = [
     "SummarizerAgent",
     "LinkerAgent",
     "VisualizerAgent",
+    "SuggestionAgent",
 ]

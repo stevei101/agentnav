@@ -15,6 +15,8 @@ from pydantic import BaseModel
 
 # Import WebSocket streaming routes (FR#020)
 from backend.routes.stream_routes import router as stream_router
+# Import Suggestion routes (FR#201)
+from backend.routes.suggestion_routes import router as suggestion_router
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,9 @@ async def add_security_headers(request: Request, call_next):
 
 # Include WebSocket streaming routes (FR#020 - Interactive Agent Dashboard)
 app.include_router(stream_router)
+
+# Include Suggestion routes (FR#201 - Prompt Vault Intelligence)
+app.include_router(suggestion_router)
 
 
 class HealthResponse(BaseModel):
