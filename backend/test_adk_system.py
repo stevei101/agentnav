@@ -163,7 +163,7 @@ def print_summary():
 5. 🔧 System Architecture
    - Follows system instruction requirements for ADK and A2A Protocol
    - Firestore integration for prompt management and session persistence
-   - Gemma GPU service integration for enhanced AI capabilities
+   - Gemini cloud service integration for AI capabilities
    - Cloud Run compatibility with proper health checks
 
 📋 KEY IMPLEMENTATION DETAILS:

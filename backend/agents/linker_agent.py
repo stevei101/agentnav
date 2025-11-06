@@ -23,11 +23,10 @@ class LinkerAgent(Agent):
     - Emit real-time events for FR#020 streaming dashboard
     """
     
-    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None, model_type: str = "gemini"):
+    def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("linker", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
-        self.model_type = model_type  # "gemini" (cloud) or "gemma" (local GPU)
     
     def _get_prompt_template(self) -> str:
         """Get prompt template from Firestore or fallback"""
@@ -245,7 +244,7 @@ Return a structured analysis of entities and their relationships.
         return entities
     
     async def _extract_document_entities(self, document: str) -> List[Dict[str, Any]]:
-        """Extract entities from document content using Gemini/Gemma"""
+        """Extract entities from document content using Gemini"""
         try:
             # Use standardized Gemini client for cloud-based or local reasoning
             from services.gemini_client import reason_with_gemini
@@ -263,8 +262,7 @@ Extract 5-10 key entities:
             response = await reason_with_gemini(
                 prompt=prompt,
                 max_tokens=300,
-                temperature=0.3,
-                model_type=self.model_type
+                temperature=0.3
             )
             
             # Parse response into entities
@@ -289,48 +287,8 @@ Extract 5-10 key entities:
             
         except Exception as e:
             self.logger.warning(f"⚠️  Error using Gemini for entity extraction: {e}")
-            self.logger.info("📋 Falling back to Gemma service for entity extraction")
-            # Fallback to Gemma service if Gemini fails
-            try:
-                from services.gemma_service import reason_with_gemma
-                
-                prompt = f"""
-Analyze this document and extract key entities (concepts, topics, themes).
-Return them as a simple list, one per line.
-
-Document:
-{document[:2000]}
-
-Extract 5-10 key entities:
-"""
-                
-                response = await reason_with_gemma(
-                    prompt=prompt,
-                    max_tokens=300,
-                    temperature=0.3
-                )
-                
-                # Parse response into entities (same logic as above)
-                entities = []
-                lines = response.strip().split('\n')
-                
-                for i, line in enumerate(lines):
-                    line = line.strip()
-                    if line and not line.startswith('-') and len(line) > 2:
-                        entity_name = line.replace('-', '').replace('*', '').strip()
-                        if entity_name:
-                            entities.append({
-                                "id": f"concept_{i}",
-                                "label": entity_name,
-                                "type": "concept",
-                                "group": "Concept",
-                                "importance": "high" if i < 3 else "medium"
-                            })
-                
-                return entities[:10]
-            except Exception as fallback_error:
-                self.logger.error(f"Error extracting document entities (both Gemini and Gemma failed): {fallback_error}")
-                return self._extract_document_entities_fallback(document)
+            self.logger.info("📋 Falling back to basic entity extraction")
+            return self._extract_document_entities_fallback(document)
     
     def _extract_document_entities_fallback(self, document: str) -> List[Dict[str, Any]]:
         """Fallback entity extraction for documents"""
@@ -493,86 +451,20 @@ Extract 5-10 key entities:
         """
         Identify relationships in document content using semantic embeddings
         
-        This method uses Gemma embeddings to calculate semantic similarity
-        between entities, providing more accurate relationship mapping than
-        simple co-occurrence analysis.
+        This method uses simple co-occurrence analysis to identify relationships
+        between entities.
         """
-        relationships = []
-        
-        try:
-            from services.gemma_service import embed_with_gemma
-            
-            # Generate embeddings for all entity labels
-            entity_labels = [entity["label"] for entity in entities]
-            
-            if not entity_labels:
-                return relationships
-            
-            self.logger.info(f"🔗 Generating embeddings for {len(entity_labels)} entities")
-            
-            # Get embeddings in batch
-            embeddings = await embed_with_gemma(entity_labels)
-            
-            # Store embeddings in entities
-            for entity, embedding in zip(entities, embeddings):
-                entity["embedding"] = embedding
-            
-            # Calculate semantic similarity between all pairs
-            similarity_threshold = 0.7  # Configurable threshold
-            
-            for i, entity1 in enumerate(entities):
-                for j, entity2 in enumerate(entities):
-                    if i >= j:  # Avoid duplicates and self-references
-                        continue
-                    
-                    # Calculate cosine similarity
-                    similarity = self._cosine_similarity(
-                        entity1["embedding"],
-                        entity2["embedding"]
-                    )
-                    
-                    # Create relationship if similarity exceeds threshold
-                    if similarity >= similarity_threshold:
-                        relationship_type = "strongly_related" if similarity >= 0.85 else "related"
-                        
-                        relationships.append({
-                            "from": entity1["id"],
-                            "to": entity2["id"],
-                            "type": relationship_type,
-                            "label": f"semantically related ({similarity:.2f})",
-                            "similarity": similarity,
-                            "confidence": "high" if similarity >= 0.85 else "medium"
-                        })
-            
-            # Use Gemma reasoning for complex relationship extraction
-            if len(entities) > 2:
-                relationships = await self._enhance_relationships_with_reasoning(
-                    document, entities, relationships
-                )
-            
-            # Sort by similarity (highest first) and limit
-            relationships.sort(key=lambda r: r.get("similarity", 0), reverse=True)
-            
-            self.logger.info(f"✅ Identified {len(relationships)} semantic relationships")
-            
-            return relationships[:15]  # Limit to top 15 relationships
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️  Error using embeddings for relationships: {e}")
-            self.logger.info("📋 Falling back to simple relationship extraction")
-            # Fallback to simple method
-            return await self._identify_document_relationships(document, entities)
+        return await self._identify_document_relationships(document, entities)
     
     async def _enhance_relationships_with_reasoning(
         self, document: str, entities: List[Dict[str, Any]], 
         relationships: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        Use reasoning to enhance relationship analysis (Gemini or Gemma based on model_type)
+        Use Gemini reasoning to enhance relationship analysis
         
-        This method asks the selected model to analyze specific entity relationships
+        This method asks Gemini to analyze specific entity relationships
         in the context of the full document.
-        Falls back to Gemma service if Gemini is unavailable.
         """
         try:
             from services.gemini_client import reason_with_gemini
@@ -595,8 +487,7 @@ Provide relationship insights:
             response = await reason_with_gemini(
                 prompt=prompt,
                 max_tokens=400,
-                temperature=0.3,
-                model_type=self.model_type
+                temperature=0.3
             )
             
             # Parse reasoning to enhance existing relationships
@@ -604,41 +495,10 @@ Provide relationship insights:
                 # Add reasoning context
                 relationship["reasoning_context"] = response[:200]  # Store snippet
             
-            self.logger.info(f"✅ Enhanced relationships with reasoning (model_type={self.model_type})")
+            self.logger.info("✅ Enhanced relationships with Gemini reasoning")
             
         except Exception as e:
             self.logger.warning(f"⚠️  Could not enhance with Gemini reasoning: {e}")
-            self.logger.info("📋 Attempting fallback to Gemma service")
-            # Fallback to Gemma service if Gemini fails
-            try:
-                from services.gemma_service import reason_with_gemma
-                
-                top_entities = [e["label"] for e in entities[:5]]
-                prompt = f"""
-Analyze the relationships between these entities in the given context.
-For each pair, describe the relationship type (e.g., "supports", "contradicts", "builds on", "causes", "enables").
-
-Entities: {', '.join(top_entities)}
-
-Context:
-{document[:1500]}
-
-Provide relationship insights:
-"""
-                
-                response = await reason_with_gemma(
-                    prompt=prompt,
-                    max_tokens=400,
-                    temperature=0.3
-                )
-                
-                # Parse reasoning to enhance existing relationships
-                for relationship in relationships:
-                    relationship["reasoning_context"] = response[:200]
-                
-                self.logger.info("✅ Enhanced relationships with Gemma reasoning (fallback)")
-            except Exception as fallback_error:
-                self.logger.warning(f"⚠️  Could not enhance with reasoning (both Gemini and Gemma failed): {fallback_error}")
         
         return relationships
     

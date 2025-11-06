@@ -98,12 +98,11 @@ async def reason_with_gemini(
     prompt: str, 
     max_tokens: int = 256, 
     temperature: float = 0.0, 
-    model: Optional[str] = None,
-    model_type: str = "gemini"
+    model: Optional[str] = None
 ) -> str:
     """Convenience helper used by agents for reasoning prompts.
 
-    Supports both cloud-based Gemini and local Gemma GPU service reasoning.
+    Uses cloud-based Gemini for all reasoning tasks.
     Agents should fetch prompt templates from prompt loader, format them, 
     and call this helper.
 
@@ -111,64 +110,41 @@ async def reason_with_gemini(
         prompt: The reasoning prompt to send.
         max_tokens: Maximum tokens in the response.
         temperature: Sampling temperature (0.0 = deterministic, higher = more creative).
-        model: Optional explicit model name (overrides model_type logic).
-        model_type: Either "gemini" (cloud GenAI SDK) or "gemma" (local GPU service).
-                   Defaults to "gemini". Can be overridden by AGENTNAV_MODEL_TYPE env var.
+        model: Optional explicit model name. Defaults to "gemini-1" or GEMINI_MODEL env var.
 
     Returns:
-        The text response from the selected model.
+        The text response from Gemini.
 
     Raises:
-        ValueError: If model_type is not "gemini" or "gemma".
+        RuntimeError: If Gemini client fails to generate response.
     """
-    # Allow override via environment variable
-    model_type = os.environ.get("AGENTNAV_MODEL_TYPE", model_type).lower()
+    # Use cloud Gemini via GenAI SDK
+    model = model or os.environ.get("GEMINI_MODEL") or "gemini-1"
+    client = GeminiClient()
+    result = await client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
 
-    if model_type == "gemma":
-        # Use local Gemma GPU service
-        try:
-            from services.gemma_service import reason_with_gemma
-            response = await reason_with_gemma(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
-            logger.info(f"✅ Used Gemma service for reasoning (max_tokens={max_tokens})")
-            return response
-        except Exception as e:
-            logger.warning(f"⚠️ Gemma service unavailable: {e}. Falling back to Gemini.")
-            model_type = "gemini"
+    # Normalize a few common SDK return shapes
+    # - Newer SDKs may return an object with .candidates or .output
+    if isinstance(result, dict):
+        # common pattern: {'candidates': [{'content': {'text': '...'}}]}
+        candidates = result.get("candidates") or result.get("outputs")
+        if isinstance(candidates, list) and len(candidates) > 0:
+            first = candidates[0]
+            # nested content
+            content = first.get("content") or first.get("output") or first
+            if isinstance(content, dict):
+                text = content.get("text") or content.get("content")
+                if text:
+                    logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
+                    return text
+            # fallback to string representation
+            return str(first)
 
-    if model_type == "gemini":
-        # Use cloud Gemini via GenAI SDK
-        model = model or os.environ.get("GEMINI_MODEL") or "gemini-1"
-        client = GeminiClient()
-        result = await client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
-
-        # Normalize a few common SDK return shapes
-        # - Newer SDKs may return an object with .candidates or .output
-        if isinstance(result, dict):
-            # common pattern: {'candidates': [{'content': {'text': '...'}}]}
-            candidates = result.get("candidates") or result.get("outputs")
-            if isinstance(candidates, list) and len(candidates) > 0:
-                first = candidates[0]
-                # nested content
-                content = first.get("content") or first.get("output") or first
-                if isinstance(content, dict):
-                    text = content.get("text") or content.get("content")
-                    if text:
-                        logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
-                        return text
-                # fallback to string representation
-                return str(first)
-
-        # If result is a string-like return it
-        if isinstance(result, str):
-            logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
-            return result
-
-        # Last resort: return stringified result
+    # If result is a string-like return it
+    if isinstance(result, str):
         logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
-        return str(result)
+        return result
 
-    raise ValueError(f"Unsupported model_type: {model_type}. Must be 'gemini' or 'gemma'.")
+    # Last resort: return stringified result
+    logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
+    return str(result)

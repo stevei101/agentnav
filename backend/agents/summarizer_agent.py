@@ -120,9 +120,9 @@ Create a comprehensive summary that captures the essence and key information.
         }
     
     async def _generate_summary(self, document: str, content_type: str) -> str:
-        """Generate summary using Gemini via Gemma service"""
+        """Generate summary using Gemini"""
         try:
-            from services.gemma_service import generate_with_gemma
+            from services.gemini_client import reason_with_gemini
             
             prompt_template = self._get_prompt_template()
             prompt = prompt_template.format(
@@ -130,8 +130,8 @@ Create a comprehensive summary that captures the essence and key information.
                 content_type=content_type
             )
             
-            self.logger.info("🤖 Calling Gemma service for summary generation")
-            summary = await generate_with_gemma(
+            self.logger.info("🤖 Calling Gemini service for summary generation")
+            summary = await reason_with_gemini(
                 prompt=prompt,
                 max_tokens=800,
                 temperature=0.3,  # Lower temperature for more consistent summaries
@@ -145,7 +145,7 @@ Create a comprehensive summary that captures the essence and key information.
             return self._create_fallback_summary(document, content_type)
     
     def _create_fallback_summary(self, document: str, content_type: str) -> str:
-        """Create basic fallback summary when Gemma service unavailable"""
+        """Create basic fallback summary when Gemini service unavailable"""
         lines = document.split('\n')
         words = document.split()
         
