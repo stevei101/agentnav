@@ -126,6 +126,7 @@ export default tseslint.config(
       'scripts/**/*.py',
       '*.lock',
       'bun.lockb',
+      'prompt-vault/**', // Prompt Vault has separate ESLint config
     ],
   }
 );
