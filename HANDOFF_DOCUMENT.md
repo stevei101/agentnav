@@ -31,7 +31,7 @@
 ```
 backend/Dockerfile          - Replace problematic CMD with ENTRYPOINT
 backend/Dockerfile.gemma    - Replace problematic CMD with ENTRYPOINT
-backend/entrypoint.sh       - NEW: Backend startup script with PORT validation
+backend/entrypoint.sh       - REMOVED: Simplified to direct CMD in Dockerfile
 backend/gemma_service/entrypoint.sh - NEW: Gemma startup script with PORT validation
 ```
 
@@ -221,9 +221,8 @@ git log --oneline -3  # See the commits
 
 ```bash
 cd backend
-# Test port validation
-PORT=abc bash entrypoint.sh  # Should fail with error
-PORT=8080 bash entrypoint.sh  # Should start uvicorn
+# Testing simplified - direct CMD approach eliminates need for separate script
+# Container now starts with: uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
 ---

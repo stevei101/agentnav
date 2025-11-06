@@ -64,7 +64,7 @@ Solution:
 Files Changed:
   ✅ backend/Dockerfile
   ✅ backend/Dockerfile.gemma
-  ✅ backend/entrypoint.sh (NEW)
+  ✅ backend/entrypoint.sh (REMOVED - simplified to direct CMD)
   ✅ backend/gemma_service/entrypoint.sh (NEW)
 
 Testing:
