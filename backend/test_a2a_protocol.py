@@ -75,8 +75,12 @@ async def test_a2a_message_schemas():
             message_id=create_message_id("linker", "relationship_mapped"),
             from_agent="linker",
             to_agent="visualizer",
-            entities=[{"id": "entity_1", "label": "Machine Learning", "type": "concept"}],
-            relationships=[{"from": "entity_1", "to": "entity_2", "type": "relates_to"}],
+            entities=[
+                {"id": "entity_1", "label": "Machine Learning", "type": "concept"}
+            ],
+            relationships=[
+                {"from": "entity_1", "to": "entity_2", "type": "relates_to"}
+            ],
             entity_count=1,
             relationship_count=1,
             trace=A2ATraceContext(correlation_id=correlation_id),
@@ -144,11 +148,15 @@ async def test_a2a_security():
 
         # Test 3: Invalid signature detection
         invalid_sig = "invalid_signature_12345"
-        is_invalid = security_service.verify_message_signature(test_message, invalid_sig)
+        is_invalid = security_service.verify_message_signature(
+            test_message, invalid_sig
+        )
         print(f"✅ Invalid signature detected: {not is_invalid}")
 
         # Test 4: Service Account authentication
-        is_trusted = security_service.authenticate_service_account(security_service.identity.email)
+        is_trusted = security_service.authenticate_service_account(
+            security_service.identity.email
+        )
         print(f"✅ Service Account authentication: {is_trusted}")
 
         # Test 5: Authorization checks
@@ -365,8 +373,12 @@ async def main():
     print(f"  🔄 Protocol Service: {'✅ PASS' if protocol_passed else '❌ FAIL'}")
     print(f"  🤖 Agent Integration: {'✅ PASS' if integration_passed else '❌ FAIL'}")
 
-    overall_success = all([schemas_passed, security_passed, protocol_passed, integration_passed])
-    print(f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    overall_success = all(
+        [schemas_passed, security_passed, protocol_passed, integration_passed]
+    )
+    print(
+        f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     # Print summary
     print("\n" + "=" * 70)
