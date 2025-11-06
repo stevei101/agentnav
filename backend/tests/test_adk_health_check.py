@@ -141,7 +141,9 @@ class TestAgentStatusEndpoint:
         """Test agent status when some agents fail to initialize"""
         with (
             patch("main.OrchestratorAgent") as mock_orch,
-            patch("main.SummarizerAgent", side_effect=Exception("Summarizer init failed")),
+            patch(
+                "main.SummarizerAgent", side_effect=Exception("Summarizer init failed")
+            ),
             patch("main.LinkerAgent") as mock_link,
             patch("main.VisualizerAgent") as mock_viz,
             patch("main.A2AProtocol") as mock_a2a,

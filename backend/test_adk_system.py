@@ -217,7 +217,9 @@ async def main():
     print(f"  🔌 API Components: {'✅ PASS' if api_test_passed else '❌ FAIL'}")
 
     overall_success = agent_test_passed and api_test_passed
-    print(f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    print(
+        f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     # Print implementation summary
     print_summary()
