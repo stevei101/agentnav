@@ -434,7 +434,7 @@ async def get_agent_status():
         diagnostic_info["environment_vars"][var] = "set" if value else "missing"
     
     try:
-        from agents import (
+        from backend.agents import (
             OrchestratorAgent, SummarizerAgent, LinkerAgent, VisualizerAgent, A2AProtocol
         )
         
