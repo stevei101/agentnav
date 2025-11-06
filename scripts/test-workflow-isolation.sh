@@ -105,8 +105,9 @@ for workflow in ci.yml build.yml terraform.yml; do
     if [ -f "$REPO_ROOT/.github/workflows/$workflow" ]; then
         # Extract paths: sections (not paths-ignore:) and check for prompt-vault references
         # This verifies that prompt-vault is not explicitly included in the paths filter
-        PATHS_SECTION=$(grep -A 10 "^  paths:" "$REPO_ROOT/.github/workflows/$workflow" || true)
-        IGNORE_SECTION=$(grep -A 5 "^  paths-ignore:" "$REPO_ROOT/.github/workflows/$workflow" || true)
+        # Use larger buffer (30 lines) to handle deeply nested configurations
+        PATHS_SECTION=$(grep -A 30 "^  paths:" "$REPO_ROOT/.github/workflows/$workflow" || true)
+        IGNORE_SECTION=$(grep -A 20 "^  paths-ignore:" "$REPO_ROOT/.github/workflows/$workflow" || true)
         
         # If paths section contains prompt-vault but ignore section doesn't, it's an explicit include
         if echo "$PATHS_SECTION" | grep -q "prompt-vault"; then
