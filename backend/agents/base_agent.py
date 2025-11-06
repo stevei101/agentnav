@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Import new A2A Protocol components (FR#027)
 try:
     from services.a2a_protocol import A2AProtocolService, create_status_message
-    from models.a2a_messages import A2AMessageBase, AgentStatusMessage
+    from models.a2a_messages import A2AMessageBase
 
     HAS_ENHANCED_A2A = True
 except ImportError as e:
