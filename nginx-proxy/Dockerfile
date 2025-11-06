@@ -3,8 +3,8 @@
 
 FROM nginx:1.25-alpine
 
-# Install envsubst for environment variable substitution
-RUN apk add --no-cache gettext
+# Install envsubst for environment variable substitution and wget for health checks
+RUN apk add --no-cache gettext wget
 
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
