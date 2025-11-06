@@ -277,4 +277,3 @@ jobs:
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"
-

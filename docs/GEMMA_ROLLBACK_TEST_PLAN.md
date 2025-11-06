@@ -7,6 +7,7 @@
 ## Changes Summary
 
 ### 1. Backend Code Changes
+
 - ✅ Made `get_gemma_client()` return `None` when `GEMMA_SERVICE_URL` not set
 - ✅ Added `RuntimeError` handling in convenience functions
 - ✅ Updated all agents to gracefully fallback to Gemini:
@@ -16,17 +17,20 @@
   - `main.py`: `/api/generate` endpoint falls back to Gemini
 
 ### 2. Infrastructure Changes
+
 - ✅ Commented out Gemma service in `terraform/cloud_run.tf`
 - ✅ Removed `GEMMA_SERVICE_URL` from backend environment variables
 - ✅ Removed `gemma` from CI/CD build matrix
 
 ### 3. Import Updates
+
 - ✅ Changed all `from services.gemma_service` to `from services.gemma_client`
 - ✅ Updated error handling to catch `RuntimeError` when Gemma unavailable
 
 ## Test Cases
 
 ### Test 1: Gemma Client Without URL
+
 ```python
 import os
 os.environ.pop('GEMMA_SERVICE_URL', None)
@@ -37,6 +41,7 @@ assert client is None  # Should return None
 ```
 
 ### Test 2: Agents Import Successfully
+
 ```python
 from agents.visualizer_agent import VisualizerAgent
 from agents.linker_agent import LinkerAgent
@@ -45,6 +50,7 @@ from agents.summarizer_agent import SummarizerAgent
 ```
 
 ### Test 3: RuntimeError When Gemma Unavailable
+
 ```python
 import os
 os.environ.pop('GEMMA_SERVICE_URL', None)
@@ -57,6 +63,7 @@ except RuntimeError as e:
 ```
 
 ### Test 4: Backend Starts Without Gemma
+
 ```bash
 # Ensure GEMMA_SERVICE_URL is not set
 unset GEMMA_SERVICE_URL
@@ -69,12 +76,14 @@ uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
 ### Test 5: Health Check Endpoint
+
 ```bash
 curl http://localhost:8080/healthz
 # Should return 200 OK even without Gemma service
 ```
 
 ### Test 6: API Endpoints Work
+
 ```bash
 # Test /api/generate (should fallback to Gemini)
 curl -X POST http://localhost:8080/api/generate \
@@ -87,6 +96,7 @@ curl -X POST http://localhost:8080/api/generate \
 ## Manual Testing Steps
 
 1. **Set Up Environment:**
+
    ```bash
    cd backend
    # Ensure GEMMA_SERVICE_URL is NOT set
@@ -94,16 +104,19 @@ curl -X POST http://localhost:8080/api/generate \
    ```
 
 2. **Run Test Script:**
+
    ```bash
    python3 test_gemma_rollback.py
    ```
 
 3. **Start Backend Locally:**
+
    ```bash
    uvicorn main:app --host 0.0.0.0 --port 8080 --reload
    ```
 
 4. **Verify Health Check:**
+
    ```bash
    curl http://localhost:8080/healthz
    ```
@@ -116,6 +129,7 @@ curl -X POST http://localhost:8080/api/generate \
 ## Expected Behavior
 
 ### ✅ Should Work:
+
 - Backend starts without `GEMMA_SERVICE_URL`
 - All agents import successfully
 - Health check endpoint returns 200 OK
@@ -123,11 +137,13 @@ curl -X POST http://localhost:8080/api/generate \
 - No startup timeout errors
 
 ### ⚠️ Expected Log Messages:
+
 - "GEMMA_SERVICE_URL not configured, Gemma service unavailable"
 - "Gemma service unavailable, using Gemini"
 - "Falling back to simple relationship extraction"
 
 ### ❌ Should NOT Happen:
+
 - Import errors
 - Startup failures
 - Timeout errors related to Gemma service
@@ -147,9 +163,9 @@ curl -X POST http://localhost:8080/api/generate \
 ## Next Steps
 
 After successful local testing:
+
 1. Create feature branch
 2. Commit changes
 3. Create PR with label `agentnav`
 4. Verify CI/CD passes (should skip Gemma builds)
 5. Deploy to staging to verify Cloud Run startup
-

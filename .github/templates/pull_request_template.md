@@ -7,7 +7,6 @@ Please include a summary of the changes and the related issue. Please also inclu
 
 ## Reviewer(s)
 
-
 ## Linked Issue(s)
 
 Fixes # (issue)
@@ -29,10 +28,11 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] Test B
 
 **Test Configuration**:
-* Firmware version:
-* Hardware:
-* Toolchain:
-* SDK:
+
+- Firmware version:
+- Hardware:
+- Toolchain:
+- SDK:
 
 # Checklist:
 

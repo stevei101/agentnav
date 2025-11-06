@@ -31,7 +31,7 @@ if (typeof global.DragEvent === 'undefined') {
       this.dataTransfer = init?.dataTransfer || new DataTransfer();
     }
   } as unknown as typeof DragEvent;
-  
+
   // Also ensure window.DragEvent is available
   if (typeof window !== 'undefined') {
     (window as any).DragEvent = global.DragEvent;
