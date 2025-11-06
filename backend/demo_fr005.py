@@ -198,7 +198,9 @@ The field continues to evolve rapidly, with new breakthroughs emerging regularly
         print("-" * 70)
         print(f"   Session ID: {result_context.session_id}")
         print(f"   Workflow Status: {result_context.workflow_status}")
-        print(f"   Completed Agents: {len(result_context.completed_agents)}/{len(workflow.agents)}")
+        print(
+            f"   Completed Agents: {len(result_context.completed_agents)}/{len(workflow.agents)}"
+        )
         print(f"   Execution Time: {execution_time:.2f} seconds")
         print(f"   Errors: {len(result_context.errors)}")
         if result_context.errors:
@@ -237,7 +239,9 @@ The field continues to evolve rapidly, with new breakthroughs emerging regularly
         print()
         print("Key Achievements:")
         print("  ✅ SessionContext created and validated")
-        print("  ✅ Sequential workflow executed (Orchestrator → Summarizer → Linker → Visualizer)")
+        print(
+            "  ✅ Sequential workflow executed (Orchestrator → Summarizer → Linker → Visualizer)"
+        )
         print("  ✅ Each agent updated specific SessionContext fields")
         print("  ✅ Results accessible via unified SessionContext object")
         print()

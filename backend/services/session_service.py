@@ -151,7 +151,9 @@ class SessionService:
 
             doc_ref.update(updates)
 
-            logger.debug(f"🤖 Updated agent state for {agent_name} in session {session_id}")
+            logger.debug(
+                f"🤖 Updated agent state for {agent_name} in session {session_id}"
+            )
 
             return True
 
@@ -209,7 +211,9 @@ class SessionService:
             logger.error(f"❌ Failed to delete session from Firestore: {e}")
             return False
 
-    async def list_sessions(self, limit: int = 10, order_by: str = "created_at") -> list:
+    async def list_sessions(
+        self, limit: int = 10, order_by: str = "created_at"
+    ) -> list:
         """
         List recent sessions
 
@@ -225,7 +229,11 @@ class SessionService:
             collection = client.get_collection(self._collection_name)
 
             # Get recent sessions ordered by timestamp
-            docs = collection.order_by(order_by, direction="DESCENDING").limit(limit).stream()
+            docs = (
+                collection.order_by(order_by, direction="DESCENDING")
+                .limit(limit)
+                .stream()
+            )
 
             sessions = [doc.to_dict() for doc in docs]
 

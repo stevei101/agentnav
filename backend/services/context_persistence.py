@@ -145,7 +145,11 @@ class ContextPersistenceService:
             collection = client.get_collection(self._collection_name)
 
             # Get recent documents ordered by timestamp
-            docs = collection.order_by("timestamp", direction="DESCENDING").limit(limit).stream()
+            docs = (
+                collection.order_by("timestamp", direction="DESCENDING")
+                .limit(limit)
+                .stream()
+            )
 
             session_ids = [doc.id for doc in docs]
 
