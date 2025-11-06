@@ -23,9 +23,10 @@ class TestHealthzEndpoint:
 
     def test_healthz_with_operational_adk(self):
         """Test healthz returns healthy when ADK is operational"""
-        with patch("main.OrchestratorAgent") as mock_agent_class, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+        with (
+            patch("main.OrchestratorAgent") as mock_agent_class,
+            patch("main.A2AProtocol") as mock_a2a,
+        ):
 
             # Mock successful agent initialization
             mock_agent = MagicMock()
@@ -91,13 +92,13 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_operational(self):
         """Test agent status returns operational when all agents are available"""
-        with patch("main.OrchestratorAgent") as mock_orch, patch(
-            "main.SummarizerAgent"
-        ) as mock_sum, patch("main.LinkerAgent") as mock_link, patch(
-            "main.VisualizerAgent"
-        ) as mock_viz, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+        with (
+            patch("main.OrchestratorAgent") as mock_orch,
+            patch("main.SummarizerAgent") as mock_sum,
+            patch("main.LinkerAgent") as mock_link,
+            patch("main.VisualizerAgent") as mock_viz,
+            patch("main.A2AProtocol") as mock_a2a,
+        ):
 
             # Mock agent instances
             def create_mock_agent(name):
@@ -138,13 +139,13 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_partial_availability(self):
         """Test agent status when some agents fail to initialize"""
-        with patch("main.OrchestratorAgent") as mock_orch, patch(
-            "main.SummarizerAgent", side_effect=Exception("Summarizer init failed")
-        ), patch("main.LinkerAgent") as mock_link, patch(
-            "main.VisualizerAgent"
-        ) as mock_viz, patch(
-            "main.A2AProtocol"
-        ) as mock_a2a:
+        with (
+            patch("main.OrchestratorAgent") as mock_orch,
+            patch("main.SummarizerAgent", side_effect=Exception("Summarizer init failed")),
+            patch("main.LinkerAgent") as mock_link,
+            patch("main.VisualizerAgent") as mock_viz,
+            patch("main.A2AProtocol") as mock_a2a,
+        ):
 
             # Mock successful agents
             def create_mock_agent(name):
@@ -169,9 +170,13 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_includes_environment_vars(self):
         """Test agent status includes environment variable diagnostics"""
-        with patch("main.OrchestratorAgent"), patch("main.SummarizerAgent"), patch(
-            "main.LinkerAgent"
-        ), patch("main.VisualizerAgent"), patch("main.A2AProtocol"):
+        with (
+            patch("main.OrchestratorAgent"),
+            patch("main.SummarizerAgent"),
+            patch("main.LinkerAgent"),
+            patch("main.VisualizerAgent"),
+            patch("main.A2AProtocol"),
+        ):
 
             with patch.dict(
                 os.environ,

@@ -173,9 +173,7 @@ class TestCIConfigurationModernization:
         """Verify CI uses modern gcloud run deploy syntax"""
         import os
 
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
 
         with open(ci_path, "r") as f:
@@ -191,9 +189,7 @@ class TestCIConfigurationModernization:
         """Verify CI configures min/max instances for Cloud Run"""
         import os
 
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
 
         with open(ci_path, "r") as f:
@@ -207,9 +203,7 @@ class TestCIConfigurationModernization:
         """Verify CI sets production environment variables"""
         import os
 
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
 
         with open(ci_path, "r") as f:
@@ -222,9 +216,7 @@ class TestCIConfigurationModernization:
         """Verify CI configures CPU throttling for cost optimization"""
         import os
 
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
 
         with open(ci_path, "r") as f:
@@ -237,9 +229,7 @@ class TestCIConfigurationModernization:
         """Verify CI explicitly sets port for Cloud Run"""
         import os
 
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
 
         with open(ci_path, "r") as f:

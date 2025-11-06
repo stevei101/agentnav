@@ -135,9 +135,7 @@ Content to analyze:
 {document[:3000]}
 """
 
-        response = await reason_with_gemini(
-            prompt=analysis_prompt, max_tokens=300, temperature=0.3
-        )
+        response = await reason_with_gemini(prompt=analysis_prompt, max_tokens=300, temperature=0.3)
 
         # Parse structured response
         return self._parse_analysis_response(response, document)
@@ -166,9 +164,7 @@ Content to analyze:
                         parsed["complexity_level"] = complexity
                 elif line.startswith("KEY_TOPICS:"):
                     topics_str = line.split(":", 1)[1].strip()
-                    parsed["key_topics"] = [t.strip() for t in topics_str.split(",")][
-                        :5
-                    ]
+                    parsed["key_topics"] = [t.strip() for t in topics_str.split(",")][:5]
                 elif line.startswith("SUMMARY:"):
                     parsed["content_summary"] = line.split(":", 1)[1].strip()
         except Exception as e:
@@ -207,9 +203,7 @@ Content to analyze:
         ]
 
         document_lower = document.lower()
-        code_score = sum(
-            1 for indicator in code_indicators if indicator in document_lower
-        )
+        code_score = sum(1 for indicator in code_indicators if indicator in document_lower)
 
         # Determine content type
         content_type = "codebase" if code_score >= 2 else "document"
@@ -247,9 +241,7 @@ Content to analyze:
             "analysis_method": "heuristic",
         }
 
-    async def _delegate_to_agents(
-        self, content_analysis: Dict[str, Any], document: str
-    ):
+    async def _delegate_to_agents(self, content_analysis: Dict[str, Any], document: str):
         """
         Send delegation messages to specialized agents via A2A Protocol
 
@@ -261,9 +253,7 @@ Content to analyze:
         else:
             await self._delegate_with_legacy_messages(content_analysis, document)
 
-    async def _delegate_with_typed_messages(
-        self, content_analysis: Dict[str, Any], document: str
-    ):
+    async def _delegate_with_typed_messages(self, content_analysis: Dict[str, Any], document: str):
         """Send typed delegation messages (FR#027)"""
         from services.a2a_protocol import create_task_delegation_message
 
@@ -314,13 +304,9 @@ Content to analyze:
         )
         await self.a2a.send_message(visualizer_message)
 
-        self.logger.info(
-            "📨 Sent typed delegation messages to all specialized agents (FR#027)"
-        )
+        self.logger.info("📨 Sent typed delegation messages to all specialized agents (FR#027)")
 
-    async def _delegate_with_legacy_messages(
-        self, content_analysis: Dict[str, Any], document: str
-    ):
+    async def _delegate_with_legacy_messages(self, content_analysis: Dict[str, Any], document: str):
         """Send legacy delegation messages (backward compatibility)"""
         from .base_agent import A2AMessage
 
@@ -394,9 +380,7 @@ Content to analyze:
             "execution_strategy": execution_strategy,
             "estimated_duration": self._estimate_processing_time(content_analysis),
             "visualization_type": (
-                "DEPENDENCY_GRAPH"
-                if content_analysis["content_type"] == "codebase"
-                else "MIND_MAP"
+                "DEPENDENCY_GRAPH" if content_analysis["content_type"] == "codebase" else "MIND_MAP"
             ),
             "agent_priorities": {
                 "summarizer": 4,  # High priority
@@ -412,9 +396,7 @@ Content to analyze:
         # Adjust based on complexity
         complexity_multiplier = {"simple": 1.0, "moderate": 1.5, "complex": 2.0}
 
-        multiplier = complexity_multiplier.get(
-            content_analysis["complexity_level"], 1.0
-        )
+        multiplier = complexity_multiplier.get(content_analysis["complexity_level"], 1.0)
         estimated_time = int(base_time * multiplier)
 
         return estimated_time
@@ -431,9 +413,7 @@ Content to analyze:
             self.a2a.update_shared_context(
                 "workflow_progress",
                 {
-                    "completed_agents": self.a2a.get_shared_context().get(
-                        "completed_agents", []
-                    )
+                    "completed_agents": self.a2a.get_shared_context().get("completed_agents", [])
                     + [agent_name],
                     "last_update": time.time(),
                 },

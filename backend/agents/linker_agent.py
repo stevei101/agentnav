@@ -98,19 +98,13 @@ Return a structured analysis of entities and their relationships.
             entities = await self._extract_entities(document, content_type)
 
             # Identify relationships between entities
-            relationships = await self._identify_relationships(
-                document, content_type, entities
-            )
+            relationships = await self._identify_relationships(document, content_type, entities)
 
             # Use summary from shared context if available
             summary_context = shared_context.get("summarizer_result", {})
             if summary_context:
-                self.logger.info(
-                    "📋 Using summary context for enhanced relationship analysis"
-                )
-                relationships = self._enhance_with_summary_context(
-                    relationships, summary_context
-                )
+                self.logger.info("📋 Using summary context for enhanced relationship analysis")
+                relationships = self._enhance_with_summary_context(relationships, summary_context)
 
             # Prepare visualization data structure
             graph_data = self._prepare_graph_data(entities, relationships, content_type)
@@ -151,14 +145,10 @@ Return a structured analysis of entities and their relationships.
         except Exception as e:
             # Emit error event
             if self.event_emitter:
-                await self.event_emitter.emit_agent_error(
-                    agent_name="Linker", error_message=str(e)
-                )
+                await self.event_emitter.emit_agent_error(agent_name="Linker", error_message=str(e))
             raise
 
-    async def _extract_entities(
-        self, document: str, content_type: str
-    ) -> List[Dict[str, Any]]:
+    async def _extract_entities(self, document: str, content_type: str) -> List[Dict[str, Any]]:
         """Extract key entities from the content"""
 
         if content_type == "codebase":
@@ -207,9 +197,7 @@ Return a structured analysis of entities and their relationships.
 
             # Import statements
             elif line.startswith("import ") or line.startswith("from "):
-                module = (
-                    line.split()[1] if line.startswith("import ") else line.split()[1]
-                )
+                module = line.split()[1] if line.startswith("import ") else line.split()[1]
                 entities.append(
                     {
                         "id": f"import_{module.replace('.', '_')}",
@@ -221,9 +209,7 @@ Return a structured analysis of entities and their relationships.
                 )
 
         # Add JavaScript/TypeScript entities if detected
-        if any(
-            keyword in document for keyword in ["function", "const ", "let ", "var "]
-        ):
+        if any(keyword in document for keyword in ["function", "const ", "let ", "var "]):
             entities.extend(self._extract_js_entities(document))
 
         return entities
@@ -282,9 +268,7 @@ Document:
 Extract 5-10 key entities:
 """
 
-            response = await reason_with_gemini(
-                prompt=prompt, max_tokens=300, temperature=0.3
-            )
+            response = await reason_with_gemini(prompt=prompt, max_tokens=300, temperature=0.3)
 
             # Parse response into entities
             entities = []
@@ -313,9 +297,7 @@ Extract 5-10 key entities:
             self.logger.info("📋 Falling back to basic entity extraction")
             return self._extract_document_entities_fallback(document)
 
-    def _extract_document_entities_fallback(
-        self, document: str
-    ) -> List[Dict[str, Any]]:
+    def _extract_document_entities_fallback(self, document: str) -> List[Dict[str, Any]]:
         """Fallback entity extraction for documents"""
         entities = []
 
@@ -360,9 +342,7 @@ Extract 5-10 key entities:
         if content_type == "codebase":
             return self._identify_code_relationships(document, entities)
         else:
-            return await self._identify_document_relationships_with_embeddings(
-                document, entities
-            )
+            return await self._identify_document_relationships_with_embeddings(document, entities)
 
     def _identify_code_relationships(
         self, document: str, entities: List[Dict[str, Any]]
@@ -533,9 +513,7 @@ Context:
 Provide relationship insights:
 """
 
-            response = await reason_with_gemini(
-                prompt=prompt, max_tokens=400, temperature=0.3
-            )
+            response = await reason_with_gemini(prompt=prompt, max_tokens=400, temperature=0.3)
 
             # Parse reasoning to enhance existing relationships
             for relationship in relationships:
@@ -668,7 +646,5 @@ Provide relationship insights:
                 # Task will be processed by main process() method
 
         elif message.message_type == "summary_complete":
-            self.logger.info(
-                "📋 Received summary completion - can enhance relationship analysis"
-            )
+            self.logger.info("📋 Received summary completion - can enhance relationship analysis")
             # Could trigger re-analysis with summary context

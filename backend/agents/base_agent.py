@@ -23,9 +23,7 @@ try:
     HAS_ENHANCED_A2A = True
 except ImportError as e:
     HAS_ENHANCED_A2A = False
-    logger.warning(
-        f"⚠️  Enhanced A2A Protocol not available, using legacy implementation: {e}"
-    )
+    logger.warning(f"⚠️  Enhanced A2A Protocol not available, using legacy implementation: {e}")
 
 
 class AgentState(Enum):
@@ -75,9 +73,7 @@ class A2AProtocol:
 
     async def send_message(self, message: A2AMessage):
         """Send A2A Protocol message to target agent(s)"""
-        logger.info(
-            f"📨 A2A: {message.from_agent} → {message.to_agent} [{message.message_type}]"
-        )
+        logger.info(f"📨 A2A: {message.from_agent} → {message.to_agent} [{message.message_type}]")
 
         # Add to queue (sorted by priority)
         self._message_queue.append(message)
@@ -91,9 +87,7 @@ class A2AProtocol:
         """Get pending messages for specific agent"""
         messages = [msg for msg in self._message_queue if msg.to_agent == agent_name]
         # Remove retrieved messages from queue
-        self._message_queue = [
-            msg for msg in self._message_queue if msg.to_agent != agent_name
-        ]
+        self._message_queue = [msg for msg in self._message_queue if msg.to_agent != agent_name]
         return messages
 
     def get_shared_context(self) -> Dict[str, Any]:
@@ -118,9 +112,7 @@ class Agent(ABC):
     - Enhanced logging with structured metadata
     """
 
-    def __init__(
-        self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]
-    ):
+    def __init__(self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]):
         self.name = name
         self.state = AgentState.IDLE
         self.a2a = a2a_protocol
@@ -161,9 +153,7 @@ class Agent(ABC):
         execution_id = f"{self.name}_{int(execution_start)}"
 
         try:
-            self.logger.info(
-                f"🚀 Agent {self.name} starting execution [{execution_id}]"
-            )
+            self.logger.info(f"🚀 Agent {self.name} starting execution [{execution_id}]")
             self.state = AgentState.PROCESSING
 
             # Process any pending A2A messages
@@ -181,9 +171,7 @@ class Agent(ABC):
             self._record_execution(execution_id, execution_time, result, None)
 
             self.state = AgentState.COMPLETED
-            self.logger.info(
-                f"✅ Agent {self.name} completed successfully [{execution_time:.2f}s]"
-            )
+            self.logger.info(f"✅ Agent {self.name} completed successfully [{execution_time:.2f}s]")
 
             # Notify other agents of completion
             await self._notify_completion(result)
@@ -341,9 +329,7 @@ class Agent(ABC):
         return {
             "name": self.name,
             "state": self.state.value,
-            "last_execution": (
-                self.execution_history[-1] if self.execution_history else None
-            ),
+            "last_execution": (self.execution_history[-1] if self.execution_history else None),
             "total_executions": len(self.execution_history),
         }
 
@@ -431,9 +417,7 @@ class AgentWorkflow:
                 except Exception as e:
                     logger.error(f"❌ Agent {agent_name} failed: {e}")
                     # Continue with other agents - depending agents will handle the failure
-                    executed_agents.add(
-                        agent_name
-                    )  # Mark as processed to avoid infinite loop
+                    executed_agents.add(agent_name)  # Mark as processed to avoid infinite loop
 
         logger.info("🏁 ADK Agent Workflow completed")
         return workflow_results
@@ -597,9 +581,7 @@ class AgentWorkflow:
                 agent_execution_time = time.time() - agent_start_time
 
                 # Update SessionContext based on agent type and results
-                self._update_session_context_from_result(
-                    session_context, agent_name, result
-                )
+                self._update_session_context_from_result(session_context, agent_name, result)
 
                 # Mark agent as complete
                 session_context.mark_agent_complete(agent_name)
@@ -662,9 +644,7 @@ class AgentWorkflow:
                 summary=session_context.summary_text or "",
                 visualization_data=session_context.graph_json or {},
                 key_entities=session_context.key_entities,
-                relationships=[
-                    rel.model_dump() for rel in session_context.relationships
-                ],
+                relationships=[rel.model_dump() for rel in session_context.relationships],
             )
 
         # Final persistence
@@ -708,8 +688,7 @@ class AgentWorkflow:
                 # Extract entity labels/IDs
                 entities = result["entities"]
                 session_context.key_entities = [
-                    entity.get("label", entity.get("id", "unknown"))
-                    for entity in entities
+                    entity.get("label", entity.get("id", "unknown")) for entity in entities
                 ]
 
             if "relationships" in result:

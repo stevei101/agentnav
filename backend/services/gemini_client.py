@@ -80,9 +80,7 @@ class GeminiClient:
         def _sync_call():
             # Try client.models.generate(model=..., prompt=...)
             try:
-                if hasattr(self._client, "models") and hasattr(
-                    self._client.models, "generate"
-                ):
+                if hasattr(self._client, "models") and hasattr(self._client.models, "generate"):
                     # Newer SDKs (module.client.models.generate)
                     return self._client.models.generate(
                         model=model,
@@ -165,9 +163,7 @@ async def reason_with_gemini(
             if isinstance(content, dict):
                 text = content.get("text") or content.get("content")
                 if text:
-                    logger.info(
-                        f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})"
-                    )
+                    logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
                     return text
             # fallback to string representation
             return str(first)

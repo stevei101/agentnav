@@ -51,9 +51,7 @@ class A2ASecurityContext(BaseModel):
     service_account_id: Optional[str] = Field(
         None, description="GCP Service Account ID from Cloud Run Workload Identity"
     )
-    signature: Optional[str] = Field(
-        None, description="Message signature for verification"
-    )
+    signature: Optional[str] = Field(None, description="Message signature for verification")
     signature_algorithm: str = Field(
         default="SHA256", description="Algorithm used for signature generation"
     )
@@ -145,14 +143,10 @@ class A2AMessageBase(BaseModel):
     )
 
     # Traceability context
-    trace: A2ATraceContext = Field(
-        ..., description="Traceability context for message tracking"
-    )
+    trace: A2ATraceContext = Field(..., description="Traceability context for message tracking")
 
     # Message payload (subclasses define specific structure)
-    data: Dict[str, Any] = Field(
-        default_factory=dict, description="Message payload data"
-    )
+    data: Dict[str, Any] = Field(default_factory=dict, description="Message payload data")
 
     @field_validator("message_id")
     @classmethod
@@ -299,9 +293,7 @@ class RelationshipMappedMessage(A2AMessageBase):
         default_factory=list, description="List of relationships between entities"
     )
     entity_count: int = Field(..., description="Number of entities identified")
-    relationship_count: int = Field(
-        ..., description="Number of relationships identified"
-    )
+    relationship_count: int = Field(..., description="Number of relationships identified")
     graph_data: Optional[Dict[str, Any]] = Field(
         None, description="Preliminary graph data structure"
     )
@@ -312,12 +304,8 @@ class RelationshipMappedMessage(A2AMessageBase):
                 "message_id": "msg_linker_complete_001",
                 "from_agent": "linker",
                 "to_agent": "visualizer",
-                "entities": [
-                    {"id": "entity_1", "label": "Machine Learning", "type": "concept"}
-                ],
-                "relationships": [
-                    {"from": "entity_1", "to": "entity_2", "type": "relates_to"}
-                ],
+                "entities": [{"id": "entity_1", "label": "Machine Learning", "type": "concept"}],
+                "relationships": [{"from": "entity_1", "to": "entity_2", "type": "relates_to"}],
                 "entity_count": 10,
                 "relationship_count": 15,
             }
@@ -339,14 +327,10 @@ class VisualizationReadyMessage(A2AMessageBase):
     visualization_type: str = Field(
         ..., description="Type of visualization (MIND_MAP, DEPENDENCY_GRAPH)"
     )
-    graph_json: Dict[str, Any] = Field(
-        ..., description="Complete visualization graph structure"
-    )
+    graph_json: Dict[str, Any] = Field(..., description="Complete visualization graph structure")
     node_count: int = Field(..., description="Number of nodes in the graph")
     edge_count: int = Field(..., description="Number of edges in the graph")
-    generation_method: str = Field(
-        ..., description="Method used to generate visualization"
-    )
+    generation_method: str = Field(..., description="Method used to generate visualization")
 
     model_config = ConfigDict(
         json_schema_extra={

@@ -70,18 +70,12 @@ class ServiceAccountIdentity:
 
             # Get project ID
             project_url = f"{metadata_server}/project/project-id"
-            project_response = requests.get(
-                project_url, headers=metadata_flavor, timeout=2
-            )
+            project_response = requests.get(project_url, headers=metadata_flavor, timeout=2)
             project_id = project_response.text.strip()
 
             # Get unique ID
-            unique_id_url = (
-                f"{metadata_server}/instance/service-accounts/default/unique-id"
-            )
-            unique_id_response = requests.get(
-                unique_id_url, headers=metadata_flavor, timeout=2
-            )
+            unique_id_url = f"{metadata_server}/instance/service-accounts/default/unique-id"
+            unique_id_response = requests.get(unique_id_url, headers=metadata_flavor, timeout=2)
             unique_id = unique_id_response.text.strip()
 
             logger.info(f"✅ Retrieved Cloud Run Service Account: {email}")
@@ -149,9 +143,7 @@ class A2ASecurityService:
 
         # Only add dev account in actual development environment
         if os.getenv("ENVIRONMENT", "production") == "development":
-            default_accounts.append(
-                "dev-service-account@development.iam.gserviceaccount.com"
-            )
+            default_accounts.append("dev-service-account@development.iam.gserviceaccount.com")
 
         logger.warning(
             f"⚠️  Using default trusted accounts (should configure via TRUSTED_SERVICE_ACCOUNTS)"
@@ -235,9 +227,7 @@ class A2ASecurityService:
 
         return signature.hex()
 
-    def verify_message_signature(
-        self, message_dict: Dict[str, Any], signature: str
-    ) -> bool:
+    def verify_message_signature(self, message_dict: Dict[str, Any], signature: str) -> bool:
         """
         Verify A2A message signature
 
@@ -253,13 +243,9 @@ class A2ASecurityService:
             is_valid = signature == expected_signature
 
             if is_valid:
-                logger.debug(
-                    f"✅ Message signature verified: {message_dict.get('message_id')}"
-                )
+                logger.debug(f"✅ Message signature verified: {message_dict.get('message_id')}")
             else:
-                logger.warning(
-                    f"⚠️  Invalid message signature: {message_dict.get('message_id')}"
-                )
+                logger.warning(f"⚠️  Invalid message signature: {message_dict.get('message_id')}")
                 self._log_security_event("signature_verification_failed", message_dict)
 
             return is_valid
@@ -339,9 +325,7 @@ class A2ASecurityService:
         )
 
         if not is_authorized:
-            logger.warning(
-                f"⚠️  Unauthorized agent communication: {from_agent} → {to_agent}"
-            )
+            logger.warning(f"⚠️  Unauthorized agent communication: {from_agent} → {to_agent}")
             self._log_security_event(
                 "unauthorized_communication",
                 {
@@ -430,9 +414,7 @@ class A2ASecurityService:
             "validated_at": time.time(),
         }
 
-    def enhance_message_with_security(
-        self, message_dict: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def enhance_message_with_security(self, message_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
         Add security context to an outgoing A2A message
 
@@ -453,9 +435,7 @@ class A2ASecurityService:
             "verified": False,  # Will be set to True after verification
         }
 
-        logger.debug(
-            f"🔐 Enhanced message with security: {message_dict.get('message_id')}"
-        )
+        logger.debug(f"🔐 Enhanced message with security: {message_dict.get('message_id')}")
 
         return message_dict
 
@@ -483,9 +463,7 @@ class A2ASecurityService:
         sanitized_data = self._sanitize_for_logging(event_data)
 
         # In production, send to Cloud Logging
-        logger.warning(
-            f"🔒 SECURITY EVENT: {event_type} - {json.dumps(sanitized_data)}"
-        )
+        logger.warning(f"🔒 SECURITY EVENT: {event_type} - {json.dumps(sanitized_data)}")
 
         # TODO: Store in Firestore security_audit collection
         # TODO: Trigger alerts for critical events

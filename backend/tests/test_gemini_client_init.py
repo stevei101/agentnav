@@ -87,9 +87,7 @@ def test_reason_with_gemini_model_type_selection(monkeypatch):
     monkeypatch.setenv("AGENTNAV_MODEL_TYPE", "gemini")
 
     async def test_env_override():
-        result = await reason_with_gemini(
-            prompt="Test prompt", max_tokens=100, temperature=0.5
-        )
+        result = await reason_with_gemini(prompt="Test prompt", max_tokens=100, temperature=0.5)
         assert result == "gemini_response"
 
     asyncio.run(test_env_override())

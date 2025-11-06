@@ -126,9 +126,7 @@ class PromptLoaderService:
         # Cache miss - load from Firestore
         logger.info(f"Loading prompt from Firestore: {prompt_id}")
         try:
-            doc_ref = self.firestore_client.get_document(
-                self.collection_name, prompt_id
-            )
+            doc_ref = self.firestore_client.get_document(self.collection_name, prompt_id)
             doc = doc_ref.get()
 
             if not doc.exists:
