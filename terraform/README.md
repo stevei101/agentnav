@@ -72,7 +72,7 @@ terraform apply
 
 ## Important Notes
 
-```
+````
 
 This is because Terraform's `google` provider doesn't fully support GPU configuration in Cloud Run v2 yet.
 
@@ -86,7 +86,7 @@ echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets versions add GEMINI_API_KEY --dat
 
 # Add Hugging Face token (optional)
 echo -n "YOUR_HF_TOKEN" | gcloud secrets versions add HUGGINGFACE_TOKEN --data-file=-
-```
+````
 
 ### Workload Identity Federation Outputs
 

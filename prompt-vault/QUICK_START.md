@@ -59,6 +59,7 @@ Once you push to the `main` or `main-promptvault` branch:
    - Deploy to Cloud Run
 
 2. **Set up Secrets in GCP Secret Manager:**
+
    ```bash
    # Add Supabase secrets
    echo -n "https://your-project-ref.supabase.co" | gcloud secrets create SUPABASE_URL --data-file=-
@@ -80,14 +81,17 @@ Once you push to the `main` or `main-promptvault` branch:
 ## Troubleshooting
 
 **"Missing Supabase credentials" error:**
+
 - Check your `.env.local` file exists
 - Verify environment variable names start with `VITE_`
 
 **"Authentication failed":**
+
 - Verify Google OAuth is enabled in Supabase
 - Check redirect URL matches Supabase callback URL
 
 **"Database error":**
+
 - Make sure you ran the schema SQL in Supabase
 - Check Row Level Security policies are active
 
@@ -95,4 +99,3 @@ Once you push to the `main` or `main-promptvault` branch:
 
 - See [database/README.md](./database/README.md) for database setup
 - See [docs/PROMPT_VAULT_ISOLATION_PLAN.md](../docs/PROMPT_VAULT_ISOLATION_PLAN.md) for architecture details
-

@@ -10,6 +10,7 @@
 ## Current State
 
 **Custom Framework Status:**
+
 - ✅ Custom `BaseAgent` class implemented (`backend/agents/base_agent.py`)
 - ✅ Enhanced A2A Protocol with security (`backend/services/a2a_protocol.py`)
 - ✅ Four agents working: Orchestrator, Summarizer, Linker, Visualizer
@@ -17,6 +18,7 @@
 - ❌ Google ADK not installed (TODO comment in `requirements.txt`)
 
 **Requirements.txt:**
+
 ```python
 # TODO: Add google-adk when available (Google Agent Development Kit)
 # google-adk>=X.X.X
@@ -29,12 +31,14 @@
 ### Option A: Migrate to Google ADK
 
 **Pros:**
+
 - ✅ Official Google framework (may be required for hackathon)
 - ✅ Potentially better integration with Gemini
 - ✅ Future-proof (official support)
 - ✅ Better alignment with hackathon category requirements
 
 **Cons:**
+
 - ❌ High effort (2-3 weeks)
 - ❌ Risk: ADK may not be publicly available yet
 - ❌ Migration complexity (rewrite agents)
@@ -42,6 +46,7 @@
 - ❌ Timeline may be too aggressive
 
 **Research Required:**
+
 1. Is Google ADK publicly available?
 2. What is the Python package name?
 3. What are the API differences?
@@ -50,6 +55,7 @@
 ### Option B: Enhance Narrative (Recommended)
 
 **Pros:**
+
 - ✅ Low effort (1 day)
 - ✅ No risk to existing functionality
 - ✅ Can highlight unique features of custom framework
@@ -57,10 +63,12 @@
 - ✅ Meets timeline constraints
 
 **Cons:**
+
 - ⚠️ May not qualify if ADK is strictly required
 - ⚠️ Judges may prefer official framework
 
 **Implementation:**
+
 1. Update documentation to highlight custom framework
 2. Emphasize A2A Protocol implementation
 3. Showcase security features (Workload Identity)
@@ -75,6 +83,7 @@
 **Current Status:** Google ADK may not be publicly available as a Python package yet.
 
 **Finding:**
+
 - ADK is mentioned in Google Cloud documentation
 - May be in preview/beta
 - May require special access or approval
@@ -83,6 +92,7 @@
 ### Verification Steps
 
 1. **Check PyPI:**
+
    ```bash
    pip search google-adk
    pip search agent-development-kit
@@ -110,6 +120,7 @@
 ### Rationale
 
 **Why Narrative Enhancement:**
+
 1. **Timeline Constraints:** 2-3 weeks for ADK migration is too aggressive
 2. **Risk:** ADK may not be available or may require special access
 3. **Current Framework Works:** Custom framework is functional and well-designed
@@ -121,6 +132,7 @@
 #### Step 1: Update Documentation (2 hours)
 
 **Files to Update:**
+
 1. `README.md`
    - Add section: "Multi-Agent Architecture"
    - Highlight: "ADK-Compatible Agent Framework"
@@ -140,16 +152,20 @@
 **Submission Text Updates:**
 
 **Current:**
+
 > "Built with Google's Agent Development Kit (ADK)"
 
 **Enhanced:**
+
 > "Built with an ADK-compatible multi-agent framework implementing Google's Agent Development Kit patterns. Our custom implementation includes:
+>
 > - Enhanced A2A Protocol with Workload Identity security
 > - Four specialized agents (Orchestrator, Summarizer, Linker, Visualizer)
 > - Firestore-based session persistence
 > - Cloud Run native authentication"
 
 **Key Points to Emphasize:**
+
 1. ✅ ADK-compatible architecture
 2. ✅ Enhanced security (Workload Identity)
 3. ✅ Production-ready implementation
@@ -159,12 +175,14 @@
 #### Step 3: Architecture Documentation (2 hours)
 
 **Create/Update:**
+
 1. Architecture diagram with agent relationships
 2. A2A Protocol flow diagram
 3. Security architecture (Workload Identity)
 4. Agent collaboration patterns
 
 **Files:**
+
 - `docs/ARCHITECTURE.md` (create or update)
 - `docs/AGENT_ARCHITECTURE.md` (create)
 
@@ -203,14 +221,14 @@ If Google ADK becomes available and migration is desired:
 
 ## Decision Matrix
 
-| Factor | ADK Migration | Narrative Enhancement |
-|--------|--------------|----------------------|
-| **Effort** | High (2-3 weeks) | Low (1 day) |
-| **Risk** | High (breaking changes) | Low (no code changes) |
-| **Timeline** | ⚠️ Too aggressive | ✅ Feasible |
-| **Hackathon Alignment** | ✅✅ High (if ADK required) | ✅ Good (if ADK optional) |
-| **Unique Features** | ⚠️ May lose custom features | ✅ Highlight unique features |
-| **Future-Proof** | ✅ Official support | ⚠️ Custom maintenance |
+| Factor                  | ADK Migration               | Narrative Enhancement        |
+| ----------------------- | --------------------------- | ---------------------------- |
+| **Effort**              | High (2-3 weeks)            | Low (1 day)                  |
+| **Risk**                | High (breaking changes)     | Low (no code changes)        |
+| **Timeline**            | ⚠️ Too aggressive           | ✅ Feasible                  |
+| **Hackathon Alignment** | ✅✅ High (if ADK required) | ✅ Good (if ADK optional)    |
+| **Unique Features**     | ⚠️ May lose custom features | ✅ Highlight unique features |
+| **Future-Proof**        | ✅ Official support         | ⚠️ Custom maintenance        |
 
 ---
 
@@ -219,6 +237,7 @@ If Google ADK becomes available and migration is desired:
 **✅ Proceed with Narrative Enhancement**
 
 **Rationale:**
+
 1. Timeline constraints favor low-effort solution
 2. Current framework is well-designed and functional
 3. A2A Protocol with security is impressive
@@ -226,6 +245,7 @@ If Google ADK becomes available and migration is desired:
 5. Low risk approach
 
 **Fallback:**
+
 - If hackathon judges require official ADK, we can migrate post-submission
 - Narrative enhancement doesn't prevent future migration
 
@@ -287,4 +307,3 @@ If Google ADK becomes available and migration is desired:
 **Last Updated:** [Current Date]  
 **Status:** Decision Pending - Research Required  
 **Recommended:** Narrative Enhancement (Low Risk, Quick Win)
-

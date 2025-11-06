@@ -11,6 +11,7 @@
 **Primary Source:** https://run.devpost.com/
 
 **Note:** This document synthesizes known hackathon criteria from:
+
 1. General DevPost hackathon standards
 2. Cloud Run hackathon category requirements (AI Agents + GPU)
 3. Google Cloud best practices
@@ -25,6 +26,7 @@
 **Category Focus:** Multi-agent AI systems using Google's Agent Development Kit (ADK)
 
 **Key Requirements:**
+
 - ✅ Built with Google's Agent Development Kit (ADK)
 - ✅ Multi-agent architecture (minimum 2+ specialized agents)
 - ✅ Agent-to-Agent (A2A) Protocol communication
@@ -33,6 +35,7 @@
 - ✅ Demonstrates agent collaboration and coordination
 
 **Judging Criteria:**
+
 1. **Technical Implementation (40%)**
    - Clean, well-structured code
    - Cloud Run best practices
@@ -52,6 +55,7 @@
    - Technical sophistication
 
 **Bonus Points:**
+
 - Use Google AI Models (+0.2 points)
 - Multiple Cloud Run Services (+0.2 points)
 - Blog post (+0.4 points)
@@ -66,6 +70,7 @@
 **Category Focus:** GPU-accelerated AI workloads on Cloud Run
 
 **Key Requirements:**
+
 - ✅ Utilize NVIDIA L4 GPUs on Cloud Run
 - ✅ Deploy in europe-west1 or europe-west4 region
 - ✅ Use open-source model (e.g., Gemma)
@@ -73,6 +78,7 @@
 - ✅ Demonstrate GPU acceleration benefits
 
 **Judging Criteria:**
+
 1. **GPU Implementation (40%)**
    - Successful GPU deployment on Cloud Run
    - Proper GPU configuration (NVIDIA L4)
@@ -92,6 +98,7 @@
    - Clear demonstration of GPU benefits
 
 **Bonus Points:**
+
 - Same as AI Agents category
 
 ---
@@ -101,12 +108,14 @@
 Based on DevPost standards, hackathons typically evaluate:
 
 ### 1. Quality of the Idea (20%)
+
 - Creativity and originality
 - Problem significance
 - Solution uniqueness
 - Target audience clarity
 
 ### 2. Implementation (30%)
+
 - **Technical Complexity:**
   - Sophisticated architecture
   - Advanced features
@@ -120,18 +129,21 @@ Based on DevPost standards, hackathons typically evaluate:
   - Production-ready features
 
 ### 3. Potential Impact (25%)
+
 - Scalability potential
 - Real-world applicability
 - User benefit
 - Market viability
 
 ### 4. Innovation (15%)
+
 - Novel approaches
 - Creative problem-solving
 - Unique technology combinations
 - Technical breakthroughs
 
 ### 5. Design & UX (10%)
+
 - User interface quality
 - User experience flow
 - Visual design
@@ -144,6 +156,7 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Cloud Run Features to Demonstrate
 
 **High-Value Features:**
+
 1. **Auto-scaling**
    - Scale-to-zero capability
    - Automatic scaling based on load
@@ -185,16 +198,19 @@ Based on DevPost standards, hackathons typically evaluate:
 ## Google AI Best Practices
 
 ### Structured Output
+
 - **Requirement:** Use structured output (Pydantic/JSON Schema) with Gemini
 - **Value:** Demonstrates advanced AI integration
 - **Implementation:** Gemini structured output mode with Pydantic models
 
 ### Model Selection
+
 - **Gemini:** For agent reasoning, text generation
 - **Gemma:** For GPU-accelerated tasks, embeddings
 - **Best Practice:** Right model for right task
 
 ### Agent Architecture
+
 - **ADK:** Google Agent Development Kit
 - **A2A Protocol:** Agent-to-Agent communication
 - **State Management:** Firestore for agent state
@@ -204,23 +220,27 @@ Based on DevPost standards, hackathons typically evaluate:
 ## Scoring Breakdown (Estimated)
 
 ### Technical Implementation (40%)
+
 - Code quality: 10%
 - Cloud Run best practices: 15%
 - AI/ML integration: 10%
 - Architecture design: 5%
 
 ### Demo & Presentation (40%)
+
 - Problem statement clarity: 10%
 - Live demonstration: 15%
 - Documentation quality: 10%
 - Architecture diagram: 5%
 
 ### Innovation & Creativity (20%)
+
 - Novel approach: 10%
 - Real-world impact: 5%
 - Technical sophistication: 5%
 
 ### Bonus Points (up to +1.2)
+
 - Google AI Models: +0.2
 - Multiple Cloud Run Services: +0.2
 - Blog post: +0.4
@@ -233,6 +253,7 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Current Alignment (agentnav)
 
 **✅ AI Agents Category:**
+
 - ✅ Built with ADK (planned)
 - ✅ Multi-agent architecture (Orchestrator, Summarizer, Linker, Visualizer)
 - ✅ A2A Protocol communication
@@ -241,6 +262,7 @@ Based on DevPost standards, hackathons typically evaluate:
 - ✅ Firestore integration
 
 **✅ GPU Category:**
+
 - ✅ Gemma on NVIDIA L4 GPU
 - ✅ europe-west1 region
 - ✅ Open-source model
@@ -249,23 +271,27 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Prompt Vault Alignment Gaps
 
 **❌ Missing AI Agents Features:**
+
 - ❌ No ADK implementation
 - ❌ No A2A Protocol
 - ❌ No multi-agent architecture
 - ❌ No agent collaboration demonstration
 
 **❌ Missing Cloud Run Features:**
+
 - ❌ No Workload Identity (WI) demonstration
 - ❌ No cross-service communication
 - ❌ No auto-scaling demonstration
 - ❌ Backend not fully implemented
 
 **❌ Missing Google AI Features:**
+
 - ❌ No structured output (Pydantic/JSON Schema)
 - ❌ No direct Gemini integration
 - ❌ No Gemma GPU integration
 
 **❌ Missing Innovation Points:**
+
 - ❌ Generic CRUD application
 - ❌ No advanced AI features
 - ❌ No cross-service architecture
@@ -278,6 +304,7 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Priority 1: FR#260 Prompt Suggestion Agent
 
 **Must Demonstrate:**
+
 1. **Structured Output (Pydantic/JSON Schema)**
    - Use Gemini structured output mode
    - Pydantic models for request/response
@@ -305,6 +332,7 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Priority 2: Multi-Service Architecture
 
 **Demonstrate:**
+
 - Prompt Vault frontend (Cloud Run)
 - Prompt Vault backend (Cloud Run)
 - agentnav backend (Cloud Run)
@@ -314,6 +342,7 @@ Based on DevPost standards, hackathons typically evaluate:
 ### Priority 3: Auto-Scaling Demonstration
 
 **Show in Demo:**
+
 - Scale-to-zero capability
 - Automatic scaling under load
 - Cloud Console metrics
@@ -372,4 +401,3 @@ Based on DevPost standards, hackathons typically evaluate:
 
 **Last Updated:** [Current Date]  
 **Status:** Research Complete - Ready for Gap Analysis
-
