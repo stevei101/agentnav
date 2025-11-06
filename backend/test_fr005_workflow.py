@@ -330,11 +330,19 @@ async def main():
     print("\n" + "=" * 60)
     print("📊 TEST RESULTS:")
     print(f"  📦 SessionContext Model: {'✅ PASS' if model_test_passed else '❌ FAIL'}")
-    print(f"  🔄 Sequential Workflow: {'✅ PASS' if workflow_test_passed else '❌ FAIL'}")
-    print(f"  💾 Context Persistence: {'✅ PASS' if persistence_test_passed else '❌ FAIL'}")
+    print(
+        f"  🔄 Sequential Workflow: {'✅ PASS' if workflow_test_passed else '❌ FAIL'}"
+    )
+    print(
+        f"  💾 Context Persistence: {'✅ PASS' if persistence_test_passed else '❌ FAIL'}"
+    )
 
-    overall_success = model_test_passed and workflow_test_passed and persistence_test_passed
-    print(f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    overall_success = (
+        model_test_passed and workflow_test_passed and persistence_test_passed
+    )
+    print(
+        f"\n🎯 Overall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     # Print implementation summary
     print_fr005_summary()

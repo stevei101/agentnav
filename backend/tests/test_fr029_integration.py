@@ -113,7 +113,9 @@ async def test_workflow_with_cache():
             content_type="document",
         )
 
-        updated_context_2 = await workflow.execute_sequential_workflow(session_context_2)
+        updated_context_2 = await workflow.execute_sequential_workflow(
+            session_context_2
+        )
 
         # Check if cache was used
         if updated_context_2.workflow_status == "completed_from_cache":

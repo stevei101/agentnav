@@ -61,7 +61,9 @@ async def stream_workflow(websocket: WebSocket):
         emitter.register_client(client_queue)
 
         # Start background task to send events to client
-        send_task = asyncio.create_task(_send_events_to_client(websocket, client_queue, session_id))
+        send_task = asyncio.create_task(
+            _send_events_to_client(websocket, client_queue, session_id)
+        )
 
         try:
             # Receive initial request from client
@@ -111,7 +113,9 @@ async def stream_workflow(websocket: WebSocket):
                         if task != workflow_task:
                             try:
                                 command = await task
-                                await _handle_client_command(command, workflow_task, session_id)
+                                await _handle_client_command(
+                                    command, workflow_task, session_id
+                                )
                             except asyncio.TimeoutError:
                                 logger.debug(f"⏱️  Client receive timeout: {session_id}")
                             except Exception as e:
@@ -265,7 +269,9 @@ async def _execute_stream_workflow(
             },
         )
 
-        logger.info(f"✅ Workflow completed successfully: {session_id} ({elapsed_seconds:.2f}s)")
+        logger.info(
+            f"✅ Workflow completed successfully: {session_id} ({elapsed_seconds:.2f}s)"
+        )
 
     except asyncio.CancelledError:
         logger.info(f"📛 Workflow cancelled: {session_id}")
@@ -370,6 +376,8 @@ async def cleanup_inactive_streams(max_age_seconds: int = 3600):
         Number of sessions removed
     """
     emitter_manager = get_event_emitter_manager()
-    removed = emitter_manager.cleanup_inactive_emitters(max_age_ms=max_age_seconds * 1000)
+    removed = emitter_manager.cleanup_inactive_emitters(
+        max_age_ms=max_age_seconds * 1000
+    )
 
     return {"sessions_removed": removed, "max_age_seconds": max_age_seconds}
