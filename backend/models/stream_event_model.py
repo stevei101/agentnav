@@ -232,7 +232,7 @@ class WorkflowStreamRequest(BaseModel):
     )
     content_type: Optional[str] = Field(
         default="document",
-        pattern="^(document|codebase)$",
+        regex="^(document|codebase)$",
         description="Type of content: 'document' or 'codebase'"
     )
     include_metadata: bool = Field(
@@ -313,7 +313,7 @@ class ClientCommand(BaseModel):
     
     action: str = Field(
         ...,
-        pattern="^(cancel|pause|resume)$",
+        regex="^(cancel|pause|resume)$",
         description="Action to perform"
     )
     reason: Optional[str] = Field(
