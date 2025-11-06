@@ -460,13 +460,14 @@ Before making a pull request, always:
 
 ## **Important Constraints**
 
-1. **Never use localStorage/sessionStorage** in artifacts (not supported in Claude.ai)
-2. **Never use THREE.CapsuleGeometry** (requires r142+, we use Three.js r128)
-3. **Always use PORT environment variable** for Cloud Run compatibility
-4. **Never embed credentials** in code, containers, or config files
-5. **Always achieve ≥70% test coverage** for new/modified code
-6. **Use Tailwind utility classes only** (no custom CSS, no compiler access)
-7. **Trust these instructions** \- only search/explore if instructions are incomplete or incorrect
+1. **⚠️ FRONTEND PACKAGE MANAGER: Use BUN ONLY, never npm/yarn** - This is critical for agentnav
+2. **Never use localStorage/sessionStorage** in artifacts (not supported in Claude.ai)
+3. **Never use THREE.CapsuleGeometry** (requires r142+, we use Three.js r128)
+4. **Always use PORT environment variable** for Cloud Run compatibility
+5. **Never embed credentials** in code, containers, or config files
+6. **Always achieve ≥70% test coverage** for new/modified code
+7. **Use Tailwind utility classes only** (no custom CSS, no compiler access)
+8. **Trust these instructions** \- only search/explore if instructions are incomplete or incorrect
 
 ---
 
