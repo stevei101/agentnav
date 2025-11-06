@@ -4,10 +4,11 @@ Identifies key entities and their relationships for visualization
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from .base_agent import Agent, A2AMessage
-import time
 import re
+import time
+from typing import Any, Dict, List, Optional
+
+from .base_agent import A2AMessage, Agent
 
 logger = logging.getLogger(__name__)
 

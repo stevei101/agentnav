@@ -3,17 +3,18 @@ Gemma GPU Service - FastAPI Application
 Serves Gemma model on Cloud Run with GPU acceleration
 """
 
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
+from typing import Optional
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
 
-from .model_loader import ModelLoader
-from .inference import GemmaInference
 from .auth import verify_jwt_token
+from .inference import GemmaInference
+from .model_loader import ModelLoader
 
 # Configure logging
 logging.basicConfig(

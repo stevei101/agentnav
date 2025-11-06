@@ -6,9 +6,9 @@ Usage:
     python backend/scripts/seed_prompts.py
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime, timezone
 
 # Add parent directory to path for imports

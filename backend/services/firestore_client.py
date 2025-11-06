@@ -3,9 +3,10 @@ Firestore Client Service
 Singleton pattern for managing Firestore database connections
 """
 
-import os
 import logging
+import os
 from typing import Optional
+
 from google.cloud import firestore
 
 logger = logging.getLogger(__name__)

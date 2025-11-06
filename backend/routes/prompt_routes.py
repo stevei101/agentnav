@@ -4,8 +4,9 @@ FastAPI routes for prompt CRUD operations
 """
 
 import logging
-from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Header, Depends
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException
 from models.prompt_models import (
     Prompt,
     PromptCreate,

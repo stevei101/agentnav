@@ -5,9 +5,10 @@ Creates concise, comprehensive summaries of content
 
 import hashlib
 import logging
-from typing import Dict, Any, Optional
-from .base_agent import Agent, A2AMessage
 import time
+from typing import Any, Dict, Optional
+
+from .base_agent import A2AMessage, Agent
 
 logger = logging.getLogger(__name__)
 

@@ -2,14 +2,15 @@
 Tests for Gemma Service JWT Authentication
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from gemma_service.auth import verify_jwt_token, REQUIRE_AUTH
+from gemma_service.auth import REQUIRE_AUTH, verify_jwt_token
 
 
 class TestJWTAuthentication:
@@ -20,6 +21,7 @@ class TestJWTAuthentication:
         with patch.dict(os.environ, {"REQUIRE_AUTH": "false"}):
             # Reload module to pick up new env var
             import importlib
+
             import gemma_service.auth
 
             importlib.reload(gemma_service.auth)
@@ -32,6 +34,7 @@ class TestJWTAuthentication:
         """Test that authentication fails when required but no header provided"""
         with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}):
             import importlib
+
             import gemma_service.auth
 
             importlib.reload(gemma_service.auth)
@@ -48,6 +51,7 @@ class TestJWTAuthentication:
         """Test that invalid Authorization header format is rejected"""
         with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}):
             import importlib
+
             import gemma_service.auth
 
             importlib.reload(gemma_service.auth)
@@ -65,6 +69,7 @@ class TestJWTAuthentication:
         """Test that valid JWT token passes authentication"""
         with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}):
             import importlib
+
             import gemma_service.auth
             from google.auth.transport import requests
 
@@ -87,6 +92,7 @@ class TestJWTAuthentication:
         """Test that invalid JWT token fails authentication"""
         with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}):
             import importlib
+
             import gemma_service.auth
 
             importlib.reload(gemma_service.auth)
@@ -107,6 +113,7 @@ class TestJWTAuthentication:
         """Test graceful handling when google-auth is not installed"""
         with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}):
             import importlib
+
             import gemma_service.auth
 
             importlib.reload(gemma_service.auth)

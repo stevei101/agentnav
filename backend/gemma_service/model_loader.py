@@ -3,8 +3,9 @@ Model Loader for Gemma
 Handles GPU detection, model loading, and device management
 """
 
-import os
 import logging
+import os
+
 import torch
 
 logger = logging.getLogger(__name__)

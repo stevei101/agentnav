@@ -4,10 +4,10 @@ Demo script for FR#005 Sequential Multi-Agent Workflow
 Demonstrates the complete workflow with a sample document
 """
 
-import sys
-import os
 import asyncio
 import json
+import os
+import sys
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -75,15 +75,16 @@ The field continues to evolve rapidly, with new breakthroughs emerging regularly
     print()
 
     try:
+        import time
+
         from agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
         from models.context_model import SessionContext
-        import time
 
         # Step 1: Create SessionContext
         print("📋 Step 1: Creating SessionContext")

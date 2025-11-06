@@ -3,10 +3,11 @@ JWT Authentication for Gemma Service
 Implements Workload Identity authentication for Cloud Run service-to-service calls
 """
 
-import os
 import logging
+import os
 from typing import Optional
-from fastapi import HTTPException, Header
+
+from fastapi import Header, HTTPException
 
 logger = logging.getLogger(__name__)
 
