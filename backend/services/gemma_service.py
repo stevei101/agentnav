@@ -2,6 +2,7 @@
 Gemma Service Client
 HTTP client for calling the Gemma GPU service with support for WI-based authentication
 """
+
 import os
 import logging
 from typing import Optional, List
@@ -12,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 class GemmaServiceClient:
     """Client for interacting with Gemma GPU service"""
-    
+
     def __init__(self, base_url: Optional[str] = None):
         self.base_url = base_url or os.getenv(
             "GEMMA_SERVICE_URL",
-            "http://localhost:8080"  # Default for local development
+            "http://localhost:8080",  # Default for local development
         )
         self.timeout = float(os.getenv("GEMMA_SERVICE_TIMEOUT", "60.0"))
-    
+
     async def reason(
         self,
         prompt: str,
@@ -31,7 +32,7 @@ class GemmaServiceClient:
     ) -> str:
         """
         Generate reasoning/text using Gemma service with optional context
-        
+
         Args:
             prompt: Input prompt
             context: Optional additional context for reasoning
@@ -39,7 +40,7 @@ class GemmaServiceClient:
             temperature: Sampling temperature
             top_p: Nucleus sampling parameter
             top_k: Top-k sampling
-            
+
         Returns:
             Generated text
         """
@@ -53,14 +54,14 @@ class GemmaServiceClient:
         }
         if context is not None:
             payload["context"] = context
-        
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()
                 result = response.json()
                 return result["text"]
-                
+
         except httpx.TimeoutException as e:
             logger.error("Gemma service timeout")
             raise Exception("Gemma service request timeout") from e
@@ -70,31 +71,31 @@ class GemmaServiceClient:
         except Exception as e:
             logger.error(f"Error calling Gemma service: {e}")
             raise
-    
+
     async def embed(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings for a batch of text strings
-        
+
         Args:
             texts: List of text strings to embed
-            
+
         Returns:
             List of embedding vectors
         """
         url = f"{self.base_url}/embed"
         payload = {"texts": texts}
-        
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()
                 result = response.json()
                 return result["embeddings"]
-                
+
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             raise
-    
+
     # Legacy method names for backward compatibility
     async def generate(
         self,
@@ -112,35 +113,39 @@ class GemmaServiceClient:
             top_p=top_p,
             top_k=top_k,
         )
-    
+
     async def generate_embeddings(self, text: str) -> List[float]:
         """
         Generate embeddings for a single text (legacy method, use embed() instead)
-        
+
         Args:
             text: Input text
-            
+
         Returns:
             Embedding vector (empty list if no embeddings)
         """
         embeddings_batch = await self.embed([text])
-        return embeddings_batch[0] if embeddings_batch and len(embeddings_batch) > 0 else []
-    
+        return (
+            embeddings_batch[0]
+            if embeddings_batch and len(embeddings_batch) > 0
+            else []
+        )
+
     async def health_check(self) -> dict:
         """
         Check Gemma service health
-        
+
         Returns:
             Health status information
         """
         url = f"{self.base_url}/healthz"
-        
+
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 return response.json()
-                
+
         except Exception as e:
             logger.warning(f"Gemma service health check failed: {e}")
             return {"status": "unhealthy", "error": str(e)}
@@ -194,4 +199,3 @@ async def generate_with_gemma(
         max_tokens=max_tokens,
         temperature=temperature,
     )
-

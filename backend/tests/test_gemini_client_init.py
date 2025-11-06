@@ -12,6 +12,7 @@ def test_gemini_client_initializes(monkeypatch):
     It imports the `gemini_client.py` file directly to avoid executing
     `backend/services/__init__.py` which pulls in Firestore and other heavy deps.
     """
+
     # Create a fake genai module with a Client class
     class FakeModels:
         def generate(self, *args, **kwargs):
@@ -76,10 +77,7 @@ def test_reason_with_gemini_model_type_selection(monkeypatch):
     # Test: Gemini model type (cloud-based)
     async def test_gemini():
         result = await reason_with_gemini(
-            prompt="Test prompt",
-            max_tokens=100,
-            temperature=0.5,
-            model_type="gemini"
+            prompt="Test prompt", max_tokens=100, temperature=0.5, model_type="gemini"
         )
         assert result == "gemini_response"
 
@@ -87,13 +85,11 @@ def test_reason_with_gemini_model_type_selection(monkeypatch):
 
     # Test: Environment variable override
     monkeypatch.setenv("AGENTNAV_MODEL_TYPE", "gemini")
+
     async def test_env_override():
         result = await reason_with_gemini(
-            prompt="Test prompt",
-            max_tokens=100,
-            temperature=0.5
+            prompt="Test prompt", max_tokens=100, temperature=0.5
         )
         assert result == "gemini_response"
 
     asyncio.run(test_env_override())
-
