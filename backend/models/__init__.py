@@ -28,6 +28,15 @@ from .prompt_models import (
     TestResultCreate,
     UserInfo,
 )
+from .prompt_models import (
+    Prompt,
+    PromptCreate,
+    PromptUpdate,
+    PromptVersion,
+    TestResult,
+    TestResultCreate,
+    UserInfo,
+)
 
 __all__ = [
     # Context models

@@ -10,7 +10,6 @@ This module intentionally keeps initialization minimal so the SDK can pick up
 credentials from the environment or Workload Identity (WI) when running on
 Cloud Run.
 """
-
 import asyncio
 import logging
 import os
@@ -45,7 +44,7 @@ class GeminiClient:
 
         if genai is None:
             raise RuntimeError(
-                "google-genai SDK is not installed. Install `google-genai` in requirements."
+                "google-genai SDK is not installed. Install `google-genai` in requirements." 
             )
 
         # Prefer an explicit Client() constructor if available
@@ -62,14 +61,7 @@ class GeminiClient:
 
         logger.info("Initialized Gemini client wrapper")
 
-    async def generate(
-        self,
-        model: Optional[str],
-        prompt: str,
-        max_tokens: int = 256,
-        temperature: float = 0.0,
-        **kwargs,
-    ) -> Any:
+    async def generate(self, model: Optional[str], prompt: str, max_tokens: int = 256, temperature: float = 0.0, **kwargs) -> Any:
         """Generate text from the specified model.
 
         This method attempts several common call signatures for different SDK
@@ -80,37 +72,17 @@ class GeminiClient:
         def _sync_call():
             # Try client.models.generate(model=..., prompt=...)
             try:
-                if hasattr(self._client, "models") and hasattr(
-                    self._client.models, "generate"
-                ):
+                if hasattr(self._client, "models") and hasattr(self._client.models, "generate"):
                     # Newer SDKs (module.client.models.generate)
-                    return self._client.models.generate(
-                        model=model,
-                        prompt=prompt,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        **kwargs,
-                    )
+                    return self._client.models.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
 
                 # genai.generate(...) or client.generate(...)
                 if hasattr(self._client, "generate"):
-                    return self._client.generate(
-                        model=model,
-                        prompt=prompt,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        **kwargs,
-                    )
+                    return self._client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
 
                 # Older variants
                 if hasattr(self._client, "generate_text"):
-                    return self._client.generate_text(
-                        model=model,
-                        prompt=prompt,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        **kwargs,
-                    )
+                    return self._client.generate_text(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
 
             except Exception as e:
                 # Surface SDK errors
@@ -123,16 +95,16 @@ class GeminiClient:
 
 
 async def reason_with_gemini(
-    prompt: str,
-    max_tokens: int = 256,
-    temperature: float = 0.0,
+    prompt: str, 
+    max_tokens: int = 256, 
+    temperature: float = 0.0, 
     model: Optional[str] = None,
-    model_type: str = "gemini",
+    model_type: str = "gemini"
 ) -> str:
     """Convenience helper used by agents for reasoning prompts.
 
     Supports both cloud-based Gemini and local Gemma GPU service reasoning.
-    Agents should fetch prompt templates from prompt loader, format them,
+    Agents should fetch prompt templates from prompt loader, format them, 
     and call this helper.
 
     Args:
@@ -156,13 +128,12 @@ async def reason_with_gemini(
         # Use local Gemma GPU service
         try:
             from services.gemma_service import reason_with_gemma
-
             response = await reason_with_gemma(
-                prompt=prompt, max_tokens=max_tokens, temperature=temperature
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature
             )
-            logger.info(
-                f"✅ Used Gemma service for reasoning (max_tokens={max_tokens})"
-            )
+            logger.info(f"✅ Used Gemma service for reasoning (max_tokens={max_tokens})")
             return response
         except Exception as e:
             logger.warning(f"⚠️ Gemma service unavailable: {e}. Falling back to Gemini.")
@@ -172,9 +143,7 @@ async def reason_with_gemini(
         # Use cloud Gemini via GenAI SDK
         model = model or os.environ.get("GEMINI_MODEL") or "gemini-1"
         client = GeminiClient()
-        result = await client.generate(
-            model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature
-        )
+        result = await client.generate(model=model, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
 
         # Normalize a few common SDK return shapes
         # - Newer SDKs may return an object with .candidates or .output
@@ -188,24 +157,18 @@ async def reason_with_gemini(
                 if isinstance(content, dict):
                     text = content.get("text") or content.get("content")
                     if text:
-                        logger.info(
-                            f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})"
-                        )
+                        logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
                         return text
                 # fallback to string representation
                 return str(first)
 
         # If result is a string-like return it
         if isinstance(result, str):
-            logger.info(
-                f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})"
-            )
+            logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
             return result
 
         # Last resort: return stringified result
         logger.info(f"✅ Used Gemini service for reasoning (max_tokens={max_tokens})")
         return str(result)
 
-    raise ValueError(
-        f"Unsupported model_type: {model_type}. Must be 'gemini' or 'gemma'."
-    )
+    raise ValueError(f"Unsupported model_type: {model_type}. Must be 'gemini' or 'gemma'.")
