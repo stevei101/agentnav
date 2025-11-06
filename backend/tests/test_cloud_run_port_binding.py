@@ -131,8 +131,8 @@ def test_backend_uses_correct_uvicorn_params():
     # Validate uvicorn command-line parameters in CMD
     assert "uvicorn main:app" in content, "Must use uvicorn main:app to start"
     assert "--host 0.0.0.0" in content, "Must bind to 0.0.0.0 for Cloud Run"
-    # Port should be read from ${PORT:-8080} (shell syntax)
-    assert "${PORT:-8080}" in content or "--port ${PORT" in content, "Must read PORT from environment with fallback"
+    # Port should be read from ${PORT:-8080} (shell syntax with default fallback)
+    assert "--port ${PORT:-8080}" in content, "Must read PORT from environment with fallback"
 
 
 if __name__ == "__main__":
