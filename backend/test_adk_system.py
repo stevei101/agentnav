@@ -4,9 +4,9 @@ Test script for ADK Multi-Agent System
 Tests the new /api/analyze endpoint and agent functionality
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,9 +19,9 @@ async def test_agents():
     try:
         from agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
 

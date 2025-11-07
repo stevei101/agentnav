@@ -5,14 +5,15 @@ Tests verify that the /healthz and /api/agents/status endpoints
 correctly detect ADK system availability and provide diagnostic information.
 """
 
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, patch
 
 # Add backend to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from fastapi.testclient import TestClient
+
 from backend.main import app
 
 # TestClient with base_url to satisfy TrustedHostMiddleware

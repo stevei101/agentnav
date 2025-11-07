@@ -1,7 +1,7 @@
+import os
 import sys
 import types
-import os
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec, spec_from_file_location
 
 
 def test_gemini_client_initializes(monkeypatch):

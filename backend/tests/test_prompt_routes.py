@@ -1,6 +1,7 @@
+from unittest.mock import AsyncMock, patch
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 from backend.routes import prompt_routes
 from backend.routes.prompt_routes import router

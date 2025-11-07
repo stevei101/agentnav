@@ -5,6 +5,7 @@ Handles storing and retrieving SessionContext from Firestore
 
 import logging
 from typing import Optional
+
 from models.context_model import SessionContext
 
 logger = logging.getLogger(__name__)

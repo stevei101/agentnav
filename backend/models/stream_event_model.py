@@ -5,11 +5,12 @@ Pydantic models for real-time event streaming during agent workflow execution.
 These models define the schema for all WebSocket messages between backend and frontend.
 """
 
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Dict, Any, List
-from enum import Enum
-from datetime import datetime
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AgentStatusEnum(str, Enum):

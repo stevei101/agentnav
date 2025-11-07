@@ -16,7 +16,6 @@ from fastapi import Depends, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-
 _AUTH_HEADER_PREFIX = "bearer "
 
 

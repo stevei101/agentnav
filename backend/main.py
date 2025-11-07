@@ -4,19 +4,21 @@ Development server with hot-reload support
 Multi-agent system with ADK and A2A Protocol
 """
 
-import os
-import logging
 import importlib
-from typing import Optional, Dict, Any
+import logging
+import os
+from typing import Any, Dict, Optional
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from backend.routes.prompt_routes import router as prompt_router
+
 # Import WebSocket streaming routes (FR#020)
 from backend.routes.stream_routes import router as stream_router
-from backend.routes.prompt_routes import router as prompt_router
 
 logger = logging.getLogger(__name__)
 
@@ -295,9 +297,9 @@ async def analyze_content(request: AnalyzeRequest):
     try:
         from backend.agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
         from backend.models.context_model import SessionContext
@@ -413,7 +415,7 @@ async def visualize_content(request: VisualizeRequest):
     complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-        from backend.agents import VisualizerAgent, A2AProtocol
+        from backend.agents import A2AProtocol, VisualizerAgent
 
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
@@ -458,11 +460,11 @@ async def get_agent_status():
 
     try:
         from backend.agents import (
+            A2AProtocol,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
-            A2AProtocol,
         )
 
         logger.info("🔍 Checking ADK agent system status...")

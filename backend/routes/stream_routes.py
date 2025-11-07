@@ -7,18 +7,19 @@ Provides real-time streaming of agent workflow events via WebSocket.
 import asyncio
 import logging
 import time
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
-from typing import Optional
 import uuid
+from typing import Optional
 
-from backend.models.stream_event_model import (
-    WorkflowStreamRequest,
-    WorkflowStreamResponse,
-    ErrorType,
-)
-from backend.services.event_emitter import get_event_emitter_manager
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+
 from backend.agents.orchestrator_agent import OrchestratorAgent
 from backend.models.context_model import SessionContext
+from backend.models.stream_event_model import (
+    ErrorType,
+    WorkflowStreamRequest,
+    WorkflowStreamResponse,
+)
+from backend.services.event_emitter import get_event_emitter_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["streaming"])

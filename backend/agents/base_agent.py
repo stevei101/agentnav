@@ -9,16 +9,16 @@ and security features.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Union
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 # Import new A2A Protocol components (FR#027)
 try:
-    from services.a2a_protocol import A2AProtocolService, create_status_message
     from models.a2a_messages import A2AMessageBase
+    from services.a2a_protocol import A2AProtocolService, create_status_message
 
     HAS_ENHANCED_A2A = True
 except ImportError as e:

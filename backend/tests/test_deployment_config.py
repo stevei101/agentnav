@@ -8,8 +8,9 @@ Tests cover:
 - Deployment configuration patterns
 """
 
-import pytest
 import os
+
+import pytest
 
 
 class TestDockerfileConfiguration:
