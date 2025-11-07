@@ -152,7 +152,7 @@ class SessionContext(BaseModel):
                 ],
                 "workflow_status": "completed",
             }
-        }
+        },
     )
 
     @property

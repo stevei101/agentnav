@@ -171,6 +171,7 @@ async def healthz_check():
     # Check Firestore connectivity (optional - may not be required for basic health)
     try:
         from backend.services.firestore_client import get_firestore_client
+
         firestore_client = get_firestore_client()
         # Simple connectivity test - just check if client was created
         if firestore_client:
@@ -411,6 +412,7 @@ async def visualize_content(request: VisualizeRequest):
     """
     try:
         from backend.agents import VisualizerAgent, A2AProtocol
+
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
         agent = VisualizerAgent(a2a)
@@ -536,6 +538,7 @@ async def get_agent_status():
         firestore_status = "unknown"
         try:
             from backend.services.firestore_client import get_firestore_client
+
             firestore_client = get_firestore_client()
             if firestore_client:
                 firestore_status = "connected"
