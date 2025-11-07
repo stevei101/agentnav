@@ -171,7 +171,6 @@ jobs:
 
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
-
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
