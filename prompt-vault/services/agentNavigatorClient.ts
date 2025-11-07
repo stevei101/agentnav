@@ -27,7 +27,9 @@ async function fetchIdToken(audience: string): Promise<string> {
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ID token: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch ID token: ${response.status} ${response.statusText}`
+    );
   }
 
   const token = await response.text();
@@ -45,7 +47,9 @@ export async function callAgentNavigator(
   options: CallOptions = {}
 ): Promise<Response> {
   const audience =
-    options.expectedAudience || process.env.EXPECTED_AUDIENCE || url.split('?')[0];
+    options.expectedAudience ||
+    process.env.EXPECTED_AUDIENCE ||
+    url.split('?')[0];
   const idToken = await fetchIdToken(audience);
 
   const headers = new Headers(options.headers);
@@ -61,4 +65,3 @@ export function resetTokenCache(): void {
   cachedToken = null;
   cachedExpiration = 0;
 }
-
