@@ -34,8 +34,8 @@ import { analyzePrompt } from './services/suggestionService';
 
 // Analyze a prompt
 const response = await analyzePrompt({
-  prompt_text: "Your prompt here",
-  user_context: "Optional context"
+  prompt_text: 'Your prompt here',
+  user_context: 'Optional context',
 });
 
 console.log('Quality Score:', response.quality_score);
@@ -49,7 +49,7 @@ import { PromptSuggestions } from './components/PromptSuggestions';
 
 function MyEditor() {
   const [prompt, setPrompt] = useState('');
-  
+
   return (
     <PromptSuggestions
       promptText={prompt}
@@ -63,11 +63,11 @@ function MyEditor() {
 
 ## 📋 API Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/v1/suggestions/analyze` | POST | Analyze prompt and get suggestions |
-| `/api/v1/suggestions/health` | GET | Check agent availability |
-| `/api/v1/suggestions/examples` | GET | Get example prompts |
+| Endpoint                       | Method | Purpose                            |
+| ------------------------------ | ------ | ---------------------------------- |
+| `/api/v1/suggestions/analyze`  | POST   | Analyze prompt and get suggestions |
+| `/api/v1/suggestions/health`   | GET    | Check agent availability           |
+| `/api/v1/suggestions/examples` | GET    | Get example prompts                |
 
 ---
 
@@ -137,12 +137,12 @@ pytest tests/test_suggestion_agent.py --cov=agents.suggestion_agent --cov-report
 
 ## 🎯 Quality Score Interpretation
 
-| Score | Meaning | Color |
-|-------|---------|-------|
-| 8-10 | Excellent | 🟢 Green |
-| 6-7 | Good | 🟡 Yellow |
-| 4-5 | Needs Work | 🟠 Orange |
-| 1-3 | Poor | 🔴 Red |
+| Score | Meaning    | Color     |
+| ----- | ---------- | --------- |
+| 8-10  | Excellent  | 🟢 Green  |
+| 6-7   | Good       | 🟡 Yellow |
+| 4-5   | Needs Work | 🟠 Orange |
+| 1-3   | Poor       | 🔴 Red    |
 
 ---
 
@@ -152,7 +152,7 @@ pytest tests/test_suggestion_agent.py --cov=agents.suggestion_agent --cov-report
 
 ```typescript
 const result = await analyzePrompt({
-  prompt_text: "Summarize this document"
+  prompt_text: 'Summarize this document',
 });
 ```
 
@@ -160,8 +160,8 @@ const result = await analyzePrompt({
 
 ```typescript
 const result = await analyzePrompt({
-  prompt_text: "Summarize this document",
-  user_context: "For a technical audience"
+  prompt_text: 'Summarize this document',
+  user_context: 'For a technical audience',
 });
 ```
 
@@ -179,6 +179,7 @@ const result = await analyzePrompt({
 ## 🐛 Troubleshooting
 
 ### Agent Unavailable
+
 ```bash
 # Check backend health
 curl http://localhost:8080/healthz
@@ -188,12 +189,14 @@ curl http://localhost:8080/api/agents/status
 ```
 
 ### CORS Error
+
 ```bash
 # Add your domain to CORS_ORIGINS
 export CORS_ORIGINS="http://localhost:5173,https://your-domain.com"
 ```
 
 ### Slow Response
+
 - Check Gemini API quota
 - Verify network connectivity
 - Consider implementing caching

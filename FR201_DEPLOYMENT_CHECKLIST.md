@@ -172,19 +172,17 @@ import { PromptSuggestions } from '@/components/PromptSuggestions';
 
 export function PromptEditor() {
   const [prompt, setPrompt] = useState('');
-  
+
   const handleSuggestionApplied = (suggestion: string) => {
     // Apply suggestion to prompt
     alert(`Applying: ${suggestion}`);
   };
-  
+
   return (
     <div className="grid grid-cols-2 gap-6">
       {/* Left: Prompt Editor */}
       <div>
-        <label className="block text-sm font-medium mb-2">
-          Your Prompt
-        </label>
+        <label className="block text-sm font-medium mb-2">Your Prompt</label>
         <textarea
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
@@ -192,7 +190,7 @@ export function PromptEditor() {
           placeholder="Enter your prompt here..."
         />
       </div>
-      
+
       {/* Right: AI Suggestions */}
       <div>
         <PromptSuggestions
@@ -345,12 +343,12 @@ git push origin main
 
 ### Expected Performance
 
-| Metric | Target | Acceptable | Critical |
-|--------|--------|------------|----------|
-| API Response Time | <2s | <5s | >10s |
-| Quality Score Accuracy | N/A | N/A | N/A |
-| Error Rate | <0.1% | <1% | >5% |
-| Availability | >99.9% | >99% | <95% |
+| Metric                 | Target | Acceptable | Critical |
+| ---------------------- | ------ | ---------- | -------- |
+| API Response Time      | <2s    | <5s        | >10s     |
+| Quality Score Accuracy | N/A    | N/A        | N/A      |
+| Error Rate             | <0.1%  | <1%        | >5%      |
+| Availability           | >99.9% | >99%       | <95%     |
 
 ### Load Testing (Optional)
 
@@ -445,7 +443,7 @@ None currently identified.
 - [ ] Documentation complete
 - [ ] Ready for deployment
 
-**Signed:** ___________________ Date: ___________
+**Signed:** ********\_\_\_******** Date: ****\_\_\_****
 
 ### DevOps Team
 
@@ -454,7 +452,7 @@ None currently identified.
 - [ ] Monitoring configured
 - [ ] Ready to deploy
 
-**Signed:** ___________________ Date: ___________
+**Signed:** ********\_\_\_******** Date: ****\_\_\_****
 
 ### Product Team
 
@@ -463,7 +461,7 @@ None currently identified.
 - [ ] Success metrics defined
 - [ ] Approved for production
 
-**Signed:** ___________________ Date: ___________
+**Signed:** ********\_\_\_******** Date: ****\_\_\_****
 
 ---
 

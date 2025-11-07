@@ -41,6 +41,7 @@ This feature integrates AI-driven prompt analysis capabilities from the **agentn
 The Suggestion Agent is an ADK-compatible agent that analyzes prompts using Gemini AI:
 
 **Key Features:**
+
 - Prompt quality scoring (1-10)
 - Optimization suggestions
 - Structured output schema generation
@@ -68,20 +69,24 @@ result = await agent.execute(context)
 ### 2. API Endpoints (`backend/routes/suggestion_routes.py`)
 
 **POST `/api/v1/suggestions/analyze`**
+
 - Analyzes a prompt and returns AI-driven suggestions
 - Request body: `PromptSuggestionRequest`
 - Response: `PromptSuggestionResponse`
 
 **GET `/api/v1/suggestions/health`**
+
 - Checks if Suggestion Agent is available
 - Returns agent health status
 
 **GET `/api/v1/suggestions/examples`**
+
 - Returns example prompts for testing
 
 ### 3. Pydantic Models (`backend/models/suggestion_models.py`)
 
 **Request Model:**
+
 ```python
 class PromptSuggestionRequest(BaseModel):
     prompt_text: str  # Required, 1-10000 chars
@@ -90,6 +95,7 @@ class PromptSuggestionRequest(BaseModel):
 ```
 
 **Response Model:**
+
 ```python
 class PromptSuggestionResponse(BaseModel):
     agent: str
@@ -118,8 +124,8 @@ TypeScript client for calling the Suggestion Agent API:
 ```typescript
 // Analyze a prompt
 const response = await analyzePrompt({
-  prompt_text: "Your prompt here",
-  user_context: "Optional context"
+  prompt_text: 'Your prompt here',
+  user_context: 'Optional context',
 });
 
 // Check agent health
@@ -132,6 +138,7 @@ const examples = await getExamplePrompts();
 **Configuration:**
 
 Set the API base URL via environment variable:
+
 ```bash
 VITE_AGENTNAV_API_URL=https://agentnav-backend-xyz.run.app
 ```
@@ -141,12 +148,13 @@ VITE_AGENTNAV_API_URL=https://agentnav-backend-xyz.run.app
 Ready-to-use React component for displaying suggestions:
 
 **Props:**
+
 ```typescript
 interface PromptSuggestionsProps {
-  promptText: string;              // Prompt to analyze
-  userContext?: string;            // Optional context
-  onSuggestionApplied?: (s: string) => void;  // Callback when suggestion applied
-  className?: string;              // Custom CSS classes
+  promptText: string; // Prompt to analyze
+  userContext?: string; // Optional context
+  onSuggestionApplied?: (s: string) => void; // Callback when suggestion applied
+  className?: string; // Custom CSS classes
 }
 ```
 
@@ -157,16 +165,16 @@ import { PromptSuggestions } from './components/PromptSuggestions';
 
 function PromptEditor() {
   const [prompt, setPrompt] = useState('');
-  
+
   const handleSuggestionApplied = (suggestion: string) => {
     // Apply suggestion to prompt
     console.log('Applying:', suggestion);
   };
-  
+
   return (
     <div>
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)} />
-      
+
       <PromptSuggestions
         promptText={prompt}
         userContext="Educational tutorial"
@@ -220,7 +228,7 @@ import { PromptSuggestions } from '@/components/PromptSuggestions';
 
 function PromptEditor() {
   const [prompt, setPrompt] = useState('');
-  
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Left: Prompt Editor */}
@@ -232,7 +240,7 @@ function PromptEditor() {
           placeholder="Enter your prompt..."
         />
       </div>
-      
+
       {/* Right: AI Suggestions */}
       <div>
         <PromptSuggestions
@@ -256,6 +264,7 @@ function PromptEditor() {
 ### Example 1: Analyze a Simple Prompt
 
 **Request:**
+
 ```bash
 curl -X POST https://agentnav-backend.run.app/api/v1/suggestions/analyze \
   -H "Content-Type: application/json" \
@@ -266,6 +275,7 @@ curl -X POST https://agentnav-backend.run.app/api/v1/suggestions/analyze \
 ```
 
 **Response:**
+
 ```json
 {
   "agent": "suggestion",
@@ -279,15 +289,18 @@ curl -X POST https://agentnav-backend.run.app/api/v1/suggestions/analyze \
   "structured_output_schema": {
     "type": "object",
     "properties": {
-      "code": {"type": "string", "description": "Function code"},
-      "explanation": {"type": "string", "description": "Code explanation"}
+      "code": { "type": "string", "description": "Function code" },
+      "explanation": { "type": "string", "description": "Code explanation" }
     },
     "required": ["code"]
   },
   "function_calling_hint": null,
   "quality_score": 6,
   "strengths": ["Clear task definition", "Concise"],
-  "weaknesses": ["Lacks programming language context", "No output format specified"],
+  "weaknesses": [
+    "Lacks programming language context",
+    "No output format specified"
+  ],
   "actionable_improvements": [
     "Add: 'Write a Python function...'",
     "Add: 'Return the result as an integer'",
@@ -301,11 +314,13 @@ curl -X POST https://agentnav-backend.run.app/api/v1/suggestions/analyze \
 ### Example 2: Check Agent Health
 
 **Request:**
+
 ```bash
 curl https://agentnav-backend.run.app/api/v1/suggestions/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -341,7 +356,7 @@ const response = await fetch(`${SUGGESTIONS_ENDPOINT}/analyze`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'X-API-Key': process.env.VITE_AGENTNAV_API_KEY,  // Add API key
+    'X-API-Key': process.env.VITE_AGENTNAV_API_KEY, // Add API key
   },
   body: JSON.stringify(request),
 });
@@ -367,6 +382,7 @@ pytest tests/test_suggestion_agent.py -v
 **Test Coverage:** 70%+ (as required by project standards)
 
 **Test Categories:**
+
 - Agent initialization and core functionality
 - Prompt processing and analysis
 - Response parsing (schemas, functions, lists)
@@ -425,6 +441,7 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 ### Metrics
 
 Monitor key metrics:
+
 - Request count to `/api/v1/suggestions/analyze`
 - Average response time
 - Error rate
@@ -439,6 +456,7 @@ Monitor key metrics:
 **Symptom:** Health check returns `"available": false`
 
 **Solution:**
+
 1. Check if backend is running: `curl https://backend-url/healthz`
 2. Verify Gemini API key is configured
 3. Check backend logs for import errors
@@ -448,6 +466,7 @@ Monitor key metrics:
 **Symptom:** Browser console shows CORS error
 
 **Solution:**
+
 1. Add Prompt Vault domain to `CORS_ORIGINS` in backend
 2. Redeploy backend with updated CORS configuration
 
@@ -456,6 +475,7 @@ Monitor key metrics:
 **Symptom:** Analysis takes >10 seconds
 
 **Solution:**
+
 1. Check Gemini API quota and rate limits
 2. Consider implementing caching for repeated prompts
 3. Optimize prompt template length

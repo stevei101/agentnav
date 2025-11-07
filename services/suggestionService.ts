@@ -1,15 +1,16 @@
 /**
  * Suggestion Service - Client for Prompt Vault Intelligence (FR#201)
- * 
+ *
  * Provides TypeScript client for calling the Suggestion Agent API
  * from the Prompt Vault frontend application.
- * 
+ *
  * This service integrates the agentnav backend's Suggestion Agent
  * with the Prompt Vault application via secure HTTP calls.
  */
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_AGENTNAV_API_URL || 'http://localhost:8080';
+const API_BASE_URL =
+  import.meta.env.VITE_AGENTNAV_API_URL || 'http://localhost:8080';
 const SUGGESTIONS_ENDPOINT = `${API_BASE_URL}/api/v1/suggestions`;
 
 /**
@@ -81,7 +82,7 @@ export interface SuggestionHealthResponse {
 
 /**
  * Analyze a prompt and get AI-driven suggestions
- * 
+ *
  * @param request - Prompt analysis request
  * @returns Promise with suggestion response
  * @throws Error if API call fails
@@ -115,7 +116,7 @@ export async function analyzePrompt(
 
 /**
  * Check if the Suggestion Agent is available and healthy
- * 
+ *
  * @returns Promise with health status
  */
 export async function checkSuggestionAgentHealth(): Promise<SuggestionHealthResponse> {
@@ -150,7 +151,7 @@ export async function checkSuggestionAgentHealth(): Promise<SuggestionHealthResp
 
 /**
  * Get example prompts for testing
- * 
+ *
  * @returns Promise with example prompts
  */
 export async function getExamplePrompts(): Promise<{
@@ -182,7 +183,8 @@ export async function getExamplePrompts(): Promise<{
       examples: [
         {
           name: 'Simple Task',
-          prompt_text: 'Write a function that calculates the factorial of a number',
+          prompt_text:
+            'Write a function that calculates the factorial of a number',
           user_context: 'Educational coding tutorial',
           expected_suggestions: [
             'Specify programming language',
@@ -200,7 +202,7 @@ export async function getExamplePrompts(): Promise<{
 
 /**
  * Format quality score as a percentage
- * 
+ *
  * @param score - Quality score (1-10)
  * @returns Formatted percentage string
  */
@@ -210,7 +212,7 @@ export function formatQualityScore(score: number): string {
 
 /**
  * Get quality score color based on score value
- * 
+ *
  * @param score - Quality score (1-10)
  * @returns Tailwind CSS color class
  */

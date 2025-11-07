@@ -1,10 +1,10 @@
 /**
  * Prompt Suggestions Component (FR#201)
- * 
+ *
  * React component for displaying AI-driven prompt suggestions
  * from the Suggestion Agent. Designed for integration with
  * the Prompt Vault application.
- * 
+ *
  * Features:
  * - Analyze prompt text and get optimization suggestions
  * - Display structured output schema suggestions
@@ -37,10 +37,12 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
   onSuggestionApplied,
   className = '',
 }) => {
-  const [suggestions, setSuggestions] = useState<PromptSuggestionResponse | null>(null);
+  const [suggestions, setSuggestions] =
+    useState<PromptSuggestionResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agentHealth, setAgentHealth] = useState<SuggestionHealthResponse | null>(null);
+  const [agentHealth, setAgentHealth] =
+    useState<SuggestionHealthResponse | null>(null);
 
   // Check agent health on mount
   React.useEffect(() => {
@@ -88,7 +90,7 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
         <h3 className="text-lg font-semibold text-gray-900">
           AI Prompt Suggestions
         </h3>
-        
+
         {/* Agent Health Indicator */}
         {agentHealth && (
           <div className="flex items-center gap-2">
@@ -174,21 +176,23 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
                 💡 Optimization Suggestions
               </h4>
               <ul className="space-y-2">
-                {suggestions.optimization_suggestions.map((suggestion, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2 text-sm text-gray-700"
-                  >
-                    <span className="text-blue-600 mt-0.5">•</span>
-                    <span className="flex-1">{suggestion}</span>
-                    <button
-                      onClick={() => handleApplySuggestion(suggestion)}
-                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                {suggestions.optimization_suggestions.map(
+                  (suggestion, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-2 text-sm text-gray-700"
                     >
-                      Apply
-                    </button>
-                  </li>
-                ))}
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span className="flex-1">{suggestion}</span>
+                      <button
+                        onClick={() => handleApplySuggestion(suggestion)}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Apply
+                      </button>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           )}
@@ -240,7 +244,11 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
               <button
                 onClick={() =>
                   navigator.clipboard.writeText(
-                    JSON.stringify(suggestions.structured_output_schema, null, 2)
+                    JSON.stringify(
+                      suggestions.structured_output_schema,
+                      null,
+                      2
+                    )
                   )
                 }
                 className="mt-2 text-xs text-purple-600 hover:text-purple-800 underline"
@@ -258,7 +266,8 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
               </h4>
               {suggestions.function_calling_hint.name && (
                 <p className="text-sm text-indigo-800 mb-2">
-                  <strong>Function:</strong> {suggestions.function_calling_hint.name}
+                  <strong>Function:</strong>{' '}
+                  {suggestions.function_calling_hint.name}
                 </p>
               )}
               {suggestions.function_calling_hint.description && (
@@ -273,7 +282,11 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
               )}
               {suggestions.function_calling_hint.parameters && (
                 <pre className="text-xs bg-white p-3 rounded border border-indigo-200 overflow-x-auto mt-3">
-                  {JSON.stringify(suggestions.function_calling_hint.parameters, null, 2)}
+                  {JSON.stringify(
+                    suggestions.function_calling_hint.parameters,
+                    null,
+                    2
+                  )}
                 </pre>
               )}
             </div>
@@ -286,15 +299,17 @@ export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({
                 🎯 Actionable Improvements
               </h4>
               <ul className="space-y-2">
-                {suggestions.actionable_improvements.map((improvement, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2 text-sm text-blue-800"
-                  >
-                    <span className="text-blue-600 mt-0.5">{index + 1}.</span>
-                    <span>{improvement}</span>
-                  </li>
-                ))}
+                {suggestions.actionable_improvements.map(
+                  (improvement, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-2 text-sm text-blue-800"
+                    >
+                      <span className="text-blue-600 mt-0.5">{index + 1}.</span>
+                      <span>{improvement}</span>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           )}
