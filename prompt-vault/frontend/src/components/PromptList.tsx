@@ -243,11 +243,14 @@ export default function PromptList() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1 ml-2">
+                <div
+                  className="flex items-center gap-1 ml-2"
+                  aria-label={prompt.is_public ? 'Public prompt' : 'Private prompt'}
+                >
                   {prompt.is_public ? (
-                    <Eye className="w-4 h-4 text-green-400" title="Public" />
+                    <Eye className="w-4 h-4 text-green-400" aria-hidden="true" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-500" title="Private" />
+                    <EyeOff className="w-4 h-4 text-gray-500" aria-hidden="true" />
                   )}
                 </div>
               </div>
@@ -327,11 +330,11 @@ export default function PromptList() {
                       </span>
                     )}
                     {prompt.is_public ? (
-                      <Eye className="w-4 h-4 text-green-400" title="Public" />
+                      <Eye className="w-4 h-4 text-green-400" aria-hidden="true" />
                     ) : (
                       <EyeOff
                         className="w-4 h-4 text-gray-500"
-                        title="Private"
+                        aria-hidden="true"
                       />
                     )}
                   </div>

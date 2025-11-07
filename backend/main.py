@@ -132,18 +132,22 @@ async def healthz_check():
     errors = {}
 
     # Check ADK System availability
-    try:
-        agents_module = importlib.import_module("backend.agents")
-    except ImportError:
+    agents_module = None
+    last_import_error = None
+
+    for module_name in ("backend.agents", "agents"):
         try:
-            agents_module = importlib.import_module("agents")
-        except ImportError as e:
-            adk_status = "unavailable"
-            error_msg = f"ADK agents not available: {str(e)}"
-            errors["adk"] = error_msg
-            logger.error(f"❌ ADK system check failed: {error_msg}")
-            health_status = "degraded"
-            agents_module = None
+            agents_module = importlib.import_module(module_name)
+            break
+        except ImportError as exc:
+            last_import_error = exc
+
+    if agents_module is None:
+        adk_status = "unavailable"
+        error_msg = f"ADK agents not available: {last_import_error}"
+        errors["adk"] = error_msg
+        logger.error(f"❌ ADK system check failed: {error_msg}")
+        health_status = "degraded"
 
     if adk_status is None and agents_module is not None:
         try:

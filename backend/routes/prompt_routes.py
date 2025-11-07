@@ -41,9 +41,12 @@ async def suggest_prompt(
 
     try:
         from backend.services.gemini_client import reason_with_gemini
-    except Exception as exc:  # noqa: BLE001
+    except ImportError as exc:
         logger.error("Gemini client unavailable: %s", exc)
-        raise HTTPException(503, "Prompt suggestion service unavailable") from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Prompt suggestion service unavailable",
+        ) from exc
 
     base_prompt = (
         "You are an expert prompt engineer. Rewrite the provided prompt to make it"

@@ -40,12 +40,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Get Google OAuth Client ID for Supabase Sign-in
-export const getGoogleClientId = (): string | undefined => {
-  if (
-    typeof window !== 'undefined' &&
-    (window as any).NEXT_PUBLIC_GOOGLE_CLIENT_ID
-  ) {
-    return (window as any).NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  }
-  return import.meta.env.VITE_GOOGLE_CLIENT_ID;
-};
