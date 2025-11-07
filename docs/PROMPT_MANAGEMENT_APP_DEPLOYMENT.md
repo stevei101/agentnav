@@ -19,6 +19,9 @@ references instead:
   routes secured by Workload Identity Federation. See
   `services/agentNavigatorClient.ts` in the Prompt Vault repo for the current
   client helper.
+- Cursor IDE exports are handled in the standalone
+  [`stevei101/cursor-ide`](https://github.com/stevei101/cursor-ide) repository,
+  which includes tooling for syncing prompts into Prompt Vault.
 
 ## Historical Reference
 
