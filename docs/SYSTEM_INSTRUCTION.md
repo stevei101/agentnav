@@ -29,21 +29,6 @@ Your deployment leverages **Terraform Cloud** for infrastructure as code (IaC) s
 
 ---
 
-## Application and Deployment Tools
-
-| Component                          | Description                                                                                                                                                                                                                                                                                                                        | Deployment Tooling                   |
-| :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
-| **Google Cloud Run**               | The serverless compute platform hosting all containerized applications (frontend and backend). Supports GPU acceleration in `europe-west1` region for Gemini/Gemma inference.                                                                                                                                                      | Terraform, Cloud Run API             |
-| **Google Artifact Registry (GAR)** | The centralized registry used to store the **Podman**-built OCI container images. **(Replaces GCR)**                                                                                                                                                                                                                               | Terraform, Podman CI                 |
-| **GCP IAM & Identity**             | **Two identity mechanisms:** 1) **Workload Identity Federation (WIF)** allows GitHub Actions runner to securely assume a GCP Service Account for CI/CD without static keys. 2) **Workload Identity (WI)** allows Cloud Run services to access other GCP services (Firestore, Secret Manager) using their built-in Service Account. | Terraform, GitHub Actions, Cloud Run |
-| **Cloud DNS & TLS**                | Manages the domain `agentnav.lornu.com` (or configured domain). TLS/SSL is automatically managed by Cloud Run's built-in HTTPS termination.                                                                                                                                                                                        | Terraform, Cloud Run                 |
-| **Firestore**                      | **NoSQL document database** used for persistent session memory, knowledge caching, and agent state management across all environments (Dev, Staging, Prod).                                                                                                                                                                        | Terraform, Firestore API             |
-| **Secret Manager**                 | Stores sensitive credentials including Gemini API keys, Firestore service account keys, and other secrets.                                                                                                                                                                                                                         | Terraform, Secret Manager API        |
-| **Gemma GPU Service**              | **GPU-accelerated model service** running Gemma open-source model on Cloud Run with NVIDIA L4 GPU in `europe-west1` region. Used for complex visualization and embedding tasks.                                                                                                                                                    | Podman, Cloud Run API                |
-| **Prompt Vault (Companion App)** | **TypeScript React frontend + Supabase auth/PostgreSQL**; optional backend uses FastAPI for Firestore integration | **bun** (frontend), Supabase SQL migrations                    | Provides isolated prompt management UI/workflows. Shares infrastructure but deploys as its own Cloud Run service with Supabase-managed auth and data.                            |
-
----
-
 ## Identity & Authentication Architecture
 
 The project uses **two distinct identity mechanisms** for different purposes:
@@ -117,6 +102,7 @@ The project uses **two distinct identity mechanisms** for different purposes:
 | **Frontend (UI)**        | **TypeScript**, **React**, **Vite**, **Tailwind CSS**                          | **bun** (for fast JS runtime, package management, and bundling) | Utilize TypeScript for type safety; bun for fast development loops. Build optimized static assets for Cloud Run.                                                                   |
 | **Backend (API/Agents)** | **Python**, **FastAPI**, **Google ADK**, **A2A Protocol**, **Gemini**          | **uv** (for fast Python package installation/resolution)        | Enforce Python best practices for API security. Use ADK for structured agent orchestration. Implement A2A Protocol for agent communication. Use Firestore for session persistence. |
 | **Gemma GPU Service**    | **Python**, **FastAPI**, **PyTorch (CUDA)**, **Transformers**, **Gemma Model** | **pip** (PyTorch base image)                                    | GPU-accelerated model serving. Handles text generation and embeddings using Gemma open-source model. Deployed separately on Cloud Run with NVIDIA L4 GPU.                          |
+| **Prompt Vault Companion** | **TypeScript React**, **Supabase Auth/PostgreSQL**, optional **FastAPI** backend | **bun** (frontend), Supabase migrations, **uv** (backend)        | Self-contained prompt management app. Frontend runs on Cloud Run with Supabase OAuth; optional backend proxies Firestore actions. Shares CI/CD but deploys as separate services. |
 
 ### 2. Multi-Agent Architecture
 
@@ -158,11 +144,13 @@ The system employs a **multi-agent architecture** using Google's **Agent Develop
    - Cloud Run services use **Workload Identity (WI)** with their Service Accounts to automatically authenticate to Firestore, Secret Manager, and permitted Supabase APIs (no credentials baked into containers).
    - Cloud Run automatically handles HTTPS/TLS termination and provides the public URL.
    - **Final Commands:**
-     - `gcloud run deploy agentnav-frontend --image gcr.io/$PROJECT_ID/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
-     - `gcloud run deploy agentnav-backend --image gcr.io/$PROJECT_ID/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
-     - `gcloud run deploy prompt-vault-frontend --image gcr.io/$PROJECT_ID/prompt-vault-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest`
-     - `gcloud run deploy prompt-vault-backend --image gcr.io/$PROJECT_ID/prompt-vault-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-secrets SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest --set-env-vars FIRESTORE_PROJECT_ID=$$FIRESTORE_PROJECT_ID`
+     - `gcloud run deploy agentnav-frontend --image us-central1-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/agentnav-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s`
+     - `gcloud run deploy agentnav-backend --image europe-west1-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/agentnav-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-env-vars PORT=8080,GEMINI_API_KEY=$$GEMINI_API_KEY,GEMMA_SERVICE_URL=$$GEMMA_SERVICE_URL --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest`
+     - `gcloud run deploy prompt-vault-frontend --image us-central1-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/prompt-vault-frontend:$GITHUB_SHA --region us-central1 --platform managed --port 80 --timeout 300s --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest`
+     - `gcloud run deploy prompt-vault-backend --image europe-west1-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/prompt-vault-backend:$GITHUB_SHA --region europe-west1 --platform managed --port 8080 --timeout 300s --set-secrets SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest --set-env-vars FIRESTORE_PROJECT_ID=$$FIRESTORE_PROJECT_ID`
      - `gcloud run deploy gemma-service --image $REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:$GITHUB_SHA --region europe-west1 --platform managed --cpu gpu --memory 16Gi --gpu-type nvidia-l4 --gpu-count 1 --port 8080 --timeout 300s`
+
+    _Note: update the `*-docker.pkg.dev` prefix to match the Artifact Registry region where each image is stored (for example `us-central1-docker.pkg.dev` or `europe-west1-docker.pkg.dev`)._
 
 ### CI/CD Failure Response (Zero-Tolerance Policy)
 
@@ -303,7 +291,7 @@ Cloud Run GPU support is available in specific regions (`europe-west1`, `us-cent
 
 ```bash
 gcloud run deploy gemma-service \
-  --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPO}/gemma-service:latest \
+  --image ${REGION}-docker.pkg.dev/$PROJECT_ID/$GAR_REPO/gemma-service:latest \
   --region europe-west1 \
   --platform managed \
   --cpu gpu \
