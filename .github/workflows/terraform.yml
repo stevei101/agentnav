@@ -15,8 +15,8 @@ on:
 
 jobs:
   terraform:
-    uses: stevei101/infrastructure/.github/workflows/terraform-agentnav.yml@main
+    uses: ./infrastructure/.github/workflows/terraform-agentnav.yml
     with:
-      terraform_directory: terraform
+      terraform_directory: infrastructure/terraform/agentnav
       run_apply: false
     secrets: inherit
