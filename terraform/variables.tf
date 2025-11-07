@@ -41,6 +41,18 @@ variable "artifact_registry_repository_id" {
   default     = "agentnav-containers"
 }
 
+variable "prompt_vault_artifact_registry_location" {
+  description = "Location for Prompt Vault Artifact Registry"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "prompt_vault_artifact_registry_repository_id" {
+  description = "Prompt Vault Artifact Registry repository ID"
+  type        = string
+  default     = "prompt-vault"
+}
+
 variable "firestore_database_id" {
   description = "Firestore database ID"
   type        = string
