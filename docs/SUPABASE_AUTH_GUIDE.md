@@ -19,18 +19,19 @@ Successfully implemented complete infrastructure for Supabase Google OAuth authe
 
 **New Resources Created:**
 
-| Resource Type | Resource Name | Purpose |
-|---------------|--------------|---------|
-| Secret Manager Secret | `supabase_url` | Supabase project URL |
-| Secret Manager Secret | `supabase_anon_key` | Public anonymous key for client-side |
-| Secret Manager Secret | `supabase_service_key` | Private service role key for server-side |
-| Service Account | `cloud_run_prompt_mgmt` | Identity for Prompt Management App |
-| Cloud Run Service | `prompt_mgmt` | Serverless deployment configuration |
-| IAM Member (×3) | `prompt_mgmt_supabase_*` | Secret access permissions |
-| IAM Member (×2) | `prompt_mgmt_secret_accessor`, `prompt_mgmt_service_invoker` | Service account permissions |
-| IAM Member | `prompt_mgmt_public` | Public access configuration |
+| Resource Type         | Resource Name                                                | Purpose                                  |
+| --------------------- | ------------------------------------------------------------ | ---------------------------------------- |
+| Secret Manager Secret | `supabase_url`                                               | Supabase project URL                     |
+| Secret Manager Secret | `supabase_anon_key`                                          | Public anonymous key for client-side     |
+| Secret Manager Secret | `supabase_service_key`                                       | Private service role key for server-side |
+| Service Account       | `cloud_run_prompt_mgmt`                                      | Identity for Prompt Management App       |
+| Cloud Run Service     | `prompt_mgmt`                                                | Serverless deployment configuration      |
+| IAM Member (×3)       | `prompt_mgmt_supabase_*`                                     | Secret access permissions                |
+| IAM Member (×2)       | `prompt_mgmt_secret_accessor`, `prompt_mgmt_service_invoker` | Service account permissions              |
+| IAM Member            | `prompt_mgmt_public`                                         | Public access configuration              |
 
 **Resource Configuration:**
+
 - **Region:** us-central1 (same as frontend for low latency)
 - **Scaling:** 0-10 instances (scale to zero for cost optimization)
 - **Resources:** 1 vCPU, 512Mi memory
@@ -38,6 +39,7 @@ Successfully implemented complete infrastructure for Supabase Google OAuth authe
 - **Timeout:** 300s
 
 **Environment Variables Configured:**
+
 - `PORT` - Container port
 - `NEXT_PUBLIC_SUPABASE_URL` - From Secret Manager
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - From Secret Manager
@@ -49,6 +51,7 @@ Successfully implemented complete infrastructure for Supabase Google OAuth authe
 Created three comprehensive guides totaling 27.5KB:
 
 **A. SUPABASE_GOOGLE_OAUTH_SETUP.md (10KB)**
+
 - Prerequisites checklist
 - Google Cloud OAuth 2.0 setup
 - Supabase dashboard configuration
@@ -59,6 +62,7 @@ Created three comprehensive guides totaling 27.5KB:
 - Security best practices
 
 **B. PROMPT_MANAGEMENT_APP_DEPLOYMENT.md (12KB)**
+
 - Architecture overview with diagrams
 - Infrastructure components breakdown
 - Manual and automated deployment methods
@@ -68,6 +72,7 @@ Created three comprehensive guides totaling 27.5KB:
 - Cost optimization strategies
 
 **C. README_SUPABASE.md (6.5KB)**
+
 - Documentation index
 - Quick start guides
 - Architecture diagram
@@ -79,6 +84,7 @@ Created three comprehensive guides totaling 27.5KB:
 **Infrastructure Tests:** Created `terraform/tests/test_supabase_infrastructure.sh`
 
 **Test Coverage:**
+
 - ✅ Terraform configuration validation
 - ✅ Secret resource definitions
 - ✅ Service account configuration
@@ -97,6 +103,7 @@ Created three comprehensive guides totaling 27.5KB:
 ### 4. Configuration Updates
 
 **Updated Files:**
+
 - `.env.example` - Added Supabase configuration template
 - `terraform/secret_manager.tf` - Added 3 secret resources and IAM bindings
 - `terraform/iam.tf` - Added service account and permissions
@@ -108,6 +115,7 @@ Created three comprehensive guides totaling 27.5KB:
 ## Architecture
 
 ### Before This Implementation
+
 ```
 ┌─────────────────────────────────────┐
 │  Google Cloud Run                   │
@@ -119,6 +127,7 @@ Created three comprehensive guides totaling 27.5KB:
 ```
 
 ### After This Implementation
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  Google Cloud Run                                         │
@@ -152,6 +161,7 @@ Created three comprehensive guides totaling 27.5KB:
 ## Technical Decisions
 
 ### Why Supabase?
+
 - **Managed Authentication:** Battle-tested OAuth implementation
 - **PostgreSQL:** Powerful relational database with JSON support
 - **Row Level Security:** Built-in authorization at the database level
@@ -159,12 +169,14 @@ Created three comprehensive guides totaling 27.5KB:
 - **Developer Experience:** Excellent tooling and documentation
 
 ### Why Cloud Run?
+
 - **Serverless:** No infrastructure management
 - **Scale to Zero:** Cost-effective for intermittent workloads
 - **Auto-scaling:** Handles traffic spikes automatically
 - **Integrated:** Works seamlessly with Secret Manager and IAM
 
 ### Infrastructure as Code (Terraform)
+
 - **Consistency:** All environments deployed identically
 - **Version Control:** Infrastructure changes tracked in Git
 - **Automation:** CI/CD pipeline can provision resources
@@ -175,24 +187,28 @@ Created three comprehensive guides totaling 27.5KB:
 ## Security Features
 
 ### 1. Secret Management
+
 ✅ All secrets stored in Google Secret Manager  
 ✅ IAM-based access control  
 ✅ Automatic secret rotation support  
 ✅ Audit logging enabled
 
 ### 2. Authentication
+
 ✅ OAuth 2.0 with Google  
 ✅ Supabase-managed sessions  
 ✅ JWT tokens with short expiration  
 ✅ Secure callback URL validation
 
 ### 3. Authorization
+
 ✅ Row Level Security (RLS) in Supabase  
 ✅ Service account least privilege  
 ✅ Separate public and private keys  
 ✅ Server-side key never exposed to client
 
 ### 4. Network Security
+
 ✅ HTTPS enforced (Cloud Run default)  
 ✅ CORS configured for trusted origins  
 ✅ Rate limiting available via Cloud Armor
@@ -203,16 +219,17 @@ Created three comprehensive guides totaling 27.5KB:
 
 ### Estimated Monthly Costs (Low Usage)
 
-| Service | Usage | Cost |
-|---------|-------|------|
-| Cloud Run (Prompt Mgmt App) | 100 hours/month @ 1 vCPU, 512Mi | ~$2-5 |
-| Secret Manager | 3 secrets, 1000 accesses/month | ~$0.20 |
-| Supabase (Free Tier) | <50,000 rows, <500MB storage | $0 |
-| **Total** | | **~$2-5/month** |
+| Service                     | Usage                           | Cost            |
+| --------------------------- | ------------------------------- | --------------- |
+| Cloud Run (Prompt Mgmt App) | 100 hours/month @ 1 vCPU, 512Mi | ~$2-5           |
+| Secret Manager              | 3 secrets, 1000 accesses/month  | ~$0.20          |
+| Supabase (Free Tier)        | <50,000 rows, <500MB storage    | $0              |
+| **Total**                   |                                 | **~$2-5/month** |
 
 **Note:** Costs scale with usage. Production workloads with higher traffic will cost more.
 
 ### Cost Optimization Tips
+
 - Scale to zero (min instances = 0)
 - Use Supabase free tier for development
 - Monitor usage with Cloud Monitoring
@@ -223,18 +240,21 @@ Created three comprehensive guides totaling 27.5KB:
 ## Testing Strategy
 
 ### Unit Tests (Future)
+
 - [ ] Supabase client configuration
 - [ ] OAuth callback handling
 - [ ] Session management
 - [ ] RLS policy enforcement
 
 ### Integration Tests (Future)
+
 - [ ] End-to-end OAuth flow
 - [ ] Database operations with RLS
 - [ ] Secret retrieval from Cloud Run
 - [ ] Health check endpoints
 
 ### Infrastructure Tests (Complete)
+
 - [x] Terraform validation
 - [x] Resource existence checks
 - [x] IAM permission verification
@@ -278,12 +298,14 @@ Created three comprehensive guides totaling 27.5KB:
 ## Known Limitations
 
 ### Current Implementation
+
 1. **No CI/CD Integration:** Container build and deployment not yet automated
 2. **Manual Secret Population:** Secrets must be manually added to Secret Manager
 3. **No Staging Environment:** Only production configuration exists
 4. **No Monitoring Dashboard:** Requires manual log inspection
 
 ### Future Enhancements
+
 1. Add GitHub Actions workflow for building and deploying Prompt Management App
 2. Create staging Cloud Run service for testing
 3. Add Cloud Monitoring dashboards and alerts
@@ -295,25 +317,27 @@ Created three comprehensive guides totaling 27.5KB:
 
 ## Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|-----------|------------|
-| Secret exposure in logs | High | Low | Use Secret Manager, never log secrets |
-| OAuth misconfiguration | High | Medium | Comprehensive documentation, testing guide |
-| Cost overrun | Medium | Low | Scale-to-zero, budget alerts |
-| Service downtime | Medium | Low | Cloud Run SLA, health checks |
-| RLS policy errors | High | Medium | Thorough testing, policy documentation |
+| Risk                    | Impact | Likelihood | Mitigation                                 |
+| ----------------------- | ------ | ---------- | ------------------------------------------ |
+| Secret exposure in logs | High   | Low        | Use Secret Manager, never log secrets      |
+| OAuth misconfiguration  | High   | Medium     | Comprehensive documentation, testing guide |
+| Cost overrun            | Medium | Low        | Scale-to-zero, budget alerts               |
+| Service downtime        | Medium | Low        | Cloud Run SLA, health checks               |
+| RLS policy errors       | High   | Medium     | Thorough testing, policy documentation     |
 
 ---
 
 ## Success Metrics
 
 ### Technical Metrics
+
 - ✅ Infrastructure tests: 13/13 passing
 - ✅ Terraform validation: Successful
 - ✅ Documentation: 27.5KB across 3 comprehensive guides
 - ✅ Code coverage: N/A (infrastructure only)
 
 ### Business Metrics (Post-Deployment)
+
 - [ ] OAuth conversion rate: >90%
 - [ ] Authentication errors: <1%
 - [ ] Average sign-in time: <3 seconds
@@ -324,12 +348,14 @@ Created three comprehensive guides totaling 27.5KB:
 ## Lessons Learned
 
 ### What Went Well
+
 ✅ Terraform resource ordering (secrets before IAM bindings)  
 ✅ Comprehensive test coverage for infrastructure  
 ✅ Documentation-first approach  
 ✅ Reusable patterns for future services
 
 ### What Could Be Improved
+
 ⚠️ Initial test failures due to grep patterns - fixed with better regex  
 ⚠️ Secret ordering required refactoring - now properly organized  
 ⚠️ CI/CD integration should have been included - left for future work
@@ -339,18 +365,21 @@ Created three comprehensive guides totaling 27.5KB:
 ## Next Steps
 
 ### Immediate (This Week)
+
 1. Merge this PR
 2. Populate secrets in Secret Manager (post-merge)
 3. Configure OAuth in Google Cloud and Supabase
 4. Test authentication flow manually
 
 ### Short Term (Next Sprint)
+
 1. Add CI/CD workflow for Prompt Management App
 2. Create staging environment
 3. Implement integration tests
 4. Set up monitoring dashboard
 
 ### Long Term (Next Quarter)
+
 1. Add more OAuth providers (GitHub, Microsoft)
 2. Implement automated secret rotation
 3. Create Terraform module for reusability
@@ -371,7 +400,7 @@ Created three comprehensive guides totaling 27.5KB:
 
 **Implemented By:** GitHub Copilot  
 **Reviewed By:** [Pending]  
-**Product Owner:** stevei101  
+**Product Owner:** stevei101
 
 ---
 
@@ -380,6 +409,7 @@ Created three comprehensive guides totaling 27.5KB:
 ### Version 1.0.0 (2025-11-04)
 
 **Added:**
+
 - Terraform resources for Supabase authentication
 - Cloud Run service for Prompt Management App
 - Comprehensive documentation (3 guides, 27.5KB)
@@ -387,11 +417,13 @@ Created three comprehensive guides totaling 27.5KB:
 - Environment configuration templates
 
 **Changed:**
+
 - Updated .env.example with Supabase variables
 - Reordered secret_manager.tf for proper dependencies
 - Formatted all documentation with Prettier
 
 **Fixed:**
+
 - Test script grep patterns for resource names
 - Secret ordering in Terraform configuration
 

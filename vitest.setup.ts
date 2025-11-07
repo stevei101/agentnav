@@ -23,13 +23,19 @@ beforeAll(() => {
 
 // Mock DragEvent for jsdom environment
 if (typeof global.DragEvent === 'undefined') {
+  // Create a proper DragEvent class that extends Event
   global.DragEvent = class DragEvent extends Event {
     dataTransfer: DataTransfer;
     constructor(type: string, init?: DragEventInit) {
-      super(type, init);
+      super(type, { bubbles: init?.bubbles, cancelable: init?.cancelable });
       this.dataTransfer = init?.dataTransfer || new DataTransfer();
     }
   } as unknown as typeof DragEvent;
+
+  // Also ensure window.DragEvent is available
+  if (typeof window !== 'undefined') {
+    (window as any).DragEvent = global.DragEvent;
+  }
 }
 
 // Mock DataTransfer if not available

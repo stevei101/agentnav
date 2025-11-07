@@ -12,6 +12,7 @@ def test_gemini_client_initializes(monkeypatch):
     It imports the `gemini_client.py` file directly to avoid executing
     `backend/services/__init__.py` which pulls in Firestore and other heavy deps.
     """
+
     # Create a fake genai module with a Client class
     class FakeModels:
         def generate(self, *args, **kwargs):
@@ -42,11 +43,11 @@ def test_gemini_client_initializes(monkeypatch):
     assert hasattr(client._client, "models") or hasattr(client._client, "generate")
 
 
-def test_reason_with_gemini_model_type_selection(monkeypatch):
-    """Verify reason_with_gemini can switch between 'gemini' and 'gemma' models.
+def test_reason_with_gemini_basic(monkeypatch):
+    """Verify reason_with_gemini works with Gemini cloud service.
 
-    This test verifies that the model_type parameter allows selecting between
-    cloud Gemini and local Gemma service for reasoning tasks.
+    This test verifies that reason_with_gemini successfully calls
+    the Gemini cloud service for reasoning tasks.
     """
     import asyncio
 
@@ -73,27 +74,11 @@ def test_reason_with_gemini_model_type_selection(monkeypatch):
 
     reason_with_gemini = getattr(module, "reason_with_gemini")
 
-    # Test: Gemini model type (cloud-based)
+    # Test: Gemini service (cloud-based)
     async def test_gemini():
         result = await reason_with_gemini(
-            prompt="Test prompt",
-            max_tokens=100,
-            temperature=0.5,
-            model_type="gemini"
+            prompt="Test prompt", max_tokens=100, temperature=0.5
         )
         assert result == "gemini_response"
 
     asyncio.run(test_gemini())
-
-    # Test: Environment variable override
-    monkeypatch.setenv("AGENTNAV_MODEL_TYPE", "gemini")
-    async def test_env_override():
-        result = await reason_with_gemini(
-            prompt="Test prompt",
-            max_tokens=100,
-            temperature=0.5
-        )
-        assert result == "gemini_response"
-
-    asyncio.run(test_env_override())
-

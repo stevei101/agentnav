@@ -1,4 +1,4 @@
-# 📚 Documentation Index - Session Complete
+# 📚 Documentation Index
 
 **Session:** Issue Analysis & Prioritization + FR#350 Strategic Audit  
 **Date:** November 3-6, 2025  
@@ -171,6 +171,11 @@
 ---
 
 ## 🎯 Which Document to Read?
+
+### If you need hackathon strategy (45 min):
+
+→ Read: **docs/PROMPT_VAULT_HACKATHON_GAP_ANALYSIS.md**  
+Strategic audit for Google Cloud Run Hackathon alignment
 
 ### If you have 5 minutes:
 

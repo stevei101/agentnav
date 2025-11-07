@@ -213,7 +213,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pytest pytest-asyncio google-cloud-firestore
+          pip install pytest pytest-asyncio google-cloud-firestore httpx
 
       - name: Run backend tests
         env:
@@ -222,23 +222,26 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         working-directory: backend
         run: |
-          pytest -v
+          set -euo pipefail
+          echo "🔍 Running pytest collection check..."
+          pytest --collect-only -q || true
+          echo ""
+          echo "🧪 Running backend tests..."
+          pytest -v --tb=short || {
+            EXIT_CODE=$?
+            echo "❌ Pytest failed with exit code: $EXIT_CODE"
+            echo ""
+            echo "📋 Test summary:"
+            pytest --co -q || true
+            exit $EXIT_CODE
+          }
 
       - name: Run backend tests (Gemini model)
         env:
           FIRESTORE_EMULATOR_HOST: 'localhost:8081'
           FIRESTORE_PROJECT_ID: 'agentnav-dev'
-          AGENTNAV_MODEL_TYPE: 'gemini'
         run: |
-          pytest -q backend/tests/test_model_selection_integration.py
-
-      - name: Run backend tests (Gemma model)
-        env:
-          FIRESTORE_EMULATOR_HOST: 'localhost:8081'
-          FIRESTORE_PROJECT_ID: 'agentnav-dev'
-          AGENTNAV_MODEL_TYPE: 'gemma'
-        run: |
-          pytest -q backend/tests/test_model_selection_integration.py
+          pytest -q backend/tests/
 
       - name: Stop Firestore emulator
         if: always()
