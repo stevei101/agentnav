@@ -1,5 +1,11 @@
 # **agentnav - GitHub Copilot Instructions**
 
+> 💡 **Note:** This file provides a high-level overview of the project. For detailed, component-specific guidance, see the scoped instruction files in [`.github/instructions/`](.github/instructions/):
+> - [Backend (Python/FastAPI/ADK)](.github/instructions/backend.instructions.md)
+> - [Frontend (React/TypeScript)](.github/instructions/frontend.instructions.md)
+> - [Infrastructure (Terraform/GCP)](.github/instructions/terraform.instructions.md)
+> - [Testing & Quality Standards](.github/instructions/testing.instructions.md)
+
 ## **Project Overview**
 
 agentnav is a multi-agent knowledge exploration system using Google Agent Development Kit (ADK) with Agent2Agent (A2A) Protocol. The system features a TypeScript/React frontend and Python/FastAPI backend with specialized AI agents, deployed serverlessly on Google Cloud Run with GPU acceleration support. The project includes a companion application, the **Gen AI Prompt Management App**, which provides prompt management capabilities using Supabase for persistence and authentication.
