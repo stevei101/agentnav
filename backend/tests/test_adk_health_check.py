@@ -48,7 +48,7 @@ class TestHealthzEndpoint:
         """Test healthz returns degraded when ADK agents cannot be imported"""
         with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
-                "builtins.__import__",
+                "backend.main.importlib.import_module",
                 side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/healthz")
@@ -62,7 +62,9 @@ class TestHealthzEndpoint:
 
     def test_healthz_firestore_check(self):
         """Test healthz checks Firestore connectivity"""
-        with patch("backend.services.firestore_client.get_firestore_client") as mock_firestore:
+        with patch(
+            "backend.services.firestore_client.get_firestore_client"
+        ) as mock_firestore:
             # Mock Firestore client available
             mock_firestore.return_value = MagicMock()
 
@@ -124,7 +126,7 @@ class TestAgentStatusEndpoint:
         """Test agent status handles import errors with diagnostics"""
         with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
-                "builtins.__import__",
+                "backend.main.importlib.import_module",
                 side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/api/agents/status")
@@ -141,7 +143,8 @@ class TestAgentStatusEndpoint:
         with (
             patch("backend.agents.OrchestratorAgent") as mock_orch,
             patch(
-                "backend.agents.SummarizerAgent", side_effect=Exception("Summarizer init failed")
+                "backend.agents.SummarizerAgent",
+                side_effect=Exception("Summarizer init failed"),
             ),
             patch("backend.agents.LinkerAgent") as mock_link,
             patch("backend.agents.VisualizerAgent") as mock_viz,

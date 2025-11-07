@@ -11,7 +11,7 @@
 
 ### Criterion 1: Mapping Document Created
 
-**Requirement:** *A document is created mapping the **7-8 highest-scoring features** to the **Hackathon Judging Criteria**.*
+**Requirement:** _A document is created mapping the **7-8 highest-scoring features** to the **Hackathon Judging Criteria**._
 
 **Status:** ✅ **COMPLETE**
 
@@ -34,12 +34,12 @@
 
 **Judging Criteria Breakdown:**
 
-| Category | Max Points | Features Mapped |
-|----------|-----------|----------------|
-| **Technical Implementation** | 40 | 8 features (35-38 points estimated) |
-| **Demo & Presentation** | 40 | 7 features (34-37 points estimated) |
-| **Innovation & Creativity** | 20 | 5 features (16-18 points estimated) |
-| **Bonus Points** | +1.2 | 4 opportunities (+0.4 to +1.2) |
+| Category                     | Max Points | Features Mapped                     |
+| ---------------------------- | ---------- | ----------------------------------- |
+| **Technical Implementation** | 40         | 8 features (35-38 points estimated) |
+| **Demo & Presentation**      | 40         | 7 features (34-37 points estimated) |
+| **Innovation & Creativity**  | 20         | 5 features (16-18 points estimated) |
+| **Bonus Points**             | +1.2       | 4 opportunities (+0.4 to +1.2)      |
 
 **Total Estimated Score:** 86-91 / 101.2 (Top 10-15%)
 
@@ -47,7 +47,7 @@
 
 ### Criterion 2: YouTube Walkthrough Recommendation
 
-**Requirement:** *The document includes a final recommendation for the **YouTube Walkthrough (FR#035)** script focus.*
+**Requirement:** _The document includes a final recommendation for the **YouTube Walkthrough (FR#035)** script focus._
 
 **Status:** ✅ **COMPLETE**
 
@@ -115,12 +115,12 @@
 
 **Current State vs. Optimal Submission:**
 
-| Aspect | Gap | Recommendation | Priority |
-|--------|-----|----------------|----------|
-| Demo Script | Not timed | Rehearse 3-min script | HIGH |
-| Problem Statement | Not compelling | Use script from Section 6 | HIGH |
-| GPU Comparison | Not displayed | Record CPU vs GPU metrics | HIGH |
-| Architecture Diagram | GPU not prominent | Update diagram | MEDIUM |
+| Aspect               | Gap               | Recommendation            | Priority |
+| -------------------- | ----------------- | ------------------------- | -------- |
+| Demo Script          | Not timed         | Rehearse 3-min script     | HIGH     |
+| Problem Statement    | Not compelling    | Use script from Section 6 | HIGH     |
+| GPU Comparison       | Not displayed     | Record CPU vs GPU metrics | HIGH     |
+| Architecture Diagram | GPU not prominent | Update diagram            | MEDIUM   |
 
 **Highest-Impact Quick Fixes:**
 
@@ -138,12 +138,12 @@
 
 **Opportunities Identified:**
 
-| Bonus | Points | Status | Evidence |
-|-------|--------|--------|----------|
-| Google AI Models | +0.2 | ✅ Complete | Gemini + Gemma |
-| Multiple Services | +0.2 | ✅ Complete | Frontend + Backend + GPU |
-| Blog Post | +0.4 | ⏳ Pending | Template provided |
-| Social Media | +0.4 | ⏳ Pending | Template provided |
+| Bonus             | Points | Status      | Evidence                 |
+| ----------------- | ------ | ----------- | ------------------------ |
+| Google AI Models  | +0.2   | ✅ Complete | Gemini + Gemma           |
+| Multiple Services | +0.2   | ✅ Complete | Frontend + Backend + GPU |
+| Blog Post         | +0.4   | ⏳ Pending  | Template provided        |
+| Social Media      | +0.4   | ⏳ Pending  | Template provided        |
 
 **Total Possible:** +1.2 points (0.4 confirmed, 0.8 pending)
 

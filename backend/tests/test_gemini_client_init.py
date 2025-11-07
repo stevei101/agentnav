@@ -22,9 +22,19 @@ def test_gemini_client_initializes(monkeypatch):
         def __init__(self):
             self.models = FakeModels()
 
-    fake_genai = types.SimpleNamespace(Client=FakeClient)
+    fake_genai = types.ModuleType("google.genai")
+    fake_genai.Client = FakeClient
 
     monkeypatch.setitem(sys.modules, "genai", fake_genai)
+    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)
+
+    existing_google = sys.modules.get("google")
+    if existing_google is None:
+        fake_google_pkg = types.ModuleType("google")
+        monkeypatch.setitem(sys.modules, "google", fake_google_pkg)
+        existing_google = fake_google_pkg
+
+    monkeypatch.setattr(existing_google, "genai", fake_genai, raising=False)
 
     # Import gemini_client directly from file to avoid package side-effects
     base = os.path.dirname(os.path.dirname(__file__))
@@ -60,8 +70,19 @@ def test_reason_with_gemini_basic(monkeypatch):
         def __init__(self):
             self.models = FakeModels()
 
-    fake_genai = types.SimpleNamespace(Client=FakeClient)
+    fake_genai = types.ModuleType("google.genai")
+    fake_genai.Client = FakeClient
+
     monkeypatch.setitem(sys.modules, "genai", fake_genai)
+    monkeypatch.setitem(sys.modules, "google.genai", fake_genai)
+
+    existing_google = sys.modules.get("google")
+    if existing_google is None:
+        fake_google_pkg = types.ModuleType("google")
+        monkeypatch.setitem(sys.modules, "google", fake_google_pkg)
+        existing_google = fake_google_pkg
+
+    monkeypatch.setattr(existing_google, "genai", fake_genai, raising=False)
 
     # Import gemini_client
     base = os.path.dirname(os.path.dirname(__file__))
