@@ -3,8 +3,12 @@ name: CI - Tests & Security
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'prompt-vault/**'
   push:
     branches: ['**'] # Run on ALL branches for immediate feedback (FR#100)
+    paths-ignore:
+      - 'prompt-vault/**'
 
 jobs:
   # ============================================================================

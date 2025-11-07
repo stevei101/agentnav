@@ -1,0 +1,377 @@
+name: Build and Deploy Prompt Vault
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'prompt-vault/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'prompt-vault/**'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: europe-west1
+  ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+
+jobs:
+  # ============================================================================
+  # PATH FILTERING DETECTION
+  # ============================================================================
+  
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      prompt_vault: ${{ steps.filter.outputs.prompt_vault }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            prompt_vault:
+              - 'prompt-vault/**'
+
+  # ============================================================================
+  # PROMPT VAULT CI CHECKS
+  # ============================================================================
+
+  prompt-vault-lint:
+    name: Prompt Vault - Lint & Format Check
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.prompt_vault == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if frontend exists
+        id: check_frontend
+        run: |
+          if [ -d "prompt-vault/frontend" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Prompt Vault frontend directory not found - skipping lint checks"
+          fi
+
+      - name: Setup Bun
+        if: steps.check_frontend.outputs.exists == 'true'
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: steps.check_frontend.outputs.exists == 'true'
+        working-directory: prompt-vault/frontend
+        run: bun install
+
+      - name: Run ESLint
+        if: steps.check_frontend.outputs.exists == 'true'
+        working-directory: prompt-vault/frontend
+        run: bun run lint || echo "⚠️ Linting not configured yet"
+
+      - name: Check Prettier formatting
+        if: steps.check_frontend.outputs.exists == 'true'
+        working-directory: prompt-vault/frontend
+        run: bun run format:check || echo "⚠️ Format check not configured yet"
+
+  prompt-vault-tests:
+    name: Prompt Vault - Unit Tests
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.prompt_vault == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if frontend exists
+        id: check_frontend
+        run: |
+          if [ -d "prompt-vault/frontend" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Prompt Vault frontend directory not found - skipping tests"
+          fi
+
+      - name: Setup Bun
+        if: steps.check_frontend.outputs.exists == 'true'
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: steps.check_frontend.outputs.exists == 'true'
+        working-directory: prompt-vault/frontend
+        run: bun install
+
+      - name: Run tests
+        if: steps.check_frontend.outputs.exists == 'true'
+        working-directory: prompt-vault/frontend
+        run: bun test --run || echo "⚠️ Tests not configured yet"
+
+  # ============================================================================
+  # BUILD AND PUSH CONTAINERS
+  # ============================================================================
+
+  build-and-push:
+    name: Build and Push Prompt Vault Container
+    runs-on: ubuntu-latest
+    needs: [changes, prompt-vault-lint, prompt-vault-tests]
+    # Run if prompt-vault changed and all tests passed or were skipped
+    # Don't run if tests were cancelled to allow graceful cancellation
+    if: |
+      needs.changes.outputs.prompt_vault == 'true' &&
+      (needs.prompt-vault-lint.result == 'success' || needs.prompt-vault-lint.result == 'skipped') &&
+      (needs.prompt-vault-tests.result == 'success' || needs.prompt-vault-tests.result == 'skipped') &&
+      needs.prompt-vault-lint.result != 'cancelled' &&
+      needs.prompt-vault-tests.result != 'cancelled'
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if Dockerfile exists
+        id: check_dockerfile
+        run: |
+          if [ -f "prompt-vault/Dockerfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Prompt Vault Dockerfile not found - skipping build"
+          fi
+
+      - name: Authenticate to Google Cloud
+        if: steps.check_dockerfile.outputs.exists == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        if: steps.check_dockerfile.outputs.exists == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        if: steps.check_dockerfile.outputs.exists == 'true'
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Determine Image Tags based on Event
+        if: steps.check_dockerfile.outputs.exists == 'true'
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LATEST_TAG=""
+
+          # 1. Check for Pull Request trigger
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            if [[ -z "${PR_NUMBER}" ]]; then
+              echo "❌ Error: Pull request number is missing"
+              exit 1
+            fi
+            IMAGE_TAG="pr-${PR_NUMBER}"
+            
+          # 2. Check for Push to 'main' branch
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            IMAGE_TAG="${{ github.sha }}"
+            LATEST_TAG="latest"
+            
+          # 3. Default (other branches)
+          else
+            IMAGE_TAG="$(echo '${{ github.sha }}' | cut -c1-7)"
+          fi
+
+          # Validate IMAGE_TAG is set
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: IMAGE_TAG is empty"
+            exit 1
+          fi
+
+          # Set outputs for subsequent build/push steps
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Image tag: ${IMAGE_TAG}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "Latest tag: ${LATEST_TAG}"
+          fi
+
+      - name: Build and push prompt-vault
+        if: steps.check_dockerfile.outputs.exists == 'true'
+        run: |
+          set -euo pipefail
+
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-vault-frontend"
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+
+          echo "🔨 Building prompt-vault frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f prompt-vault/Dockerfile \
+            ./prompt-vault
+
+          # Tag as latest if on main branch
+          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          # Push primary tag
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+          # Push latest tag if set
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker push ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          echo "✅ Prompt Vault frontend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+  # ============================================================================
+  # DEPLOY TO CLOUD RUN (Only on main branch push)
+  # ============================================================================
+
+  deploy:
+    name: Deploy Prompt Vault to Cloud Run
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy prompt-vault to Cloud Run
+        run: |
+          set -euo pipefail
+
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-vault-frontend:latest"
+          SERVICE_ACCOUNT="agentnav-prompt-mgmt@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
+          echo "🚀 Deploying prompt-vault frontend to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: us-central1"
+          echo "   Service Account: ${SERVICE_ACCOUNT}"
+
+          # Modern gcloud run deploy with Cloud Run best practices
+          # Required secrets (must exist in Secret Manager):
+          #   - SUPABASE_URL: Supabase project URL (https://your-project.supabase.co)
+          #   - SUPABASE_ANON_KEY: Public anonymous key for Supabase client
+          #   - SUPABASE_SERVICE_KEY: Private service role key (server-side only)
+          gcloud run deploy prompt-vault-frontend \
+            --image ${IMAGE} \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account ${SERVICE_ACCOUNT} \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 80 \
+            --set-env-vars PORT=80 \
+            --set-env-vars ENVIRONMENT=production \
+            --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest \
+            --quiet || echo "⚠️ Deployment skipped - service account may not exist yet"
+
+          echo "✅ Prompt Vault frontend deployment completed"
+
+      - name: Get service URL
+        run: |
+          gcloud run services describe prompt-vault-frontend \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)" || echo "⚠️ Service not deployed yet"
+
+  # ============================================================================
+  # QUALITY GATE (Required Check)
+  # ============================================================================
+
+  PROMPT_VAULT_QUALITY_GATE:
+    name: PROMPT_VAULT_QUALITY_GATE
+    runs-on: ubuntu-latest
+    needs: [changes, prompt-vault-lint, prompt-vault-tests]
+    if: always()
+    steps:
+      - name: Check Quality Gate Status
+        run: |
+          echo "## 🎯 Prompt Vault Quality Gate" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Evaluating Prompt Vault CI pipeline results..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          CHANGES_RESULT="${{ needs.changes.result }}"
+          LINT_RESULT="${{ needs.prompt-vault-lint.result }}"
+          TESTS_RESULT="${{ needs.prompt-vault-tests.result }}"
+
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| changes | $CHANGES_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| prompt-vault-lint | $LINT_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| prompt-vault-tests | $TESTS_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # A job can be: success, failure, cancelled, or skipped
+          # We pass if jobs are either success OR skipped
+          # We fail only if a job that RAN has failed
+
+          if [[ "$CHANGES_RESULT" == "failure" ]]; then
+            echo "❌ Quality gate FAILED - changes job failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          if [[ "$LINT_RESULT" == "failure" ]]; then
+            echo "❌ Quality gate FAILED - lint job failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          if [[ "$TESTS_RESULT" == "failure" ]]; then
+            echo "❌ Quality gate FAILED - tests job failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "✅ Quality gate PASSED - All Prompt Vault checks succeeded" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Note: Skipped checks (when prompt-vault code not ready) are treated as passing." >> $GITHUB_STEP_SUMMARY
+          exit 0

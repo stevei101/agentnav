@@ -6,11 +6,15 @@ on:
       - main
     paths:
       - '**'
+    paths-ignore:
+      - 'prompt-vault/**'
   pull_request:
     branches:
       - main
     paths:
       - '**'
+    paths-ignore:
+      - 'prompt-vault/**'
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
