@@ -1,0 +1,151 @@
+name: Build and Deploy Prompt Vault
+
+on:
+  push:
+    branches:
+      - main-promptvault
+    paths:
+      - 'prompt-vault/**'
+      - '.github/workflows/build-prompt-vault.yml'
+  pull_request:
+    branches:
+      - main-promptvault
+    paths:
+      - 'prompt-vault/**'
+      - '.github/workflows/build-prompt-vault.yml'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: us-central1
+  ARTIFACT_REGISTRY_REPOSITORY: prompt-vault
+
+jobs:
+  build-and-push:
+    name: Build and Push Prompt Vault Containers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      matrix:
+        service: [frontend, backend]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Determine image tags
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LATEST_TAG=""
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            if [[ -z "${PR_NUMBER}" ]]; then
+              echo "❌ Error: Pull request number is missing"
+              exit 1
+            fi
+            IMAGE_TAG="pr-${PR_NUMBER}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main-promptvault" ]]; then
+            IMAGE_TAG="${{ github.sha }}"
+            LATEST_TAG="latest"
+          else
+            IMAGE_TAG="$(echo '${{ github.sha }}' | cut -c1-7)"
+          fi
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: IMAGE_TAG is empty"
+            exit 1
+          fi
+
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "latest_tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Service: ${{ matrix.service }}"
+          echo "Image tag: ${IMAGE_TAG}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "Latest tag: ${LATEST_TAG}"
+          fi
+
+      - name: Build and push frontend
+        if: matrix.service == 'frontend'
+        run: |
+          set -euo pipefail
+
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-vault-frontend"
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+
+          echo "🔨 Building prompt-vault-frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+          cd prompt-vault/frontend
+          npm install
+          npm run build
+          cd ../..
+
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f prompt-vault/Dockerfile \
+            prompt-vault
+
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+          if [[ -n "${{ steps.image.outputs.latest_tag }}" ]]; then
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+            docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          fi
+
+      - name: Build and push backend
+        if: matrix.service == 'backend'
+        run: |
+          set -euo pipefail
+
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-vault-backend"
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+
+          echo "🔨 Building prompt-vault-backend image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f prompt-vault/backend/Dockerfile \
+            prompt-vault/backend
+
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+          if [[ -n "${{ steps.image.outputs.latest_tag }}" ]]; then
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+            docker push ${IMAGE_NAME}:${{ steps.image.outputs.latest_tag }}
+          fi
