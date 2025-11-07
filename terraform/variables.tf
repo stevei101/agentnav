@@ -113,3 +113,9 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
+variable "manage_frontend_dns_records" {
+  description = "Set to true to have Terraform manage Cloud DNS records for the frontend custom domain. Leave false to manage DNS manually."
+  type        = bool
+  default     = false
+}
+

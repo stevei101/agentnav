@@ -41,10 +41,27 @@ resource "google_cloud_run_domain_mapping" "frontend_custom_domain" {
   ]
 }
 
+locals {
+  frontend_domain_records = var.manage_frontend_dns_records ? try(
+    google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records,
+    []
+  ) : []
+
+  frontend_domain_a_rrdatas = [
+    for record in local.frontend_domain_records : record.rrdata if upper(record.type) == "A"
+  ]
+
+  frontend_domain_cname_rrdatas = [
+    for record in local.frontend_domain_records : record.rrdata if upper(record.type) == "CNAME"
+  ]
+}
+
 # Cloud DNS A Records for agentnav.lornu.com
 # Cloud Run provides these IP addresses in the domain mapping status
 # We extract A records from the domain mapping status
 resource "google_dns_record_set" "frontend_domain_a" {
+  count = var.manage_frontend_dns_records ? (length(local.frontend_domain_a_rrdatas) > 0 ? 1 : 0) : 0
+
   # DNS record names must include trailing dot for Cloud DNS
   name         = "${var.custom_domain_name}."
   managed_zone = data.google_dns_managed_zone.lornu_zone.name
@@ -52,21 +69,7 @@ resource "google_dns_record_set" "frontend_domain_a" {
   ttl          = 300
   project      = var.project_id
 
-  # Extract A record IPs from Cloud Run domain mapping status
-  # The status.resource_records contains the target DNS records provided by Cloud Run
-  # Use count to only create this resource when A records are available
-  count = try(
-    length([
-      for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
-      record.rrdata if record.type == "A"
-    ]) > 0,
-    false
-  ) ? 1 : 0
-
-  rrdatas = [
-    for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
-    record.rrdata if record.type == "A"
-  ]
+  rrdatas = local.frontend_domain_a_rrdatas
 
   depends_on = [google_cloud_run_domain_mapping.frontend_custom_domain]
 }
@@ -74,13 +77,7 @@ resource "google_dns_record_set" "frontend_domain_a" {
 # Cloud DNS CNAME Record for agentnav.lornu.com (if Cloud Run provides one)
 # Some Cloud Run configurations use CNAME instead of or in addition to A records
 resource "google_dns_record_set" "frontend_domain_cname" {
-  count = try(
-    length([
-      for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
-      record.rrdata if record.type == "CNAME"
-    ]) > 0,
-    false
-  ) ? 1 : 0
+  count = var.manage_frontend_dns_records ? (length(local.frontend_domain_cname_rrdatas) > 0 ? 1 : 0) : 0
 
   # DNS record names must include trailing dot for Cloud DNS
   name         = "${var.custom_domain_name}."
@@ -89,10 +86,7 @@ resource "google_dns_record_set" "frontend_domain_cname" {
   ttl          = 300
   project      = var.project_id
 
-  rrdatas = [
-    for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
-    record.rrdata if record.type == "CNAME"
-  ]
+  rrdatas = local.frontend_domain_cname_rrdatas
 
   depends_on = [google_cloud_run_domain_mapping.frontend_custom_domain]
 }
