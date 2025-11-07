@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # Node.js (if using npm/yarn)
 node_modules
+package-lock.json
 
 # Bun
 .bun

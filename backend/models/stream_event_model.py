@@ -45,15 +45,34 @@ class ErrorType(str, Enum):
 class EventMetadata(BaseModel):
     """Metadata about event timing and progress"""
 
-    elapsed_ms: int = Field(..., description="Milliseconds since workflow start")
-    step: int = Field(..., ge=1, le=4, description="Current step number (1-4)")
-    total_steps: int = Field(default=4, description="Total steps in workflow")
+    elapsed_ms: Optional[int] = Field(
+        default=None, description="Milliseconds since workflow start"
+    )
+    step: Optional[int] = Field(
+        default=None, ge=1, le=4, description="Current step number (1-4)"
+    )
+<<<<<<< HEAD
+    total_steps: Optional[int] = Field(
+        default=4, description="Total steps in workflow"
+    )
+=======
+    total_steps: Optional[int] = Field(default=4, description="Total steps in workflow")
+>>>>>>> origin/main
     agent_sequence: List[str] = Field(
-        default=["orchestrator", "summarizer", "linker", "visualizer"],
+        default_factory=lambda: [
+            "orchestrator",
+            "summarizer",
+            "linker",
+            "visualizer",
+        ],
         description="Order of agents in workflow",
+    )
+    session_id: Optional[str] = Field(
+        default=None, description="Optional session identifier for event"
     )
 
     model_config = ConfigDict(
+        extra="allow",
         json_schema_extra={
             "example": {
                 "elapsed_ms": 1234,
@@ -66,7 +85,7 @@ class EventMetadata(BaseModel):
                     "visualizer",
                 ],
             }
-        }
+        },
     )
 
 
@@ -94,53 +113,78 @@ class ErrorPayload(BaseModel):
     )
 
 
-class AgentEventPayload(BaseModel):
-    """Payload data from agent processing"""
+class EventPayload(BaseModel):
+    """Backward-compatible payload schema for streaming events"""
 
-    # Summarizer outputs
     summary: Optional[str] = Field(default=None, description="Generated summary text")
-
-    # Linker outputs
     entities: Optional[List[str]] = Field(
         default=None, description="List of identified entities"
     )
     relationships: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="List of entity relationships"
     )
-
-    # Visualizer outputs
     visualization: Optional[Dict[str, Any]] = Field(
         default=None, description="Graph visualization data"
     )
-
-    # Error information
     error: Optional[ErrorPayload] = Field(
-        default=None, description="Error details if status is 'error'"
+        default=None, description="Structured error details"
     )
-
-    # Partial/streaming results
+    error_message: Optional[str] = Field(
+        default=None, description="Human-readable error message"
+    )
+    error_type: Optional[str] = Field(default=None, description="Legacy error type")
+    error_details: Optional[str] = Field(
+        default=None, description="Legacy error details"
+    )
+    recoverable: Optional[bool] = Field(
+        default=None, description="Legacy recoverable flag"
+    )
     partial_results: Optional[Dict[str, Any]] = Field(
         default=None, description="Partial results during processing"
     )
-
-    # Metrics
     metrics: Optional[Dict[str, Any]] = Field(
         default=None, description="Performance metrics (latency, tokens, etc.)"
     )
 
     model_config = ConfigDict(
+        extra="allow",
         json_schema_extra={
             "example": {
                 "summary": "This document describes the key features...",
                 "entities": None,
                 "relationships": None,
                 "visualization": None,
-                "error": None,
+                "error_message": None,
+                "error_type": None,
                 "partial_results": None,
                 "metrics": {"processing_time_ms": 1234, "tokens_used": 450},
             }
-        }
+        },
     )
+
+    def model_post_init(self, __context: Any) -> None:  # type: ignore[override]
+        # Bridge legacy error fields into structured error payload
+        if self.error is None and (self.error_message or self.error_type):
+            try:
+                error_type_enum = ErrorType(self.error_type or "unknown")
+            except ValueError:
+                error_type_enum = ErrorType.UNKNOWN
+
+            self.error = ErrorPayload(
+                error=self.error_message or "AgentError",
+                error_type=error_type_enum,
+                error_details=self.error_details,
+                recoverable=self.recoverable if self.recoverable is not None else False,
+            )
+
+
+class AgentEventPayload(EventPayload):
+    """Alias for newer naming used in backend services"""
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
+    pass
 
 
 class AgentStreamEvent(BaseModel):
@@ -157,10 +201,10 @@ class AgentStreamEvent(BaseModel):
         description="ISO 8601 timestamp of event",
     )
     metadata: EventMetadata = Field(
-        ..., description="Event timing and progress metadata"
+        default_factory=EventMetadata, description="Event timing and progress metadata"
     )
-    payload: AgentEventPayload = Field(
-        default_factory=AgentEventPayload,
+    payload: EventPayload = Field(
+        default_factory=EventPayload,
         description="Event payload with results or error",
     )
 
