@@ -11,7 +11,6 @@ Tests cover:
 import os
 
 
-
 class TestDockerfileConfiguration:
     """Test Dockerfile configuration best practices"""
 
