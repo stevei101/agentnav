@@ -46,11 +46,16 @@ class TestHealthzEndpoint:
 
     def test_healthz_with_unavailable_adk(self):
         """Test healthz returns degraded when ADK agents cannot be imported"""
+        # Create a selective import mock that only blocks backend.agents
+        original_import = __import__
+        
+        def selective_import(name, *args, **kwargs):
+            if name == "backend.agents" or name.startswith("backend.agents."):
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+        
         with patch.dict("sys.modules", {"backend.agents": None}):
-            with patch(
-                "builtins.__import__",
-                side_effect=ImportError("No module named 'backend.agents'"),
-            ):
+            with patch("builtins.__import__", side_effect=selective_import):
                 response = client.get("/healthz")
 
                 assert response.status_code == 200
@@ -122,11 +127,16 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_import_error(self):
         """Test agent status handles import errors with diagnostics"""
+        # Create a selective import mock that only blocks backend.agents
+        original_import = __import__
+        
+        def selective_import(name, *args, **kwargs):
+            if name == "backend.agents" or name.startswith("backend.agents."):
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+        
         with patch.dict("sys.modules", {"backend.agents": None}):
-            with patch(
-                "builtins.__import__",
-                side_effect=ImportError("No module named 'backend.agents'"),
-            ):
+            with patch("builtins.__import__", side_effect=selective_import):
                 response = client.get("/api/agents/status")
 
                 assert response.status_code == 200
