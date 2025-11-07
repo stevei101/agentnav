@@ -1,0 +1,4 @@
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: us-central1
+  ARTIFACT_REGISTRY_REPOSITORY: prompt-vault  # Dedicated GAR repository for Prompt Vault images

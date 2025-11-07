@@ -15,11 +15,11 @@ Prompt Vault is a separate application that uses:
 
 This application is completely isolated from the main `agentnav` application:
 
-- **Container Images:** `prompt-vault-frontend` and `prompt-vault-backend` (vs `agentnav-frontend`, `agentnav-backend`)
-- **Cloud Run Services:** `prompt-vault-frontend` and `prompt-vault-backend`
+- **Container Image:** `prompt-management-app` (vs `agentnav-frontend`, `agentnav-backend`)
+- **Cloud Run Service:** `prompt-management-app`
 - **CI/CD Workflow:** Separate workflow file (`.github/workflows/build-prompt-vault.yml`) with path filtering
-- **GAR Repository:** Shares `agentnav-containers` repository but with different image names
-- **Service Accounts:** `prompt-vault-frontend@${PROJECT_ID}.iam.gserviceaccount.com`
+- **GAR Repository:** Dedicated `prompt-vault` repository in `us-central1`
+- **Service Account:** `agentnav-prompt-mgmt@${PROJECT_ID}.iam.gserviceaccount.com`
 
 ## Local Development
 
@@ -99,7 +99,7 @@ Deployment is handled automatically via GitHub Actions:
 - **Trigger:** Changes to `prompt-vault/` directory
 - **Workflow:** `.github/workflows/build-prompt-vault.yml`
 - **Image Tagging:** Same strategy as agentnav (pr-{number}, {sha}, latest)
-- **Registry:** `europe-west1-docker.pkg.dev/${PROJECT_ID}/agentnav-containers/prompt-vault-frontend:${TAG}`
+- **Registry:** `us-central1-docker.pkg.dev/${PROJECT_ID}/prompt-vault/prompt-management-app:${TAG}`
 
 ## Environment Variables (Cloud Run)
 

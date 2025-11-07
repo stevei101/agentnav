@@ -136,12 +136,12 @@ export IMAGE_TAG="latest"  # Or specific version
 cd /path/to/prompt-management-app
 podman build -t prompt-management-app:$IMAGE_TAG .
 podman tag prompt-management-app:$IMAGE_TAG \
-  $REGION-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:$IMAGE_TAG
-podman push $REGION-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:$IMAGE_TAG
+  $REGION-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:$IMAGE_TAG
+podman push $REGION-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:$IMAGE_TAG
 
 # 3. Deploy to Cloud Run
 gcloud run deploy prompt-management-app \
-  --image=$REGION-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:$IMAGE_TAG \
+  --image=$REGION-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:$IMAGE_TAG \
   --region=$REGION \
   --platform=managed \
   --port=80 \
@@ -366,12 +366,12 @@ podman build -t prompt-management-app:v2 .
 
 # Tag and push
 podman tag prompt-management-app:v2 \
-  us-central1-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:v2
-podman push us-central1-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:v2
+  us-central1-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:v2
+podman push us-central1-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:v2
 
 # Update service
 gcloud run services update prompt-management-app \
-  --image=us-central1-docker.pkg.dev/$PROJECT_ID/agentnav-containers/prompt-management-app:v2 \
+  --image=us-central1-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:v2 \
   --region=us-central1
 ```
 

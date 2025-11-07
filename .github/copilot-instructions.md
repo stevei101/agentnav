@@ -220,7 +220,7 @@ gcloud run deploy gemma-service \
 
 # Gen AI Prompt Management App (us-central1)
 gcloud run deploy prompt-management-app \
-  --image gcr.io/$PROJECT_ID/prompt-management-app:$GITHUB_SHA \
+  --image us-central1-docker.pkg.dev/$PROJECT_ID/prompt-vault/prompt-management-app:$GITHUB_SHA \
   --region us-central1 --platform managed --port 8080 --timeout 300s \
   --set-env-vars PORT=8080 \
   --set-secrets SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest
