@@ -58,7 +58,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Run FastAPI app with Cloud Run optimizations
 # Using exec form with sh -c to support PORT environment variable and proper signal handling
-# Cloud Run optimizations from start.sh:
+# Cloud Run optimizations:
 # - --timeout-keep-alive 65: Prevents load balancer from closing idle connections (default: 5s)
 # - --timeout-graceful-shutdown 30: Allows graceful shutdown on SIGTERM
 # - --no-access-log: Reduces log volume (Cloud Run captures all logs)
