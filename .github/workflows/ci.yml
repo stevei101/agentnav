@@ -286,35 +286,43 @@ jobs:
 
       - name: Install detect-secrets
         run: |
-          python3 -m pip install --upgrade "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
+          python3 -m pip install --upgrade detect-secrets
 
       - name: Scan for secrets with detect-secrets (non-interactive)
         run: |
           # Check if baseline exists
           if [ ! -f .secrets.baseline ]; then
             echo "⚠️  Baseline file not found. Please create it locally and commit:"
-            echo "   detect-secrets scan --baseline .secrets.baseline"
+            echo "   detect-secrets scan > .secrets.baseline"
             echo "   git add .secrets.baseline && git commit"
             exit 1
           fi
           
-          # Scan current code and create temporary baseline
+          # Copy baseline to temp location and scan current code
+          # This preserves the filter configuration and audited secrets from the committed baseline
           echo "🔍 Scanning for secrets with detect-secrets..."
-          detect-secrets scan --baseline /tmp/current-scan.baseline
+          cp .secrets.baseline /tmp/current-scan.baseline
+          detect-secrets scan --baseline /tmp/current-scan.baseline --exclude-files '\.secrets\.baseline$' .
           
-          # Compare current scan with committed baseline
-          # This will show differences if new secrets are found
-          if ! detect-secrets compare /tmp/current-scan.baseline .secrets.baseline; then
-            echo "❌ New secrets detected! Differences found between current code and baseline."
+          # Check for unverified/unaudited secrets in the scan
+          # The audit --report command outputs JSON with secrets categorized as UNVERIFIED or REVIEWED
+          AUDIT_OUTPUT=$(detect-secrets audit --report /tmp/current-scan.baseline)
+          UNVERIFIED_COUNT=$(echo "$AUDIT_OUTPUT" | jq -r '[.results[] | select(.category == "UNVERIFIED")] | length')
+          
+          if [ "$UNVERIFIED_COUNT" -gt 0 ]; then
+            echo "❌ New unaudited secrets detected! Found $UNVERIFIED_COUNT unverified secrets."
+            echo ""
+            echo "$AUDIT_OUTPUT" | jq -r '.results[] | select(.category == "UNVERIFIED") | "  - \(.filename): \(.types | join(", "))"'
             echo ""
             echo "To fix this locally:"
-            echo "  1. Run: detect-secrets scan --update .secrets.baseline"
-            echo "  2. Review the baseline file"
-            echo "  3. Commit the updated baseline: git add .secrets.baseline && git commit"
+            echo "  1. Run: detect-secrets scan --baseline .secrets.baseline"
+            echo "  2. Run: detect-secrets audit .secrets.baseline"
+            echo "  3. Mark secrets as false positives in the interactive audit (press 'n' for false positive)"
+            echo "  4. Commit the updated baseline: git add .secrets.baseline && git commit"
             exit 1
           fi
           
-          echo "✅ No new secrets detected (baseline matches current scan)"
+          echo "✅ No new unaudited secrets detected"
           echo "✓ .gitignore properly configured"
 
   # ============================================================================
