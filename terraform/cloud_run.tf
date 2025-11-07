@@ -42,7 +42,7 @@ resource "google_cloud_run_v2_service" "frontend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.frontend_container_port
         }
@@ -148,7 +148,7 @@ resource "google_cloud_run_v2_service" "backend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.backend_container_port
         }
@@ -240,7 +240,7 @@ resource "google_cloud_run_v2_service" "gemma" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 30  # 300s total / 10s period = 30 attempts (for GPU model loading)
+        failure_threshold = 30 # 300s total / 10s period = 30 attempts (for GPU model loading)
         tcp_socket {
           port = var.gemma_container_port
         }
