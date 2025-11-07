@@ -67,9 +67,7 @@ async def suggest_prompt(
     )
 
     suggestions = [
-        item.strip(" -")
-        for item in suggestions_text.splitlines()
-        if item.strip()
+        item.strip(" -") for item in suggestions_text.splitlines() if item.strip()
     ]
 
     if not suggestions:
@@ -88,4 +86,3 @@ async def suggest_prompt(
             "authenticated": str(auth_info.get("authenticated", False)).lower(),
         },
     )
-

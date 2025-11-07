@@ -31,7 +31,10 @@ def test_suggest_prompt_returns_suggestions():
 
     fake_response = "- Improved prompt\n- Another prompt"
 
-    with patch("backend.services.gemini_client.reason_with_gemini", new=AsyncMock(return_value=fake_response)):
+    with patch(
+        "backend.services.gemini_client.reason_with_gemini",
+        new=AsyncMock(return_value=fake_response),
+    ):
         response = client.post(
             "/api/prompt-assistant/suggest",
             json={"prompt": "Test prompt", "max_suggestions": 2},
@@ -40,4 +43,3 @@ def test_suggest_prompt_returns_suggestions():
     assert response.status_code == 200
     data = response.json()
     assert data["suggestions"] == ["Improved prompt", "Another prompt"]
-

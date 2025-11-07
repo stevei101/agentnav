@@ -62,7 +62,9 @@ class TestHealthzEndpoint:
 
     def test_healthz_firestore_check(self):
         """Test healthz checks Firestore connectivity"""
-        with patch("backend.services.firestore_client.get_firestore_client") as mock_firestore:
+        with patch(
+            "backend.services.firestore_client.get_firestore_client"
+        ) as mock_firestore:
             # Mock Firestore client available
             mock_firestore.return_value = MagicMock()
 
@@ -141,7 +143,8 @@ class TestAgentStatusEndpoint:
         with (
             patch("backend.agents.OrchestratorAgent") as mock_orch,
             patch(
-                "backend.agents.SummarizerAgent", side_effect=Exception("Summarizer init failed")
+                "backend.agents.SummarizerAgent",
+                side_effect=Exception("Summarizer init failed"),
             ),
             patch("backend.agents.LinkerAgent") as mock_link,
             patch("backend.agents.VisualizerAgent") as mock_viz,

@@ -51,9 +51,7 @@ class EventMetadata(BaseModel):
     step: Optional[int] = Field(
         default=None, ge=1, le=4, description="Current step number (1-4)"
     )
-    total_steps: Optional[int] = Field(
-        default=4, description="Total steps in workflow"
-    )
+    total_steps: Optional[int] = Field(default=4, description="Total steps in workflow")
     agent_sequence: List[str] = Field(
         default_factory=lambda: [
             "orchestrator",
@@ -81,7 +79,7 @@ class EventMetadata(BaseModel):
                     "visualizer",
                 ],
             }
-        }
+        },
     )
 
 
@@ -176,6 +174,7 @@ class EventPayload(BaseModel):
 
 class AgentEventPayload(EventPayload):
     """Alias for newer naming used in backend services"""
+
     pass
 
 

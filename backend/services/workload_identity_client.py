@@ -72,4 +72,3 @@ def reset_token_cache() -> None:
     """Utility for tests to clear the cached tokens."""
 
     _TOKEN_CACHE.clear()
-

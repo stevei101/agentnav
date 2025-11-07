@@ -52,7 +52,9 @@ def test_token_rejected_if_email_missing(monkeypatch):
     app = create_app()
     client = TestClient(app)
 
-    with patch("backend.services.workload_identity_auth.id_token.verify_oauth2_token") as verify:
+    with patch(
+        "backend.services.workload_identity_auth.id_token.verify_oauth2_token"
+    ) as verify:
         verify.return_value = {"aud": "aud"}
 
         response = client.get("/protected", headers={"Authorization": "Bearer abc"})
@@ -62,13 +64,20 @@ def test_token_rejected_if_email_missing(monkeypatch):
 
 def test_token_rejected_if_email_not_trusted(monkeypatch):
     monkeypatch.setenv("REQUIRE_WI_AUTH", "true")
-    monkeypatch.setenv("TRUSTED_SERVICE_ACCOUNTS", "trusted@project.iam.gserviceaccount.com")
+    monkeypatch.setenv(
+        "TRUSTED_SERVICE_ACCOUNTS", "trusted@project.iam.gserviceaccount.com"
+    )
 
     app = create_app()
     client = TestClient(app)
 
-    with patch("backend.services.workload_identity_auth.id_token.verify_oauth2_token") as verify:
-        verify.return_value = {"aud": "aud", "email": "intruder@project.iam.gserviceaccount.com"}
+    with patch(
+        "backend.services.workload_identity_auth.id_token.verify_oauth2_token"
+    ) as verify:
+        verify.return_value = {
+            "aud": "aud",
+            "email": "intruder@project.iam.gserviceaccount.com",
+        }
 
         response = client.get("/protected", headers={"Authorization": "Bearer abc"})
 
@@ -77,14 +86,21 @@ def test_token_rejected_if_email_not_trusted(monkeypatch):
 
 def test_token_allows_trusted_service_account(monkeypatch):
     monkeypatch.setenv("REQUIRE_WI_AUTH", "true")
-    monkeypatch.setenv("TRUSTED_SERVICE_ACCOUNTS", "trusted@project.iam.gserviceaccount.com")
-    monkeypatch.setenv("EXPECTED_AUDIENCE", "https://backend" )
+    monkeypatch.setenv(
+        "TRUSTED_SERVICE_ACCOUNTS", "trusted@project.iam.gserviceaccount.com"
+    )
+    monkeypatch.setenv("EXPECTED_AUDIENCE", "https://backend")
 
     app = create_app()
     client = TestClient(app)
 
-    with patch("backend.services.workload_identity_auth.id_token.verify_oauth2_token") as verify:
-        verify.return_value = {"aud": "https://backend", "email": "trusted@project.iam.gserviceaccount.com"}
+    with patch(
+        "backend.services.workload_identity_auth.id_token.verify_oauth2_token"
+    ) as verify:
+        verify.return_value = {
+            "aud": "https://backend",
+            "email": "trusted@project.iam.gserviceaccount.com",
+        }
 
         response = client.get("/protected", headers={"Authorization": "Bearer abc"})
 
@@ -92,4 +108,3 @@ def test_token_allows_trusted_service_account(monkeypatch):
     body = response.json()
     assert body["authenticated"] is True
     assert body["email"] == "trusted@project.iam.gserviceaccount.com"
-

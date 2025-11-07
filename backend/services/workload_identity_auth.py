@@ -122,4 +122,3 @@ async def verify_workload_identity(request: Request) -> Dict[str, Optional[str]]
 
 
 WorkloadIdentityAuth = Depends(verify_workload_identity)
-
