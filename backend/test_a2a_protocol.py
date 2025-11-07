@@ -25,12 +25,9 @@ async def test_a2a_message_schemas():
     try:
         from models.a2a_messages import (
             A2ATraceContext,
-            AgentStatusMessage,
-            KnowledgeTransferMessage,
             RelationshipMappedMessage,
             SummarizationCompletedMessage,
             TaskDelegationMessage,
-            VisualizationReadyMessage,
             create_correlation_id,
             create_message_id,
         )
@@ -119,7 +116,7 @@ async def test_a2a_security():
             create_correlation_id,
             create_message_id,
         )
-        from services.a2a_security import ServiceAccountIdentity, get_security_service
+        from services.a2a_security import get_security_service
 
         # Initialize security service
         security_service = get_security_service()
@@ -208,7 +205,6 @@ async def test_a2a_protocol_service():
         from services.a2a_protocol import (
             A2AProtocolService,
             create_knowledge_transfer_message,
-            create_status_message,
             create_task_delegation_message,
         )
 

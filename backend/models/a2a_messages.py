@@ -12,8 +12,6 @@ Key Features:
 - Support for Workload Identity authentication
 """
 
-import hashlib
-import json
 import time
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional

@@ -8,7 +8,6 @@ import asyncio
 import logging
 import time
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
@@ -17,7 +16,6 @@ from backend.models.context_model import SessionContext
 from backend.models.stream_event_model import (
     ErrorType,
     WorkflowStreamRequest,
-    WorkflowStreamResponse,
 )
 from backend.services.event_emitter import get_event_emitter_manager
 

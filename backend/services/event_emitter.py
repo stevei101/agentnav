@@ -6,19 +6,15 @@ Allows agents to emit status events that are streamed to frontend in real-time.
 """
 
 import asyncio
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from backend.models.stream_event_model import (
     AgentEventPayload,
-    AgentStatusEnum,
     AgentStreamEvent,
     AgentTypeEnum,
-    ErrorPayload,
     ErrorType,
-    EventMetadata,
     create_agent_complete_event,
     create_agent_error_event,
     create_agent_processing_event,

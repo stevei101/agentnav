@@ -12,7 +12,6 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from backend.routes.prompt_routes import router as prompt_router
@@ -149,9 +148,9 @@ async def healthz_check():
     if adk_status is None and agents_module is not None:
         try:
             OrchestratorAgent = getattr(agents_module, "OrchestratorAgent")
-            SummarizerAgent = getattr(agents_module, "SummarizerAgent")
-            LinkerAgent = getattr(agents_module, "LinkerAgent")
-            VisualizerAgent = getattr(agents_module, "VisualizerAgent")
+            getattr(agents_module, "SummarizerAgent")
+            getattr(agents_module, "LinkerAgent")
+            getattr(agents_module, "VisualizerAgent")
             A2AProtocol = getattr(agents_module, "A2AProtocol")
 
             # Test agent instantiation (doesn't require full initialization)

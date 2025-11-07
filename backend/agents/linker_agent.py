@@ -435,9 +435,6 @@ Extract 5-10 key entities:
         """Identify relationships in document content"""
         relationships = []
 
-        # Simple approach: entities that appear near each other are related
-        entity_labels = [entity["label"].lower() for entity in entities]
-
         for i, entity1 in enumerate(entities):
             for j, entity2 in enumerate(entities):
                 if i >= j:  # Avoid duplicates and self-references
@@ -554,9 +551,6 @@ Provide relationship insights:
         self, relationships: List[Dict[str, Any]], summary_context: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Enhance relationships using summary context from Summarizer Agent"""
-        # This could use summary insights to weight or filter relationships
-        insights = summary_context.get("insights", {})
-
         # For now, just add metadata based on content length
         for relationship in relationships:
             relationship["confidence"] = "high" if len(relationships) < 10 else "medium"

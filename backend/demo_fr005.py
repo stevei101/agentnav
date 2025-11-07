@@ -96,7 +96,7 @@ The field continues to evolve rapidly, with new breakthroughs emerging regularly
             content_type="document",
         )
 
-        print(f"✅ SessionContext created")
+        print("✅ SessionContext created")
         print(f"   Session ID: {session_context.session_id}")
         print(f"   Content type: {session_context.content_type}")
         print(f"   Input length: {len(session_context.raw_input)} characters")

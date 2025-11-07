@@ -57,7 +57,7 @@ class FirestoreClient:
                 )
             else:
                 # Use production Firestore
-                logger.info(f"☁️  Using production Firestore")
+                logger.info("☁️  Using production Firestore")
                 logger.info(
                     f"   Project: {self._project_id}, Database: {self._database_id}"
                 )

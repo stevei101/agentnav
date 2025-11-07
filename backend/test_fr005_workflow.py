@@ -161,7 +161,7 @@ Applications include image recognition, natural language processing, and recomme
             print("   ⚠️  Relationships: None found")
 
         if updated_context.graph_json:
-            print(f"   ✅ Graph JSON: Generated")
+            print("   ✅ Graph JSON: Generated")
             print(f"      - Type: {updated_context.graph_json.get('type')}")
             print(f"      - Nodes: {len(updated_context.graph_json.get('nodes', []))}")
             print(f"      - Edges: {len(updated_context.graph_json.get('edges', []))}")

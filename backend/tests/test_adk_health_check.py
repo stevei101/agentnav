@@ -27,7 +27,7 @@ class TestHealthzEndpoint:
         """Test healthz returns healthy when ADK is operational"""
         with (
             patch("backend.agents.OrchestratorAgent") as mock_agent_class,
-            patch("backend.agents.A2AProtocol") as mock_a2a,
+            patch("backend.agents.A2AProtocol"),
         ):
             # Mock successful agent initialization
             mock_agent = MagicMock()
@@ -100,7 +100,7 @@ class TestAgentStatusEndpoint:
             patch("backend.agents.SummarizerAgent") as mock_sum,
             patch("backend.agents.LinkerAgent") as mock_link,
             patch("backend.agents.VisualizerAgent") as mock_viz,
-            patch("backend.agents.A2AProtocol") as mock_a2a,
+            patch("backend.agents.A2AProtocol"),
         ):
             # Mock agent instances
             def create_mock_agent(name):
@@ -149,7 +149,7 @@ class TestAgentStatusEndpoint:
             ),
             patch("backend.agents.LinkerAgent") as mock_link,
             patch("backend.agents.VisualizerAgent") as mock_viz,
-            patch("backend.agents.A2AProtocol") as mock_a2a,
+            patch("backend.agents.A2AProtocol"),
         ):
             # Mock successful agents
             def create_mock_agent(name):

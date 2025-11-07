@@ -10,7 +10,6 @@ Tests cover:
 
 import os
 
-import pytest
 
 
 class TestDockerfileConfiguration:
@@ -18,7 +17,6 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_uses_multistage_build(self):
         """Verify Dockerfile uses multi-stage build pattern"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -33,7 +31,6 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_uses_nonroot_user(self):
         """Verify Dockerfile creates and uses non-root user (security)"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -47,7 +44,6 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_sets_pythonunbuffered(self):
         """Verify Dockerfile sets PYTHONUNBUFFERED (Cloud Run best practice)"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -59,7 +55,6 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_optimizes_layer_caching(self):
         """Verify Dockerfile copies dependencies before application code"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -85,7 +80,6 @@ class TestDockerfileConfiguration:
 
     def test_dockerfile_copies_from_builder(self):
         """Verify runtime stage copies dependencies from builder stage"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -102,7 +96,6 @@ class TestStartupScript:
 
     def test_startup_script_reads_port_env(self):
         """Verify startup script reads PORT from environment"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -116,7 +109,6 @@ class TestStartupScript:
 
     def test_startup_script_configures_workers(self):
         """Verify startup script configures Uvicorn workers"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -129,7 +121,6 @@ class TestStartupScript:
 
     def test_startup_script_sets_keepalive(self):
         """Verify startup script sets keepalive timeout for Cloud Run"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -142,7 +133,6 @@ class TestStartupScript:
 
     def test_startup_script_sets_graceful_shutdown(self):
         """Verify startup script configures graceful shutdown"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -155,7 +145,6 @@ class TestStartupScript:
 
     def test_startup_script_uses_optimal_worker_count(self):
         """Verify startup script uses optimal worker count for Cloud Run"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -172,7 +161,6 @@ class TestCIConfigurationModernization:
 
     def test_ci_uses_modern_gcloud_syntax(self):
         """Verify CI uses modern gcloud run deploy syntax"""
-        import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -190,7 +178,6 @@ class TestCIConfigurationModernization:
 
     def test_ci_configures_cloud_run_scaling(self):
         """Verify CI configures min/max instances for Cloud Run"""
-        import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -206,7 +193,6 @@ class TestCIConfigurationModernization:
 
     def test_ci_sets_environment_variables(self):
         """Verify CI sets production environment variables"""
-        import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -221,7 +207,6 @@ class TestCIConfigurationModernization:
 
     def test_ci_configures_cpu_throttling(self):
         """Verify CI configures CPU throttling for cost optimization"""
-        import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -236,7 +221,6 @@ class TestCIConfigurationModernization:
 
     def test_ci_sets_explicit_port(self):
         """Verify CI explicitly sets port for Cloud Run"""
-        import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -255,7 +239,6 @@ class TestFastAPIConfiguration:
 
     def test_main_has_cors_configuration(self):
         """Verify main.py has CORS configuration"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         main_path = os.path.join(backend_dir, "main.py")
@@ -269,7 +252,6 @@ class TestFastAPIConfiguration:
 
     def test_main_has_security_headers_middleware(self):
         """Verify main.py has security headers middleware"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         main_path = os.path.join(backend_dir, "main.py")
@@ -284,7 +266,6 @@ class TestFastAPIConfiguration:
 
     def test_main_has_trusted_host_middleware(self):
         """Verify main.py has TrustedHostMiddleware"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         main_path = os.path.join(backend_dir, "main.py")
@@ -298,7 +279,6 @@ class TestFastAPIConfiguration:
 
     def test_main_has_healthz_endpoint(self):
         """Verify main.py has /healthz endpoint (Cloud Run standard)"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         main_path = os.path.join(backend_dir, "main.py")
@@ -312,7 +292,6 @@ class TestFastAPIConfiguration:
 
     def test_main_configures_cors_max_age(self):
         """Verify CORS is configured with max_age for preflight caching"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         main_path = os.path.join(backend_dir, "main.py")
@@ -329,7 +308,6 @@ class TestDeploymentBestPractices:
 
     def test_dockerfile_minimizes_layers(self):
         """Verify Dockerfile uses efficient layering strategy"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")
@@ -351,7 +329,6 @@ class TestDeploymentBestPractices:
 
     def test_startup_script_uses_exec(self):
         """Verify startup script uses exec for proper signal handling"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         startup_path = os.path.join(backend_dir, "start.sh")
@@ -364,7 +341,6 @@ class TestDeploymentBestPractices:
 
     def test_dockerfile_exposes_port(self):
         """Verify Dockerfile exposes the correct port"""
-        import os
 
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         dockerfile_path = os.path.join(backend_dir, "Dockerfile")

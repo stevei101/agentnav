@@ -15,7 +15,7 @@ import json
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional
 
 from models.a2a_messages import (
     A2AMessageBase,
@@ -23,10 +23,7 @@ from models.a2a_messages import (
     A2AMessageStatus,
     AgentStatusMessage,
     KnowledgeTransferMessage,
-    RelationshipMappedMessage,
-    SummarizationCompletedMessage,
     TaskDelegationMessage,
-    VisualizationReadyMessage,
     create_correlation_id,
     create_message_id,
 )
@@ -68,7 +65,7 @@ class A2AProtocolService:
         # Security service
         self._security_service = get_security_service()
 
-        logger.info(f"🔄 A2A Protocol Service initialized")
+        logger.info("🔄 A2A Protocol Service initialized")
         logger.info(f"   Session ID: {self.session_id}")
         logger.info(f"   Correlation ID: {self.correlation_id}")
 
