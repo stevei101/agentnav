@@ -1,4 +1,54 @@
+name: Build Prompt Vault Container
+
+on:
+  push:
+    branches: [ main, staging ]
+    paths:
+      - 'prompt-vault/**'
+      - '.github/workflows/build-prompt-vault.yml'
+  pull_request:
+    branches: [ main, staging ]
+    paths:
+      - 'prompt-vault/**'
+      - '.github/workflows/build-prompt-vault.yml'
+
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   ARTIFACT_REGISTRY_LOCATION: us-central1
-  ARTIFACT_REGISTRY_REPOSITORY: prompt-vault  # Dedicated GAR repository for Prompt Vault images
+  ARTIFACT_REGISTRY_REPOSITORY: prompt-vault
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Artifact Registry auth
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev --quiet
+
+      - name: Build Prompt Vault image
+        working-directory: prompt-vault
+        run: |
+          docker build \
+            --tag ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/frontend:${{ github.sha }} \
+            --file Dockerfile \
+            .
+
+      - name: Push image to Artifact Registry
+        run: |
+          docker push ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/frontend:${{ github.sha }}
