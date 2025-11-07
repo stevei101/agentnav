@@ -177,3 +177,6 @@ Ensure service accounts have `secretmanager.secretAccessor` role (configured in 
 - ✅ Service accounts use least-privilege IAM roles
 - ✅ WIF used for GitHub Actions (no static keys)
 - ✅ Secrets only accessible to required services
+
+# Automation Note
+This addition simply triggers the Terraform GitHub Actions workflow (`.github/workflows/terraform.yml`) and does not introduce any behavioral changes.
