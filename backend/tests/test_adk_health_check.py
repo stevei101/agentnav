@@ -48,7 +48,7 @@ class TestHealthzEndpoint:
         """Test healthz returns degraded when ADK agents cannot be imported"""
         with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
-                "builtins.__import__",
+                "backend.main.importlib.import_module",
                 side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/healthz")
@@ -124,7 +124,7 @@ class TestAgentStatusEndpoint:
         """Test agent status handles import errors with diagnostics"""
         with patch.dict("sys.modules", {"backend.agents": None}):
             with patch(
-                "builtins.__import__",
+                "backend.main.importlib.import_module",
                 side_effect=ImportError("No module named 'backend.agents'"),
             ):
                 response = client.get("/api/agents/status")
