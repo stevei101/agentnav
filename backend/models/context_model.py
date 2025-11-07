@@ -70,7 +70,11 @@ class SessionContext(BaseModel):
     )
 
     # Input data
-    raw_input: str = Field(..., description="Original document or codebase content")
+    raw_input: str = Field(
+        default="",
+        description="Original document or codebase content",
+        alias="document",
+    )
 
     # Summarizer Agent outputs
     summary_text: Optional[str] = Field(
@@ -110,8 +114,12 @@ class SessionContext(BaseModel):
     errors: List[Dict[str, str]] = Field(
         default_factory=list, description="List of errors encountered during workflow"
     )
+    agent_states: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict, description="Per-agent state tracking"
+    )
 
     model_config = ConfigDict(
+        populate_by_name=True,
         json_schema_extra={
             "example": {
                 "session_id": "session_12345",
@@ -146,6 +154,15 @@ class SessionContext(BaseModel):
             }
         }
     )
+
+    @property
+    def document(self) -> str:
+        """Backwards-compatible accessor for raw input."""
+        return self.raw_input
+
+    @document.setter
+    def document(self, value: str) -> None:
+        self.raw_input = value
 
     def mark_agent_complete(self, agent_name: str):
         """Mark an agent as completed in the workflow"""
