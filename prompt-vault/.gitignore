@@ -1,3 +1,15 @@
+# Prompt Vault frontend artifacts
+frontend/node_modules
+frontend/dist
+frontend/.env*
+frontend/.DS_Store
+
+# Logs
+*.log
+
+# Editor
+.vscode
+.idea
 # Dependencies
 node_modules/
 bun.lockb

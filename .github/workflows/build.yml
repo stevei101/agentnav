@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [frontend, backend]
+        service: [frontend, backend, prompt-mgmt]
       fail-fast: false
 
     steps:
@@ -171,6 +171,41 @@ jobs:
 
           echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
 
+      - name: Build and push prompt management app
+        if: matrix.service == 'prompt-mgmt'
+        run: |
+          set -euo pipefail
+
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-management-app"
+          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Error: image_tag output is missing"
+            exit 1
+          fi
+
+          echo "🔨 Building prompt management image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f prompt-vault/Dockerfile \
+            ./prompt-vault
+
+          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+          if [[ -n "${LATEST_TAG}" ]]; then
+            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
+            docker push ${IMAGE_NAME}:${LATEST_TAG}
+          fi
+
+          echo "✅ Prompt management image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
@@ -182,7 +217,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [frontend, backend]
+        service: [frontend, backend, prompt-mgmt]
       fail-fast: false
 
     steps:
@@ -263,6 +298,44 @@ jobs:
 
           echo "✅ Backend deployment completed"
 
+      - name: Deploy prompt management app to Cloud Run
+        if: matrix.service == 'prompt-mgmt'
+        run: |
+          set -euo pipefail
+
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/prompt-management-app:latest"
+          SERVICE_ACCOUNT="agentnav-prompt-mgmt@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
+          echo "🚀 Deploying prompt management app to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: us-central1"
+          echo "   Service Account: ${SERVICE_ACCOUNT}"
+
+          gcloud run deploy prompt-management-app \
+            --image ${IMAGE} \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account ${SERVICE_ACCOUNT} \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 80 \
+            --set-secrets SUPABASE_URL=SUPABASE_URL:latest \
+            --set-secrets SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest \
+            --set-secrets SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest \
+            --set-secrets NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest \
+            --set-secrets NEXT_PUBLIC_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest \
+            --set-env-vars ENVIRONMENT=production \
+            --quiet
+
+          echo "✅ Prompt management deployment completed"
+
       - name: Get service URLs
         if: matrix.service == 'frontend'
         run: |
@@ -275,5 +348,11 @@ jobs:
           echo "Backend URL:"
           gcloud run services describe agentnav-backend \
             --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"
+
+          echo "Prompt Management URL:"
+          gcloud run services describe prompt-management-app \
+            --region us-central1 \
             --project ${GCP_PROJECT_ID} \
             --format="value(status.url)"

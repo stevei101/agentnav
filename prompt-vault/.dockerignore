@@ -1,0 +1,14 @@
+# Ignore dependencies and build artifacts to keep Docker contexts small
+frontend/node_modules
+frontend/dist
+frontend/.env*
+frontend/.DS_Store
+
+# Git and editor files
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+**/.DS_Store
+

@@ -48,20 +48,25 @@ set -e \
 envsubst "\${PORT}" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
 # Inject Supabase environment variables via a separate config.js file for better security \
 # This approach generates a separate config file at runtime rather than modifying HTML with sed \
-if [ -n "$SUPABASE_URL" ] || [ -n "$SUPABASE_ANON_KEY" ] || [ -n "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]; then \
+if [ -n "$SUPABASE_URL" ] || [ -n "$SUPABASE_ANON_KEY" ] || [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] || [ -n "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ] || [ -n "$GOOGLE_CLIENT_ID" ]; then \
   # Use node.js for proper JSON escaping to prevent injection vulnerabilities \
   node -e " \
     const fs = require('fs'); \
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || null; \
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null; \
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || null; \
     const config = { \
-      SUPABASE_URL: process.env.SUPABASE_URL || null, \
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || null, \
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || null \
+      SUPABASE_URL: supabaseUrl, \
+      SUPABASE_ANON_KEY: supabaseAnonKey, \
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: googleClientId \
     }; \
     const configScript = 'window.APP_CONFIG=' + JSON.stringify(config) + ';'; \
     fs.writeFileSync('/usr/share/nginx/html/config.js', configScript); \
   " \
-  # Inject script tag to load config.js in index.html \
-  sed -i 's|<head>|<head><script src="/config.js"></script>|' /usr/share/nginx/html/index.html \
+  # Inject script tag to load config.js in index.html if not already present \
+  if ! grep -q "config.js" /usr/share/nginx/html/index.html; then \
+    sed -i 's|<head>|<head><script src="/config.js"></script>|' /usr/share/nginx/html/index.html \
+  fi \
 fi \
 # Start nginx \
 exec nginx -g "daemon off;"' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
