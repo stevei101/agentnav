@@ -42,7 +42,7 @@ resource "google_cloud_run_v2_service" "frontend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.frontend_container_port
         }
@@ -138,7 +138,7 @@ resource "google_cloud_run_v2_service" "backend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.backend_container_port
         }
@@ -161,6 +161,15 @@ resource "google_cloud_run_service_iam_member" "backend_public" {
   service  = google_cloud_run_v2_service.backend.name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# Allow Prompt Vault service account to call secured endpoints via WI ID tokens
+resource "google_cloud_run_service_iam_member" "backend_prompt_mgmt_invoker" {
+  location = google_cloud_run_v2_service.backend.location
+  project  = google_cloud_run_v2_service.backend.project
+  service  = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
 }
 
 # ============================================
@@ -243,7 +252,7 @@ resource "google_cloud_run_v2_service" "prompt_mgmt" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.prompt_mgmt_container_port
         }

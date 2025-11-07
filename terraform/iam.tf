@@ -30,8 +30,8 @@ resource "google_service_account" "cloud_run_prompt_mgmt" {
 # Service account for GitHub Actions (Workload Identity Federation)
 # Using data source to reference existing SA created manually
 data "google_service_account" "github_actions" {
-  project      = var.project_id
-  account_id   = "github-actions"
+  project    = var.project_id
+  account_id = "github-actions"
 }
 
 # IAM roles for Cloud Run services

@@ -346,6 +346,28 @@ gcloud secrets versions access latest --secret=SUPABASE_URL
 - Enable CORS only for trusted origins
 - Implement rate limiting
 
+- Protect calls to Agent Navigator using Workload Identity ID tokens (see section below)
+
+❌ **DON'T:**
+
+- Leave the Agent Navigator backend public when WI enforcement is enabled
+
+### 4. Workload Identity Integration
+
+✅ **DO:**
+
+- Set `REQUIRE_WI_AUTH=true` on the Agent Navigator backend in production
+- Populate `TRUSTED_SERVICE_ACCOUNTS` with the Prompt Vault service account email(s)
+- Configure `EXPECTED_AUDIENCE` to match the backend Cloud Run URL
+- Use the helper in `prompt-vault/services/agentNavigatorClient.ts` to automatically attach the ID token to outgoing requests
+- Ensure Terraform grants `roles/run.invoker` to `agentnav-prompt-mgmt@{PROJECT}.iam.gserviceaccount.com`
+
+❌ **DON'T:**
+
+- Fetch tokens manually with stored credentials
+- Hardcode service account emails inside application code without using configuration
+- Disable WI enforcement outside of local development environments
+
 ## Updating the Deployment
 
 ### Update Secrets

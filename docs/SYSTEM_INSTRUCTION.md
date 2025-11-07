@@ -235,6 +235,9 @@ This is the **highest priority workflow item** after a CI run. See [ZERO_TOLERAN
   - `FIRESTORE_DATABASE_ID`
   - `ADK_AGENT_CONFIG_PATH`
   - `A2A_PROTOCOL_ENABLED=true`
+  - `REQUIRE_WI_AUTH` (set to `true` in production to enforce Workload Identity tokens)
+  - `TRUSTED_SERVICE_ACCOUNTS` (comma-separated list of service account emails allowed to call protected Prompt Vault endpoints)
+  - `EXPECTED_AUDIENCE` (Cloud Run URL used as the audience claim when validating ID tokens)
 
 ### Gemma GPU Service Configuration
 
@@ -416,7 +419,7 @@ Firestore is used for persistent session memory and knowledge caching:
 - **Secret Management:** Store all secrets in Secret Manager, never in code or config files.
 - **IAM Roles:** Use least-privilege IAM roles for all service accounts.
 - **Workload Identity Federation (WIF):** Prefer WIF over static service account keys for GitHub Actions CI/CD authentication.
-- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication to GCP services (Firestore, Secret Manager, etc.); never embed credentials in containers.
+- **Workload Identity (WI):** Use Cloud Run Service Accounts with appropriate IAM roles for runtime authentication to GCP services (Firestore, Secret Manager, etc.); never embed credentials in containers. Protected Prompt Vault APIs require WI-issued ID tokens and validate the caller’s service account email and audience claim.
 - **API Authentication:** Implement authentication for backend API (API keys or OAuth).
 - **Input Validation:** Validate and sanitize all user inputs.
 - **Rate Limiting:** Implement rate limiting on Cloud Run services.
