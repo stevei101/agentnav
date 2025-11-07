@@ -40,6 +40,15 @@ jobs:
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
           project_id: ${{ env.GCP_PROJECT_ID }}
 
+      - name: Select Terraform environment
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/staging" ]]; then
+            echo "TF_VAR_environment=staging" >> $GITHUB_ENV
+          else
+            echo "TF_VAR_environment=prod" >> $GITHUB_ENV
+          fi
+
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
@@ -132,6 +141,6 @@ jobs:
           exit 1
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'push' and (github.ref == 'refs/heads/main' or github.ref == 'refs/heads/staging')
         working-directory: terraform
         run: terraform apply -auto-approve -input=false
