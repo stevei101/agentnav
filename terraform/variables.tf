@@ -89,12 +89,6 @@ variable "backend_container_port" {
   default     = 8080
 }
 
-variable "prompt_mgmt_container_port" {
-  description = "Container port for Prompt Management App Cloud Run service"
-  type        = number
-  default     = 80
-}
-
 variable "enable_staging_environment" {
   description = "Enable staging environment Cloud Run services for PR testing and validation."
   type        = bool
