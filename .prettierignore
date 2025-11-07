@@ -1,0 +1,6 @@
+# Documentation and instruction content is maintained in rich text editors,
+# so we exclude it from automated Prettier checks to keep CI focused on code.
+.github/instructions/**
+.github/copilot-instructions.md
+docs/**
+
