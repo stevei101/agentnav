@@ -13,45 +13,44 @@ These documents are:
 
 ## Contents
 
-### Setup & Development Guides
+### Active Guides
 
-- `GCP_SETUP_GUIDE.md` - Step-by-step Google Cloud Platform setup
-- `GPU_SETUP_GUIDE.md` - Adding Gemma model with NVIDIA L4 GPU
 - `local-development.md` - Local development environment setup
-- `MANUAL_WORKFLOWS.md` - Guide for manually triggering GitHub Actions workflows
-
-### Contribution & CI/CD Documentation
-
-- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - Pull request best practices
-- `CONTRIBUTION_QUALITY_GATES.md` - Required CI/CD checks for PRs
-- `COPILOT_AGENT_GUIDE.md` - Using the agentnav-copilot-agent for development assistance
-- `WORKFLOW_PR_RECOVERY.md` - Recovering from failed workflows
-
-### Architecture & System Documentation
-
 - `SYSTEM_INSTRUCTION.md` - Complete system architecture and deployment guide
-- `ARCHITECTURE_DIAGRAM_GUIDE.md` - How to create architecture diagrams
+- `TESTING_STRATEGY.md` - Quality gates, coverage, and verification strategy
+- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` / `CONTRIBUTION_QUALITY_GATES.md` - PR flow and CI expectations
+- `WORKFLOW_PR_RECOVERY.md` / `ZERO_TOLERANCE_FAILURE_POLICY.md` - CI incident response
 
-### Contribution & Workflow Policies
+### Deployment Playbooks (`deployment/`)
 
-- `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md` - PR discipline and minimum viable commit guidelines
-- `ZERO_TOLERANCE_FAILURE_POLICY.md` - **Mandatory policy for CI/CD failure response**
+- `GCP_SETUP_GUIDE.md` / `TERRAFORM_FIRST_APPLY.md` - Platform bootstrap and Terraform flow
+- `CUSTOM_DOMAIN_SETUP.md` / `STAGING_PRODUCTION_WORKFLOW.md` - Environment promotion & routing
+- `WIF_GITHUB_SECRETS_SETUP.md` / `GITHUB_SECRETS_TO_GCP_GUIDE.md` - Workload Identity and secret sync
+- `GPU_SETUP_GUIDE.md` / `GEMMA_*` docs - GPU and Gemma service operations
+- `MANUAL_WORKFLOWS.md` - Manual GitHub Actions triggers (kept for disaster recovery)
+- `CLOUD_RUN_MIGRATION_PLAN.md` - Readiness plan for Issue #262 (`podman-cloudrun-deploy-gha`)
 
-### Hackathon Submission Guides
+### Integrations (`integrations/`)
 
-- `HACKATHON_SUBMISSION_GUIDE.md` - Complete submission preparation guide
-- `HACKATHON_QUICK_REFERENCE.md` - Quick checklist and key points
-- `HACKATHON_SETUP_CHECKLIST.md` - Pre-hackathon setup checklist
-- `DUAL_CATEGORY_STRATEGY.md` - Targeting both AI Agents + GPU categories
+- Supabase SSO (`SUPABASE_AUTH_GUIDE.md`, `SUPABASE_GOOGLE_OAUTH_SETUP.md`, `README_SUPABASE.md`)
+- Prompt Vault integration overview (`PROMPT_MANAGEMENT_GUIDE.md`)
+- ADK / A2A notes (`ADK_CONSIDERATION_PLAN.md`, `A2A_PROTOCOL_INTEGRATION.md`, `A2A_SECURITY_AUDIT.md`)
+- Gemma client/service integration (`GEMMA_INTEGRATION_GUIDE.md`)
+
+### Archives (`archive/`)
+
+- `archive/hackathon/` – Hackathon submissions, checklists, and strategy decks
+- `archive/strategy/` – Historical feature retros, gap analyses, and planning docs
+- These references remain for historical context but are excluded from the active deployment playbooks
 
 ## For Developers
 
 If you're a developer looking to:
 
 - **Set up the project locally** ? Start with `local-development.md`
-- **Deploy to Google Cloud** ? See `GCP_SETUP_GUIDE.md`
+- **Deploy to Google Cloud** ? Use the `deployment/` playbooks (begin with `GCP_SETUP_GUIDE.md`)
 - **Understand the architecture** ? Read `SYSTEM_INSTRUCTION.md`
-- **Add GPU support** ? Follow `GPU_SETUP_GUIDE.md`
+- **Add GPU support** ? Follow `deployment/GPU_SETUP_GUIDE.md`
 - **Get development assistance** ? Use the custom Copilot agent (see `COPILOT_AGENT_GUIDE.md`)
 - **Understand CI/CD failure response** ? Review `ZERO_TOLERANCE_FAILURE_POLICY.md` (**mandatory reading**)
 - **Follow PR best practices** ? See `CONTRIBUTION_GUIDE_PR_DISCIPLINE.md`
@@ -61,5 +60,5 @@ If you're a developer looking to:
 If you're reviewing this project:
 
 - **System Architecture** ? `SYSTEM_INSTRUCTION.md`
-- **Submission Materials** ? `HACKATHON_SUBMISSION_GUIDE.md`
-- **Quick Overview** ? `HACKATHON_QUICK_REFERENCE.md`
+- **Cloud Run migration progress** ? `deployment/CLOUD_RUN_MIGRATION_PLAN.md`
+- **Legacy hackathon package** ? See `archive/hackathon/`

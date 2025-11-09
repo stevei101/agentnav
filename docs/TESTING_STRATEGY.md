@@ -251,7 +251,7 @@ osv-scanner -r --skip-git ./
 
 Automatic dependency updates are configured in `.github/dependabot.yml`:
 
-- **Frontend dependencies** (npm) - Weekly checks
+- **Frontend dependencies** (bun) - Weekly checks
 - **Backend dependencies** (pip) - Weekly checks
 
 Dependabot will create PRs for:

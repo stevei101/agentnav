@@ -45,15 +45,30 @@ class ErrorType(str, Enum):
 class EventMetadata(BaseModel):
     """Metadata about event timing and progress"""
 
-    elapsed_ms: int = Field(..., description="Milliseconds since workflow start")
-    step: int = Field(..., ge=1, le=4, description="Current step number (1-4)")
-    total_steps: int = Field(default=4, description="Total steps in workflow")
+    elapsed_ms: Optional[int] = Field(
+        default=None, description="Milliseconds since workflow start"
+    )
+    step: Optional[int] = Field(
+        default=None, ge=1, le=4, description="Current step number (1-4)"
+    )
+    total_steps: Optional[int] = Field(
+        default=4, description="Total steps in workflow"
+    )
     agent_sequence: List[str] = Field(
-        default=["orchestrator", "summarizer", "linker", "visualizer"],
+        default_factory=lambda: [
+            "orchestrator",
+            "summarizer",
+            "linker",
+            "visualizer",
+        ],
         description="Order of agents in workflow",
+    )
+    session_id: Optional[str] = Field(
+        default=None, description="Optional session identifier for event"
     )
 
     model_config = ConfigDict(
+        extra="allow",
         json_schema_extra={
             "example": {
                 "elapsed_ms": 1234,
@@ -66,7 +81,7 @@ class EventMetadata(BaseModel):
                     "visualizer",
                 ],
             }
-        }
+        },
     )
 
 

@@ -170,68 +170,71 @@ class TestCIConfigurationModernization:
     """Test CI/CD configuration for modern Cloud Run deployment"""
 
     def test_ci_uses_modern_gcloud_syntax(self):
-        """Verify CI uses modern gcloud run deploy syntax"""
+        """Verify CI uses the shared Podman→Cloud Run reusable workflow"""
         import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
+        ci_path = os.path.join(repo_root, ".github", "workflows", "cloud-run-deploy.yml")
 
         with open(ci_path, "r") as f:
             content = f.read()
 
-        # Check for modern gcloud deploy with resource specifications
-        assert "--memory" in content
-        assert "--cpu" in content
-        assert "--timeout" in content
-        assert "--concurrency" in content
+        assert (
+            "uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@main"
+            in content
+        ), "Deployment workflow must leverage the shared Podman Cloud Run pattern"
 
     def test_ci_configures_cloud_run_scaling(self):
-        """Verify CI configures min/max instances for Cloud Run"""
+        """Verify CI provides region configuration for backend and frontend"""
         import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
+        ci_path = os.path.join(repo_root, ".github", "workflows", "cloud-run-deploy.yml")
 
         with open(ci_path, "r") as f:
             content = f.read()
 
-        # Check for scaling configuration
-        assert "--min-instances" in content
-        assert "--max-instances" in content
+        assert "cloud_run_region: europe-west1" in content, "Backend region must be europe-west1"
+        assert "cloud_run_region: us-central1" in content, "Frontend region must be us-central1"
 
     def test_ci_sets_environment_variables(self):
-        """Verify CI sets production environment variables"""
+        """Verify CI sets necessary environment variables via workflow inputs"""
         import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
+        ci_path = os.path.join(repo_root, ".github", "workflows", "cloud-run-deploy.yml")
 
         with open(ci_path, "r") as f:
             content = f.read()
 
-        # Check for environment variable configuration
-        assert "--set-env-vars" in content or "set-env-vars" in content
+        assert (
+            'additional_env_vars: "ENVIRONMENT=production,ALLOWED_HOSTS=agentnav.lornu.com\\,*.run.app,CORS_ORIGINS=https://agentnav.lornu.com"'
+            in content
+        ), "Backend deployment must configure production environment variables"
+        assert (
+            'additional_env_vars: "PORT=80"' in content
+        ), "Frontend deployment must set PORT=80 environment variable"
 
     def test_ci_configures_cpu_throttling(self):
-        """Verify CI configures CPU throttling for cost optimization"""
+        """Verify CI allows unauthenticated access and sets container repository"""
         import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
+        ci_path = os.path.join(repo_root, ".github", "workflows", "cloud-run-deploy.yml")
 
         with open(ci_path, "r") as f:
             content = f.read()
 
-        # Check for CPU throttling flag
-        assert "--cpu-throttling" in content
+        assert "allow_unauthenticated: true" in content, "Deployments should allow unauthenticated access"
+        assert "gar_repository: agentnav-containers" in content, "Workflow must reference the shared Artifact Registry"
 
     def test_ci_sets_explicit_port(self):
         """Verify CI explicitly sets port for Cloud Run"""
