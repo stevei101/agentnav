@@ -1,11 +1,6 @@
 name: Build and Deploy Containers
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**'
   pull_request:
     branches:
       - main

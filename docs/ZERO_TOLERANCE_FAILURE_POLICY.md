@@ -157,7 +157,7 @@ This policy applies to **ALL** GitHub Actions status checks, including but not l
 | **Backend Tests (pytest + Firestore emulator)** | `.github/workflows/ci.yml`                | ✅ Yes                            |
 | **Terraform Security Scan (tfsec)**             | `.github/workflows/ci.yml`                | ✅ Yes                            |
 | **OSV Dependency Vulnerability Scan**           | `.github/workflows/ci.yml`                | ✅ Yes                            |
-| **Build and Deploy Containers**                 | `.github/workflows/build.yml`             | ✅ Yes                            |
+| **Deploy Agentnav to Cloud Run**                | `.github/workflows/deploy-cloudrun.yaml`  | ✅ Yes                            |
 | **Build Gemma Debug**                           | `.github/workflows/build-gemma-debug.yml` | ✅ Yes                            |
 | **Terraform Infrastructure**                    | `.github/workflows/terraform.yml`         | ✅ Yes (for syntax/plan failures) |
 
