@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 # Import WebSocket streaming routes (FR#020)
 from backend.routes.stream_routes import router as stream_router
+from backend.utils import load_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -129,12 +130,21 @@ async def healthz_check():
 
     # Check ADK System availability
     try:
-        from backend.agents import (
+        (
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
             A2AProtocol,
+        ) = load_attributes(
+            "backend.agents",
+            [
+                "OrchestratorAgent",
+                "SummarizerAgent",
+                "LinkerAgent",
+                "VisualizerAgent",
+                "A2AProtocol",
+            ],
         )
 
         # Test agent instantiation (doesn't require full initialization)
@@ -284,12 +294,21 @@ async def analyze_content(request: AnalyzeRequest):
     start_time = time.time()
 
     try:
-        from backend.agents import (
+        (
             AgentWorkflow,
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
+        ) = load_attributes(
+            "backend.agents",
+            [
+                "AgentWorkflow",
+                "OrchestratorAgent",
+                "SummarizerAgent",
+                "LinkerAgent",
+                "VisualizerAgent",
+            ],
         )
         from backend.models.context_model import SessionContext
 
@@ -404,7 +423,9 @@ async def visualize_content(request: VisualizeRequest):
     complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-        from backend.agents import VisualizerAgent, A2AProtocol
+        VisualizerAgent, A2AProtocol = load_attributes(
+            "backend.agents", ["VisualizerAgent", "A2AProtocol"]
+        )
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
         agent = VisualizerAgent(a2a)
@@ -447,12 +468,21 @@ async def get_agent_status():
         diagnostic_info["environment_vars"][var] = "set" if value else "missing"
 
     try:
-        from backend.agents import (
+        (
             OrchestratorAgent,
             SummarizerAgent,
             LinkerAgent,
             VisualizerAgent,
             A2AProtocol,
+        ) = load_attributes(
+            "backend.agents",
+            [
+                "OrchestratorAgent",
+                "SummarizerAgent",
+                "LinkerAgent",
+                "VisualizerAgent",
+                "A2AProtocol",
+            ],
         )
 
         logger.info("🔍 Checking ADK agent system status...")

@@ -4,7 +4,7 @@ Implements the shared session context as specified in FR#005
 """
 
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
 import time
 
 
@@ -70,7 +70,11 @@ class SessionContext(BaseModel):
     )
 
     # Input data
-    raw_input: str = Field(..., description="Original document or codebase content")
+    raw_input: str = Field(
+        ...,
+        description="Original document or codebase content",
+        validation_alias=AliasChoices("raw_input", "document"),
+    )
 
     # Summarizer Agent outputs
     summary_text: Optional[str] = Field(
@@ -110,6 +114,10 @@ class SessionContext(BaseModel):
     errors: List[Dict[str, str]] = Field(
         default_factory=list, description="List of errors encountered during workflow"
     )
+    agent_states: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Runtime state for each agent during streaming workflows",
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -143,6 +151,10 @@ class SessionContext(BaseModel):
                     "visualizer",
                 ],
                 "workflow_status": "completed",
+                "agent_states": {
+                    "summarizer": {"status": "completed"},
+                    "linker": {"status": "queued"},
+                },
             }
         }
     )
@@ -200,3 +212,12 @@ class SessionContext(BaseModel):
             ]
 
         return cls(**data)
+
+    # Backwards compatibility helpers (legacy tests expect `document` attribute)
+    @property
+    def document(self) -> str:
+        return self.raw_input
+
+    @document.setter
+    def document(self, value: str) -> None:
+        self.raw_input = value

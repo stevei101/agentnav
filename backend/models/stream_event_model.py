@@ -5,8 +5,8 @@ Pydantic models for real-time event streaming during agent workflow execution.
 These models define the schema for all WebSocket messages between backend and frontend.
 """
 
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from typing import Optional, Dict, Any, List, Union
 from enum import Enum
 from datetime import datetime
 import uuid
@@ -39,14 +39,17 @@ class ErrorType(str, Enum):
     VALIDATION_ERROR = "validation_error"  # Invalid input
     WORKFLOW_ERROR = "workflow_error"  # Inter-agent communication failed
     FIRESTORE_ERROR = "firestore_error"  # Firestore access failed
+    PROCESSING_ERROR = "ProcessingError"  # Legacy casing for processing errors
     UNKNOWN = "unknown"  # Unknown error
 
 
 class EventMetadata(BaseModel):
     """Metadata about event timing and progress"""
 
-    elapsed_ms: int = Field(..., description="Milliseconds since workflow start")
-    step: int = Field(..., ge=1, le=4, description="Current step number (1-4)")
+    elapsed_ms: int = Field(
+        0, description="Milliseconds since workflow start", ge=0
+    )
+    step: int = Field(1, ge=1, le=4, description="Current step number (1-4)")
     total_steps: int = Field(default=4, description="Total steps in workflow")
     agent_sequence: List[str] = Field(
         default=["orchestrator", "summarizer", "linker", "visualizer"],
@@ -128,6 +131,50 @@ class AgentEventPayload(BaseModel):
         default=None, description="Performance metrics (latency, tokens, etc.)"
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_error_fields(cls, data: Any) -> Any:
+        """Support legacy error_message/error_type inputs."""
+        if isinstance(data, dict):
+            if "error" not in data:
+                error_message = data.pop("error_message", None)
+                error_type = data.pop("error_type", None)
+                if error_message or error_type:
+                    resolved_type: ErrorType
+                    if error_type:
+                        try:
+                            resolved_type = ErrorType(error_type)
+                        except ValueError:
+                            resolved_type = ErrorType.UNKNOWN
+                    else:
+                        resolved_type = ErrorType.UNKNOWN
+
+                    data["error"] = {
+                        "error": error_message or error_type or "Error",
+                        "error_type": resolved_type,
+                        "error_details": data.get("error_details"),
+                        "recoverable": data.get("recoverable", False),
+                    }
+            else:
+                # Remove legacy fields if present alongside new schema
+                data.pop("error_message", None)
+                data.pop("error_type", None)
+        return data
+
+    @property
+    def error_message(self) -> Optional[str]:
+        return self.error.error if self.error else None
+
+    @property
+    def error_type(self) -> Optional[str]:
+        if self.error:
+            return (
+                self.error.error_type.value
+                if isinstance(self.error.error_type, ErrorType)
+                else str(self.error.error_type)
+            )
+        return None
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -141,6 +188,10 @@ class AgentEventPayload(BaseModel):
             }
         }
     )
+
+
+def _default_metadata() -> "EventMetadata":
+    return EventMetadata(elapsed_ms=0, step=1, total_steps=4)
 
 
 class AgentStreamEvent(BaseModel):
@@ -157,7 +208,8 @@ class AgentStreamEvent(BaseModel):
         description="ISO 8601 timestamp of event",
     )
     metadata: EventMetadata = Field(
-        ..., description="Event timing and progress metadata"
+        default_factory=_default_metadata,
+        description="Event timing and progress metadata",
     )
     payload: AgentEventPayload = Field(
         default_factory=AgentEventPayload,
@@ -193,6 +245,16 @@ class AgentStreamEvent(BaseModel):
             }
         }
     )
+
+
+# Backwards compatibility alias used by older tests/documentation
+class EventPayload(AgentEventPayload):
+    """
+    Backwards-compatible payload model that exposes error_message/error_type
+    for older tests and integrations.
+    """
+
+    pass
 
 
 class WorkflowStreamRequest(BaseModel):

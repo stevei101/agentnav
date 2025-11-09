@@ -46,19 +46,18 @@ class TestHealthzEndpoint:
 
     def test_healthz_with_unavailable_adk(self):
         """Test healthz returns degraded when ADK agents cannot be imported"""
-        with patch.dict("sys.modules", {"backend.agents": None}):
-            with patch(
-                "builtins.__import__",
-                side_effect=ImportError("No module named 'backend.agents'"),
-            ):
-                response = client.get("/healthz")
+        with patch(
+            "backend.main.load_attributes",
+            side_effect=ImportError("No module named 'backend.agents'"),
+        ):
+            response = client.get("/healthz")
 
-                assert response.status_code == 200
-                data = response.json()
-                assert data["status"] == "unhealthy"
-                assert data["adk_system"] == "unavailable"
-                assert "errors" in data
-                assert "adk" in data["errors"]
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "unhealthy"
+            assert data["adk_system"] == "unavailable"
+            assert "errors" in data
+            assert "adk" in data["errors"]
 
     def test_healthz_firestore_check(self):
         """Test healthz checks Firestore connectivity"""
@@ -122,19 +121,18 @@ class TestAgentStatusEndpoint:
 
     def test_agent_status_import_error(self):
         """Test agent status handles import errors with diagnostics"""
-        with patch.dict("sys.modules", {"backend.agents": None}):
-            with patch(
-                "builtins.__import__",
-                side_effect=ImportError("No module named 'backend.agents'"),
-            ):
-                response = client.get("/api/agents/status")
+        with patch(
+            "backend.main.load_attributes",
+            side_effect=ImportError("No module named 'backend.agents'"),
+        ):
+            response = client.get("/api/agents/status")
 
-                assert response.status_code == 200
-                data = response.json()
-                assert data["adk_system"] == "unavailable"
-                assert "diagnostics" in data
-                assert "import_errors" in data["diagnostics"]
-                assert len(data["diagnostics"]["import_errors"]) > 0
+            assert response.status_code == 200
+            data = response.json()
+            assert data["adk_system"] == "unavailable"
+            assert "diagnostics" in data
+            assert "import_errors" in data["diagnostics"]
+            assert len(data["diagnostics"]["import_errors"]) > 0
 
     def test_agent_status_partial_availability(self):
         """Test agent status when some agents fail to initialize"""

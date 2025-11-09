@@ -17,8 +17,8 @@ from backend.models.stream_event_model import (
     ErrorType,
 )
 from backend.services.event_emitter import get_event_emitter_manager
-from backend.agents.orchestrator_agent import OrchestratorAgent
 from backend.models.context_model import SessionContext
+from backend.utils import load_attributes
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["streaming"])
@@ -228,6 +228,9 @@ async def _execute_stream_workflow(
         start_time = time.time()
 
         # Create orchestrator with event emitter
+        (OrchestratorAgent,) = load_attributes(
+            "backend.agents", ["OrchestratorAgent"]
+        )
         orchestrator = OrchestratorAgent(event_emitter=emitter)
 
         # Create session context

@@ -119,8 +119,13 @@ class Agent(ABC):
     """
 
     def __init__(
-        self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]
+        self,
+        name: str,
+        a2a_protocol: Optional[Union["A2AProtocol", "A2AProtocolService"]] = None,
     ):
+        if a2a_protocol is None:
+            a2a_protocol = A2AProtocol()
+
         self.name = name
         self.state = AgentState.IDLE
         self.a2a = a2a_protocol

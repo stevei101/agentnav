@@ -14,6 +14,7 @@ Cloud Run.
 import asyncio
 import logging
 import os
+import sys
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -21,14 +22,22 @@ logger = logging.getLogger(__name__)
 
 # Flexible import: support multiple possible package layouts for the GenAI SDK.
 genai = None
-try:
-    # Preferred new layout
-    import google.genai as genai  # type: ignore
-except Exception:
+
+# Always honor a pre-inserted stub (used by unit tests)
+if "genai" in sys.modules:
+    genai = sys.modules["genai"]
+else:
     try:
-        import genai  # type: ignore
+        import genai as _genai  # type: ignore
+
+        genai = _genai
     except Exception:
-        genai = None
+        try:
+            import google.genai as _genai  # type: ignore
+
+            genai = _genai
+        except Exception:
+            genai = None
 
 
 class GeminiClient:

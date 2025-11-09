@@ -7,7 +7,7 @@ Allows agents to emit status events that are streamed to frontend in real-time.
 
 import asyncio
 import logging
-from typing import Dict, Set, Optional, Any, List
+from typing import Dict, Set, Optional, Any, List, Union
 from datetime import datetime
 import json
 
@@ -81,13 +81,18 @@ class EventEmitter:
         current_time = datetime.utcnow().timestamp() * 1000
         return int(current_time - self.start_time)
 
-    async def emit_event(self, event: AgentStreamEvent) -> None:
+    async def emit_event(
+        self, event: Union[AgentStreamEvent, Dict[str, Any]]
+    ) -> None:
         """
         Emit an event to all connected clients.
 
         Args:
             event: Event to emit
         """
+        if not isinstance(event, AgentStreamEvent):
+            event = AgentStreamEvent.model_validate(event)
+
         # Update elapsed time
         event.metadata.elapsed_ms = self._calculate_elapsed_ms()
 
