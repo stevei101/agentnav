@@ -228,8 +228,8 @@ gcloud projects list
 ### Install Emulator
 
 ```bash
-# Install Firebase CLI (includes Firestore emulator)
-npm install -g firebase-tools
+# Firebase CLI (includes Firestore emulator) via bunx (no global install required)
+bunx --bun firebase-tools@latest --help
 
 # Or via gcloud SDK
 gcloud components install beta cloud-firestore-emulator

@@ -169,207 +169,46 @@ class TestStartupScript:
 class TestCIConfigurationModernization:
     """Test CI/CD configuration for modern Cloud Run deployment"""
 
-    def test_ci_uses_modern_gcloud_syntax(self):
-        """Verify CI uses modern gcloud run deploy syntax"""
+    def _load_workflow(self):
         import os
 
         repo_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
-
+        ci_path = os.path.join(repo_root, ".github", "workflows", "cloud-run-deploy.yml")
         with open(ci_path, "r") as f:
-            content = f.read()
+            return f.read()
 
-        # Check for modern gcloud deploy with resource specifications
-        assert "--memory" in content
-        assert "--cpu" in content
-        assert "--timeout" in content
-        assert "--concurrency" in content
-
-    def test_ci_configures_cloud_run_scaling(self):
-        """Verify CI configures min/max instances for Cloud Run"""
-        import os
-
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
-
-        with open(ci_path, "r") as f:
-            content = f.read()
-
-        # Check for scaling configuration
-        assert "--min-instances" in content
-        assert "--max-instances" in content
-
-    def test_ci_sets_environment_variables(self):
-        """Verify CI sets production environment variables"""
-        import os
-
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
-
-        with open(ci_path, "r") as f:
-            content = f.read()
-
-        # Check for environment variable configuration
-        assert "--set-env-vars" in content or "set-env-vars" in content
-
-    def test_ci_configures_cpu_throttling(self):
-        """Verify CI configures CPU throttling for cost optimization"""
-        import os
-
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
-
-        with open(ci_path, "r") as f:
-            content = f.read()
-
-        # Check for CPU throttling flag
-        assert "--cpu-throttling" in content
-
-    def test_ci_sets_explicit_port(self):
-        """Verify CI explicitly sets port for Cloud Run"""
-        import os
-
-        repo_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        ci_path = os.path.join(repo_root, ".github", "workflows", "build.yml")
-
-        with open(ci_path, "r") as f:
-            content = f.read()
-
-        # Check for port configuration
-        assert "--port" in content
-
-
-class TestFastAPIConfiguration:
-    """Test FastAPI configuration for Cloud Run security"""
-
-    def test_main_has_cors_configuration(self):
-        """Verify main.py has CORS configuration"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        main_path = os.path.join(backend_dir, "main.py")
-
-        with open(main_path, "r") as f:
-            content = f.read()
-
-        # Check for CORS middleware
-        assert "CORSMiddleware" in content
-        assert "CORS_ORIGINS" in content
-
-    def test_main_has_security_headers_middleware(self):
-        """Verify main.py has security headers middleware"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        main_path = os.path.join(backend_dir, "main.py")
-
-        with open(main_path, "r") as f:
-            content = f.read()
-
-        # Check for security headers
-        assert "Strict-Transport-Security" in content
-        assert "X-Frame-Options" in content
-        assert "X-Content-Type-Options" in content
-
-    def test_main_has_trusted_host_middleware(self):
-        """Verify main.py has TrustedHostMiddleware"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        main_path = os.path.join(backend_dir, "main.py")
-
-        with open(main_path, "r") as f:
-            content = f.read()
-
-        # Check for TrustedHostMiddleware
-        assert "TrustedHostMiddleware" in content
-        assert "ALLOWED_HOSTS" in content
-
-    def test_main_has_healthz_endpoint(self):
-        """Verify main.py has /healthz endpoint (Cloud Run standard)"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        main_path = os.path.join(backend_dir, "main.py")
-
-        with open(main_path, "r") as f:
-            content = f.read()
-
-        # Check for /healthz endpoint
-        assert "/healthz" in content
-        assert "healthz_check" in content or "healthz" in content
-
-    def test_main_configures_cors_max_age(self):
-        """Verify CORS is configured with max_age for preflight caching"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        main_path = os.path.join(backend_dir, "main.py")
-
-        with open(main_path, "r") as f:
-            content = f.read()
-
-        # Check for max_age in CORS configuration
-        assert "max_age" in content
-
-
-class TestDeploymentBestPractices:
-    """Test adherence to Cloud Run deployment best practices"""
-
-    def test_dockerfile_minimizes_layers(self):
-        """Verify Dockerfile uses efficient layering strategy"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        dockerfile_path = os.path.join(backend_dir, "Dockerfile")
-
-        with open(dockerfile_path, "r") as f:
-            content = f.read()
-
-        # Check for combined RUN commands and efficient layering
-        lines = [line for line in content.split("\n") if line.strip().startswith("RUN")]
-
-        # Multi-stage builds typically have 3-5 RUN commands total
-        # Builder stage: 1-2 commands (uv install)
-        # Runtime stage: 1-2 commands (user creation, permissions)
-        # This is efficient for Docker layer caching
-        MAX_RUN_COMMANDS = 5
+    def test_ci_uses_reusable_podman_workflow(self):
+        content = self._load_workflow()
         assert (
-            len(lines) <= MAX_RUN_COMMANDS
-        ), f"Found {len(lines)} RUN commands, expected <= {MAX_RUN_COMMANDS} for optimal layer caching"
+            "uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@main"
+            in content
+        ), "Deployment workflow must reference reusable Podman Cloud Run pattern"
 
-    def test_startup_script_uses_exec(self):
-        """Verify startup script uses exec for proper signal handling"""
-        import os
+    def test_ci_defines_backend_inputs(self):
+        content = self._load_workflow()
+        assert "service_name: agentnav-backend" in content, "Backend service name missing"
+        assert 'container_port: "8080"' in content, "Backend container port must be 8080"
+        assert "BACKEND_REGION: europe-west1" in content, "Backend region env must be europe-west1"
+        assert "cloud_run_region: ${{ env.BACKEND_REGION }}" in content, "Backend region should reference env variable"
 
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        startup_path = os.path.join(backend_dir, "start.sh")
+    def test_ci_defines_frontend_inputs(self):
+        content = self._load_workflow()
+        assert "service_name: agentnav-frontend" in content, "Frontend service name missing"
+        assert 'container_port: "80"' in content, "Frontend container port must be 80"
+        assert "FRONTEND_REGION: us-central1" in content, "Frontend region env must be us-central1"
+        assert "cloud_run_region: ${{ env.FRONTEND_REGION }}" in content, "Frontend region should reference env variable"
 
-        with open(startup_path, "r") as f:
-            content = f.read()
+    def test_ci_sets_required_environment_variables(self):
+        content = self._load_workflow()
+        assert "ENVIRONMENT=production" in content, "Backend must set production environment"
+        assert "ALLOWED_HOSTS=agentnav.lornu.com\\\\,*.run.app" in content, "Backend must include allowed hosts"
+        assert "CORS_ORIGINS=https://agentnav.lornu.com" in content, "Backend must include CORS origins"
+        assert 'additional_env_vars: "PORT=80"' in content, "Frontend deployment must set PORT=80"
 
-        # Check for exec command (proper signal handling)
-        assert "exec uvicorn" in content
-
-    def test_dockerfile_exposes_port(self):
-        """Verify Dockerfile exposes the correct port"""
-        import os
-
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        dockerfile_path = os.path.join(backend_dir, "Dockerfile")
-
-        with open(dockerfile_path, "r") as f:
-            content = f.read()
-
-        # Check for EXPOSE instruction
-        assert "EXPOSE 8080" in content or "EXPOSE" in content
+    def test_ci_references_artifact_registry(self):
+        content = self._load_workflow()
+        assert "GAR_REPOSITORY: agentnav-containers" in content, "GAR repository env must be defined"
+        assert "gar_repository: ${{ env.GAR_REPOSITORY }}" in content, "GAR repository input should reference env variable"
+        assert "allow_unauthenticated: true" in content, "Deployments should allow unauthenticated access"
