@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test script for all three apps: agentnav, prompt-vault, cursor-ide
+# Test script for agentnav and cursor-ide
 # Tests backend, frontend, and proxy routes
 
 set -euo pipefail
@@ -85,42 +85,7 @@ fi
 echo ""
 
 # ============================================
-# 2. PROMPT-VAULT Tests
-# ============================================
-echo "📦 Testing Prompt Vault"
-echo "----------------------"
-
-# Check if prompt-vault exists
-if [ -d "$(dirname "$0")/../prompt-vault" ]; then
-    cd "$(dirname "$0")/../prompt-vault" || exit 1
-    
-    # Frontend tests (if test script exists)
-    if [ -f "package.json" ]; then
-        echo "  Testing frontend..."
-        if command -v bun >/dev/null 2>&1; then
-            if bun test --run >/tmp/prompt-vault-tests.log 2>&1; then
-                test_result "Prompt Vault Frontend Tests" 0
-            else
-                echo -e "${YELLOW}⚠️  No tests configured or tests failed${NC}"
-            fi
-        fi
-    fi
-    
-    # Frontend accessibility (if running)
-    echo "  Testing frontend accessibility..."
-    if curl -s http://localhost:5175 >/dev/null 2>&1; then
-        test_result "Prompt Vault Frontend Accessibility" 0
-    else
-        echo -e "${YELLOW}⚠️  Frontend not running on port 5175${NC}"
-    fi
-else
-    echo -e "${YELLOW}⚠️  prompt-vault directory not found${NC}"
-fi
-
-echo ""
-
-# ============================================
-# 3. CURSOR-IDE Tests
+# 2. CURSOR-IDE Tests
 # ============================================
 echo "⌨️  Testing Cursor IDE"
 echo "---------------------"
@@ -172,14 +137,6 @@ if curl -s -I "$PROXY_URL/agentnav/docs" >/dev/null 2>&1; then
     test_result "Proxy /agentnav/docs Route" 0
 else
     test_result "Proxy /agentnav/docs Route" 1
-fi
-
-# Test prompt-vault routes
-echo "  Testing prompt-vault routes..."
-if curl -s -I "$PROXY_URL/prompt-vault/" >/dev/null 2>&1; then
-    test_result "Proxy /prompt-vault/ Route" 0
-else
-    test_result "Proxy /prompt-vault/ Route" 1
 fi
 
 # Test cursor-ide routes
