@@ -15,7 +15,7 @@ on:
 
 jobs:
   terraform:
-    uses: ./infrastructure/.github/workflows/terraform-agentnav.yml
+    uses: stevei101/infrastructure/.github/workflows/terraform-agentnav.yml@main
     with:
       terraform_directory: infrastructure/terraform/agentnav
       run_apply: false
