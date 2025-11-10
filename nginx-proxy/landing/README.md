@@ -27,21 +27,22 @@ Edit `index.html` and add a new `.app-card`:
 
 ```html
 <div class="app-card">
-    <div class="app-icon">🎯</div>
-    <h2>New App</h2>
-    <p class="app-description">Description of the app</p>
-    <div class="app-links">
-        <a href="/new-app/" class="btn btn-primary">Open App</a>
-    </div>
-    <div class="app-info">
-        <span class="badge">Category</span>
-    </div>
+  <div class="app-icon">🎯</div>
+  <h2>New App</h2>
+  <p class="app-description">Description of the app</p>
+  <div class="app-links">
+    <a href="/new-app/" class="btn btn-primary">Open App</a>
+  </div>
+  <div class="app-info">
+    <span class="badge">Category</span>
+  </div>
 </div>
 ```
 
 ### Styling
 
 Edit `styles.css` to customize:
+
 - Colors: Update CSS variables in `:root`
 - Layout: Modify grid and spacing
 - Typography: Change font families and sizes
@@ -49,6 +50,7 @@ Edit `styles.css` to customize:
 ## Routing
 
 The landing page is served at:
+
 - `/` - Landing page (hub)
 - `/agentnav/` - Agentnav frontend (proxied)
 - `/agentnav/api/` - Agentnav backend API (proxied)
@@ -56,10 +58,10 @@ The landing page is served at:
 ## Future Enhancements
 
 Optional TypeScript version could add:
+
 - Dynamic app status checking
 - Real-time health monitoring
 - App search/filtering
 - User preferences
 
 For now, HTML + CSS is sufficient and keeps it simple!
-

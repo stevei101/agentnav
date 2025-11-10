@@ -46,14 +46,14 @@ The proxy requires these environment variables (set by Terraform):
 
 ### Routing Rules
 
-| Path | Destination | Purpose |
-|------|-------------|---------|
-| `/healthz` | Proxy | Health check |
-| `/api/*` | Backend | API endpoints |
-| `/ws/*` | Backend | WebSocket streaming |
-| `/gemma/*` | Gemma | GPU service |
-| `/docs` | Backend | FastAPI docs |
-| `/` | Frontend | React SPA |
+| Path       | Destination | Purpose             |
+| ---------- | ----------- | ------------------- |
+| `/healthz` | Proxy       | Health check        |
+| `/api/*`   | Backend     | API endpoints       |
+| `/ws/*`    | Backend     | WebSocket streaming |
+| `/gemma/*` | Gemma       | GPU service         |
+| `/docs`    | Backend     | FastAPI docs        |
+| `/`        | Frontend    | React SPA           |
 
 ## Deployment
 
@@ -67,6 +67,7 @@ podman build -t agentnav-proxy:latest .
 ### Deploy to Cloud Run
 
 Deployment is handled automatically via:
+
 1. **Terraform**: Creates Cloud Run service
 2. **GitHub Actions**: Builds and pushes image
 3. **CI/CD**: Updates service with new image
@@ -144,7 +145,7 @@ podman run -p 8080:8080 \
 
 - ✅ **Public Access**: Proxy is public (gateway)
 - ✅ **Backend Services**: Can be private (accessed via proxy)
-- ✅ **Headers**: Preserves X-Forwarded-* headers
+- ✅ **Headers**: Preserves X-Forwarded-\* headers
 - ✅ **HTTPS**: Cloud Run provides TLS termination
 
 ## Troubleshooting
@@ -173,6 +174,7 @@ podman run --rm agentnav-proxy:latest nginx -t
 ## Integration with Hackathon
 
 This proxy provides:
+
 - ✅ **Single Entry Point**: One URL for all services
 - ✅ **Clean Routing**: Organized URL structure
 - ✅ **Production Ready**: Suitable for demo
@@ -181,7 +183,7 @@ This proxy provides:
 ---
 
 **For Hackathon Submission:**
+
 - Use proxy URL as "Try it Out" link
 - All services accessible through single endpoint
 - Cleaner architecture presentation
-

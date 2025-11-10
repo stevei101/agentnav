@@ -1,7 +1,15 @@
 // Vitest setup file for global test configuration
 import '@testing-library/jest-dom';
-import { beforeAll } from 'vitest';
 import { JSDOM } from 'jsdom';
+import { beforeAll } from 'vitest';
+
+type AugmentedGlobal = typeof globalThis & {
+  window: Window;
+  document: Document;
+  navigator: Navigator;
+  HTMLElement: typeof HTMLElement;
+  Element: typeof Element;
+};
 
 // Setup DOM globals for jsdom environment
 beforeAll(() => {
@@ -13,13 +21,12 @@ beforeAll(() => {
       resources: 'usable',
     });
 
-    const windowObject = dom.window as unknown as Window & typeof globalThis;
-
-    globalThis.window = windowObject;
-    globalThis.document = windowObject.document;
-    globalThis.navigator = windowObject.navigator;
-    globalThis.HTMLElement = windowObject.HTMLElement;
-    globalThis.Element = windowObject.Element;
+    const augmentedGlobal = globalThis as AugmentedGlobal;
+    augmentedGlobal.window = dom.window as unknown as Window;
+    augmentedGlobal.document = dom.window.document;
+    augmentedGlobal.navigator = dom.window.navigator;
+    augmentedGlobal.HTMLElement = dom.window.HTMLElement;
+    augmentedGlobal.Element = dom.window.Element;
   }
 });
 
@@ -36,7 +43,8 @@ if (typeof global.DragEvent === 'undefined') {
 
   // Also ensure window.DragEvent is available
   if (typeof window !== 'undefined') {
-    (window as Window & typeof globalThis).DragEvent = global.DragEvent;
+    (window as Window & { DragEvent?: typeof global.DragEvent }).DragEvent =
+      global.DragEvent;
   }
 }
 
