@@ -52,19 +52,8 @@ jobs:
           # Configure docker/podman to authenticate to Artifact Registry
           gcloud auth configure-docker ${ART_LOCATION}-docker.pkg.dev
 
-      - name: Build and push frontend image with Podman
-        env:
-          ART_LOCATION: ${{ env.CLOUD_RUN_REGION }}
-        run: |
-          set -euo pipefail
-          IMAGE=${ART_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
-          echo "Building image: ${IMAGE}"
-          podman build -t ${IMAGE} -f Dockerfile .
-          echo "Pushing image: ${IMAGE}"
-          podman push ${IMAGE}
-
       - name: "Optional: run frontend checks"
-        if: ${{ always() }}
+        continue-on-error: true
         run: |
           set -euo pipefail
           # Only run the project-specified prebuild checks if bun is available and not skipped
@@ -76,6 +65,17 @@ jobs:
           else
             echo "bun not available in runner; skipping JS checks"
           fi
+
+      - name: Build and push frontend image with Podman
+        env:
+          ART_LOCATION: ${{ env.CLOUD_RUN_REGION }}
+        run: |
+          set -euo pipefail
+          IMAGE=${ART_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
+          echo "Building image: ${IMAGE}"
+          podman build -t ${IMAGE} -f Dockerfile .
+          echo "Pushing image: ${IMAGE}"
+          podman push ${IMAGE}
 
       - name: Deploy frontend to Cloud Run
         env:
