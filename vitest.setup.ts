@@ -1,34 +1,5 @@
 // Vitest setup file for global test configuration
 import '@testing-library/jest-dom';
-import { JSDOM } from 'jsdom';
-import { beforeAll } from 'vitest';
-
-type AugmentedGlobal = typeof globalThis & {
-  window: Window;
-  document: Document;
-  navigator: Navigator;
-  HTMLElement: typeof HTMLElement;
-  Element: typeof Element;
-};
-
-// Setup DOM globals for jsdom environment
-beforeAll(() => {
-  // Ensure global DOM objects are available
-  if (typeof globalThis.document === 'undefined') {
-    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-      url: 'http://localhost:3000',
-      pretendToBeVisual: true,
-      resources: 'usable',
-    });
-
-    const augmentedGlobal = globalThis as AugmentedGlobal;
-    augmentedGlobal.window = dom.window as unknown as Window;
-    augmentedGlobal.document = dom.window.document;
-    augmentedGlobal.navigator = dom.window.navigator;
-    augmentedGlobal.HTMLElement = dom.window.HTMLElement;
-    augmentedGlobal.Element = dom.window.Element;
-  }
-});
 
 // Mock DragEvent for jsdom environment
 if (typeof global.DragEvent === 'undefined') {

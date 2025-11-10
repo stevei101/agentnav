@@ -8,6 +8,7 @@ import { AgentName, AgentStatusValue } from '../../types';
 describe('AgentCard', () => {
   it('renders agent name and details correctly', () => {
     const agent = {
+      id: 'test-orchestrator-001',
       name: AgentName.ORCHESTRATOR,
       status: AgentStatusValue.IDLE,
       details: 'Idle and ready',
