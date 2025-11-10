@@ -43,7 +43,7 @@ jobs:
         working-directory: terraform
         run: |
           terraform init
-          terraform refresh -input=false
+          terraform apply -refresh-only -auto-approve -input=false
           
           # Get current IPs
           CURRENT_IPS=$(terraform output -json current_cloud_run_ips)
