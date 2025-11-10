@@ -32,6 +32,12 @@ RUN echo 'server { \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
+    # Health check endpoint for Cloud Run readiness \
+    location /healthz { \
+        access_log off; \
+        default_type text/plain; \
+        return 200 "OK"; \
+    } \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \

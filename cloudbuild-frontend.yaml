@@ -9,7 +9,7 @@ steps:
     args:
       - 'build'
       - '-f'
-      - 'frontend.Dockerfile.dev'
+      - 'Dockerfile'
       - '-t'
       - '${_ARTIFACT_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_GAR_REPO}/agentnav-frontend:${COMMIT_SHA}'
       - '-t'
