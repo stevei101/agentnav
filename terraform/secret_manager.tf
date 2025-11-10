@@ -41,6 +41,29 @@ resource "google_secret_manager_secret" "firestore_credentials" {
 }
 
 # ==============================================================================
+# Cross-Project DNS Configuration Secrets
+# ==============================================================================
+
+# DNS Zone Project ID (for cross-project DNS setup)
+resource "google_secret_manager_secret" "dns_zone_project_id" {
+  secret_id = "DNS_ZONE_PROJECT_ID"
+  project   = var.project_id
+
+  replication {
+    auto {
+    }
+  }
+
+  labels = {
+    service    = "infrastructure"
+    type       = "dns_config"
+    managed_by = "terraform"
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+# ==============================================================================
 # Supabase Secrets (for Gen AI Prompt Management App)
 # ==============================================================================
 

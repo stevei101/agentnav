@@ -103,3 +103,48 @@ output "domain_mapping_status" {
   sensitive   = false
 }
 
+# DNS Records for Manual Creation (Cross-Project Setup)
+output "dns_records_for_manual_creation" {
+  description = "DNS records that need to be created manually in the infrastructure repository when manage_dns_in_this_project=false"
+  value = var.manage_dns_in_this_project ? null : {
+    domain_name = var.custom_domain_name
+    zone_name   = var.dns_zone_name
+    zone_project = data.google_secret_manager_secret_version.dns_zone_project_id.secret_data
+    last_updated = timestamp()  # Track when these IPs were last retrieved
+    records = try(
+      [
+        for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records : {
+          name   = "${var.custom_domain_name}."
+          type   = record.type
+          ttl    = 300
+          rrdatas = [record.rrdata]
+        }
+      ],
+      []
+    )
+  }
+}
+
+# Current Cloud Run Domain Mapping IP Addresses (for monitoring)
+output "current_cloud_run_ips" {
+  description = "Current IP addresses assigned by Cloud Run (monitor for changes)"
+  value = try(
+    {
+      a_records = [
+        for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+        record.rrdata if record.type == "A"
+      ]
+      aaaa_records = [
+        for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+        record.rrdata if record.type == "AAAA"
+      ]
+      last_checked = timestamp()
+    },
+    {
+      a_records = []
+      aaaa_records = []
+      last_checked = timestamp()
+    }
+  )
+}
+
