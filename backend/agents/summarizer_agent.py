@@ -8,7 +8,7 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-from .base_agent import A2AMessage, A2AProtocol, Agent
+from .base_agent import A2AMessage, A2AMessageLike, A2AProtocol, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class SummarizerAgent(Agent):
         if a2a_protocol is None:
             a2a_protocol = A2AProtocol()
         super().__init__("summarizer", a2a_protocol)
-        self._prompt_template = None
+        self._prompt_template: Optional[str] = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
 
     def _get_prompt_template(self) -> str:
@@ -37,7 +37,7 @@ class SummarizerAgent(Agent):
             return self._prompt_template
 
         try:
-            from services.prompt_loader import get_prompt
+            from backend.services.prompt_loader import get_prompt
 
             self._prompt_template = get_prompt("summarizer_system_instruction")
             logger.info("✅ Loaded summarizer prompt from Firestore")
@@ -127,7 +127,7 @@ Create a comprehensive summary that captures the essence and key information.
     async def _generate_summary(self, document: str, content_type: str) -> str:
         """Generate summary using Gemini"""
         try:
-            from services.gemini_client import reason_with_gemini
+            from backend.services.gemini_client import reason_with_gemini
 
             prompt_template = self._get_prompt_template()
             prompt = prompt_template.format(
@@ -182,9 +182,11 @@ Create a comprehensive summary that captures the essence and key information.
         self, document: str, content_type: str, summary: str
     ) -> Dict[str, Any]:
         """Extract key insights from the content and summary"""
-        insights = {
-            "word_count": len(document.split()),
-            "line_count": len(document.split("\n")),
+        word_count = len(document.split())
+        line_count = len(document.split("\n"))
+        insights: Dict[str, Any] = {
+            "word_count": word_count,
+            "line_count": line_count,
             "content_type": content_type,
             "key_metrics": {},
         }
@@ -211,26 +213,24 @@ Create a comprehensive summary that captures the essence and key information.
             # Document-specific insights
             sentences = document.count(".") + document.count("!") + document.count("?")
             paragraphs = len([para for para in document.split("\n\n") if para.strip()])
+            avg_words_per_sentence = word_count / max(sentences, 1)
             insights["key_metrics"] = {
                 "sentences": sentences,
                 "paragraphs": paragraphs,
-                "avg_words_per_sentence": insights["word_count"] / max(sentences, 1),
-                "reading_time_minutes": max(
-                    1, insights["word_count"] // 200
-                ),  # ~200 WPM average
+                "avg_words_per_sentence": avg_words_per_sentence,
+                "reading_time_minutes": max(1, word_count // 200),  # ~200 WPM average
             }
 
-        insights["summary_length"] = len(summary.split())
-        insights["compression_ratio"] = round(
-            insights["summary_length"] / insights["word_count"], 3
-        )
+        summary_length = len(summary.split())
+        insights["summary_length"] = summary_length
+        insights["compression_ratio"] = round(summary_length / max(word_count, 1), 3)
 
         return insights
 
     async def _store_summary_results(self, summary: str, insights: Dict[str, Any]):
         """Store summary results in Firestore for persistence"""
         try:
-            from services.firestore_client import get_firestore_client
+            from backend.services.firestore_client import get_firestore_client
 
             db = get_firestore_client()
 
@@ -274,8 +274,7 @@ Create a comprehensive summary that captures the essence and key information.
             },
             priority=3,
         )
-        if self.a2a is not None:
-            await self.a2a.send_message(message)
+        await self._send_a2a_message(message)
 
         # Also send specific notification to visualizer agent
         visualizer_message = A2AMessage(
@@ -290,12 +289,11 @@ Create a comprehensive summary that captures the essence and key information.
             },
             priority=4,
         )
-        if self.a2a is not None:
-            await self.a2a.send_message(visualizer_message)
+        await self._send_a2a_message(visualizer_message)
 
         self.logger.info("📤 Sent summary completion notifications via A2A Protocol")
 
-    async def _handle_a2a_message(self, message: A2AMessage):
+    async def _handle_a2a_message(self, message: A2AMessageLike):
         """Handle incoming A2A messages specific to Summarizer"""
         await super()._handle_a2a_message(message)
 

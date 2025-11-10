@@ -1,50 +1,85 @@
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from backend.services.event_emitter import EventEmitter, EventEmitterManager
+
 
 @pytest.fixture
-def mock_event_emitter_manager(monkeypatch):
-    """Provide a reusable mocked EventEmitterManager for stream route tests.
+def event_emitter_manager(monkeypatch: pytest.MonkeyPatch) -> EventEmitterManager:
+    """Provide a real EventEmitterManager wired into the stream routes module.
 
-    Patches `backend.routes.stream_routes.get_event_emitter_manager` so tests
-    can rely on a simple, predictable manager that returns a mock emitter.
+    Using the real manager keeps the tests close to the production behaviour
+    while still allowing us to observe and assert on emitted events.
     """
-    mock_emitter = Mock()
-    # These methods are synchronous in the actual implementation
-    mock_emitter.register_client = Mock()
-    mock_emitter.unregister_client = Mock()
-    mock_emitter.emit_event = AsyncMock()  # This one is async
 
-    mock_manager = Mock()
-    mock_manager.create_emitter.return_value = mock_emitter
-
-    # Patch the accessor used by stream routes to return our manager
+    manager = EventEmitterManager()
     monkeypatch.setattr(
         "backend.routes.stream_routes.get_event_emitter_manager",
-        lambda: mock_manager,
+        lambda: manager,
         raising=False,
     )
-
-    return mock_manager
+    yield manager
+    manager.emitters.clear()
 
 
 @pytest.fixture
-def mock_websocket():
+def emitter_factory(
+    event_emitter_manager: EventEmitterManager,
+) -> Callable[[str], EventEmitter]:
+    """Return a factory that produces emitters for ad-hoc session IDs."""
+
+    def _create(session_id: str = "test-session") -> EventEmitter:
+        return event_emitter_manager.create_emitter(session_id)
+
+    return _create
+
+
+@pytest.fixture
+def mock_websocket() -> AsyncMock:
     """Factory-like fixture returning a simple mocked WebSocket.
 
-    The mock implements async methods `accept`, `receive_json`, and `send_json`.
-    Tests can override `receive_json.side_effect` or `return_value` as needed.
+    The mock implements the async methods used by the route handler so tests
+    can tailor behaviour via `return_value` or `side_effect`.
     """
+
     ws = AsyncMock()
     ws.accept = AsyncMock()
     ws.send_json = AsyncMock()
-    ws.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
+    ws.receive_json = AsyncMock()
     ws.close = AsyncMock()
     return ws
 
 
 @pytest.fixture
-def simple_emitter(mock_event_emitter_manager):
-    """Return the emitter object created by the patched manager for convenience."""
-    return mock_event_emitter_manager.create_emitter()
+def stub_external_services(monkeypatch: pytest.MonkeyPatch) -> Dict[str, Any]:
+    """Stub external I/O services (Gemini + Firestore) for agent tests."""
+
+    async def _fake_reason_with_gemini(*_: Any, **__: Any) -> str:
+        return "Stubbed summary content."
+
+    gemini_mock = AsyncMock(side_effect=_fake_reason_with_gemini)
+    monkeypatch.setattr(
+        "backend.services.gemini_client.reason_with_gemini",
+        gemini_mock,
+        raising=False,
+    )
+
+    firestore_doc = Mock()
+    firestore_client = Mock()
+    firestore_client.get_document.return_value = firestore_doc
+    monkeypatch.setattr(
+        "backend.services.firestore_client.get_firestore_client",
+        lambda: firestore_client,
+        raising=False,
+    )
+
+    return {
+        "gemini": gemini_mock,
+        "firestore": firestore_client,
+        "document": firestore_doc,
+    }

@@ -7,7 +7,7 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-from .base_agent import A2AMessage, Agent
+from .base_agent import A2AMessageLike, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class OrchestratorAgent(Agent):
 
     def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("orchestrator", a2a_protocol)
-        self._prompt_template = None
+        self._prompt_template: Optional[str] = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
 
     def _get_prompt_template(self) -> str:
@@ -35,7 +35,7 @@ class OrchestratorAgent(Agent):
             return self._prompt_template
 
         try:
-            from services.prompt_loader import get_prompt
+            from backend.services.prompt_loader import get_prompt
 
             self._prompt_template = get_prompt("orchestrator_system_instruction")
             logger.info("✅ Loaded orchestrator prompt from Firestore")
@@ -121,7 +121,7 @@ Determine:
 
     async def _analyze_content_with_ai(self, document: str) -> Dict[str, Any]:
         """Use Gemini to analyze content type and characteristics"""
-        from services.gemini_client import reason_with_gemini
+        from backend.services.gemini_client import reason_with_gemini
 
         analysis_prompt = f"""
 Analyze the following content and provide structured analysis.
@@ -147,7 +147,7 @@ Content to analyze:
         """Parse structured analysis response from AI model"""
 
         lines = response.strip().split("\n")
-        parsed = {
+        parsed: Dict[str, Any] = {
             "content_type": "document",
             "complexity_level": "moderate",
             "key_topics": [],
@@ -179,8 +179,9 @@ Content to analyze:
         if not parsed["content_summary"]:
             lines_count = len(document.split("\n"))
             words_count = len(document.split())
+            content_type = str(parsed.get("content_type", "document"))
             parsed["content_summary"] = (
-                f"{parsed['content_type'].title()} with {lines_count} lines, {words_count} words"
+                f"{content_type.title()} with {lines_count} lines, {words_count} words"
             )
 
         return parsed
@@ -266,7 +267,7 @@ Content to analyze:
         self, content_analysis: Dict[str, Any], document: str
     ):
         """Send typed delegation messages (FR#027)"""
-        from services.a2a_protocol import create_task_delegation_message
+        from backend.services.a2a_protocol import create_task_delegation_message
 
         correlation_id = getattr(self.a2a, "correlation_id", "unknown")
 
@@ -282,7 +283,7 @@ Content to analyze:
             expected_output="comprehensive_summary",
             correlation_id=correlation_id,
         )
-        await self.a2a.send_message(summarizer_message)
+        await self._send_a2a_message(summarizer_message)
 
         # Message to Linker Agent
         linker_message = create_task_delegation_message(
@@ -297,7 +298,7 @@ Content to analyze:
             expected_output="entity_relationships",
             correlation_id=correlation_id,
         )
-        await self.a2a.send_message(linker_message)
+        await self._send_a2a_message(linker_message)
 
         # Message to Visualizer Agent
         visualizer_message = create_task_delegation_message(
@@ -313,7 +314,7 @@ Content to analyze:
             correlation_id=correlation_id,
             depends_on=["summarizer", "linker"],
         )
-        await self.a2a.send_message(visualizer_message)
+        await self._send_a2a_message(visualizer_message)
 
         self.logger.info(
             "📨 Sent typed delegation messages to all specialized agents (FR#027)"
@@ -340,7 +341,7 @@ Content to analyze:
             },
             priority=4,
         )
-        await self.a2a.send_message(summarizer_message)
+        await self._send_a2a_message(summarizer_message)
 
         # Message to Linker Agent
         linker_message = A2AMessage(
@@ -357,7 +358,7 @@ Content to analyze:
             },
             priority=3,
         )
-        await self.a2a.send_message(linker_message)
+        await self._send_a2a_message(linker_message)
 
         # Message to Visualizer Agent
         visualizer_message = A2AMessage(
@@ -378,7 +379,7 @@ Content to analyze:
             },
             priority=2,
         )
-        await self.a2a.send_message(visualizer_message)
+        await self._send_a2a_message(visualizer_message)
 
         self.logger.info("📨 Sent delegation messages to all specialized agents")
 
@@ -420,7 +421,7 @@ Content to analyze:
 
         return estimated_time
 
-    async def _handle_a2a_message(self, message: A2AMessage):
+    async def _handle_a2a_message(self, message: A2AMessageLike):
         """Handle incoming A2A messages specific to Orchestrator"""
         await super()._handle_a2a_message(message)
 

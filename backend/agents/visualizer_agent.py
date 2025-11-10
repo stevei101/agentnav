@@ -11,7 +11,7 @@ import re
 import time
 from typing import Any, Dict, Optional
 
-from .base_agent import A2AMessage, Agent
+from .base_agent import A2AMessage, A2AMessageLike, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class VisualizerAgent(Agent):
 
         try:
             # Try to load from Firestore
-            from services.prompt_loader import get_prompt
+            from backend.services.prompt_loader import get_prompt
 
             self._prompt_template = get_prompt("visualizer_graph_generation")
             logger.info("✅ Loaded prompt from Firestore")
@@ -221,7 +221,7 @@ class VisualizerAgent(Agent):
         )
 
         try:
-            from services.gemini_client import reason_with_gemini
+            from backend.services.gemini_client import reason_with_gemini
 
             logger.info(f"Calling Gemini service for {viz_type} generation...")
             graph_text = await reason_with_gemini(
@@ -291,7 +291,7 @@ Suggest improvements to make the visualization clearer and more informative.
 Return enhanced node groups and edge labels.
 """
 
-            from services.gemini_client import reason_with_gemini
+            from backend.services.gemini_client import reason_with_gemini
 
             enhancement_text = await reason_with_gemini(
                 prompt=enhancement_prompt, max_tokens=400, temperature=0.5
@@ -326,13 +326,13 @@ Return enhanced node groups and edge labels.
             },
             priority=2,
         )
-        await self.a2a.send_message(message)
+        await self._send_a2a_message(message)
 
         self.logger.info(
             "📤 Sent visualization completion notification via A2A Protocol"
         )
 
-    async def _handle_a2a_message(self, message: A2AMessage):
+    async def _handle_a2a_message(self, message: A2AMessageLike):
         """Handle incoming A2A messages specific to Visualizer"""
         await super()._handle_a2a_message(message)
 

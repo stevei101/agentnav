@@ -8,7 +8,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
-from .base_agent import A2AMessage, Agent
+from .base_agent import A2AMessage, A2AMessageLike, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class LinkerAgent(Agent):
 
     def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
         super().__init__("linker", a2a_protocol)
-        self._prompt_template = None
+        self._prompt_template: Optional[str] = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
 
     def _get_prompt_template(self) -> str:
@@ -36,7 +36,7 @@ class LinkerAgent(Agent):
             return self._prompt_template
 
         try:
-            from services.prompt_loader import get_prompt
+            from backend.services.prompt_loader import get_prompt
 
             self._prompt_template = get_prompt("linker_system_instruction")
             logger.info("✅ Loaded linker prompt from Firestore")
@@ -271,7 +271,7 @@ Return a structured analysis of entities and their relationships.
         """Extract entities from document content using Gemini"""
         try:
             # Use standardized Gemini client for cloud-based or local reasoning
-            from services.gemini_client import reason_with_gemini
+            from backend.services.gemini_client import reason_with_gemini
 
             prompt = f"""
 Analyze this document and extract key entities (concepts, topics, themes).
@@ -514,7 +514,7 @@ Extract 5-10 key entities:
         in the context of the full document.
         """
         try:
-            from services.gemini_client import reason_with_gemini
+            from backend.services.gemini_client import reason_with_gemini
 
             # Take top entities by importance
             top_entities = [e["label"] for e in entities[:5]]
@@ -630,7 +630,7 @@ Provide relationship insights:
             },
             priority=3,
         )
-        await self.a2a.send_message(message)
+        await self._send_a2a_message(message)
 
         # Send specific data to visualizer
         visualizer_message = A2AMessage(
@@ -646,11 +646,11 @@ Provide relationship insights:
             },
             priority=4,
         )
-        await self.a2a.send_message(visualizer_message)
+        await self._send_a2a_message(visualizer_message)
 
         self.logger.info("📤 Sent linking completion notifications via A2A Protocol")
 
-    async def _handle_a2a_message(self, message: A2AMessage):
+    async def _handle_a2a_message(self, message: A2AMessageLike):
         """Handle incoming A2A messages specific to Linker"""
         await super()._handle_a2a_message(message)
 

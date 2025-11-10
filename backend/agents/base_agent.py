@@ -6,22 +6,43 @@ Updated for FR#027: Full A2A Protocol Integration with formal message schemas
 and security features.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Union,
+    cast,
+)
 
 if TYPE_CHECKING:
-    from models.context_model import SessionContext
+    from backend.models.a2a_messages import A2AMessageBase
+    from backend.models.context_model import SessionContext
+    from backend.services.a2a_protocol import A2AProtocolService
+    from backend.services.context_persistence import ContextPersistenceService
+    from backend.services.knowledge_cache_service import KnowledgeCacheService
+    from backend.services.session_service import SessionService
+else:
+    A2AMessageBase = Any  # type: ignore[assignment]
+    A2AProtocolService = Any  # type: ignore[assignment]
+
+A2AMessageLike = Union["A2AMessage", A2AMessageBase]
 
 logger = logging.getLogger(__name__)
 
 # Import new A2A Protocol components (FR#027)
 try:
-    from models.a2a_messages import A2AMessageBase
-    from services.a2a_protocol import A2AProtocolService, create_status_message
+    from backend.models.a2a_messages import A2AMessageBase
+    from backend.services.a2a_protocol import A2AProtocolService, create_status_message
 
     HAS_ENHANCED_A2A = True
 except ImportError as e:
@@ -122,17 +143,24 @@ class Agent(ABC):
     """
 
     def __init__(
-        self, name: str, a2a_protocol: Union["A2AProtocol", "A2AProtocolService"]
+        self,
+        name: str,
+        a2a_protocol: Optional[Union["A2AProtocol", "A2AProtocolService"]] = None,
     ):
         self.name = name
         self.state = AgentState.IDLE
-        self.a2a = a2a_protocol
+        if a2a_protocol is None:
+            protocol: Union[A2AProtocol, A2AProtocolService] = A2AProtocol()
+        else:
+            protocol = cast(Union[A2AProtocol, A2AProtocolService], a2a_protocol)
+
+        self.a2a = protocol
         self.execution_history: List[Dict[str, Any]] = []
         self.logger = logging.getLogger(f"agent.{name}")
 
         # Check if using enhanced A2A Protocol
         self.using_enhanced_a2a = (
-            HAS_ENHANCED_A2A and isinstance(a2a_protocol, A2AProtocolService)
+            HAS_ENHANCED_A2A and isinstance(self.a2a, A2AProtocolService)
             if HAS_ENHANCED_A2A
             else False
         )
@@ -206,14 +234,14 @@ class Agent(ABC):
 
     async def _process_a2a_messages(self):
         """Process pending A2A Protocol messages for this agent"""
-        messages = await self.a2a.get_messages_for_agent(self.name)
+        messages = await self._get_a2a_messages()
         for message in messages:
             self.logger.info(
                 f"📥 Processing A2A message: {message.message_type} from {message.from_agent}"
             )
             await self._handle_a2a_message(message)
 
-    async def _handle_a2a_message(self, message: Union["A2AMessage", "A2AMessageBase"]):
+    async def _handle_a2a_message(self, message: A2AMessageLike):
         """
         Handle incoming A2A message - can be overridden by subclasses
 
@@ -264,7 +292,7 @@ class Agent(ABC):
 
         if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
             # Use typed AgentStatusMessage (FR#027)
-            message = create_status_message(
+            message_obj: A2AMessageLike = create_status_message(
                 from_agent=self.name,
                 agent_status="completed",
                 correlation_id=getattr(self.a2a, "correlation_id", "unknown"),
@@ -273,7 +301,7 @@ class Agent(ABC):
             )
         else:
             # Legacy message format
-            message = A2AMessage(
+            message_obj = A2AMessage(
                 message_id=f"{self.name}_complete_{int(time.time())}",
                 from_agent=self.name,
                 to_agent="*",  # Broadcast to all agents
@@ -281,7 +309,7 @@ class Agent(ABC):
                 data={"agent": self.name, "result_summary": result_summary},
             )
 
-        await self.a2a.send_message(message)
+        await self._send_a2a_message(message_obj)
 
     async def _notify_error(self, error: str):
         """
@@ -291,7 +319,7 @@ class Agent(ABC):
         """
         if self.using_enhanced_a2a and HAS_ENHANCED_A2A:
             # Use typed AgentStatusMessage (FR#027)
-            message = create_status_message(
+            message_obj: A2AMessageLike = create_status_message(
                 from_agent=self.name,
                 agent_status="failed",
                 correlation_id=getattr(self.a2a, "correlation_id", "unknown"),
@@ -299,7 +327,7 @@ class Agent(ABC):
             )
         else:
             # Legacy message format
-            message = A2AMessage(
+            message_obj = A2AMessage(
                 message_id=f"{self.name}_error_{int(time.time())}",
                 from_agent=self.name,
                 to_agent="*",  # Broadcast to all agents
@@ -307,7 +335,7 @@ class Agent(ABC):
                 data={"agent": self.name, "error": error},
             )
 
-        await self.a2a.send_message(message)
+        await self._send_a2a_message(message_obj)
 
     def _summarize_result(self, result: Dict[str, Any]) -> str:
         """Create a brief summary of the result for A2A communication"""
@@ -350,6 +378,26 @@ class Agent(ABC):
             "total_executions": len(self.execution_history),
         }
 
+    async def _send_a2a_message(self, message: A2AMessageLike) -> None:
+        """Send an A2A message through the configured protocol implementation."""
+        if HAS_ENHANCED_A2A and isinstance(self.a2a, A2AProtocolService):
+            await self.a2a.send_message(cast(A2AMessageBase, message))
+            return
+
+        protocol = cast(A2AProtocol, self.a2a)
+        await protocol.send_message(cast(A2AMessage, message))
+
+    async def _get_a2a_messages(self) -> List[A2AMessageLike]:
+        """Retrieve pending A2A messages, supporting both protocol implementations."""
+        if HAS_ENHANCED_A2A and isinstance(self.a2a, A2AProtocolService):
+            messages = await self.a2a.get_messages_for_agent(self.name)
+            return cast(List[A2AMessageLike], list(messages))
+
+        protocol = cast(A2AProtocol, self.a2a)
+        return cast(
+            List[A2AMessageLike], await protocol.get_messages_for_agent(self.name)
+        )
+
 
 class AgentWorkflow:
     """
@@ -370,8 +418,9 @@ class AgentWorkflow:
             use_enhanced_a2a: Whether to use enhanced A2A Protocol (FR#027)
         """
         # Choose A2A Protocol implementation
+        self.a2a: Union[A2AProtocol, A2AProtocolService]
         if use_enhanced_a2a and HAS_ENHANCED_A2A:
-            from services.a2a_protocol import A2AProtocolService
+            from backend.services.a2a_protocol import A2AProtocolService
 
             self.a2a = A2AProtocolService(session_id=session_id)
             logger.info("🔄 Using Enhanced A2A Protocol Service (FR#027)")
@@ -381,9 +430,9 @@ class AgentWorkflow:
 
         self.agents: Dict[str, Agent] = {}
         self.dependencies: Dict[str, List[str]] = {}  # agent -> [prerequisite_agents]
-        self.persistence_service = None  # Lazy initialization
-        self.session_service = None  # Lazy initialization
-        self.cache_service = None  # Lazy initialization
+        self.persistence_service: Optional["ContextPersistenceService"] = None
+        self.session_service: Optional["SessionService"] = None
+        self.cache_service: Optional["KnowledgeCacheService"] = None
 
     def register_agent(self, agent: Agent):
         """Register an agent with the workflow"""
@@ -402,8 +451,8 @@ class AgentWorkflow:
         """
         logger.info("🎬 Starting ADK Agent Workflow")
 
-        executed_agents = set()
-        workflow_results = {}
+        executed_agents: Set[str] = set()
+        workflow_results: Dict[str, Dict[str, Any]] = {}
 
         while len(executed_agents) < len(self.agents):
             # Find agents ready to execute (dependencies satisfied)
@@ -469,7 +518,7 @@ class AgentWorkflow:
         Raises:
             TypeError: If session_context is not a SessionContext instance
         """
-        from models.context_model import SessionContext
+        from backend.models.context_model import SessionContext
 
         # Validate input type
         if not isinstance(session_context, SessionContext):
@@ -480,7 +529,7 @@ class AgentWorkflow:
         # Initialize services if not already done
         if self.persistence_service is None:
             try:
-                from services.context_persistence import get_persistence_service
+                from backend.services.context_persistence import get_persistence_service
 
                 self.persistence_service = get_persistence_service()
             except Exception as e:
@@ -488,7 +537,7 @@ class AgentWorkflow:
 
         if self.session_service is None:
             try:
-                from services.session_service import get_session_service
+                from backend.services.session_service import get_session_service
 
                 self.session_service = get_session_service()
             except Exception as e:
@@ -496,7 +545,9 @@ class AgentWorkflow:
 
         if self.cache_service is None:
             try:
-                from services.knowledge_cache_service import get_knowledge_cache_service
+                from backend.services.knowledge_cache_service import (
+                    get_knowledge_cache_service,
+                )
 
                 self.cache_service = get_knowledge_cache_service()
             except Exception as e:
@@ -528,7 +579,7 @@ class AgentWorkflow:
                 session_context.key_entities = cached_result.get("key_entities", [])
 
                 # Convert relationship dicts to EntityRelationship objects
-                from models.context_model import EntityRelationship
+                from backend.models.context_model import EntityRelationship
 
                 cached_relationships = cached_result.get("relationships", [])
                 session_context.relationships = [
@@ -540,7 +591,7 @@ class AgentWorkflow:
                 session_context.workflow_status = "completed_from_cache"
 
                 # Mark all agents as complete (from cache)
-                from models.context_model import STANDARD_AGENT_ORDER
+                from backend.models.context_model import STANDARD_AGENT_ORDER
 
                 for agent_name in STANDARD_AGENT_ORDER:
                     session_context.mark_agent_complete(agent_name)
@@ -571,7 +622,7 @@ class AgentWorkflow:
 
         # Define execution order for sequential workflow
         # Uses standard agent order from context_model
-        from models.context_model import STANDARD_AGENT_ORDER
+        from backend.models.context_model import STANDARD_AGENT_ORDER
 
         execution_order = STANDARD_AGENT_ORDER
 
@@ -717,7 +768,7 @@ class AgentWorkflow:
 
             if "relationships" in result:
                 # Convert relationship dicts to EntityRelationship objects
-                from models.context_model import EntityRelationship
+                from backend.models.context_model import EntityRelationship
 
                 relationships = result["relationships"]
                 session_context.relationships = [

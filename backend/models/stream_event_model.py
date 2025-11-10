@@ -270,7 +270,7 @@ class WorkflowStreamResponse(BaseModel):
     session_id: str = Field(..., description="Unique session identifier")
     workflow_status: str = Field(..., description="Final workflow status")
     completed_agents: List[str] = Field(
-        default=[], description="List of successfully completed agents"
+        default_factory=list, description="List of successfully completed agents"
     )
     total_execution_time_ms: int = Field(
         ..., description="Total execution time in milliseconds"
@@ -297,8 +297,12 @@ class WorkflowStreamResponse(BaseModel):
                 ],
                 "total_execution_time_ms": 5234,
                 "events_count": 8,
-                "summary": "...",
-                "visualization": {...},
+                "summary": "This document discusses machine learning fundamentals.",
+                "visualization": {
+                    "type": "MIND_MAP",
+                    "nodes": [{"id": "ml", "label": "Machine Learning"}],
+                    "edges": [],
+                },
                 "error": None,
             }
         }

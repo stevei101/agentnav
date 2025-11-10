@@ -203,8 +203,8 @@ class EventEmitter:
         Returns:
             Dictionary with event statistics
         """
-        status_counts = {}
-        agent_counts = {}
+        status_counts: Dict[str, int] = {}
+        agent_counts: Dict[str, int] = {}
 
         for event in self.events_emitted:
             status = event.status.value
