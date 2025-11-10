@@ -22,7 +22,7 @@ beforeAll(() => {
     });
 
     const augmentedGlobal = globalThis as AugmentedGlobal;
-    augmentedGlobal.window = dom.window as any;
+    augmentedGlobal.window = dom.window as unknown as Window;
     augmentedGlobal.document = dom.window.document;
     augmentedGlobal.navigator = dom.window.navigator;
     augmentedGlobal.HTMLElement = dom.window.HTMLElement;
