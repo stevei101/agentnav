@@ -69,3 +69,18 @@ enable_staging_environment = true
 # Cloud DNS managed zone name (must already exist in GCP)
 # Find zone name with: gcloud dns managed-zones list
 # dns_zone_name = "lornu-com"
+
+# ============================================
+# CROSS-PROJECT DNS SETUP (OPTIONAL)
+# ============================================
+
+# If your DNS zone is in a different GCP project:
+# 1. Set this to the project ID where the DNS zone is hosted
+# 2. Set enable_dns_records = false
+# 3. Manually create DNS records in the DNS owner project
+# dns_project_id = "dns-owner-project-id"
+
+# Whether to create DNS records automatically in Terraform
+# Set to false for cross-project scenarios where you need to 
+# manually create DNS records in the DNS owner project
+# enable_dns_records = true

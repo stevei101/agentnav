@@ -2,6 +2,8 @@
 
 This guide explains how to configure a custom domain (`agentnav.lornu.com`) for the Cloud Run frontend service using Terraform.
 
+> **Cross-Project DNS Setup:** If your DNS zone is in a different GCP project, see the [Cross-Project DNS Integration Guide](./CROSS_PROJECT_DNS_SETUP.md) for detailed instructions.
+
 ## Overview
 
 Cloud Run automatically manages TLS/SSL certificates - **no cert-manager or external certificate management is needed**. The setup requires:
@@ -14,6 +16,7 @@ Cloud Run automatically manages TLS/SSL certificates - **no cert-manager or exte
 1. **Existing Cloud DNS Zone**: The DNS zone for `lornu.com` must already exist in GCP Cloud DNS
    - Check existing zones: `gcloud dns managed-zones list`
    - If missing, create it: `gcloud dns managed-zones create lornu-com --dns-name=lornu.com --description="lornu.com DNS zone"`
+   - **For cross-project DNS**: See [Cross-Project DNS Integration Guide](./CROSS_PROJECT_DNS_SETUP.md)
 
 2. **Domain Ownership Verification**: The domain must be verified in Google Cloud Console
    - Cloud Run domain mapping requires domain ownership verification
@@ -178,9 +181,11 @@ terraform output domain_mapping_status
 - **No cert-manager Needed**: External certificate management tools are not required
 - **DNS Zone Must Exist**: The Cloud DNS zone must be created before Terraform can reference it
 - **Propagation Time**: DNS changes typically take 5-15 minutes to propagate globally
+- **Cross-Project DNS**: If your DNS zone is in a different project, see [Cross-Project DNS Integration Guide](./CROSS_PROJECT_DNS_SETUP.md)
 
 ## Reference
 
+- [Cross-Project DNS Integration Guide](./CROSS_PROJECT_DNS_SETUP.md) - For cross-project DNS setups
 - [Cloud Run Custom Domains Documentation](https://cloud.google.com/run/docs/mapping-custom-domains)
 - [Cloud DNS Documentation](https://cloud.google.com/dns/docs)
 - [Terraform Cloud Run Domain Mapping](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_domain_mapping)

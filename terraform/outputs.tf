@@ -95,6 +95,30 @@ output "domain_mapping_status" {
   sensitive   = false
 }
 
+output "domain_mapping_dns_records" {
+  description = "DNS records required for the domain mapping (for manual creation in cross-project scenarios)"
+  value = try([
+    for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records : {
+      type    = record.type
+      name    = "${var.custom_domain_name}."
+      rrdata  = record.rrdata
+      ttl     = 300
+    }
+  ], [])
+  sensitive = false
+}
+
+output "dns_setup_info" {
+  description = "Information about DNS configuration and cross-project setup status"
+  value = {
+    dns_project_id       = local.dns_project_id
+    is_cross_project     = local.is_cross_project_dns
+    dns_records_managed  = var.enable_dns_records
+    dns_zone_name        = var.dns_zone_name
+    custom_domain        = var.custom_domain_name
+  }
+}
+
 # Nginx Proxy Output
 output "proxy_service_url" {
   description = "URL of the nginx proxy service (main entry point)"

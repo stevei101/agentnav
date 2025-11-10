@@ -107,6 +107,18 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
+variable "dns_project_id" {
+  description = "Google Cloud Project ID where the DNS zone is hosted. If different from project_id, this enables cross-project DNS setup. Leave empty to use the same project."
+  type        = string
+  default     = ""
+}
+
+variable "enable_dns_records" {
+  description = "Whether to create DNS records in Terraform. Set to false for cross-project scenarios where DNS records must be created manually in the DNS owner project."
+  type        = bool
+  default     = true
+}
+
 variable "proxy_region" {
   description = "Region for nginx proxy service (defaults to frontend_region)"
   type        = string
