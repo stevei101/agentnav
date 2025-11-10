@@ -129,6 +129,16 @@ terraform validate                  # Validate syntax
 terraform plan                      # Preview changes (on PR, this posts as comment)
 ```
 
+### Secret scanning (local helper)
+
+Run the official [Yelp/detect-secrets](https://github.com/Yelp/detect-secrets) tool locally before committing sensitive changes:
+
+```bash
+scripts/check-secrets.sh
+```
+
+The script uses `uvx detect-secrets` to update `.secrets.baseline` (excluding `bun.lock`) and launches the interactive audit UI so you can mark false positives.
+
 ## Troubleshooting
 
 ### Check fails but works locally
