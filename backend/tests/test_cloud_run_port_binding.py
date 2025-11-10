@@ -11,10 +11,11 @@ This addresses the critical Cloud Run deployment failure:
 defined provided by the PORT=8080 environment variable"
 """
 
-import pytest
 import os
-from unittest.mock import MagicMock
 import sys
+from unittest.mock import MagicMock
+
+import pytest
 
 # Mock torch/transformers before imports
 sys.modules["torch"] = MagicMock()

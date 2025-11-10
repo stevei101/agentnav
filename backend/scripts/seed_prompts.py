@@ -6,9 +6,9 @@ Usage:
     python backend/scripts/seed_prompts.py
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime, timezone
 
 # Add parent directory to path for imports
@@ -119,7 +119,7 @@ def seed_prompts():
                 logger.error(f"  ❌ Error processing {prompt_id}: {e}")
                 continue
 
-        logger.info(f"✅ Seeding complete!")
+        logger.info("✅ Seeding complete!")
         logger.info(f"   Created: {seeded_count}")
         logger.info(f"   Updated: {updated_count}")
 

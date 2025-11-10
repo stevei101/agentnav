@@ -201,21 +201,13 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 ### 3. Install Dependencies
 
 ```bash
-# Using bun (recommended)
 bun install
-
-# Or using npm
-npm install
 ```
 
 ### 4. Run Development Server
 
 ```bash
-# Using bun
 bun run dev
-
-# Or using npm
-npm run dev
 ```
 
 The app will be available at `http://localhost:3000`

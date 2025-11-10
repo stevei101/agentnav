@@ -15,6 +15,8 @@ This Terraform configuration provisions:
 - **Staging Environment** Cloud Run services (frontend-staging, backend-staging)
 - **Cloud Build Triggers** for automatic "Connect Repo" deployments from GitHub (frontend & backend)
 
+> **Prompt Vault:** The prompt management application now lives in [`stevei101/prompt-vault`](https://github.com/stevei101/prompt-vault) and manages its own Terraform configuration. Supabase-related resources have been removed from this module.
+
 ## Prerequisites
 
 1. **Google Cloud Project** with billing enabled

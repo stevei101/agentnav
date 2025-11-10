@@ -89,12 +89,6 @@ variable "backend_container_port" {
   default     = 8080
 }
 
-variable "prompt_mgmt_container_port" {
-  description = "Container port for Prompt Management App Cloud Run service"
-  type        = number
-  default     = 80
-}
-
 variable "enable_staging_environment" {
   description = "Enable staging environment Cloud Run services for PR testing and validation."
   type        = bool
@@ -111,5 +105,17 @@ variable "dns_zone_name" {
   description = "Name of the Cloud DNS managed zone for the custom domain (e.g., 'lornu-com' or 'lornu-zone')"
   type        = string
   default     = "lornu-com"
+}
+
+variable "proxy_region" {
+  description = "Region for nginx proxy service (defaults to frontend_region)"
+  type        = string
+  default     = null
+}
+
+variable "proxy_container_port" {
+  description = "Container port for proxy service"
+  type        = number
+  default     = 8080
 }
 

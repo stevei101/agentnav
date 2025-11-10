@@ -3,8 +3,9 @@ Tests for KnowledgeCacheService
 Tests knowledge cache management in Firestore
 """
 
-import pytest
 import time
+
+import pytest
 from services.knowledge_cache_service import KnowledgeCacheService
 
 

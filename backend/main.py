@@ -4,14 +4,17 @@ Development server with hot-reload support
 Multi-agent system with ADK and A2A Protocol
 """
 
-import os
+import importlib
 import logging
-from typing import Optional, Dict, Any
+import os
+from typing import Any, Dict, Optional
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from backend.routes.prompt_routes import router as prompt_router
 
 # Import WebSocket streaming routes (FR#020)
 from backend.routes.stream_routes import router as stream_router
@@ -84,6 +87,7 @@ async def add_security_headers(request: Request, call_next):
 
 # Include WebSocket streaming routes (FR#020 - Interactive Agent Dashboard)
 app.include_router(stream_router)
+app.include_router(prompt_router)
 
 
 class HealthResponse(BaseModel):
@@ -128,43 +132,53 @@ async def healthz_check():
     errors = {}
 
     # Check ADK System availability
-    try:
-        from backend.agents import (
-            OrchestratorAgent,
-            SummarizerAgent,
-            LinkerAgent,
-            VisualizerAgent,
-            A2AProtocol,
-        )
+    agents_module = None
+    last_import_error = None
 
-        # Test agent instantiation (doesn't require full initialization)
-        a2a = A2AProtocol()
-        test_agent = OrchestratorAgent(a2a)
+    for module_name in ("backend.agents", "agents"):
+        try:
+            agents_module = importlib.import_module(module_name)
+            break
+        except ImportError as exc:
+            last_import_error = exc
 
-        if test_agent and hasattr(test_agent, "name"):
-            adk_status = "operational"
-            logger.debug("✅ ADK system check passed")
-        else:
-            adk_status = "degraded"
-            errors["adk"] = "Agent instantiation incomplete"
-
-    except ImportError as e:
+    if agents_module is None:
         adk_status = "unavailable"
-        error_msg = f"ADK agents not available: {str(e)}"
+        error_msg = f"ADK agents not available: {last_import_error}"
         errors["adk"] = error_msg
         logger.error(f"❌ ADK system check failed: {error_msg}")
         health_status = "degraded"
 
-    except Exception as e:
-        adk_status = "error"
-        error_msg = f"ADK system error: {str(e)}"
-        errors["adk"] = error_msg
-        logger.error(f"❌ ADK system check failed: {error_msg}")
-        health_status = "degraded"
+    if adk_status is None and agents_module is not None:
+        try:
+            OrchestratorAgent = getattr(agents_module, "OrchestratorAgent")
+            getattr(agents_module, "SummarizerAgent")
+            getattr(agents_module, "LinkerAgent")
+            getattr(agents_module, "VisualizerAgent")
+            A2AProtocol = getattr(agents_module, "A2AProtocol")
+
+            # Test agent instantiation (doesn't require full initialization)
+            a2a = A2AProtocol()
+            test_agent = OrchestratorAgent(a2a)
+
+            if test_agent and hasattr(test_agent, "name"):
+                adk_status = "operational"
+                logger.debug("✅ ADK system check passed")
+            else:
+                adk_status = "degraded"
+                errors["adk"] = "Agent instantiation incomplete"
+
+        except Exception as e:
+            adk_status = "error"
+            error_msg = f"ADK system error: {str(e)}"
+            errors["adk"] = error_msg
+            logger.error(f"❌ ADK system check failed: {error_msg}")
+            health_status = "degraded"
 
     # Check Firestore connectivity (optional - may not be required for basic health)
     try:
         from backend.services.firestore_client import get_firestore_client
+
         firestore_client = get_firestore_client()
         # Simple connectivity test - just check if client was created
         if firestore_client:
@@ -286,9 +300,9 @@ async def analyze_content(request: AnalyzeRequest):
     try:
         from backend.agents import (
             AgentWorkflow,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
         )
         from backend.models.context_model import SessionContext
@@ -404,7 +418,8 @@ async def visualize_content(request: VisualizeRequest):
     complete multi-agent analysis. This endpoint will be removed in a future version.
     """
     try:
-        from backend.agents import VisualizerAgent, A2AProtocol
+        from backend.agents import A2AProtocol, VisualizerAgent
+
         # Create minimal A2A Protocol for standalone operation
         a2a = A2AProtocol()
         agent = VisualizerAgent(a2a)
@@ -448,11 +463,11 @@ async def get_agent_status():
 
     try:
         from backend.agents import (
+            A2AProtocol,
+            LinkerAgent,
             OrchestratorAgent,
             SummarizerAgent,
-            LinkerAgent,
             VisualizerAgent,
-            A2AProtocol,
         )
 
         logger.info("🔍 Checking ADK agent system status...")
@@ -530,6 +545,7 @@ async def get_agent_status():
         firestore_status = "unknown"
         try:
             from backend.services.firestore_client import get_firestore_client
+
             firestore_client = get_firestore_client()
             if firestore_client:
                 firestore_status = "connected"

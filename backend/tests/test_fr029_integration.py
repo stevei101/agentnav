@@ -3,9 +3,10 @@ Integration test for FR#029: Session and Knowledge Cache Persistence
 Tests the complete workflow with session and cache integration
 """
 
-import pytest
-import time
 import asyncio
+import time
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -13,9 +14,9 @@ async def test_workflow_with_session_creation():
     """Test that workflow creates session document"""
     from agents import (
         AgentWorkflow,
+        LinkerAgent,
         OrchestratorAgent,
         SummarizerAgent,
-        LinkerAgent,
         VisualizerAgent,
     )
     from models.context_model import SessionContext
@@ -73,9 +74,9 @@ async def test_workflow_with_cache():
     """Test that workflow uses cache on second run"""
     from agents import (
         AgentWorkflow,
+        LinkerAgent,
         OrchestratorAgent,
         SummarizerAgent,
-        LinkerAgent,
         VisualizerAgent,
     )
     from models.context_model import SessionContext

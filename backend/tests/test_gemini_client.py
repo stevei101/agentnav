@@ -11,9 +11,10 @@ Updated to match current gemini_client.py API:
 """
 
 import os
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Add backend to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

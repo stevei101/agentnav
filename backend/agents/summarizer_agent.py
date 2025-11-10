@@ -5,9 +5,10 @@ Creates concise, comprehensive summaries of content
 
 import hashlib
 import logging
-from typing import Dict, Any, Optional
-from .base_agent import Agent, A2AMessage
 import time
+from typing import Any, Dict, Optional
+
+from .base_agent import A2AMessage, A2AProtocol, Agent
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ class SummarizerAgent(Agent):
     """
 
     def __init__(self, a2a_protocol=None, event_emitter: Optional[Any] = None):
+        if a2a_protocol is None:
+            a2a_protocol = A2AProtocol()
         super().__init__("summarizer", a2a_protocol)
         self._prompt_template = None
         self.event_emitter = event_emitter  # For FR#020 WebSocket streaming
@@ -271,7 +274,8 @@ Create a comprehensive summary that captures the essence and key information.
             },
             priority=3,
         )
-        await self.a2a.send_message(message)
+        if self.a2a is not None:
+            await self.a2a.send_message(message)
 
         # Also send specific notification to visualizer agent
         visualizer_message = A2AMessage(
@@ -286,7 +290,8 @@ Create a comprehensive summary that captures the essence and key information.
             },
             priority=4,
         )
-        await self.a2a.send_message(visualizer_message)
+        if self.a2a is not None:
+            await self.a2a.send_message(visualizer_message)
 
         self.logger.info("📤 Sent summary completion notifications via A2A Protocol")
 

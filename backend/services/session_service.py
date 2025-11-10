@@ -5,7 +5,7 @@ Manages session metadata in Firestore 'sessions/' collection
 
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

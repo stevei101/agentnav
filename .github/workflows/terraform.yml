@@ -2,136 +2,26 @@ name: INFRA_VERIFICATION
 
 on:
   push:
-    branches: ['**'] # Run on ALL branches for immediate feedback (FR#100)
+    branches: ['**']
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
   pull_request:
     branches:
       - main
+      - develop
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
 
-env:
-  TF_VERSION: '1.5.0'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  TF_CLOUD_ORGANIZATION: ${{ secrets.TF_CLOUD_ORGANIZATION }}
-  TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
-
 jobs:
   terraform:
-    name: INFRA_VERIFICATION
-    runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write # Required for PR comments
-      id-token: write # Required for Workload Identity Federation
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        id: auth
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: false
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Format Check
-        id: fmt
-        run: terraform fmt -check -recursive terraform/
-        continue-on-error: true
-
-      - name: Terraform Init
-        id: init
-        working-directory: terraform
-        run: terraform init
-
-      - name: Terraform Validate
-        id: validate
-        working-directory: terraform
-        run: terraform validate -no-color
-
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: latest
-
-      - name: Run TFLint
-        id: tflint
-        working-directory: terraform
-        run: tflint --format=default --recursive
-        continue-on-error: true
-
-      - name: Run TFSec Security Scan
-        id: tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: terraform
-          soft_fail: true
-        continue-on-error: true
-
-      - name: Terraform Plan
-        id: plan
-        if: github.event_name == 'pull_request'
-        working-directory: terraform
-        run: terraform plan -no-color -input=false
-
-      - name: Comment PR
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### TFLint Linting 🔍\`${{ steps.tflint.outcome }}\`
-            #### TFSec Security Scan 🔒\`${{ steps.tfsec.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`terraform
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`terraform\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
-      - name: Check Validation Results
-        if: steps.validate.outcome == 'failure' || steps.tflint.outcome == 'failure' || steps.tfsec.outcome == 'failure'
-        run: |
-          echo "❌ Validation failed!"
-          echo "Terraform Validate: ${{ steps.validate.outcome }}"
-          echo "TFLint: ${{ steps.tflint.outcome }}"
-          echo "TFSec: ${{ steps.tfsec.outcome }}"
-          exit 1
-
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        working-directory: terraform
-        run: terraform apply -auto-approve -input=false
+      pull-requests: write
+      id-token: write
+    uses: stevei101/infrastructure/.github/workflows/terraform-agentnav.yml@main
+    with:
+      terraform_directory: infrastructure/terraform/agentnav
+      run_apply: false
+    secrets: inherit
