@@ -30,55 +30,44 @@ class TestWebSocketConnectionLifecycle:
         assert "/api/v1/navigate/stream" in routes
 
     @pytest.mark.asyncio
-    async def test_websocket_connection_acceptance(self):
+    async def test_websocket_connection_acceptance(
+        self, mock_event_emitter_manager, mock_websocket
+    ):
         """Test that WebSocket connection is properly accepted"""
-        # This is a mock-based test since TestClient has limited WebSocket support
-        with patch(
-            "backend.routes.stream_routes.get_event_emitter_manager"
-        ) as mock_emitter_manager:
-            mock_emitter = AsyncMock()
-            mock_manager = Mock()
-            mock_manager.create_emitter.return_value = mock_emitter
-            mock_emitter_manager.return_value = mock_manager
+        from backend.routes.stream_routes import stream_workflow
 
-            from backend.routes.stream_routes import stream_workflow
+        # Simulate immediate disconnect from client
+        mock_websocket.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
 
-            # Create a mock WebSocket
-            mock_ws = AsyncMock()
-            mock_ws.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
+        try:
+            await stream_workflow(mock_websocket)
+        except Exception:
+            # The stream_workflow may raise when receive_json raises; tests
+            # are concerned with correct accept/cleanup behavior rather than
+            # propagation here.
+            pass
 
-            try:
-                await stream_workflow(mock_ws)
-            except Exception:
-                pass
-
-            # Verify WebSocket was accepted
-            mock_ws.accept.assert_called_once()
+        # Verify WebSocket accept was awaited
+        mock_websocket.accept.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_websocket_disconnection_cleanup(self):
+    async def test_websocket_disconnection_cleanup(
+        self, mock_event_emitter_manager, mock_websocket
+    ):
         """Test cleanup on WebSocket disconnection"""
-        with patch(
-            "backend.routes.stream_routes.get_event_emitter_manager"
-        ) as mock_emitter_manager:
-            mock_emitter = AsyncMock()
-            mock_manager = Mock()
-            mock_manager.create_emitter.return_value = mock_emitter
-            mock_emitter_manager.return_value = mock_manager
+        from backend.routes.stream_routes import stream_workflow
 
-            from backend.routes.stream_routes import stream_workflow
+        # Ensure send_json exists and simulate immediate disconnect
+        mock_websocket.send_json = AsyncMock()
+        mock_websocket.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
 
-            mock_ws = AsyncMock()
-            mock_ws.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
-            mock_ws.send_json = AsyncMock()
+        try:
+            await stream_workflow(mock_websocket)
+        except Exception:
+            pass
 
-            try:
-                await stream_workflow(mock_ws)
-            except Exception:
-                pass
-
-            # Verify unregister was called
-            mock_emitter.unregister_client.assert_called()
+        # Verify that the emitter's unregister_client was called during cleanup
+        mock_event_emitter_manager.create_emitter.return_value.unregister_client.assert_called()
 
 
 class TestEventModelValidation:
@@ -311,29 +300,20 @@ class TestErrorHandling:
     """Test error handling in streaming"""
 
     @pytest.mark.asyncio
-    async def test_invalid_request_format_error(self):
+    async def test_invalid_request_format_error(self, mock_event_emitter_manager, mock_websocket):
         """Test handling of invalid request format"""
-        with patch(
-            "backend.routes.stream_routes.get_event_emitter_manager"
-        ) as mock_emitter_manager:
-            mock_emitter = AsyncMock()
-            mock_manager = Mock()
-            mock_manager.create_emitter.return_value = mock_emitter
-            mock_emitter_manager.return_value = mock_manager
+        from backend.routes.stream_routes import stream_workflow
 
-            from backend.routes.stream_routes import stream_workflow
+        # Simulate receiving an invalid JSON payload (missing required fields)
+        mock_websocket.receive_json = AsyncMock(return_value={})
 
-            mock_ws = AsyncMock()
-            # Receive invalid JSON
-            mock_ws.receive_json = AsyncMock(return_value={})  # Missing required fields
+        try:
+            await stream_workflow(mock_websocket)
+        except Exception:
+            pass
 
-            try:
-                await stream_workflow(mock_ws)
-            except Exception:
-                pass
-
-            # Should handle gracefully and send error response
-            mock_ws.send_json.assert_called()
+        # Should handle gracefully and attempt to send an error response
+        mock_websocket.send_json.assert_called()
 
     @pytest.mark.asyncio
     async def test_workflow_execution_error_event(self):
