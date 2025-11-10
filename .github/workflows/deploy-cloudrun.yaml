@@ -48,9 +48,8 @@ jobs:
       - name: Configure Podman / Artifact Registry access
         run: |
           set -euo pipefail
-          ART_LOCATION=${{ env.CLOUD_RUN_REGION }}
-          # Configure docker/podman to authenticate to Artifact Registry
-          gcloud auth configure-docker ${ART_LOCATION}-docker.pkg.dev
+          # Artifact Registry is in europe-west1, not the deployment region
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
 
       - name: "Optional: run frontend checks"
         continue-on-error: true
@@ -67,11 +66,10 @@ jobs:
           fi
 
       - name: Build and push frontend image with Podman
-        env:
-          ART_LOCATION: ${{ env.CLOUD_RUN_REGION }}
         run: |
           set -euo pipefail
-          IMAGE=${ART_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
+          # Use europe-west1 for Artifact Registry (not deployment region)
+          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
           echo "Building image: ${IMAGE}"
           podman build -t ${IMAGE} -f Dockerfile .
           echo "Pushing image: ${IMAGE}"
@@ -79,7 +77,7 @@ jobs:
 
       - name: Deploy frontend to Cloud Run
         env:
-          IMAGE: ${{ env.CLOUD_RUN_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
           set -euo pipefail
           echo "Deploying frontend: ${IMAGE} to region ${CLOUD_RUN_REGION}"
@@ -130,15 +128,14 @@ jobs:
       - name: Configure Podman / Artifact Registry access
         run: |
           set -euo pipefail
-          ART_LOCATION=${{ env.CLOUD_RUN_REGION }}
-          gcloud auth configure-docker ${ART_LOCATION}-docker.pkg.dev
+          # Artifact Registry is in europe-west1, not the deployment region
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
 
       - name: Build and push backend image with Podman
-        env:
-          ART_LOCATION: ${{ env.CLOUD_RUN_REGION }}
         run: |
           set -euo pipefail
-          IMAGE=${ART_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
+          # Use europe-west1 for Artifact Registry (not deployment region)
+          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
           echo "Building backend image: ${IMAGE}"
           podman build -t ${IMAGE} -f backend/Dockerfile backend
           echo "Pushing backend image: ${IMAGE}"
@@ -146,7 +143,7 @@ jobs:
 
       - name: Deploy backend to Cloud Run
         env:
-          IMAGE: ${{ env.CLOUD_RUN_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
           set -euo pipefail
           echo "Deploying backend: ${IMAGE} to region ${CLOUD_RUN_REGION}"
