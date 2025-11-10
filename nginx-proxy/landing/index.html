@@ -1,88 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agentnav Hub - Multi-App Navigation</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>🚀 Agentnav Hub</h1>
-            <p class="subtitle">Multi-Application Navigation Center</p>
-        </header>
+      <header>
+        <h1>🚀 Agentnav Hub</h1>
+        <p class="subtitle">Multi-Application Navigation Center</p>
+      </header>
 
-        <main>
-            <div class="apps-grid">
-                <!-- Agentnav Main App -->
-                <div class="app-card">
-                    <div class="app-icon">🧭</div>
-                    <h2>Agentnav</h2>
-                    <p class="app-description">Multi-agent knowledge exploration system with ADK and A2A Protocol</p>
-                    <div class="app-preview">
-                        <iframe src="/agentnav/" class="preview-frame" title="Agentnav Preview"></iframe>
-                        <div class="preview-overlay">
-                            <a href="/agentnav/" class="btn btn-primary">Open Full App</a>
-                        </div>
-                    </div>
-                    <div class="app-links">
-                        <a href="/agentnav/" class="btn btn-primary">Open Frontend</a>
-                        <a href="/agentnav/docs" class="btn btn-secondary" target="_blank">API Docs</a>
-                    </div>
-                    <div class="app-info">
-                        <span class="badge">Main App</span>
-                        <span class="badge">AI Agents</span>
-                    </div>
-                </div>
-
-                <!-- Cursor IDE -->
-                <div class="app-card">
-                    <div class="app-icon">⌨️</div>
-                    <h2>Cursor IDE</h2>
-                    <p class="app-description">Frontend application for managing Cursor prompts with Google Cloud Storage</p>
-                    <div class="app-preview">
-                        <iframe src="/cursor-ide/" class="preview-frame" title="Cursor IDE Preview"></iframe>
-                        <div class="preview-overlay">
-                            <a href="/cursor-ide/" class="btn btn-primary">Open Full App</a>
-                        </div>
-                    </div>
-                    <div class="app-links">
-                        <a href="/cursor-ide/" class="btn btn-primary">Open Frontend</a>
-                        <a href="https://github.com/stevei101/cursor-ide" class="btn btn-secondary" target="_blank">GitHub</a>
-                    </div>
-                    <div class="app-info">
-                        <span class="badge">Frontend App</span>
-                        <span class="badge">GCS Sync</span>
-                    </div>
-                </div>
+      <main>
+        <div class="apps-grid">
+          <!-- Agentnav Main App -->
+          <div class="app-card">
+            <div class="app-icon">🧭</div>
+            <h2>Agentnav</h2>
+            <p class="app-description">
+              Multi-agent knowledge exploration system with ADK and A2A Protocol
+            </p>
+            <div class="app-preview">
+              <iframe
+                src="/agentnav/"
+                class="preview-frame"
+                title="Agentnav Preview"
+              ></iframe>
+              <div class="preview-overlay">
+                <a href="/agentnav/" class="btn btn-primary">Open Full App</a>
+              </div>
             </div>
-
-            <!-- Quick Links Section -->
-            <div class="quick-links">
-                <h3>Quick Links</h3>
-                <div class="links-grid">
-                    <a href="/agentnav/api/healthz" class="link-item">
-                        <span class="link-icon">💚</span>
-                        <span>Agentnav Health</span>
-                    </a>
-                    <a href="/agentnav/docs" class="link-item" target="_blank">
-                        <span class="link-icon">📚</span>
-                        <span>API Documentation</span>
-                    </a>
-                    <a href="/agentnav/openapi.json" class="link-item" target="_blank">
-                        <span class="link-icon">📄</span>
-                        <span>OpenAPI Spec</span>
-                    </a>
-                </div>
+            <div class="app-links">
+              <a href="/agentnav/" class="btn btn-primary">Open Frontend</a>
+              <a href="/agentnav/docs" class="btn btn-secondary" target="_blank"
+                >API Docs</a
+              >
             </div>
-        </main>
+            <div class="app-info">
+              <span class="badge">Main App</span>
+              <span class="badge">AI Agents</span>
+            </div>
+          </div>
 
-        <footer>
-            <p>Agentnav Hub - Unified access to all stevei101 applications</p>
-            <p class="footer-meta">Powered by Nginx Proxy on Cloud Run</p>
-        </footer>
+          <!-- Cursor IDE -->
+          <div class="app-card">
+            <div class="app-icon">⌨️</div>
+            <h2>Cursor IDE</h2>
+            <p class="app-description">
+              Frontend application for managing Cursor prompts with Google Cloud
+              Storage
+            </p>
+            <div class="app-preview">
+              <iframe
+                src="/cursor-ide/"
+                class="preview-frame"
+                title="Cursor IDE Preview"
+              ></iframe>
+              <div class="preview-overlay">
+                <a href="/cursor-ide/" class="btn btn-primary">Open Full App</a>
+              </div>
+            </div>
+            <div class="app-links">
+              <a href="/cursor-ide/" class="btn btn-primary">Open Frontend</a>
+              <a
+                href="https://github.com/stevei101/cursor-ide"
+                class="btn btn-secondary"
+                target="_blank"
+                >GitHub</a
+              >
+            </div>
+            <div class="app-info">
+              <span class="badge">Frontend App</span>
+              <span class="badge">GCS Sync</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links Section -->
+        <div class="quick-links">
+          <h3>Quick Links</h3>
+          <div class="links-grid">
+            <a href="/agentnav/api/healthz" class="link-item">
+              <span class="link-icon">💚</span>
+              <span>Agentnav Health</span>
+            </a>
+            <a href="/agentnav/docs" class="link-item" target="_blank">
+              <span class="link-icon">📚</span>
+              <span>API Documentation</span>
+            </a>
+            <a href="/agentnav/openapi.json" class="link-item" target="_blank">
+              <span class="link-icon">📄</span>
+              <span>OpenAPI Spec</span>
+            </a>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <p>Agentnav Hub - Unified access to all stevei101 applications</p>
+        <p class="footer-meta">Powered by Nginx Proxy on Cloud Run</p>
+      </footer>
     </div>
-</body>
+  </body>
 </html>
-
