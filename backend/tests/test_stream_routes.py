@@ -37,7 +37,9 @@ class TestWebSocketConnectionLifecycle:
         from backend.routes.stream_routes import stream_workflow
 
         # Simulate immediate disconnect from client
-        mock_websocket.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
+        mock_websocket.receive_json = AsyncMock(
+            side_effect=Exception("Connection closed")
+        )
 
         try:
             await stream_workflow(mock_websocket)
@@ -59,7 +61,9 @@ class TestWebSocketConnectionLifecycle:
 
         # Ensure send_json exists and simulate immediate disconnect
         mock_websocket.send_json = AsyncMock()
-        mock_websocket.receive_json = AsyncMock(side_effect=Exception("Connection closed"))
+        mock_websocket.receive_json = AsyncMock(
+            side_effect=Exception("Connection closed")
+        )
 
         try:
             await stream_workflow(mock_websocket)
@@ -300,7 +304,9 @@ class TestErrorHandling:
     """Test error handling in streaming"""
 
     @pytest.mark.asyncio
-    async def test_invalid_request_format_error(self, mock_event_emitter_manager, mock_websocket):
+    async def test_invalid_request_format_error(
+        self, mock_event_emitter_manager, mock_websocket
+    ):
         """Test handling of invalid request format"""
         from backend.routes.stream_routes import stream_workflow
 
