@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 
 @pytest.fixture
