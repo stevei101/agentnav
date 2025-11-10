@@ -19,7 +19,7 @@ env:
 jobs:
   deploy-frontend:
     name: Deploy Frontend
-    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@v0.2.0
+    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@main
     with:
       environment: dev
       service_name: agentnav-frontend
@@ -44,7 +44,7 @@ jobs:
   deploy-backend:
     name: Deploy Backend
     needs: deploy-frontend
-    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@v0.2.0
+    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@main
     with:
       environment: dev
       service_name: agentnav-backend
@@ -55,12 +55,7 @@ jobs:
       image_tag: ${{ github.sha }}
       container_port: "8080"
       allow_unauthenticated: true
-      additional_env_vars: |
-        ENVIRONMENT=dev,
-        FIRESTORE_DATABASE_ID=${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }},
-        A2A_PROTOCOL_ENABLED=true,
-        ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }},
-        CORS_ORIGINS=${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
+      additional_env_vars: "ENVIRONMENT=dev,FIRESTORE_DATABASE_ID=${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }},A2A_PROTOCOL_ENABLED=true,ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }},CORS_ORIGINS=${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}"
       additional_secrets: GEMINI_API_KEY=GEMINI_API_KEY:latest
       terraform_directory: ""
       terraform_workspace: ""
