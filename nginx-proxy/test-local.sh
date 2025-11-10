@@ -1,9 +1,6 @@
 #!/bin/bash
 # Local Testing Script for Nginx Proxy
-# Tests the nginx proxy with local services for all three apps:
-# - agentnav
-# - prompt-vault
-# - cursor-ide
+# Tests the nginx proxy with local services for agentnav and cursor-ide
 
 set -euo pipefail
 
@@ -17,10 +14,6 @@ PROXY_PORT=${PROXY_PORT:-8082}
 # Agentnav ports
 AGENTNAV_FRONTEND_PORT=${AGENTNAV_FRONTEND_PORT:-5173}
 AGENTNAV_BACKEND_PORT=${AGENTNAV_BACKEND_PORT:-8081}
-
-# Prompt-vault ports
-PROMPT_VAULT_FRONTEND_PORT=${PROMPT_VAULT_FRONTEND_PORT:-5176}
-PROMPT_VAULT_BACKEND_PORT=${PROMPT_VAULT_BACKEND_PORT:-8001}
 
 # Cursor-ide ports
 CURSOR_IDE_FRONTEND_PORT=${CURSOR_IDE_FRONTEND_PORT:-5173}
@@ -46,10 +39,6 @@ echo "   Agentnav:"
 check_port $AGENTNAV_FRONTEND_PORT "Agentnav Frontend"
 check_port $AGENTNAV_BACKEND_PORT "Agentnav Backend"
 echo ""
-echo "   Prompt-vault:"
-check_port $PROMPT_VAULT_FRONTEND_PORT "Prompt-vault Frontend"
-check_port $PROMPT_VAULT_BACKEND_PORT "Prompt-vault Backend"
-echo ""
 echo "   Cursor-ide:"
 check_port $CURSOR_IDE_FRONTEND_PORT "Cursor-ide Frontend"
 check_port $CURSOR_IDE_BACKEND_PORT "Cursor-ide Backend"
@@ -59,8 +48,6 @@ echo "🔧 Environment Variables:"
 echo "   PROXY_PORT=$PROXY_PORT"
 echo "   AGENTNAV_FRONTEND_PORT=$AGENTNAV_FRONTEND_PORT"
 echo "   AGENTNAV_BACKEND_PORT=$AGENTNAV_BACKEND_PORT"
-echo "   PROMPT_VAULT_FRONTEND_PORT=$PROMPT_VAULT_FRONTEND_PORT"
-echo "   PROMPT_VAULT_BACKEND_PORT=$PROMPT_VAULT_BACKEND_PORT"
 echo "   CURSOR_IDE_FRONTEND_PORT=$CURSOR_IDE_FRONTEND_PORT"
 echo "   CURSOR_IDE_BACKEND_PORT=$CURSOR_IDE_BACKEND_PORT"
 echo ""
@@ -75,8 +62,6 @@ echo "🚀 Starting nginx proxy container..."
 echo "   Make sure services are running on their respective ports:"
 echo "   - Agentnav frontend: $AGENTNAV_FRONTEND_PORT"
 echo "   - Agentnav backend: $AGENTNAV_BACKEND_PORT"
-echo "   - Prompt-vault frontend: $PROMPT_VAULT_FRONTEND_PORT"
-echo "   - Prompt-vault backend: $PROMPT_VAULT_BACKEND_PORT"
 echo "   - Cursor-ide frontend: $CURSOR_IDE_FRONTEND_PORT"
 echo "   - Cursor-ide backend: $CURSOR_IDE_BACKEND_PORT"
 echo ""
@@ -102,8 +87,6 @@ podman run -d \
   -e AGENTNAV_FRONTEND_URL=http://$HOST_ADDR:$AGENTNAV_FRONTEND_PORT \
   -e AGENTNAV_BACKEND_URL=http://$HOST_ADDR:$AGENTNAV_BACKEND_PORT \
   -e AGENTNAV_GEMMA_URL=http://$HOST_ADDR:8083 \
-  -e PROMPT_VAULT_FRONTEND_URL=http://$HOST_ADDR:$PROMPT_VAULT_FRONTEND_PORT \
-  -e PROMPT_VAULT_BACKEND_URL=http://$HOST_ADDR:$PROMPT_VAULT_BACKEND_PORT \
   -e CURSOR_IDE_FRONTEND_URL=http://$HOST_ADDR:$CURSOR_IDE_FRONTEND_PORT \
   -e CURSOR_IDE_BACKEND_URL=http://$HOST_ADDR:$CURSOR_IDE_BACKEND_PORT \
   agentnav-proxy:local || \
@@ -114,8 +97,6 @@ docker run -d \
   -e AGENTNAV_FRONTEND_URL=http://$HOST_ADDR:$AGENTNAV_FRONTEND_PORT \
   -e AGENTNAV_BACKEND_URL=http://$HOST_ADDR:$AGENTNAV_BACKEND_PORT \
   -e AGENTNAV_GEMMA_URL=http://$HOST_ADDR:8083 \
-  -e PROMPT_VAULT_FRONTEND_URL=http://$HOST_ADDR:$PROMPT_VAULT_FRONTEND_PORT \
-  -e PROMPT_VAULT_BACKEND_URL=http://$HOST_ADDR:$PROMPT_VAULT_BACKEND_PORT \
   -e CURSOR_IDE_FRONTEND_URL=http://$HOST_ADDR:$CURSOR_IDE_FRONTEND_PORT \
   -e CURSOR_IDE_BACKEND_URL=http://$HOST_ADDR:$CURSOR_IDE_BACKEND_PORT \
   agentnav-proxy:local
@@ -130,11 +111,6 @@ echo "   Agentnav:"
 echo "     Frontend: http://localhost:$PROXY_PORT/agentnav/"
 echo "     API: http://localhost:$PROXY_PORT/agentnav/api/healthz"
 echo "     Docs: http://localhost:$PROXY_PORT/agentnav/docs"
-echo ""
-echo "   Prompt-vault:"
-echo "     Frontend: http://localhost:$PROXY_PORT/prompt-vault/"
-echo "     API: http://localhost:$PROXY_PORT/prompt-vault/api/healthz"
-echo "     Docs: http://localhost:$PROXY_PORT/prompt-vault/docs"
 echo ""
 echo "   Cursor-ide:"
 echo "     Frontend: http://localhost:$PROXY_PORT/cursor-ide/"

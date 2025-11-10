@@ -22,11 +22,9 @@ RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
     echo 'export AGENTNAV_BACKEND_URL=${AGENTNAV_BACKEND_URL:-${BACKEND_SERVICE_URL:-}}' >> /docker-entrypoint.sh && \
     echo 'export AGENTNAV_FRONTEND_URL=${AGENTNAV_FRONTEND_URL:-${FRONTEND_SERVICE_URL:-}}' >> /docker-entrypoint.sh && \
         echo 'export AGENTNAV_GEMMA_URL=${AGENTNAV_GEMMA_URL:-${GEMMA_SERVICE_URL:-_disabled_}}' >> /docker-entrypoint.sh && \
-    echo 'export PROMPT_VAULT_BACKEND_URL=${PROMPT_VAULT_BACKEND_URL:-_disabled_}' >> /docker-entrypoint.sh && \
-    echo 'export PROMPT_VAULT_FRONTEND_URL=${PROMPT_VAULT_FRONTEND_URL:-_disabled_}' >> /docker-entrypoint.sh && \
     echo 'export CURSOR_IDE_BACKEND_URL=${CURSOR_IDE_BACKEND_URL:-_disabled_}' >> /docker-entrypoint.sh && \
     echo 'export CURSOR_IDE_FRONTEND_URL=${CURSOR_IDE_FRONTEND_URL:-_disabled_}' >> /docker-entrypoint.sh && \
-    echo 'envsubst '"'"'$$PORT $$AGENTNAV_BACKEND_URL $$AGENTNAV_FRONTEND_URL $$AGENTNAV_GEMMA_URL $$PROMPT_VAULT_BACKEND_URL $$PROMPT_VAULT_FRONTEND_URL $$CURSOR_IDE_BACKEND_URL $$CURSOR_IDE_FRONTEND_URL'"'"' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
+    echo 'envsubst '"'"'$$PORT $$AGENTNAV_BACKEND_URL $$AGENTNAV_FRONTEND_URL $$AGENTNAV_GEMMA_URL $$CURSOR_IDE_BACKEND_URL $$CURSOR_IDE_FRONTEND_URL'"'"' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
     echo 'echo "✅ Nginx config generated"' >> /docker-entrypoint.sh && \
     echo 'echo "  PORT=${PORT}"' >> /docker-entrypoint.sh && \
     echo 'echo "  AGENTNAV_BACKEND_URL=${AGENTNAV_BACKEND_URL}"' >> /docker-entrypoint.sh && \
