@@ -24,6 +24,17 @@ output "artifact_registry_url" {
   sensitive   = true
 }
 
+output "prompt_vault_artifact_registry_repository" {
+  description = "Prompt Vault Artifact Registry repository name"
+  value       = google_artifact_registry_repository.prompt_vault.name
+}
+
+output "prompt_vault_artifact_registry_url" {
+  description = "Prompt Vault Artifact Registry repository URL"
+  value       = "${google_artifact_registry_repository.prompt_vault.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.prompt_vault.repository_id}"
+  sensitive   = true
+}
+
 # Cloud Run Service URLs
 output "frontend_service_url" {
   description = "Frontend Cloud Run service URL"
