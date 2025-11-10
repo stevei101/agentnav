@@ -39,11 +39,7 @@ jobs:
         bun run lint
         bun run type-check
         bun run test -- --run
-    secrets:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
-      WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    secrets: inherit
 
   deploy-backend:
     name: Deploy Backend
@@ -59,14 +55,15 @@ jobs:
       image_tag: ${{ github.sha }}
       container_port: "8080"
       allow_unauthenticated: true
-      additional_env_vars: ENVIRONMENT=dev,FIRESTORE_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},FIRESTORE_DATABASE_ID=${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }},A2A_PROTOCOL_ENABLED=true,ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }},CORS_ORIGINS=${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
+      additional_env_vars: |
+        ENVIRONMENT=dev,
+        FIRESTORE_DATABASE_ID=${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }},
+        A2A_PROTOCOL_ENABLED=true,
+        ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }},
+        CORS_ORIGINS=${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
       additional_secrets: GEMINI_API_KEY=GEMINI_API_KEY:latest
       terraform_directory: ""
       terraform_workspace: ""
       bun_install_dependencies: false
       bun_prebuild_commands: ""
-    secrets:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
-      WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    secrets: inherit

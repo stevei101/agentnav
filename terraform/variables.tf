@@ -107,15 +107,11 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
-variable "proxy_region" {
-  description = "Region for nginx proxy service (defaults to frontend_region)"
-  type        = string
-  default     = null
-}
+# DNS zone project is now read from Secret Manager (DNS_ZONE_PROJECT_ID)
+# This provides better security for cross-project configuration
 
-variable "proxy_container_port" {
-  description = "Container port for proxy service"
-  type        = number
-  default     = 8080
+variable "manage_dns_in_this_project" {
+  description = "If true, Terraform will create Cloud DNS record sets in the project where Terraform runs. If false, the required DNS records will be output for manual creation in the DNS owner project."
+  type        = bool
+  default     = false # Default to false for cross-project DNS setup
 }
-
