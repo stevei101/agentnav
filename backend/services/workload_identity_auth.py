@@ -61,7 +61,7 @@ def _extract_bearer_token(request: Request) -> Optional[str]:
     return header[len(_AUTH_HEADER_PREFIX) :].strip()
 
 
-async def verify_workload_identity(request: Request) -> Dict[str, Optional[str]]:
+async def verify_workload_identity(request: Request) -> Dict[str, Any]:
     """FastAPI dependency that enforces Workload Identity authentication.
 
     When `REQUIRE_WI_AUTH` is set to true, this dependency checks for a Bearer
