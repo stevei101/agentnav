@@ -41,6 +41,18 @@ variable "artifact_registry_repository_id" {
   default     = "agentnav-containers"
 }
 
+variable "prompt_vault_artifact_registry_location" {
+  description = "Location for Prompt Vault Artifact Registry"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "prompt_vault_artifact_registry_repository_id" {
+  description = "Prompt Vault Artifact Registry repository ID"
+  type        = string
+  default     = "prompt-vault"
+}
+
 variable "firestore_database_id" {
   description = "Firestore database ID"
   type        = string
@@ -89,6 +101,12 @@ variable "backend_container_port" {
   default     = 8080
 }
 
+variable "prompt_mgmt_container_port" {
+  description = "Container port for Prompt Management App Cloud Run service"
+  type        = number
+  default     = 80
+}
+
 variable "enable_staging_environment" {
   description = "Enable staging environment Cloud Run services for PR testing and validation."
   type        = bool
@@ -107,15 +125,12 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
-variable "proxy_region" {
-  description = "Region for nginx proxy service (defaults to frontend_region)"
-  type        = string
-  default     = null
-}
+# DNS zone project is now read from Secret Manager (DNS_ZONE_PROJECT_ID)
+# This provides better security for cross-project configuration
 
-variable "proxy_container_port" {
-  description = "Container port for proxy service"
-  type        = number
-  default     = 8080
+variable "manage_dns_in_this_project" {
+  description = "If true, Terraform will create Cloud DNS record sets in the project where Terraform runs. If false, the required DNS records will be output for manual creation in the DNS owner project."
+  type        = bool
+  default     = false  # Default to false for cross-project DNS setup
 }
 
