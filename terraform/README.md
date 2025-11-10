@@ -14,8 +14,11 @@ This Terraform configuration provisions:
 - **Cloud Run** service blueprints (frontend, backend)
 - **Staging Environment** Cloud Run services (frontend-staging, backend-staging)
 - **Cloud Build Triggers** for automatic "Connect Repo" deployments from GitHub (frontend & backend)
+- **Custom Domain Mapping** with support for cross-project DNS zones
 
 > **Prompt Vault:** The prompt management application now lives in [`stevei101/prompt-vault`](https://github.com/stevei101/prompt-vault) and manages its own Terraform configuration. Supabase-related resources have been removed from this module.
+
+> **Cross-Project DNS:** If your DNS zone is in a different GCP project, see [Cross-Project DNS Setup Guide](../docs/CROSS_PROJECT_DNS_SETUP.md) or [Quick Start](../docs/CROSS_PROJECT_DNS_QUICKSTART.md).
 
 ## Prerequisites
 
@@ -56,6 +59,15 @@ project_id = "your-gcp-project-id"
 github_repository = "stevei101/agentnav"
 environment = "prod"
 enable_staging_environment = true  # Enable staging Cloud Run services
+
+# Custom Domain Configuration (optional)
+custom_domain_name = "agentnav.lornu.com"
+dns_zone_name      = "lornu-com"
+
+# For cross-project DNS setup (if DNS zone is in a different project):
+# dns_project_id     = "dns-owner-project-id"
+# enable_dns_records = false
+# See: docs/CROSS_PROJECT_DNS_SETUP.md for details
 ```
 
 ### 4. Initialize Terraform

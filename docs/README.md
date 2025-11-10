@@ -17,6 +17,9 @@ These documents are:
 
 - `GCP_SETUP_GUIDE.md` - Step-by-step Google Cloud Platform setup
 - `GPU_SETUP_GUIDE.md` - Adding Gemma model with NVIDIA L4 GPU
+- `CUSTOM_DOMAIN_SETUP.md` - Configure custom domain for Cloud Run (same-project)
+- `CROSS_PROJECT_DNS_SETUP.md` - Configure custom domain with cross-project DNS zone
+- `CROSS_PROJECT_DNS_QUICKSTART.md` - Quick reference for cross-project DNS setup
 - `local-development.md` - Local development environment setup
 - `MANUAL_WORKFLOWS.md` - Guide for manually triggering GitHub Actions workflows
 
