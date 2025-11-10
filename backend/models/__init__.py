@@ -19,6 +19,13 @@ from .a2a_messages import (
     create_message_id,
     create_correlation_id,
 )
+from .suggestion_models import (
+    PromptSuggestionRequest,
+    PromptSuggestionResponse,
+    StructuredOutputSchema,
+    FunctionCallingHint,
+    PromptSuggestionError,
+)
 
 __all__ = [
     # Context models
@@ -38,4 +45,10 @@ __all__ = [
     "AgentStatusMessage",
     "create_message_id",
     "create_correlation_id",
+    # Suggestion models (FR#201)
+    "PromptSuggestionRequest",
+    "PromptSuggestionResponse",
+    "StructuredOutputSchema",
+    "FunctionCallingHint",
+    "PromptSuggestionError",
 ]
