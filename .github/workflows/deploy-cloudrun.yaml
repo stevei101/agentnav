@@ -39,11 +39,7 @@ jobs:
         bun run lint
         bun run type-check
         bun run test -- --run
-    secrets:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
-      WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    secrets: inherit
 
   deploy-backend:
     name: Deploy Backend
@@ -65,8 +61,4 @@ jobs:
       terraform_workspace: ""
       bun_install_dependencies: false
       bun_prebuild_commands: ""
-    secrets:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
-      WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    secrets: inherit
