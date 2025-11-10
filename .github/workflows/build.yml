@@ -278,7 +278,7 @@ jobs:
             --region europe-west1 \
             --project ${GCP_PROJECT_ID} \
             --platform managed \
-            --no-allow-unauthenticated \
+            --allow-unauthenticated \
             --service-account ${SERVICE_ACCOUNT} \
             --memory 8Gi \
             --cpu 4 \
