@@ -94,6 +94,7 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --port 80 \
+            --cpu-throttling \
             --quiet
 
   deploy-backend:
@@ -125,21 +126,21 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Podman / Artifact Registry access
+      - name: Configure Docker / Artifact Registry access
         run: |
           set -euo pipefail
           # Artifact Registry is in europe-west1, not the deployment region
           gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-      - name: Build and push backend image with Podman
+      - name: Build and push backend image with Docker
         run: |
           set -euo pipefail
           # Use europe-west1 for Artifact Registry (not deployment region)
           IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
           echo "Building backend image: ${IMAGE}"
-          podman build -t ${IMAGE} -f backend/Dockerfile backend
+          docker build -t ${IMAGE} -f backend/Dockerfile backend
           echo "Pushing backend image: ${IMAGE}"
-          podman push ${IMAGE}
+          docker push ${IMAGE}
 
       - name: Deploy backend to Cloud Run
         env:
