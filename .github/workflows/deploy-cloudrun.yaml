@@ -10,8 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TERRAFORM_DIR: terraform
-  TERRAFORM_WORKSPACE: agentnav-dev
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: europe-west1
+  ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
   ALLOWED_HOSTS: ${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}
   CORS_ORIGINS: ${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
   FIRESTORE_DATABASE_ID: ${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}
@@ -19,51 +20,182 @@ env:
 jobs:
   deploy-frontend:
     name: Deploy Frontend
-    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@v0.2.0
-    with:
-      environment: dev
-      service_name: agentnav-frontend
-      cloud_run_region: us-central1
-      gar_repository: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
-      dockerfile: Dockerfile
-      build_context: .
-      image_tag: ${{ github.sha }}
-      container_port: "80"
-      allow_unauthenticated: true
-      additional_env_vars: ENVIRONMENT=dev
-      additional_secrets: ""
-      terraform_directory: terraform
-      terraform_workspace: agentnav-dev
-      bun_install_dependencies: true
-      bun_prebuild_commands: |
-        bun run lint
-        bun run type-check
-        bun run test -- --run
-    secrets: inherit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Run frontend linting
+        run: bun run lint
+
+      - name: Run frontend type checking
+        run: bun run type-check
+
+      - name: Run frontend tests
+        run: bun run test -- --run
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Build and push frontend image
+        run: |
+          set -euo pipefail
+          
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
+          IMAGE_TAG="${{ github.sha }}"
+          
+          echo "🔨 Building frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f Dockerfile \
+            .
+          
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+          
+          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          set -euo pipefail
+          
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:${{ github.sha }}"
+          
+          echo "🚀 Deploying frontend to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: us-central1"
+          
+          gcloud run deploy agentnav-frontend \
+            --image ${IMAGE} \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 80 \
+            --set-env-vars ENVIRONMENT=dev \
+            --quiet
+          
+          echo "✅ Frontend deployment completed"
+
+      - name: Get frontend service URL
+        run: |
+          echo "Frontend URL:"
+          gcloud run services describe agentnav-frontend \
+            --region us-central1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"
 
   deploy-backend:
     name: Deploy Backend
+    runs-on: ubuntu-latest
     needs: deploy-frontend
-    uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@v0.2.0
-    with:
-      environment: dev
-      service_name: agentnav-backend
-      cloud_run_region: europe-west1
-      gar_repository: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
-      dockerfile: backend/Dockerfile
-      build_context: backend
-      image_tag: ${{ github.sha }}
-      container_port: "8080"
-      allow_unauthenticated: true
-      additional_env_vars: |
-        ENVIRONMENT=dev,
-        FIRESTORE_DATABASE_ID=${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }},
-        A2A_PROTOCOL_ENABLED=true,
-        ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }},
-        CORS_ORIGINS=${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
-      additional_secrets: GEMINI_API_KEY=GEMINI_API_KEY:latest
-      terraform_directory: ""
-      terraform_workspace: ""
-      bun_install_dependencies: false
-      bun_prebuild_commands: ""
-    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
+
+      - name: Build and push backend image
+        run: |
+          set -euo pipefail
+          
+          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
+          IMAGE_TAG="${{ github.sha }}"
+          
+          echo "🔨 Building backend image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            -f backend/Dockerfile \
+            ./backend
+          
+          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
+          docker push ${IMAGE_NAME}:${IMAGE_TAG}
+          
+          echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          set -euo pipefail
+          
+          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:${{ github.sha }}"
+          SERVICE_ACCOUNT="agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+          
+          echo "🚀 Deploying backend to Cloud Run..."
+          echo "   Image: ${IMAGE}"
+          echo "   Region: europe-west1"
+          echo "   Service Account: ${SERVICE_ACCOUNT}"
+          
+          gcloud run deploy agentnav-backend \
+            --image ${IMAGE} \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account ${SERVICE_ACCOUNT} \
+            --memory 8Gi \
+            --cpu 4 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 8080 \
+            --set-env-vars PORT=8080,ENVIRONMENT=dev,FIRESTORE_DATABASE_ID=${FIRESTORE_DATABASE_ID},A2A_PROTOCOL_ENABLED=true,ALLOWED_HOSTS="${ALLOWED_HOSTS}",CORS_ORIGINS="${CORS_ORIGINS}" \
+            --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
+            --quiet
+          
+          echo "✅ Backend deployment completed"
+
+      - name: Get backend service URL
+        run: |
+          echo "Backend URL:"
+          gcloud run services describe agentnav-backend \
+            --region europe-west1 \
+            --project ${GCP_PROJECT_ID} \
+            --format="value(status.url)"

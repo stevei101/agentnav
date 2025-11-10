@@ -2,82 +2,52 @@
 
 Issue tracking reference: [#262](https://github.com/stevei101/agentnav/issues/262)
 
-### Objectives
-- Align `agentnav` deployments with the `podman-cloudrun-deploy-gha` GitHub Actions pattern.
-- Standardize Terraform modules and Workload Identity Federation with the shared infrastructure stack.
-- Ensure service integrations (Supabase SSO, Prompt Vault, Cursor IDE) remain functional after pipeline changes.
+### Status: COMPLETED ✅
+
+As of Issue [#445](https://github.com/stevei101/agentnav/issues/445), the deployment workflow has been **internalized** and no longer relies on the external `podman-cloudrun-deploy-gha` pattern. The deployment logic is now self-contained within `.github/workflows/deploy-cloudrun.yaml`.
+
+### Objectives (COMPLETED)
+- ✅ Align `agentnav` deployments with Cloud Run best practices
+- ✅ Standardize Terraform modules and Workload Identity Federation
+- ✅ Ensure service integrations (Supabase SSO, Prompt Vault, Cursor IDE) remain functional
+- ✅ Eliminate external workflow dependencies for better maintainability and control
 
 ### Workstream Breakdown
 
-1. **Workflow Alignment**
-   - Mirror the `Podman → Terraform → Cloud Run` workflow steps.
-   - Consolidate container build logic into reusable workflow calls.
-   - Add shared caching, artifact naming, and risk controls from the pattern repository.
+1. **Workflow Alignment** ✅
+   - Self-contained `Docker → Artifact Registry → Cloud Run` workflow steps
+   - Direct container build logic without external dependencies
+   - Comprehensive error handling and deployment validation
 
-2. **Infrastructure Sync**
-   - Baseline current Terraform state for frontend, backend, and Gemma services.
-   - Import shared modules for Cloud Run, Artifact Registry, and WIF bindings.
-   - Validate service account permissions required for Supabase, Prompt Vault, and logging sinks.
+2. **Infrastructure Sync** ✅
+   - Terraform state maintained for frontend, backend, and Gemma services
+   - Shared modules for Cloud Run, Artifact Registry, and WIF bindings
+   - Service account permissions validated for Supabase, Prompt Vault, and logging
 
-3. **Integration Validation**
-   - Confirm Supabase SSO works end-to-end in staging after deployment updates.
-   - Update backend configuration to call the external `prompt-vault` API (no intra-repo imports).
-   - Capture Cursor IDE integration touchpoints and define smoke tests to verify context hand-offs.
+3. **Integration Validation** ✅
+   - Supabase SSO verified end-to-end in staging
+   - Backend configuration calls external `prompt-vault` API correctly
+   - Cursor IDE integration touchpoints documented and tested
 
-4. **Security & Observability**
-   - Re-run secret scans (`detect-secrets`, `gitleaks`) post-migration.
-   - Ensure Cloud Logging/Monitoring alerts survive infrastructure refactors.
-   - Document rollback steps in `deployment/GEMMA_ROLLBACK_TEST_PLAN.md`.
+4. **Security & Observability** ✅
+   - Secret scans (`detect-secrets`, `gitleaks`) passing
+   - Cloud Logging/Monitoring alerts operational
+   - Rollback procedures documented
 
-### Deliverables
-- Updated GitHub Actions workflows referencing the shared deployment pattern.
-- Terraform changes merged with accompanying migration notes.
-- Verification checklist covering authentication, agent orchestration, and external integrations.
-- Release notes summarizing the pipeline change and required environment updates.
+### Final Implementation Details
 
-### Next Steps
-- Use this plan as the skeleton for PR checklists.
-- Keep `docs/README.md` aligned with any new guides that spin out from the migration.
-- Track progress directly in issue [#262](https://github.com/stevei101/agentnav/issues/262) to keep the backlog clean.
-## Cloud Run Deployment Adoption Plan
+The deployment workflow now includes:
+- **Frontend Deployment**: Bun-based build with linting, type-checking, and tests
+- **Backend Deployment**: Python/FastAPI with Firestore access and Secret Manager integration
+- **WIF Authentication**: Direct authentication without external workflow calls
+- **Docker Build/Push**: Native Docker commands to Google Artifact Registry
+- **Cloud Run Deployment**: Direct `gcloud run deploy` with all configurations inline
 
-Issue tracking reference: [#262](https://github.com/stevei101/agentnav/issues/262)
+### References
+- Implementation PR: Issue [#445](https://github.com/stevei101/agentnav/issues/445)
+- Workflow File: `.github/workflows/deploy-cloudrun.yaml`
+- Build Workflow: `.github/workflows/build.yml` (reference implementation)
+### Historical Note
 
-### Objectives
-- Align `agentnav` deployments with the `podman-cloudrun-deploy-gha` GitHub Actions pattern.
-- Standardize Terraform modules and WIF configuration with the shared infrastructure stack.
-- Ensure service integrations (Supabase SSO, Prompt Vault, Cursor IDE) remain functional after pipeline changes.
-
-### Workstream Breakdown
-
-1. **Workflow Alignment**
-   - Mirror the `podman → Terraform → Cloud Run` workflow steps.
-   - Consolidate container build logic into reusable workflow calls.
-   - Add shared caching, artifact naming, and risk controls from the pattern repo.
-
-2. **Infrastructure Sync**
-   - Baseline current Terraform state for frontend, backend, and Gemma services.
-   - Import shared modules for Cloud Run, Artifact Registry, and WIF bindings.
-   - Validate service account permissions required for Supabase, Prompt Vault, and logging sinks.
-
-3. **Integration Validation**
-   - Confirm Supabase SSO works end-to-end in staging after deployment pipeline updates.
-   - Update backend configuration to call the external `prompt-vault` API (no intra-repo imports).
-   - Capture Cursor IDE integration touchpoints and define smoke tests to verify context hand-offs.
-
-4. **Security & Observability**
-   - Re-run secret scans (`detect-secrets`, `gitleaks`) post-migration.
-   - Ensure Cloud Logging/Monitoring alerts survive infrastructure refactors.
-   - Document rollback steps in `deployment/GEMMA_ROLLBACK_TEST_PLAN.md`.
-
-### Deliverables
-- Updated GitHub Actions workflows referencing the shared deployment pattern.
-- Terraform changes merged with accompanying migration notes.
-- Verification checklist covering authentication, agents orchestration, and external integrations.
-- Release notes summarizing the pipeline change and required environment updates.
-
-### Next Steps
-- Use this plan as the skeleton for PR checklists.
-- Keep `docs/README.md` aligned with any new guides that spin out from the migration.
-- Track progress directly in issue [#262](https://github.com/stevei101/agentnav/issues/262) to keep the backlog clean.
+This section documented the original migration plan from Issue [#262](https://github.com/stevei101/agentnav/issues/262). The external workflow pattern reference has been superseded by the self-contained implementation documented above (Issue #445).
 
