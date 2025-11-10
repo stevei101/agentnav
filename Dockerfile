@@ -34,7 +34,8 @@ RUN echo 'server { \
     index index.html; \
     # Health check endpoint for Cloud Run readiness \
     location /healthz { \
-        add_header Content-Type text/plain; \
+        access_log off; \
+        default_type text/plain; \
         return 200 "OK"; \
     } \
     location / { \
