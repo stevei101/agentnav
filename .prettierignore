@@ -3,3 +3,4 @@
 .github/copilot-instructions.md
 .github/workflows/**
 docs/**
+nginx-proxy/**
