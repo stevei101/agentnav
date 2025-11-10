@@ -255,11 +255,11 @@ The agentnav repository uses GitHub Actions for Terraform deployment via `.githu
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `dns_zone_project` | GCP project ID where DNS zone exists | `""` (uses current project) | No |
 | `dns_zone_name` | Name of Cloud DNS managed zone | `"lornu-com"` | No |
 | `manage_dns_in_this_project` | Whether to create DNS records in this project | `true` | No |
 | `custom_domain_name` | Custom domain for frontend service | `"agentnav.lornu.com"` | No |
 
+> **Note:** The DNS zone project is configured via the `DNS_ZONE_PROJECT_ID` secret in Secret Manager, not via a Terraform variable.
 ### Cross-Project IAM Requirements
 
 **Minimum Required Roles:**
