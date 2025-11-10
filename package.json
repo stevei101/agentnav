@@ -44,7 +44,7 @@
     "jsdom": "^27.1.0",
     "postcss": "^8.4.32",
     "prettier": "^3.2.5",
-    "typescript": "~5.8.2",
+    "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.2",
     "vite": "^6.2.0",
     "vitest": "^4.0.7"
