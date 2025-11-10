@@ -15,9 +15,9 @@ import json
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from models.a2a_messages import (
+from backend.models.a2a_messages import (
     A2AMessageBase,
     A2AMessagePriority,
     A2AMessageStatus,
@@ -27,7 +27,7 @@ from models.a2a_messages import (
     create_correlation_id,
     create_message_id,
 )
-from services.a2a_security import get_security_service
+from backend.services.a2a_security import get_security_service
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +83,13 @@ class A2AProtocolService:
         try:
             # Ensure message has trace context
             if not hasattr(message, "trace") or not message.trace:
-                from models.a2a_messages import A2ATraceContext
+                from backend.models.a2a_messages import A2ATraceContext
 
-                message.trace = A2ATraceContext(correlation_id=self.correlation_id)
+                message.trace = A2ATraceContext(
+                    correlation_id=self.correlation_id,
+                    parent_message_id=None,
+                    span_id=None,
+                )
 
             # Convert to dict for security processing
             message_dict = message.model_dump()
@@ -250,8 +254,8 @@ class A2AProtocolService:
         Returns:
             Dictionary of protocol statistics
         """
-        message_types = defaultdict(int)
-        agent_activity = defaultdict(int)
+        message_types: "defaultdict[str, int]" = defaultdict(int)
+        agent_activity: "defaultdict[str, int]" = defaultdict(int)
 
         for msg in self._message_history:
             message_types[msg.message_type] += 1
@@ -382,7 +386,7 @@ def create_task_delegation_message(
     Returns:
         TaskDelegationMessage instance
     """
-    from models.a2a_messages import A2ATraceContext
+    from backend.models.a2a_messages import A2ATraceContext
 
     return TaskDelegationMessage(
         message_id=create_message_id(from_agent, "task_delegation"),
@@ -394,7 +398,9 @@ def create_task_delegation_message(
         depends_on=depends_on or [],
         priority=A2AMessagePriority.HIGH,
         trace=A2ATraceContext(
-            correlation_id=correlation_id, parent_message_id=parent_message_id
+            correlation_id=correlation_id,
+            parent_message_id=parent_message_id,
+            span_id=None,
         ),
     )
 
@@ -423,7 +429,7 @@ def create_knowledge_transfer_message(
     Returns:
         KnowledgeTransferMessage instance
     """
-    from models.a2a_messages import A2ATraceContext
+    from backend.models.a2a_messages import A2ATraceContext
 
     return KnowledgeTransferMessage(
         message_id=create_message_id(from_agent, "knowledge_transfer"),
@@ -433,14 +439,16 @@ def create_knowledge_transfer_message(
         knowledge_data=knowledge_data,
         priority=priority,
         trace=A2ATraceContext(
-            correlation_id=correlation_id, parent_message_id=parent_message_id
+            correlation_id=correlation_id,
+            parent_message_id=parent_message_id,
+            span_id=None,
         ),
     )
 
 
 def create_status_message(
     from_agent: str,
-    agent_status: str,
+    agent_status: Literal["started", "in_progress", "completed", "failed"],
     correlation_id: str,
     processing_time_seconds: Optional[float] = None,
     error_message: Optional[str] = None,
@@ -462,7 +470,7 @@ def create_status_message(
     Returns:
         AgentStatusMessage instance
     """
-    from models.a2a_messages import A2ATraceContext
+    from backend.models.a2a_messages import A2ATraceContext
 
     return AgentStatusMessage(
         message_id=create_message_id(from_agent, "status"),
@@ -474,6 +482,8 @@ def create_status_message(
         result_summary=result_summary,
         priority=A2AMessagePriority.MEDIUM,
         trace=A2ATraceContext(
-            correlation_id=correlation_id, parent_message_id=parent_message_id
+            correlation_id=correlation_id,
+            parent_message_id=parent_message_id,
+            span_id=None,
         ),
     )

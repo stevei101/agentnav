@@ -14,8 +14,8 @@ from datetime import datetime, timezone
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from services.firestore_client import get_firestore_client
-from services.prompt_loader import get_prompt_loader
+from backend.services.firestore_client import get_firestore_client
+from backend.services.prompt_loader import get_prompt_loader
 
 # Configure logging
 logging.basicConfig(

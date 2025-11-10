@@ -84,7 +84,8 @@ The field continues to evolve rapidly, with new breakthroughs emerging regularly
             SummarizerAgent,
             VisualizerAgent,
         )
-        from models.context_model import SessionContext
+
+        from backend.models.context_model import SessionContext
 
         # Step 1: Create SessionContext
         print("📋 Step 1: Creating SessionContext")

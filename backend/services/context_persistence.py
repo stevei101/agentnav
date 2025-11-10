@@ -6,7 +6,7 @@ Handles storing and retrieving SessionContext from Firestore
 import logging
 from typing import Optional
 
-from models.context_model import SessionContext
+from backend.models.context_model import SessionContext
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class ContextPersistenceService:
     def _get_client(self):
         """Get Firestore client (lazy initialization)"""
         if self.firestore_client is None:
-            from services.firestore_client import get_firestore_client
+            from backend.services.firestore_client import get_firestore_client
 
             self.firestore_client = get_firestore_client()
         return self.firestore_client

@@ -17,7 +17,7 @@ async def test_session_context_model():
     print("🧪 Testing SessionContext Model")
 
     try:
-        from models.context_model import EntityRelationship, SessionContext
+        from backend.models.context_model import EntityRelationship, SessionContext
 
         # Test 1: Create basic SessionContext
         context = SessionContext(
@@ -93,7 +93,8 @@ async def test_sequential_workflow():
             SummarizerAgent,
             VisualizerAgent,
         )
-        from models.context_model import SessionContext
+
+        from backend.models.context_model import SessionContext
 
         # Create initial SessionContext
         session_context = SessionContext(
@@ -196,8 +197,8 @@ async def test_context_persistence():
     print("\n🧪 Testing Context Persistence Service")
 
     try:
-        from models.context_model import SessionContext
-        from services.context_persistence import get_persistence_service
+        from backend.models.context_model import SessionContext
+        from backend.services.context_persistence import get_persistence_service
 
         # Note: This test requires Firestore to be available
         # In development, this uses the Firestore emulator

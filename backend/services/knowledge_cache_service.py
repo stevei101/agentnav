@@ -7,7 +7,7 @@ Implements content hash-based caching to avoid redundant processing
 import hashlib
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from google.cloud.firestore import Increment
 
@@ -38,7 +38,7 @@ class KnowledgeCacheService:
     def _get_client(self):
         """Get Firestore client (lazy initialization)"""
         if self.firestore_client is None:
-            from services.firestore_client import get_firestore_client
+            from backend.services.firestore_client import get_firestore_client
 
             self.firestore_client = get_firestore_client()
         return self.firestore_client
@@ -109,8 +109,8 @@ class KnowledgeCacheService:
         content_type: str,
         summary: str,
         visualization_data: Dict[str, Any],
-        key_entities: list = None,
-        relationships: list = None,
+        key_entities: Optional[List[Any]] = None,
+        relationships: Optional[List[Any]] = None,
         ttl_hours: Optional[int] = None,
     ) -> bool:
         """

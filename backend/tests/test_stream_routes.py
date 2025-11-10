@@ -1,127 +1,144 @@
 """
-Unit and Integration Tests for WebSocket Streaming Routes (FR#020)
+Focused tests for the WebSocket streaming routes (FR#020).
 
-Tests cover:
-- WebSocket connection lifecycle
-- Event schema validation
-- Agent event streaming
-- Error handling and reconnection
-- Payload parsing and state management
+The suite keeps each test narrow in scope so failures point directly to the
+behaviour that regressed, which aligns with the SRP expectations in
+https://github.com/stevei101/agentnav/issues/285.
 """
 
+from __future__ import annotations
+
 import asyncio
+from typing import Dict
 from unittest.mock import AsyncMock
 
 import pytest
 
-# Note: Real WebSocket tests with TestClient are limited.
-# For full WebSocket testing, consider using websockets library directly.
-# This file demonstrates pytest-compatible test structure.
+from backend.models.stream_event_model import (
+    AgentStatusEnum,
+    ErrorType,
+    EventPayload,
+    WorkflowStreamRequest,
+)
+
+
+@pytest.fixture
+def stubbed_workflow(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    """Patch the internal workflow executor so route tests remain fast."""
+
+    executed = AsyncMock()
+    monkeypatch.setattr(
+        "backend.routes.stream_routes._execute_stream_workflow",
+        executed,
+        raising=False,
+    )
+    return executed
+
+
+@pytest.fixture
+def fixed_session_id(monkeypatch: pytest.MonkeyPatch) -> str:
+    """Force a deterministic session identifier for assertions."""
+
+    class _DeterministicUUID:
+        hex = "feedfacecafe123456789abc"
+
+    session_id = "session_feedfacecafe"
+    monkeypatch.setattr(
+        "backend.routes.stream_routes.uuid.uuid4",
+        lambda: _DeterministicUUID(),
+        raising=False,
+    )
+    return session_id
+
+
+@pytest.fixture
+def workflow_request_payload() -> Dict[str, str]:
+    return {
+        "document": "Stream request payload",
+        "content_type": "document",
+    }
 
 
 class TestWebSocketConnectionLifecycle:
-    """Test WebSocket connection establishment and cleanup"""
+    """WebSocket connection establishment and teardown."""
 
-    def test_websocket_endpoint_exists(self):
-        """Verify /api/v1/navigate/stream endpoint is registered"""
+    def test_websocket_endpoint_exists(self) -> None:
         from backend.main import app
 
-        routes = [route.path for route in app.routes]
+        routes = {route.path for route in app.routes}
         assert "/api/v1/navigate/stream" in routes
 
     @pytest.mark.asyncio
     async def test_websocket_connection_acceptance(
-        self, mock_event_emitter_manager, mock_websocket
-    ):
-        """Test that WebSocket connection is properly accepted"""
+        self,
+        event_emitter_manager,
+        mock_websocket,
+        stubbed_workflow,
+        fixed_session_id,
+        workflow_request_payload,
+    ) -> None:
         from backend.routes.stream_routes import stream_workflow
 
-        # Simulate immediate disconnect from client
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=Exception("Connection closed")
-        )
+        mock_websocket.receive_json = AsyncMock(return_value=workflow_request_payload)
 
-        try:
-            await stream_workflow(mock_websocket)
-        except Exception:
-            # The stream_workflow may raise when receive_json raises; tests
-            # are concerned with correct accept/cleanup behavior rather than
-            # propagation here.
-            pass
+        await stream_workflow(mock_websocket)
 
-        # Verify WebSocket accept was awaited
-        mock_websocket.accept.assert_called_once()
+        mock_websocket.accept.assert_awaited_once()
+        assert stubbed_workflow.await_count == 1
+
+        call_args = stubbed_workflow.await_args.args
+        assert call_args[0] == fixed_session_id
+        assert call_args[1] == workflow_request_payload["document"]
+        assert call_args[2] == workflow_request_payload["content_type"]
+
+        workflow_emitter = call_args[3]
+        assert workflow_emitter is not None
+        assert workflow_emitter.session_id == fixed_session_id
+        mock_websocket.send_json.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_websocket_disconnection_cleanup(
-        self, mock_event_emitter_manager, mock_websocket
-    ):
-        """Test cleanup on WebSocket disconnection"""
+        self,
+        event_emitter_manager,
+        mock_websocket,
+        stubbed_workflow,
+        fixed_session_id,
+        workflow_request_payload,
+    ) -> None:
         from backend.routes.stream_routes import stream_workflow
 
-        # Ensure send_json exists and simulate immediate disconnect
-        mock_websocket.send_json = AsyncMock()
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=Exception("Connection closed")
-        )
+        mock_websocket.receive_json = AsyncMock(return_value=workflow_request_payload)
+        stubbed_workflow.side_effect = RuntimeError("workflow failed")
 
-        try:
-            await stream_workflow(mock_websocket)
-        except Exception:
-            pass
+        await stream_workflow(mock_websocket)
 
-        # Verify that the emitter's unregister_client was called during cleanup
-        mock_event_emitter_manager.create_emitter.return_value.unregister_client.assert_called()
+        assert stubbed_workflow.await_count == 1
+        mock_websocket.accept.assert_awaited_once()
+        mock_websocket.send_json.assert_called()
+        assert event_emitter_manager.get_emitter(fixed_session_id) is None
 
 
 class TestEventModelValidation:
-    """Test Pydantic models for event validation"""
+    """Pydantic model validation."""
 
-    def test_workflow_stream_request_validation(self):
-        """Test WorkflowStreamRequest Pydantic model"""
-        from backend.models.stream_event_model import WorkflowStreamRequest
-
-        # Valid request
-        valid_req = WorkflowStreamRequest(
+    def test_workflow_stream_request_validation(self) -> None:
+        request = WorkflowStreamRequest(
             document="Test document content",
             content_type="document",
             include_metadata=True,
             include_partial_results=True,
         )
-        assert valid_req.document == "Test document content"
-        assert valid_req.content_type == "document"
+        assert request.document == "Test document content"
+        assert request.content_type == "document"
 
-    def test_workflow_stream_request_content_type_validation(self):
-        """Test content_type enum validation"""
-        from backend.models.stream_event_model import WorkflowStreamRequest
+    @pytest.mark.parametrize("content_type", ["document", "codebase"])
+    def test_workflow_stream_request_content_type_validation(
+        self, content_type: str
+    ) -> None:
+        request = WorkflowStreamRequest(document="content", content_type=content_type)
+        assert request.content_type == content_type
 
-        # Valid content types
-        for content_type in ["document", "codebase"]:
-            req = WorkflowStreamRequest(
-                document="content",
-                content_type=content_type,
-            )
-            assert req.content_type == content_type
-
-    def test_agent_stream_event_validation(self):
-        """Test AgentStreamEvent model validation"""
-        from backend.models.stream_event_model import AgentStreamEvent
-
-        event = AgentStreamEvent(
-            id="evt-123",
-            agent="summarizer",
-            status="processing",
-            timestamp="2024-01-01T00:00:00Z",
-            metadata={"session_id": "sess-123"},
-        )
-        assert event.id == "evt-123"
-        assert event.agent == "summarizer"
-        assert event.status == "processing"
-
-    def test_event_payload_with_metrics(self):
-        """Test EventPayload with metrics"""
-        from backend.models.stream_event_model import EventPayload
-
+    def test_event_payload_with_metrics(self) -> None:
         payload = EventPayload(
             summary="Test summary",
             metrics={
@@ -133,217 +150,166 @@ class TestEventModelValidation:
         assert payload.summary == "Test summary"
         assert payload.metrics["processingTime"] == 1500
 
-    def test_event_payload_with_error(self):
-        """Test EventPayload with error handling"""
-        from backend.models.stream_event_model import EventPayload
-
+    def test_event_payload_with_error(self) -> None:
         payload = EventPayload(
-            error_message="Failed to process document",
-            error_type="ProcessingError",
+            error_message="Workflow execution failed",
+            error_type="workflow_error",
+            recoverable=False,
         )
-        assert payload.error_message == "Failed to process document"
-        assert payload.error_type == "ProcessingError"
+
+        assert payload.error is not None
+        assert payload.error.error == "Workflow execution failed"
+        assert payload.error.error_type is ErrorType.WORKFLOW_ERROR
+        assert payload.error.recoverable is False
 
 
 class TestEventStreaming:
-    """Test event emission and streaming"""
+    """Event emitter behaviour."""
 
-    def test_event_emitter_creation(self):
-        """Test EventEmitter creation and session management"""
-        from backend.services.event_emitter import EventEmitterManager
-
-        manager = EventEmitterManager()
+    def test_event_emitter_creation(self, event_emitter_manager) -> None:
         session_id = "test-session-123"
-        emitter = manager.create_emitter(session_id)
-
-        assert emitter is not None
+        emitter = event_emitter_manager.create_emitter(session_id)
         assert emitter.session_id == session_id
 
     @pytest.mark.asyncio
-    async def test_event_emission_to_client_queue(self):
-        """Test that events are emitted to client queues"""
-        from backend.services.event_emitter import EventEmitterManager
-
-        manager = EventEmitterManager()
-        emitter = manager.create_emitter("test-session")
-
-        # Create a client queue
-        client_queue = asyncio.Queue()
+    async def test_event_emission_to_client_queue(self, emitter_factory) -> None:
+        emitter = emitter_factory("test-session-stream")
+        client_queue: asyncio.Queue = asyncio.Queue()
         emitter.register_client(client_queue)
 
-        # Emit an event
-        test_event = {
-            "id": "evt-001",
-            "agent": "summarizer",
-            "status": "processing",
-            "timestamp": "2024-01-01T00:00:00Z",
-        }
-        await emitter.emit_event(test_event)
+        await emitter.emit_event(
+            {
+                "id": "evt-001",
+                "agent": "summarizer",
+                "status": "processing",
+                "timestamp": "2024-01-01T00:00:00Z",
+            }
+        )
 
-        # Verify event was queued
         queued_event = await asyncio.wait_for(client_queue.get(), timeout=1.0)
         assert queued_event["id"] == "evt-001"
         assert queued_event["agent"] == "summarizer"
 
     @pytest.mark.asyncio
-    async def test_multiple_clients_receive_events(self):
-        """Test that multiple clients receive the same event"""
-        from backend.services.event_emitter import EventEmitterManager
-
-        manager = EventEmitterManager()
-        emitter = manager.create_emitter("test-session")
-
-        # Register multiple clients
-        queue1 = asyncio.Queue()
-        queue2 = asyncio.Queue()
+    async def test_multiple_clients_receive_events(self, emitter_factory) -> None:
+        emitter = emitter_factory("test-session-multi")
+        queue1: asyncio.Queue = asyncio.Queue()
+        queue2: asyncio.Queue = asyncio.Queue()
         emitter.register_client(queue1)
         emitter.register_client(queue2)
 
-        # Emit an event
-        test_event = {
-            "id": "evt-002",
-            "agent": "linker",
-            "status": "complete",
-            "timestamp": "2024-01-01T00:00:01Z",
-        }
-        await emitter.emit_event(test_event)
-
-        # Verify both queues receive the event
-        event1 = await asyncio.wait_for(queue1.get(), timeout=1.0)
-        event2 = await asyncio.wait_for(queue2.get(), timeout=1.0)
-
-        assert event1["id"] == "evt-002"
-        assert event2["id"] == "evt-002"
-
-    @pytest.mark.asyncio
-    async def test_client_unregistration(self):
-        """Test that unregistered clients stop receiving events"""
-        from backend.services.event_emitter import EventEmitterManager
-
-        manager = EventEmitterManager()
-        emitter = manager.create_emitter("test-session")
-
-        queue1 = asyncio.Queue()
-        queue2 = asyncio.Queue()
-        emitter.register_client(queue1)
-        emitter.register_client(queue2)
-
-        # Unregister queue1
-        emitter.unregister_client(queue1)
-
-        # Emit an event
-        test_event = {
-            "id": "evt-003",
-            "agent": "visualizer",
-            "status": "processing",
-            "timestamp": "2024-01-01T00:00:02Z",
-        }
-        await emitter.emit_event(test_event)
-
-        # queue2 should receive event
-        event2 = await asyncio.wait_for(queue2.get(), timeout=1.0)
-        assert event2["id"] == "evt-003"
-
-        # queue1 should be empty (timeout)
-        with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(queue1.get(), timeout=0.5)
-
-
-class TestAgentEventEmission:
-    """Test that agents emit events properly"""
-
-    @pytest.mark.asyncio
-    async def test_agent_emits_processing_event(self):
-        """Test agent emits processing event"""
-        from backend.agents.summarizer_agent import SummarizerAgent
-        from backend.services.event_emitter import EventEmitterManager
-
-        manager = EventEmitterManager()
-        emitter = manager.create_emitter("test-session")
-
-        # Create a mock event emitter callback
-        events = []
-
-        async def capture_event(event):
-            events.append(event)
-
-        emitter._emit_callback = capture_event
-
-        # Create agent with emitter
-        agent = SummarizerAgent(event_emitter=emitter)
-
-        # Process a document
-        result = await agent.process(
+        await emitter.emit_event(
             {
-                "document": "Test content for summarization",
-                "session_id": "test-session",
+                "id": "evt-002",
+                "agent": "linker",
+                "status": "complete",
+                "timestamp": "2024-01-01T00:00:01Z",
             }
         )
 
-        # Verify events were emitted
-        # Note: Actual implementation may vary based on agent code
-        assert result is not None
+        event1 = await asyncio.wait_for(queue1.get(), timeout=1.0)
+        event2 = await asyncio.wait_for(queue2.get(), timeout=1.0)
+        assert event1["id"] == event2["id"] == "evt-002"
 
     @pytest.mark.asyncio
-    async def test_agent_emits_error_event_on_failure(self):
-        """Test agent emits error event when processing fails"""
+    async def test_client_unregistration(self, emitter_factory) -> None:
+        emitter = emitter_factory("test-session-unregister")
+        queue1: asyncio.Queue = asyncio.Queue()
+        queue2: asyncio.Queue = asyncio.Queue()
+        emitter.register_client(queue1)
+        emitter.register_client(queue2)
+
+        emitter.unregister_client(queue1)
+        await emitter.emit_event(
+            {
+                "id": "evt-003",
+                "agent": "visualizer",
+                "status": "processing",
+                "timestamp": "2024-01-01T00:00:02Z",
+            }
+        )
+
+        event2 = await asyncio.wait_for(queue2.get(), timeout=1.0)
+        assert event2["id"] == "evt-003"
+
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(queue1.get(), timeout=0.25)
+
+
+class TestAgentEventEmission:
+    """Agent-level streaming hooks."""
+
+    @pytest.mark.asyncio
+    async def test_summarizer_process_emits_stream_events(
+        self, stub_external_services, emitter_factory
+    ) -> None:
         from backend.agents.summarizer_agent import SummarizerAgent
-        from backend.services.event_emitter import EventEmitterManager
 
-        manager = EventEmitterManager()
-        emitter = manager.create_emitter("test-session")
-
+        emitter = emitter_factory("agent-session")
         agent = SummarizerAgent(event_emitter=emitter)
 
-        # Try to process invalid input
-        with pytest.raises(Exception):
-            await agent.process(None)
+        context = {
+            "document": "Test content for summarization",
+            "content_type": "document",
+        }
+        result = await agent.process(context)
+
+        assert result["summary"] == "Stubbed summary content."
+        stub_external_services["gemini"].assert_awaited()
+        stub_external_services["firestore"].get_document.assert_called()
+
+        statuses = {event.status for event in emitter.events_emitted}
+        assert AgentStatusEnum.PROCESSING in statuses
+        assert AgentStatusEnum.COMPLETE in statuses
+
+    @pytest.mark.asyncio
+    async def test_summarizer_process_raises_for_missing_document(
+        self, emitter_factory
+    ) -> None:
+        from backend.agents.summarizer_agent import SummarizerAgent
+
+        emitter = emitter_factory("agent-missing-doc")
+        agent = SummarizerAgent(event_emitter=emitter)
+
+        with pytest.raises(ValueError):
+            await agent.process({"content_type": "document"})
+
+        assert emitter.events_emitted == []
 
 
 class TestErrorHandling:
-    """Test error handling in streaming"""
+    """Route error handling."""
 
     @pytest.mark.asyncio
     async def test_invalid_request_format_error(
-        self, mock_event_emitter_manager, mock_websocket
-    ):
-        """Test handling of invalid request format"""
+        self,
+        event_emitter_manager,
+        mock_websocket,
+    ) -> None:
         from backend.routes.stream_routes import stream_workflow
 
-        # Simulate receiving an invalid JSON payload (missing required fields)
+        # Missing required fields
         mock_websocket.receive_json = AsyncMock(return_value={})
 
-        try:
-            await stream_workflow(mock_websocket)
-        except Exception:
-            pass
+        await stream_workflow(mock_websocket)
 
-        # Should handle gracefully and attempt to send an error response
         mock_websocket.send_json.assert_called()
+        # No emitter should be created because the workflow never started.
+        assert not event_emitter_manager.emitters
 
-    @pytest.mark.asyncio
-    async def test_workflow_execution_error_event(self):
-        """Test that workflow errors are sent as error events"""
-        from backend.models.stream_event_model import EventPayload
-
-        payload = EventPayload(
-            error_message="Workflow execution failed",
-            error_type="WorkflowError",
-        )
-        assert payload.error_message is not None
-
-    def test_websocket_timeout_handling(self):
-        """Test timeout handling in WebSocket communication"""
-        # This would require a live WebSocket server for full testing
-        # Here we document the expected behavior
+    @pytest.mark.skip(
+        reason="Timeout scenarios require live WebSocket integration testing."
+    )
+    def test_websocket_timeout_handling(
+        self,
+    ) -> None:  # pragma: no cover - documented expectation
         pass
 
 
 class TestPayloadParsing:
-    """Test WebSocket message payload parsing"""
+    """Payload parsing helpers."""
 
-    def test_parse_agent_stream_event(self):
-        """Test parsing agent stream events"""
+    def test_parse_agent_stream_event(self) -> None:
         from backend.models.stream_event_model import AgentStreamEvent
 
         raw_event = {
@@ -360,57 +326,48 @@ class TestPayloadParsing:
             },
         }
 
-        # Parse using Pydantic model
         event = AgentStreamEvent(**raw_event)
         assert event.id == "evt-100"
         assert event.payload.summary == "Key findings"
         assert event.payload.metrics["processingTime"] == 2000
 
-    def test_parse_multiple_event_types(self):
-        """Test parsing different agent event types"""
+    @pytest.mark.parametrize("status", ["queued", "processing", "complete", "error"])
+    def test_parse_multiple_event_types(self, status: str) -> None:
         from backend.models.stream_event_model import AgentStreamEvent
 
-        event_types = ["queued", "processing", "complete", "error"]
-
-        for status in event_types:
-            event = AgentStreamEvent(
-                id=f"evt-{status}",
-                agent="visualizer",
-                status=status,
-                timestamp="2024-01-01T00:00:00Z",
-            )
-            assert event.status == status
+        event = AgentStreamEvent(
+            id=f"evt-{status}",
+            agent="visualizer",
+            status=status,
+            timestamp="2024-01-01T00:00:00Z",
+        )
+        assert event.status == status
 
 
 class TestStreamingStateManagement:
-    """Test state management during streaming"""
+    """Session context helpers."""
 
-    @pytest.mark.asyncio
-    async def test_session_context_creation(self):
-        """Test session context is created for each stream"""
+    def test_session_context_creation(self) -> None:
         from backend.models.context_model import SessionContext
 
         session = SessionContext(
             session_id="test-session-001",
-            document="Test document",
+            raw_input="Test document",
             content_type="document",
         )
 
         assert session.session_id == "test-session-001"
         assert session.document == "Test document"
 
-    @pytest.mark.asyncio
-    async def test_session_state_updates_during_stream(self):
-        """Test session state is updated as events are received"""
+    def test_session_state_updates_during_stream(self) -> None:
         from backend.models.context_model import SessionContext
 
         session = SessionContext(
             session_id="test-session-002",
-            document="Content",
+            raw_input="Content",
             content_type="codebase",
         )
 
-        # Simulate state updates
         session.agent_states["summarizer"] = {"status": "processing"}
         session.agent_states["linker"] = {"status": "queued"}
 
@@ -418,35 +375,17 @@ class TestStreamingStateManagement:
         assert session.agent_states["summarizer"]["status"] == "processing"
 
 
-# Integration-style tests (may require real services or mocking)
-
-
 class TestWebSocketIntegration:
-    """Integration tests for WebSocket streaming"""
+    """Placeholder integration tests."""
 
-    @pytest.mark.asyncio
-    async def test_end_to_end_event_stream(self):
-        """Test complete event stream from connection to completion"""
-        # This test demonstrates the expected flow:
-        # 1. Client connects with document
-        # 2. Backend initializes workflow
-        # 3. Events are streamed (queued -> processing -> complete)
-        # 4. Final results sent
-        # 5. Connection closed
+    @pytest.mark.skip(reason="Requires live WebSocket client and full agent graph.")
+    async def test_end_to_end_event_stream(
+        self,
+    ) -> None:  # pragma: no cover - documented expectation
+        ...
 
-        # Full implementation would require:
-        # - Mock WebSocket client
-        # - Mock agents
-        # - Async event loop simulation
-        pass
-
-    @pytest.mark.asyncio
-    async def test_concurrent_sessions(self):
-        """Test multiple concurrent WebSocket sessions"""
-        # Should verify that events from one session
-        # don't interfere with another session
-        pass
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    @pytest.mark.skip(reason="Requires multi-session orchestration with real agents.")
+    async def test_concurrent_sessions(
+        self,
+    ) -> None:  # pragma: no cover - documented expectation
+        ...

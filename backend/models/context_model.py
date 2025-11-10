@@ -6,7 +6,7 @@ Implements the shared session context as specified in FR#005
 import time
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 # Standard agent execution order for the workflow
 STANDARD_AGENT_ORDER = ["orchestrator", "summarizer", "linker", "visualizer"]
@@ -73,7 +73,8 @@ class SessionContext(BaseModel):
     raw_input: str = Field(
         default="",
         description="Original document or codebase content",
-        alias="document",
+        validation_alias=AliasChoices("document", "raw_input"),
+        serialization_alias="document",
     )
 
     # Summarizer Agent outputs
@@ -111,7 +112,7 @@ class SessionContext(BaseModel):
     workflow_status: str = Field(
         default="initializing", description="Current workflow status"
     )
-    errors: List[Dict[str, str]] = Field(
+    errors: List[Dict[str, Any]] = Field(
         default_factory=list, description="List of errors encountered during workflow"
     )
     agent_states: Dict[str, Dict[str, Any]] = Field(
@@ -217,3 +218,30 @@ class SessionContext(BaseModel):
             ]
 
         return cls(**data)
+
+
+def create_session_context(
+    *,
+    session_id: str,
+    raw_input: str,
+    content_type: str = "document",
+    **overrides: Any,
+) -> SessionContext:
+    """
+    Convenience factory for building SessionContext instances with typed inputs.
+
+    Args:
+        session_id: Unique session identifier
+        raw_input: Original document or codebase content
+        content_type: Content classification (defaults to "document")
+        **overrides: Additional SessionContext fields to override
+
+    Returns:
+        A fully constructed SessionContext instance.
+    """
+    return SessionContext(
+        session_id=session_id,
+        raw_input=raw_input,
+        content_type=content_type,
+        **overrides,
+    )

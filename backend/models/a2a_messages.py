@@ -19,6 +19,10 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+def _default_security_context() -> "A2ASecurityContext":
+    return A2ASecurityContext()  # type: ignore[call-arg]
+
+
 class A2AMessagePriority(str, Enum):
     """Message priority levels"""
 
@@ -139,7 +143,7 @@ class A2AMessageBase(BaseModel):
 
     # Security context
     security: A2ASecurityContext = Field(
-        default_factory=A2ASecurityContext,
+        default_factory=_default_security_context,
         description="Security context for Workload Identity authentication",
     )
 

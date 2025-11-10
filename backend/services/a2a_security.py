@@ -58,7 +58,7 @@ class ServiceAccountIdentity:
             )
 
         try:
-            import requests
+            import requests  # type: ignore[import-untyped]
 
             metadata_server = "http://metadata.google.internal/computeMetadata/v1"
             metadata_flavor = {"Metadata-Flavor": "Google"}
@@ -373,7 +373,7 @@ class A2ASecurityService:
             - issues: List[str] of any security issues
             - security_score: int (0-100)
         """
-        issues = []
+        issues: List[str] = []
 
         # Extract security context
         security_ctx = message_dict.get("security", {})
@@ -396,10 +396,17 @@ class A2ASecurityService:
         from_agent = message_dict.get("from_agent")
         to_agent = message_dict.get("to_agent")
 
-        if service_account and not self.authorize_agent_communication(
-            from_agent, to_agent, service_account
+        if (
+            service_account
+            and isinstance(from_agent, str)
+            and isinstance(to_agent, str)
         ):
-            issues.append(f"Unauthorized communication: {from_agent} → {to_agent}")
+            if not self.authorize_agent_communication(
+                from_agent, to_agent, service_account
+            ):
+                issues.append(f"Unauthorized communication: {from_agent} → {to_agent}")
+        elif service_account:
+            issues.append("Missing agent identifiers for authorization check")
 
         # Check 4: Timestamp freshness (prevent replay attacks)
         timestamp = message_dict.get("timestamp")
@@ -505,7 +512,7 @@ class A2ASecurityService:
             "api_key",
         ]
 
-        sanitized = {}
+        sanitized: Dict[str, Any] = {}
         for key, value in data.items():
             # Check if key contains sensitive terms
             is_sensitive = any(term in key.lower() for term in sensitive_fields)

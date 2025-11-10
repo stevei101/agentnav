@@ -305,12 +305,12 @@ async def analyze_content(request: AnalyzeRequest):
             SummarizerAgent,
             VisualizerAgent,
         )
-        from backend.models.context_model import SessionContext
+        from backend.models.context_model import create_session_context
 
         logger.info("🎬 Starting ADK Multi-Agent Analysis (FR#005 Sequential Workflow)")
 
         # Step 1: Initialize SessionContext with raw_input
-        session_context = SessionContext(
+        session_context = create_session_context(
             session_id=f"session_{int(start_time)}",
             raw_input=request.document,
             content_type=request.content_type or "document",

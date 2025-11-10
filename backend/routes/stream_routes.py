@@ -8,16 +8,19 @@ import asyncio
 import logging
 import time
 import uuid
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
+from backend.agents import AgentWorkflow, LinkerAgent, SummarizerAgent, VisualizerAgent
 from backend.agents.orchestrator_agent import OrchestratorAgent
-from backend.models.context_model import SessionContext
+from backend.models.context_model import create_session_context
 from backend.models.stream_event_model import (
+    AgentTypeEnum,
     ErrorType,
     WorkflowStreamRequest,
 )
-from backend.services.event_emitter import get_event_emitter_manager
+from backend.services.event_emitter import EventEmitter, get_event_emitter_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["streaming"])
@@ -56,7 +59,7 @@ async def stream_workflow(websocket: WebSocket):
         logger.info(f"✅ WebSocket accepted: {session_id}")
 
         # Register client for event streaming
-        client_queue = asyncio.Queue()
+        client_queue: asyncio.Queue[Dict[str, Any]] = asyncio.Queue()
         emitter.register_client(client_queue)
 
         # Start background task to send events to client
@@ -175,7 +178,9 @@ async def stream_workflow(websocket: WebSocket):
 
 
 async def _send_events_to_client(
-    websocket: WebSocket, client_queue: asyncio.Queue, session_id: str
+    websocket: WebSocket,
+    client_queue: asyncio.Queue[Dict[str, Any]],
+    session_id: str,
 ) -> None:
     """
     Background task that sends events from emitter to WebSocket client.
@@ -211,7 +216,10 @@ async def _send_events_to_client(
 
 
 async def _execute_stream_workflow(
-    session_id: str, document: str, content_type: str, emitter
+    session_id: str,
+    document: str,
+    content_type: Optional[str],
+    emitter: EventEmitter,
 ) -> None:
     """
     Execute the multi-agent workflow with event streaming.
@@ -228,30 +236,41 @@ async def _execute_stream_workflow(
 
         # Create orchestrator with event emitter
         orchestrator = OrchestratorAgent(event_emitter=emitter)
+        content_type_value = content_type or "document"
 
         # Create session context
-        context = SessionContext(
-            session_id=session_id, content_type=content_type, raw_input=document
+        context = create_session_context(
+            session_id=session_id,
+            raw_input=document,
+            content_type=content_type_value,
         )
 
+        workflow = AgentWorkflow()
+
+        # Initialize all agents with shared protocol
+        workflow.register_agent(orchestrator)
+        workflow.register_agent(SummarizerAgent(workflow.a2a, event_emitter=emitter))
+        workflow.register_agent(LinkerAgent(workflow.a2a, event_emitter=emitter))
+        workflow.register_agent(VisualizerAgent(workflow.a2a, event_emitter=emitter))
+
         # Emit orchestrator queued event
-        await emitter.emit_agent_queued(agent="orchestrator", step=1)
+        await emitter.emit_agent_queued(agent=AgentTypeEnum.ORCHESTRATOR, step=1)
 
         # Emit orchestrator processing event
         await emitter.emit_agent_processing(
-            agent="orchestrator",
+            agent=AgentTypeEnum.ORCHESTRATOR,
             step=1,
             partial_results={"status": "initializing workflow"},
         )
 
         # Execute workflow through orchestrator
         # The orchestrator will emit events for each agent
-        result_context = await orchestrator.execute_workflow(context)
+        result_context = await workflow.execute_sequential_workflow(context)
 
         # Emit final complete event
         elapsed_seconds = time.time() - start_time
         await emitter.emit_agent_complete(
-            agent="visualizer",
+            agent=AgentTypeEnum.VISUALIZER,
             step=4,
             summary=result_context.summary_text,
             entities=result_context.key_entities,
@@ -280,7 +299,7 @@ async def _execute_stream_workflow(
         # Emit error event
         try:
             await emitter.emit_agent_error(
-                agent="orchestrator",
+                agent=AgentTypeEnum.ORCHESTRATOR,
                 step=1,
                 error=type(e).__name__,
                 error_type=ErrorType.WORKFLOW_ERROR,
@@ -292,7 +311,7 @@ async def _execute_stream_workflow(
 
 
 async def _handle_client_command(
-    command: dict, workflow_task: asyncio.Task, session_id: str
+    command: Dict[str, Any], workflow_task: asyncio.Task, session_id: str
 ) -> None:
     """
     Handle commands sent by client during workflow.

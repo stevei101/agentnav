@@ -23,7 +23,7 @@ async def test_a2a_message_schemas():
     print("🧪 Testing A2A Message Schemas (FR#027)")
 
     try:
-        from models.a2a_messages import (
+        from backend.models.a2a_messages import (
             A2ATraceContext,
             RelationshipMappedMessage,
             SummarizationCompletedMessage,
@@ -110,13 +110,13 @@ async def test_a2a_security():
     print("\n🧪 Testing A2A Security Service (FR#027)")
 
     try:
-        from models.a2a_messages import (
+        from backend.models.a2a_messages import (
             A2ATraceContext,
             TaskDelegationMessage,
             create_correlation_id,
             create_message_id,
         )
-        from services.a2a_security import get_security_service
+        from backend.services.a2a_security import get_security_service
 
         # Initialize security service
         security_service = get_security_service()
@@ -201,8 +201,8 @@ async def test_a2a_protocol_service():
     print("\n🧪 Testing A2A Protocol Service (FR#027)")
 
     try:
-        from models.a2a_messages import A2AMessagePriority
-        from services.a2a_protocol import (
+        from backend.models.a2a_messages import A2AMessagePriority
+        from backend.services.a2a_protocol import (
             A2AProtocolService,
             create_knowledge_transfer_message,
             create_task_delegation_message,
@@ -278,7 +278,8 @@ async def test_agent_integration():
 
     try:
         from agents import AgentWorkflow, OrchestratorAgent, SummarizerAgent
-        from models.context_model import SessionContext
+
+        from backend.models.context_model import SessionContext
 
         # Create workflow with enhanced A2A Protocol
         workflow = AgentWorkflow(session_id="test_session_004", use_enhanced_a2a=True)
