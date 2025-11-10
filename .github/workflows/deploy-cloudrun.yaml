@@ -2,7 +2,7 @@ name: Deploy Agentnav to Cloud Run
 
 on:
   push:
-    branches: [main, develop]  # Added develop for testing
+    branches: [main, develop, fix/nginx-port-template]  # Added fix branch for testing
   workflow_dispatch:
 
 concurrency:
