@@ -65,7 +65,7 @@ gcloud projects add-iam-policy-binding $INFRASTRUCTURE_PROJECT_ID \
 **What this does:**
 - Creates `DNS_ZONE_PROJECT_ID` secret in Google Secret Manager
 - Terraform reads this secret to determine which project hosts the DNS zone
-- `manage_dns_in_this_project` defaults to `false` for cross-project setup
+- When `DNS_ZONE_PROJECT_ID` is set, `manage_dns_in_this_project` defaults to `false` for cross-project setup
 
 **Alternative (Manual):**
 ```bash

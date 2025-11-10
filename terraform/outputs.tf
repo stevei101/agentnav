@@ -118,16 +118,35 @@ output "dns_records_for_manual_creation" {
     zone_name   = var.dns_zone_name
     zone_project = data.google_secret_manager_secret_version.dns_zone_project_id.secret_data
     last_updated = timestamp()  # Track when these IPs were last retrieved
-    records = try(
-      [
-        for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records : {
-          name   = "${var.custom_domain_name}."
-          type   = record.type
-          ttl    = 300
-          rrdatas = [record.rrdata]
-        }
-      ],
-      []
+    
+    # Group records by type for easier navigation and creation
+    records_by_type = try(
+      {
+        A = [
+          for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+          {
+            name    = "${var.custom_domain_name}."
+            type    = record.type
+            ttl     = 300
+            rrdatas = [record.rrdata]
+          }
+          if record.type == "A"
+        ]
+        AAAA = [
+          for record in google_cloud_run_domain_mapping.frontend_custom_domain.status[0].resource_records :
+          {
+            name    = "${var.custom_domain_name}."
+            type    = record.type
+            ttl     = 300
+            rrdatas = [record.rrdata]
+          }
+          if record.type == "AAAA"
+        ]
+      },
+      {
+        A = []
+        AAAA = []
+      }
     )
   }
 }
