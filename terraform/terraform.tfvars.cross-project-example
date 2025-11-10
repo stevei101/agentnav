@@ -1,0 +1,115 @@
+# Example Terraform Configuration for Cross-Project DNS Setup
+# This file demonstrates how to configure the Agent Navigator Terraform
+# for a cross-project DNS scenario.
+#
+# Copy this to terraform/terraform.tfvars and adjust values for your environment.
+
+# =============================================================================
+# REQUIRED: Main Project Configuration
+# =============================================================================
+
+# The GCP project where Agent Navigator is deployed
+project_id = "agentnav-production"
+
+# GitHub repository for CI/CD
+github_repository = "stevei101/agentnav"
+
+# =============================================================================
+# CUSTOM DOMAIN CONFIGURATION
+# =============================================================================
+
+# The custom domain for your Agent Navigator frontend
+custom_domain_name = "agentnav.lornu.com"
+
+# The Cloud DNS managed zone name (must already exist in the DNS project)
+# Find with: gcloud dns managed-zones list --project=YOUR_DNS_PROJECT_ID
+dns_zone_name = "lornu-com"
+
+# =============================================================================
+# CROSS-PROJECT DNS CONFIGURATION
+# =============================================================================
+
+# The GCP project where the Cloud DNS zone is hosted
+# This enables cross-project DNS setup
+dns_project_id = "company-dns-production"
+
+# Disable automatic DNS record creation since we'll create them manually
+# in the DNS owner project
+enable_dns_records = false
+
+# =============================================================================
+# CLOUD RUN CONFIGURATION
+# =============================================================================
+
+# Regions for Cloud Run services
+frontend_region = "us-central1"
+backend_region  = "europe-west1"
+
+# Environment name
+environment = "prod"
+
+# Enable staging environment for PR testing
+enable_staging_environment = true
+
+# =============================================================================
+# ARTIFACT REGISTRY CONFIGURATION
+# =============================================================================
+
+# Location for container images (should have GPU support for Gemma service)
+artifact_registry_location     = "europe-west1"
+artifact_registry_repository_id = "agentnav-containers"
+
+# =============================================================================
+# FIRESTORE CONFIGURATION
+# =============================================================================
+
+# Firestore database ID
+firestore_database_id = "agentnav-db"
+
+# =============================================================================
+# DEPLOYMENT CONFIGURATION
+# =============================================================================
+
+# GitHub branch to deploy from
+github_branch = "main"
+
+# Enable Cloud Build triggers for automatic deployments
+enable_connect_repo = true
+
+# Container ports
+frontend_container_port = 80
+backend_container_port  = 8080
+
+# =============================================================================
+# AFTER TERRAFORM APPLY
+# =============================================================================
+#
+# After running `terraform apply` in the Agent Navigator project:
+#
+# 1. Get the required DNS records:
+#    terraform output domain_mapping_dns_records
+#
+# 2. Create DNS records in the DNS owner project (company-dns-production):
+#
+#    Option A - Using gcloud (in DNS owner project):
+#    
+#    gcloud dns record-sets create agentnav.lornu.com. \
+#      --zone=lornu-com \
+#      --type=A \
+#      --ttl=300 \
+#      --rrdatas="<IP1>,<IP2>" \
+#      --project=company-dns-production
+#
+#    Option B - Using Terraform (in DNS owner project):
+#    
+#    See docs/CROSS_PROJECT_DNS_SETUP.md for Terraform example
+#
+# 3. Verify domain mapping:
+#    gcloud run domain-mappings describe agentnav.lornu.com \
+#      --region=us-central1 \
+#      --project=agentnav-production
+#
+# 4. Wait for DNS propagation (5-15 minutes) and test:
+#    curl -I https://agentnav.lornu.com
+#
+# =============================================================================
