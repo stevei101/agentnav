@@ -34,7 +34,8 @@ if (typeof global.DragEvent === 'undefined') {
 
   // Also ensure window.DragEvent is available
   if (typeof window !== 'undefined') {
-    (window as Window & { DragEvent?: typeof global.DragEvent }).DragEvent = global.DragEvent;
+    (window as Window & { DragEvent?: typeof global.DragEvent }).DragEvent =
+      global.DragEvent;
   }
 }
 
