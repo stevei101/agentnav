@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
