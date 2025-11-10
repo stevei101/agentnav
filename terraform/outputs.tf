@@ -101,13 +101,13 @@ output "domain_mapping_status" {
 # DNS Records for Manual Creation (Cross-Project Setup)
 output "dns_records_for_manual_creation" {
   description = "DNS records that need to be created manually in the infrastructure repository when manage_dns_in_this_project=false"
-  sensitive   = true  # Contains sensitive data from Secret Manager
+  sensitive   = true # Contains sensitive data from Secret Manager
   value = var.manage_dns_in_this_project ? null : {
-    domain_name = var.custom_domain_name
-    zone_name   = var.dns_zone_name
+    domain_name  = var.custom_domain_name
+    zone_name    = var.dns_zone_name
     zone_project = data.google_secret_manager_secret_version.dns_zone_project_id.secret_data
-    last_updated = timestamp()  # Track when these IPs were last retrieved
-    
+    last_updated = timestamp() # Track when these IPs were last retrieved
+
     # Group records by type for easier navigation and creation
     records_by_type = try(
       {
@@ -133,7 +133,7 @@ output "dns_records_for_manual_creation" {
         ]
       },
       {
-        A = []
+        A    = []
         AAAA = []
       }
     )
@@ -156,10 +156,9 @@ output "current_cloud_run_ips" {
       last_checked = timestamp()
     },
     {
-      a_records = []
+      a_records    = []
       aaaa_records = []
       last_checked = timestamp()
     }
   )
 }
-
