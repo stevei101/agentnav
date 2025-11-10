@@ -125,12 +125,3 @@ variable "dns_zone_name" {
   default     = "lornu-com"
 }
 
-# DNS zone project is now read from Secret Manager (DNS_ZONE_PROJECT_ID)
-# This provides better security for cross-project configuration
-
-variable "manage_dns_in_this_project" {
-  description = "If true, Terraform will create Cloud DNS record sets in the project where Terraform runs. If false, the required DNS records will be output for manual creation in the DNS owner project."
-  type        = bool
-  default     = false  # Default to false for cross-project DNS setup
-}
-
