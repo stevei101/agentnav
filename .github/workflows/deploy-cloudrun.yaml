@@ -93,7 +93,7 @@ jobs:
             --concurrency 80 \
             --min-instances 0 \
             --max-instances 10 \
-            --port 80 \
+            --cpu-throttling \
             --quiet
 
   deploy-backend:
@@ -160,7 +160,78 @@ jobs:
             --concurrency 80 \
             --min-instances 0 \
             --max-instances 10 \
-            --port 8080 \
-            --set-env-vars PORT=8080,ENVIRONMENT=dev,ALLOWED_HOSTS="${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}",CORS_ORIGINS="${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}",FIRESTORE_DATABASE_ID="${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}",FIRESTORE_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}",A2A_PROTOCOL_ENABLED=true,ADK_AGENT_CONFIG_PATH="/app/agents",GEMMA_SERVICE_URL="${{ vars.GEMMA_SERVICE_URL || '' }}" \
+            --set-env-vars ENVIRONMENT=dev,ALLOWED_HOSTS="${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}",CORS_ORIGINS="${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}",FIRESTORE_DATABASE_ID="${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}",FIRESTORE_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}",A2A_PROTOCOL_ENABLED=true,ADK_AGENT_CONFIG_PATH="/app/agents",GEMMA_SERVICE_URL="${{ vars.GEMMA_SERVICE_URL || '' }}" \
             --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
+            --quiet
+
+  deploy-proxy:
+    name: Deploy Proxy
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
+      IMAGE_TAG: ${{ github.sha }}
+      SERVICE_NAME: agentnav-proxy
+      CLOUD_RUN_REGION: us-central1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Podman / Artifact Registry access
+        run: |
+          set -euo pipefail
+          # Artifact Registry is in europe-west1, not the deployment region
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - name: Build and push proxy image with Podman
+        run: |
+          set -euo pipefail
+          # Use europe-west1 for Artifact Registry (not deployment region)
+          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
+          echo "Building proxy image: ${IMAGE}"
+          podman build -t ${IMAGE} -f nginx-proxy/Dockerfile nginx-proxy
+          echo "Pushing proxy image: ${IMAGE}"
+          podman push ${IMAGE}
+
+      - name: Deploy proxy to Cloud Run
+        env:
+          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+        run: |
+          set -euo pipefail
+          echo "Deploying proxy: ${IMAGE} to region ${CLOUD_RUN_REGION}"
+          
+          # Get backend and frontend URLs for proxy configuration
+          BACKEND_URL=$(gcloud run services describe agentnav-backend --region europe-west1 --project ${GCP_PROJECT_ID} --format="value(status.url)")
+          FRONTEND_URL=$(gcloud run services describe agentnav-frontend --region us-central1 --project ${GCP_PROJECT_ID} --format="value(status.url)")
+          
+          gcloud run deploy ${SERVICE_NAME} \
+            --image ${IMAGE} \
+            --region ${CLOUD_RUN_REGION} \
+            --project ${GCP_PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --set-env-vars AGENTNAV_BACKEND_URL=${BACKEND_URL},AGENTNAV_FRONTEND_URL=${FRONTEND_URL},AGENTNAV_GEMMA_URL="${{ vars.GEMMA_SERVICE_URL || '' }}" \
+            --cpu-throttling \
             --quiet
