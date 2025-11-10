@@ -28,7 +28,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Create nginx configuration with runtime env injection
 RUN echo 'server { \
-    listen ${PORT:-80}; \
+    listen ${PORT}; \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
@@ -46,6 +46,8 @@ RUN echo 'server { \
 # Create startup script to inject runtime env vars into HTML
 RUN echo '#!/bin/sh \
 set -e \
+# Set default PORT if not provided \
+export PORT=${PORT:-80} \
 # Replace PORT in nginx config \
 envsubst "\${PORT}" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
 # Inject VITE_API_URL into index.html if set \

@@ -2,8 +2,8 @@ name: Deploy Agentnav to Cloud Run
 
 on:
   push:
-    branches: [main, develop]  # Added develop for testing
-  workflow_dispatch:
+    branches: [main, staging, develop]
+  workflow_dispatch:  # Allow manual trigger from any branch
 
 concurrency:
   group: deploy-agentnav-${{ github.ref_name }}
