@@ -360,8 +360,8 @@ gcloud container images describe \
 Access GitHub Actions workflow logs:
 
 1. Go to GitHub repository → **Actions** tab
-2. Select **"Build and Deploy Containers"** workflow
-3. View logs for the **"Determine Image Tags based on Event"** step to verify tag decisions
+2. Select **"Deploy Agentnav to Cloud Run"** workflow
+3. Inspect the **build_and_deploy** job logs for the reusable workflow run to confirm tag selection and push operations
 
 ---
 

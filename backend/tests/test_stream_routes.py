@@ -9,11 +9,10 @@ Tests cover:
 - Payload parsing and state management
 """
 
-import pytest
 import asyncio
-import json
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Note: Real WebSocket tests with TestClient are limited.
 # For full WebSocket testing, consider using websockets library directly.

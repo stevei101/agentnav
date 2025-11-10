@@ -25,7 +25,7 @@ We consolidated the CI checks into three primary, high-level checks. Each of the
 
 - The repository keeps the granular jobs for useful logs and debugging. These jobs continue to run in their current workflows.
 - The new composite jobs (named `CODE_QUALITY`, `SECURITY_AUDIT`, and `INFRA_VERIFICATION`) depend on their underlying granular jobs using the `needs:` relationship in GitHub Actions. The composite job will only succeed if all required upstream jobs succeed, producing a single high-level status.
-- Operational workflows such as `Build and Deploy Containers` remain as non-mandatory operational workflows and should not be set as required checks for merging to `main`.
+- Operational workflows such as `Deploy Agentnav to Cloud Run` remain as non-mandatory operational workflows and should not be set as required checks for merging to `main`.
 - **Note**: As of FR#150, the `Build Gemma Debug` workflow no longer runs on pull requests. It can be manually triggered via `workflow_dispatch` or runs automatically on pushes to `main` when Gemma-related files change.
 
 ## Branch protection: recommended configuration
@@ -178,7 +178,7 @@ The following checks are **mandatory** for merging to `main`:
 
 These checks run but are **not required** for merge:
 
-- `Build and Push Containers` - Container build verification
+- `Deploy Agentnav to Cloud Run` - Operational deployment pipeline
 - `Build Gemma Debug` - Gemma service debug builds
 
 ## Development Assistance

@@ -11,13 +11,13 @@ Key Features:
 - Security audit logging for all message operations
 """
 
-import os
-import logging
-import time
 import hashlib
 import json
-from typing import Optional, Dict, Any, List
+import logging
+import os
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class A2ASecurityService:
         self.trusted_service_accounts: List[str] = self._load_trusted_accounts()
         self._secret_key = self._get_signing_key()
 
-        logger.info(f"🔐 A2A Security Service initialized")
+        logger.info("🔐 A2A Security Service initialized")
         logger.info(f"   Identity: {self.identity.email}")
         logger.info(f"   Trusted accounts: {len(self.trusted_service_accounts)}")
 
@@ -154,7 +154,7 @@ class A2ASecurityService:
             )
 
         logger.warning(
-            f"⚠️  Using default trusted accounts (should configure via TRUSTED_SERVICE_ACCOUNTS)"
+            "⚠️  Using default trusted accounts (should configure via TRUSTED_SERVICE_ACCOUNTS)"
         )
         return default_accounts
 
@@ -472,13 +472,6 @@ class A2ASecurityService:
             event_type: Type of security event
             event_data: Event details
         """
-        security_log = {
-            "event_type": event_type,
-            "timestamp": time.time(),
-            "service_account": self.identity.email,
-            "data": event_data,
-        }
-
         # Sanitize event data for logging (remove sensitive fields)
         sanitized_data = self._sanitize_for_logging(event_data)
 

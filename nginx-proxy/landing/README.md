@@ -5,7 +5,7 @@ Simple HTML + CSS landing page that provides navigation to all applications in t
 ## Features
 
 - ✅ **Clean Design**: Modern, responsive UI with gradient background
-- ✅ **App Cards**: Visual cards for each application (agentnav, prompt-vault, cursor-ide)
+- ✅ **App Cards**: Visual cards for each application (agentnav, cursor-ide)
 - ✅ **Quick Links**: Fast access to API docs, health checks, etc.
 - ✅ **Responsive**: Works on mobile and desktop
 - ✅ **Lightweight**: Pure HTML + CSS (no JavaScript required)
@@ -50,9 +50,8 @@ Edit `styles.css` to customize:
 
 The landing page is served at:
 - `/` - Landing page (hub)
-- `/app/` - agentnav frontend (proxied)
-- `/api/` - Backend API (proxied)
-- `/prompt-vault/` - Prompt Vault (proxied, if configured)
+- `/agentnav/` - Agentnav frontend (proxied)
+- `/agentnav/api/` - Agentnav backend API (proxied)
 
 ## Future Enhancements
 

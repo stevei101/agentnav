@@ -9,9 +9,9 @@ Tests the formal A2A Protocol implementation with:
 - Agent communication with typed messages
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 import time
 
 # Add backend directory to path
@@ -24,15 +24,12 @@ async def test_a2a_message_schemas():
 
     try:
         from models.a2a_messages import (
-            TaskDelegationMessage,
-            SummarizationCompletedMessage,
-            RelationshipMappedMessage,
-            VisualizationReadyMessage,
-            KnowledgeTransferMessage,
-            AgentStatusMessage,
             A2ATraceContext,
-            create_message_id,
+            RelationshipMappedMessage,
+            SummarizationCompletedMessage,
+            TaskDelegationMessage,
             create_correlation_id,
+            create_message_id,
         )
 
         # Test 1: Create TaskDelegationMessage
@@ -113,13 +110,13 @@ async def test_a2a_security():
     print("\n🧪 Testing A2A Security Service (FR#027)")
 
     try:
-        from services.a2a_security import get_security_service, ServiceAccountIdentity
         from models.a2a_messages import (
-            TaskDelegationMessage,
             A2ATraceContext,
-            create_message_id,
+            TaskDelegationMessage,
             create_correlation_id,
+            create_message_id,
         )
+        from services.a2a_security import get_security_service
 
         # Initialize security service
         security_service = get_security_service()
@@ -204,13 +201,12 @@ async def test_a2a_protocol_service():
     print("\n🧪 Testing A2A Protocol Service (FR#027)")
 
     try:
+        from models.a2a_messages import A2AMessagePriority
         from services.a2a_protocol import (
             A2AProtocolService,
-            create_task_delegation_message,
             create_knowledge_transfer_message,
-            create_status_message,
+            create_task_delegation_message,
         )
-        from models.a2a_messages import A2AMessagePriority
 
         # Initialize protocol service
         protocol = A2AProtocolService(session_id="test_session_003")

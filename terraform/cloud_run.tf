@@ -42,7 +42,7 @@ resource "google_cloud_run_v2_service" "frontend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.frontend_container_port
         }
@@ -138,7 +138,7 @@ resource "google_cloud_run_v2_service" "backend" {
         # timeout_seconds is per-probe attempt (should be <= period_seconds)
         timeout_seconds   = 10
         period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
+        failure_threshold = 24 # 240s total / 10s period = 24 attempts
         tcp_socket {
           port = var.backend_container_port
         }
@@ -159,111 +159,6 @@ resource "google_cloud_run_service_iam_member" "backend_public" {
   location = google_cloud_run_v2_service.backend.location
   project  = google_cloud_run_v2_service.backend.project
   service  = google_cloud_run_v2_service.backend.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
-
-# ============================================
-# GEN AI PROMPT MANAGEMENT APP
-# ============================================
-
-# Prompt Management App Cloud Run Service
-resource "google_cloud_run_v2_service" "prompt_mgmt" {
-  name     = "prompt-management-app"
-  location = var.frontend_region # Deploy in same region as frontend
-  project  = var.project_id
-
-  depends_on = [google_project_service.apis]
-
-  template {
-    service_account = google_service_account.cloud_run_prompt_mgmt.email
-
-    scaling {
-      min_instance_count = 0
-      max_instance_count = 10
-    }
-
-    containers {
-      name  = "prompt-mgmt"
-      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_repository_id}/prompt-management-app:latest" # Placeholder - updated by CI/CD
-
-      ports {
-        container_port = var.prompt_mgmt_container_port
-      }
-
-      env {
-        name  = "PORT"
-        value = tostring(var.prompt_mgmt_container_port)
-      }
-
-      env {
-        name = "NEXT_PUBLIC_SUPABASE_URL"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.supabase_url.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.supabase_anon_key.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "SUPABASE_SERVICE_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.supabase_service_key.secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name  = "ENVIRONMENT"
-        value = var.environment
-      }
-
-      resources {
-        limits = {
-          cpu    = "1"
-          memory = "512Mi"
-        }
-      }
-
-      startup_probe {
-        # Total startup window: 10s × 24 = 240 seconds
-        # timeout_seconds is per-probe attempt (should be <= period_seconds)
-        timeout_seconds   = 10
-        period_seconds    = 10
-        failure_threshold = 24  # 240s total / 10s period = 24 attempts
-        tcp_socket {
-          port = var.prompt_mgmt_container_port
-        }
-      }
-    }
-
-    timeout = "300s"
-  }
-
-  traffic {
-    percent = 100
-    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
-  }
-}
-
-# Allow unauthenticated access to prompt management app
-resource "google_cloud_run_service_iam_member" "prompt_mgmt_public" {
-  location = google_cloud_run_v2_service.prompt_mgmt.location
-  project  = google_cloud_run_v2_service.prompt_mgmt.project
-  service  = google_cloud_run_v2_service.prompt_mgmt.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }

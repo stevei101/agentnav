@@ -3,8 +3,9 @@ Tests for SessionService
 Tests session metadata management in Firestore
 """
 
-import pytest
 import time
+
+import pytest
 from services.session_service import SessionService
 
 

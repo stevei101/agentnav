@@ -6,18 +6,20 @@ import { JSDOM } from 'jsdom';
 // Setup DOM globals for jsdom environment
 beforeAll(() => {
   // Ensure global DOM objects are available
-  if (typeof global.document === 'undefined') {
+  if (typeof globalThis.document === 'undefined') {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
       url: 'http://localhost:3000',
       pretendToBeVisual: true,
       resources: 'usable',
     });
 
-    global.document = dom.window.document;
-    global.window = dom.window as any;
-    global.navigator = dom.window.navigator;
-    global.HTMLElement = dom.window.HTMLElement;
-    global.Element = dom.window.Element;
+    const windowObject = dom.window as unknown as Window & typeof globalThis;
+
+    globalThis.window = windowObject;
+    globalThis.document = windowObject.document;
+    globalThis.navigator = windowObject.navigator;
+    globalThis.HTMLElement = windowObject.HTMLElement;
+    globalThis.Element = windowObject.Element;
   }
 });
 
@@ -34,7 +36,7 @@ if (typeof global.DragEvent === 'undefined') {
 
   // Also ensure window.DragEvent is available
   if (typeof window !== 'undefined') {
-    (window as any).DragEvent = global.DragEvent;
+    (window as Window & typeof globalThis).DragEvent = global.DragEvent;
   }
 }
 
