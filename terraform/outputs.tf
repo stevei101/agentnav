@@ -35,11 +35,6 @@ output "backend_service_url" {
   value       = google_cloud_run_v2_service.backend.uri
 }
 
-output "prompt_mgmt_service_url" {
-  description = "Prompt Management App Cloud Run service URL"
-  value       = google_cloud_run_v2_service.prompt_mgmt.uri
-}
-
 # Staging Environment Outputs
 output "frontend_staging_service_url" {
   description = "Staging Frontend Cloud Run service URL"

@@ -133,25 +133,6 @@ resource "google_secret_manager_secret_iam_member" "backend_gemini_key" {
   member    = "serviceAccount:${google_service_account.cloud_run_backend.email}"
 }
 
-# Grant Prompt Management App access to Supabase secrets
-resource "google_secret_manager_secret_iam_member" "prompt_mgmt_supabase_url" {
-  secret_id = google_secret_manager_secret.supabase_url.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "prompt_mgmt_supabase_anon_key" {
-  secret_id = google_secret_manager_secret.supabase_anon_key.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "prompt_mgmt_supabase_service_key" {
-  secret_id = google_secret_manager_secret.supabase_service_key.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloud_run_prompt_mgmt.email}"
-}
-
 # Note: Secret values should be added after creation via:
 # echo -n "YOUR_SECRET_VALUE" | gcloud secrets versions add SECRET_NAME --data-file=-
 
