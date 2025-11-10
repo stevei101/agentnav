@@ -2,6 +2,7 @@ import os
 import time
 
 from google.cloud import firestore
+
 from services.firestore_client import get_client
 
 
