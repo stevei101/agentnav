@@ -2,7 +2,7 @@ name: Deploy Agentnav to Cloud Run
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]  # Added develop for testing
   workflow_dispatch:
 
 concurrency:
