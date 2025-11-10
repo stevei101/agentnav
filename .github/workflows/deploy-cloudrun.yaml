@@ -63,7 +63,7 @@ jobs:
           echo "Pushing image: ${IMAGE}"
           podman push ${IMAGE}
 
-      - name: Optional: run frontend checks (lint/test)
+      - name: "Optional: run frontend checks"
         if: ${{ always() }}
         run: |
           set -euo pipefail
