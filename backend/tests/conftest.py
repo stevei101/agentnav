@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 
 @pytest.fixture
@@ -14,7 +15,7 @@ def mock_event_emitter_manager(monkeypatch):
     mock_emitter.register_client = Mock()
     mock_emitter.unregister_client = Mock()
     mock_emitter.emit_event = AsyncMock()  # This one is async
-    
+
     mock_manager = Mock()
     mock_manager.create_emitter.return_value = mock_emitter
 
