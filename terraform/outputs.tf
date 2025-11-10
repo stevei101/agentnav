@@ -101,6 +101,7 @@ output "domain_mapping_status" {
 # DNS Records for Manual Creation (Cross-Project Setup)
 output "dns_records_for_manual_creation" {
   description = "DNS records that need to be created manually in the infrastructure repository when manage_dns_in_this_project=false"
+  sensitive   = true  # Contains sensitive data from Secret Manager
   value = var.manage_dns_in_this_project ? null : {
     domain_name = var.custom_domain_name
     zone_name   = var.dns_zone_name
