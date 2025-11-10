@@ -14,7 +14,7 @@ beforeAll(() => {
     });
 
     global.document = dom.window.document;
-    global.window = dom.window as any;
+    global.window = dom.window as unknown as Window & typeof globalThis;
     global.navigator = dom.window.navigator;
     global.HTMLElement = dom.window.HTMLElement;
     global.Element = dom.window.Element;
@@ -34,7 +34,7 @@ if (typeof global.DragEvent === 'undefined') {
 
   // Also ensure window.DragEvent is available
   if (typeof window !== 'undefined') {
-    (window as any).DragEvent = global.DragEvent;
+    (window as Window & { DragEvent?: typeof global.DragEvent }).DragEvent = global.DragEvent;
   }
 }
 

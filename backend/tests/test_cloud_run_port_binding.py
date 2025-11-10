@@ -65,18 +65,23 @@ async def test_backend_can_start_with_custom_port():
 
 
 def test_cloud_run_deployment_has_port_flag():
-    """Verify GitHub Actions deploy step includes --port flag"""
+    """Verify GitHub Actions deploy step uses shared Cloud Run pattern with correct port"""
     workflow_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", ".github", "workflows", "build.yml"
+        os.path.dirname(__file__), "..", "..", ".github", "workflows", "cloud-run-deploy.yml"
     )
 
     with open(workflow_path, "r") as f:
         content = f.read()
 
-    # Check backend deployment
-    assert "--port 8080" in content, "Backend deployment must specify --port 8080"
-    assert "--timeout 300s" in content, "Backend deployment must specify --timeout 300s"
-    assert "PORT=8080" in content, "Backend deployment must set PORT=8080 env var"
+    assert (
+        'container_port: "8080"' in content
+    ), "Backend deployment must configure container_port 8080"
+    assert (
+        "service_name: agentnav-backend" in content
+    ), "Workflow must deploy the backend service"
+    assert (
+        "uses: stevei101/podman-cloudrun-deploy-gha/.github/workflows/podman-cloudrun-deploy.yaml@main" in content
+    ), "Deployment should use shared Podman Cloud Run workflow"
 
 
 def test_terraform_backend_has_port_env_var():
