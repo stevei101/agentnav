@@ -1,0 +1,143 @@
+name: 🗑️ Cleanup Cloud Run Services
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to clean up'
+        required: true
+        type: choice
+        options:
+          - staging-and-production
+          - dev
+          - all
+          - custom
+      confirm:
+        description: 'Type "DELETE" to confirm deletion'
+        required: true
+        type: string
+      services:
+        description: 'Services to delete (comma-separated, only for custom environment)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  cleanup:
+    name: Cleanup Cloud Run Services
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DELETE" ]; then
+            echo "❌ Confirmation failed. You must type DELETE to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: List existing Cloud Run services
+        run: |
+          echo "## 📋 Current Cloud Run Services" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          gcloud run services list --region=us-central1 --format="table(SERVICE,REGION,URL)" >> $GITHUB_STEP_SUMMARY || echo "No services found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Delete Cloud Run services
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: us-central1
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          SERVICES_INPUT: ${{ github.event.inputs.services }}
+        run: |
+          echo "🔍 Finding services to delete for environment: $ENVIRONMENT"
+          
+          ALL_SERVICES=$(gcloud run services list --region=${GCP_REGION} --format="value(metadata.name)" 2>/dev/null || echo "")
+          
+          case "$ENVIRONMENT" in
+            staging-and-production)
+              # Filter for staging/production services (excluding dev)
+              SERVICES_TO_DELETE=$(echo "$ALL_SERVICES" | grep -E "(staging|stg|production|prod|prd)" | grep -v "dev" || true)
+              echo "📋 Target: Staging & Production services"
+              ;;
+            dev)
+              # Filter for dev services only
+              SERVICES_TO_DELETE=$(echo "$ALL_SERVICES" | grep -E "dev|development" || true)
+              echo "📋 Target: Dev services"
+              ;;
+            all)
+              # All services
+              SERVICES_TO_DELETE="$ALL_SERVICES"
+              echo "📋 Target: ALL services"
+              ;;
+            custom)
+              # Use provided service names
+              SERVICES_TO_DELETE=$(echo "$SERVICES_INPUT" | tr ',' '\n')
+              echo "📋 Target: Custom services"
+              ;;
+            *)
+              echo "❌ Unknown environment: $ENVIRONMENT"
+              exit 1
+              ;;
+          esac
+          
+          if [ -z "$SERVICES_TO_DELETE" ]; then
+            echo "✅ No services found matching the criteria"
+            echo "## ✅ No Services to Delete" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "⚠️ Services to delete:"
+          echo "$SERVICES_TO_DELETE"
+          echo ""
+          
+          echo "## 🗑️ Deleting Services" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Delete each service
+          DELETED_COUNT=0
+          FAILED_COUNT=0
+          
+          while IFS= read -r service; do
+            if [ -n "$service" ]; then
+              echo "Deleting: $service"
+              if gcloud run services delete "$service" \
+                --region=${GCP_REGION} \
+                --project=${GCP_PROJECT_ID} \
+                --quiet 2>&1; then
+                echo "✅ Deleted: $service" >> $GITHUB_STEP_SUMMARY
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+              else
+                echo "❌ Failed: $service" >> $GITHUB_STEP_SUMMARY
+                FAILED_COUNT=$((FAILED_COUNT + 1))
+              fi
+            fi
+          done <<< "$SERVICES_TO_DELETE"
+          
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Summary:** Deleted $DELETED_COUNT service(s), $FAILED_COUNT failure(s)" >> $GITHUB_STEP_SUMMARY
+
+      - name: List remaining services
+        run: |
+          echo ""
+          echo "## 📋 Remaining Cloud Run Services" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          gcloud run services list --region=us-central1 --format="table(SERVICE,REGION,URL)" >> $GITHUB_STEP_SUMMARY || echo "No services found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
