@@ -3,7 +3,11 @@
 
 resource "google_project_service" "apis" {
   for_each = toset([
-    # Cloud Run
+    # GKE & Compute
+    "container.googleapis.com",
+    "compute.googleapis.com",
+
+    # Cloud Run (legacy / transition period)
     "run.googleapis.com",
 
     # Artifact Registry
@@ -41,4 +45,3 @@ resource "google_project_service" "apis" {
     update = "10m"
   }
 }
-

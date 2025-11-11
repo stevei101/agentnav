@@ -115,3 +115,76 @@ variable "manage_dns_in_this_project" {
   type        = bool
   default     = false # Default to false for cross-project DNS setup
 }
+
+variable "gke_region" {
+  description = "Region for the primary GKE cluster"
+  type        = string
+  default     = "europe-west1"
+}
+
+variable "gke_cluster_name" {
+  description = "Name of the primary GKE cluster"
+  type        = string
+  default     = "agentnav-gke"
+}
+
+variable "gke_network_name" {
+  description = "Name of the VPC network used by GKE"
+  type        = string
+  default     = "agentnav-gke-network"
+}
+
+variable "gke_subnet_name" {
+  description = "Name of the subnet used by GKE"
+  type        = string
+  default     = "agentnav-gke-subnet"
+}
+
+variable "gke_subnet_cidr" {
+  description = "CIDR range for the GKE subnet"
+  type        = string
+  default     = "10.20.0.0/20"
+}
+
+variable "gke_node_machine_type" {
+  description = "Machine type for the default GKE node pool"
+  type        = string
+  default     = "e2-standard-4"
+}
+
+variable "gke_node_count_min" {
+  description = "Minimum number of nodes in the default node pool"
+  type        = number
+  default     = 2
+}
+
+variable "gke_node_count_max" {
+  description = "Maximum number of nodes in the default node pool"
+  type        = number
+  default     = 5
+}
+
+variable "enable_gpu_node_pool" {
+  description = "Whether to provision a GPU-enabled node pool for Gemma workloads"
+  type        = bool
+  default     = false
+}
+
+variable "gke_gpu_machine_type" {
+  description = "Machine type for the GPU node pool"
+  type        = string
+  default     = "g2-standard-8"
+}
+
+variable "gke_gpu_accelerator_type" {
+  description = "GPU accelerator type for the GPU node pool"
+  type        = string
+  default     = "nvidia-l4"
+}
+
+variable "gke_gpu_accelerator_count" {
+  description = "Number of GPU accelerators per node"
+  type        = number
+  default     = 1
+}
+
