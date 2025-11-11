@@ -188,3 +188,15 @@ variable "gke_gpu_accelerator_count" {
   default     = 1
 }
 
+
+variable "gke_deletion_protection" {
+  description = "Enable deletion protection on the primary GKE cluster"
+  type        = bool
+  default     = false
+}
+
+variable "gke_default_pool_preemptible" {
+  description = "Whether nodes in the default GKE node pool should be preemptible"
+  type        = bool
+  default     = false
+}

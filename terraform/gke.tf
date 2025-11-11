@@ -1,12 +1,10 @@
 # GKE infrastructure for Agentnav
 
-# Dedicated VPC network for the cluster
 resource "google_compute_network" "gke" {
   name                    = var.gke_network_name
   auto_create_subnetworks = false
 }
 
-# Subnet for worker nodes (VPC-native cluster)
 resource "google_compute_subnetwork" "gke" {
   name          = var.gke_subnet_name
   ip_cidr_range = var.gke_subnet_cidr
@@ -20,7 +18,7 @@ resource "google_container_cluster" "primary" {
 
   remove_default_node_pool = true
   initial_node_count       = 1
-  deletion_protection      = false
+  deletion_protection      = var.gke_deletion_protection
 
   network    = google_compute_network.gke.id
   subnetwork = google_compute_subnetwork.gke.id
@@ -60,7 +58,7 @@ resource "google_container_node_pool" "default" {
   }
 
   node_config {
-    preemptible  = true
+    preemptible  = var.gke_default_pool_preemptible
     machine_type = var.gke_node_machine_type
 
     metadata = {
@@ -68,7 +66,12 @@ resource "google_container_node_pool" "default" {
     }
 
     oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/trace.append"
     ]
 
     workload_metadata_config {
@@ -106,7 +109,12 @@ resource "google_container_node_pool" "gpu" {
     }
 
     oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/trace.append"
     ]
 
     workload_metadata_config {
@@ -119,14 +127,4 @@ resource "google_container_node_pool" "gpu" {
       effect = "NO_SCHEDULE"
     }
   }
-}
-
-resource "time_sleep" "wait_for_cluster" {
-  depends_on = [
-    google_container_cluster.primary,
-    google_container_node_pool.default,
-    google_container_node_pool.gpu
-  ]
-
-  create_duration = "60s"
 }
