@@ -115,3 +115,10 @@ variable "manage_dns_in_this_project" {
   type        = bool
   default     = false # Default to false for cross-project DNS setup
 }
+
+variable "google_credentials" {
+  description = "Google Cloud credentials (usually provided via environment variable, declared to suppress Terraform warnings)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
