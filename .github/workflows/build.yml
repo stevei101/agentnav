@@ -1,11 +1,56 @@
-name: Build and Deploy Containers
+---
+name: Build and Push Container Images (Podman)
 
 on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+    paths:
+      - backend/**
+      - nginx-proxy/**
+      - Dockerfile
+      - frontend.Dockerfile.dev
+      - package.json
+      - bun.lock
   pull_request:
     branches:
       - main
+      - staging
+      - develop
     paths:
-      - '**'
+      - backend/**
+      - nginx-proxy/**
+      - Dockerfile
+      - frontend.Dockerfile.dev
+      - package.json
+      - bun.lock
+  workflow_run:
+    workflows:
+      - "INFRA_VERIFICATION"
+    types:
+      - completed
+    branches:
+      - develop
+      - staging
+      - main
+  workflow_dispatch:
+    inputs:
+      build_all:
+        description: Force rebuild of all images
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+concurrency:
+  group: docker-build-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -14,305 +59,126 @@ env:
 
 jobs:
   build-and-push:
-    name: Build and Push Containers
+    name: Build and Push Images
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write # Required for Workload Identity Federation
-
-    strategy:
-      matrix:
-        service: [frontend, backend, proxy]
-      fail-fast: false
+    environment: >-
+      ${{ github.ref == 'refs/heads/main' && 'production' ||
+          github.ref == 'refs/heads/staging' && 'staging' ||
+          'preview' }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_run'
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev
-
-      - name: Determine Image Tags based on Event
-        id: image
+      - name: Determine environment tags
+        id: determine
         shell: bash
         run: |
-          set -euo pipefail
-
-          LATEST_TAG=""
-
-          # 1. Check for Pull Request trigger
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            if [[ -z "${PR_NUMBER}" ]]; then
-              echo "❌ Error: Pull request number is missing"
-              exit 1
-            fi
-            IMAGE_TAG="pr-${PR_NUMBER}"
-            
-          # 2. Check for Push to 'main' branch
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            IMAGE_TAG="${{ github.sha }}"
-            LATEST_TAG="latest"
-            
-          # 3. Default (other branches)
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENV_TAG="production"
+            LATEST_TAG="production"
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            ENV_TAG="staging"
+            LATEST_TAG="staging"
           else
-            IMAGE_TAG="$(echo '${{ github.sha }}' | cut -c1-7)"
+            ENV_TAG="dev"
+            LATEST_TAG="dev"
           fi
 
-          # Validate IMAGE_TAG is set
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Error: IMAGE_TAG is empty"
-            exit 1
-          fi
+          REGISTRY="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}"
 
-          # Set outputs for subsequent build/push steps
-          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
-          fi
+          echo "environment_tag=${ENV_TAG}" >>"$GITHUB_OUTPUT"
+          echo "latest_tag=${LATEST_TAG}" >>"$GITHUB_OUTPUT"
+          echo "sha_tag=${GITHUB_SHA}" >>"$GITHUB_OUTPUT"
+          echo "registry=${REGISTRY}" >>"$GITHUB_OUTPUT"
 
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Service: ${{ matrix.service }}"
-          echo "Image tag: ${IMAGE_TAG}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "Latest tag: ${LATEST_TAG}"
-          fi
-
-      - name: Build and push frontend
-        if: matrix.service == 'frontend'
-        run: |
-          set -euo pipefail
-
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend"
-          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Error: image_tag output is missing"
-            exit 1
-          fi
-
-          echo "🔨 Building frontend image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker build \
-            -t ${IMAGE_NAME}:${IMAGE_TAG} \
-            -f Dockerfile \
-            .
-
-          # Tag as latest if on main branch
-          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          # Push primary tag
-          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker push ${IMAGE_NAME}:${IMAGE_TAG}
-
-          # Push latest tag if set
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker push ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          echo "✅ Frontend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
-
-      - name: Build and push backend
-        if: matrix.service == 'backend'
-        run: |
-          set -euo pipefail
-
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend"
-          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Error: image_tag output is missing"
-            exit 1
-          fi
-
-          echo "🔨 Building backend image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker build \
-            -t ${IMAGE_NAME}:${IMAGE_TAG} \
-            -f backend/Dockerfile \
-            ./backend
-
-          # Tag as latest if on main branch
-          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          # Push primary tag
-          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker push ${IMAGE_NAME}:${IMAGE_TAG}
-
-          # Push latest tag if set
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker push ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          echo "✅ Backend image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
-
-      - name: Build and push proxy
-        if: matrix.service == 'proxy'
-        run: |
-          set -euo pipefail
-
-          IMAGE_NAME="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-proxy"
-          IMAGE_TAG="${{ steps.image.outputs.image_tag }}"
-
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Error: image_tag output is missing"
-            exit 1
-          fi
-
-          echo "🔨 Building proxy image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker build \
-            -t ${IMAGE_NAME}:${IMAGE_TAG} \
-            -f nginx-proxy/Dockerfile \
-            ./nginx-proxy
-
-          # Tag as latest if on main branch
-          LATEST_TAG="${{ steps.image.outputs.latest_tag }}"
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📌 Tagging as latest: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          # Push primary tag
-          echo "📤 Pushing image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          docker push ${IMAGE_NAME}:${IMAGE_TAG}
-
-          # Push latest tag if set
-          if [[ -n "${LATEST_TAG}" ]]; then
-            echo "📤 Pushing latest tag: ${IMAGE_NAME}:${LATEST_TAG}"
-            docker push ${IMAGE_NAME}:${LATEST_TAG}
-          fi
-
-          echo "✅ Proxy image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
-
-  deploy:
-    name: Deploy to Cloud Run
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    permissions:
-      contents: read
-      id-token: write
-
-    strategy:
-      matrix:
-        service: [frontend, backend, proxy]
-      fail-fast: false
-
-    steps:
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
+          token_format: access_token
+          access_token_lifetime: 3600s
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy frontend to Cloud Run
-        if: matrix.service == 'frontend'
+      - name: Install Podman
         run: |
-          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y podman
+          podman --version
 
-          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-frontend:latest"
-
-          echo "🚀 Deploying frontend to Cloud Run..."
-          echo "   Image: ${IMAGE}"
-          echo "   Region: us-central1"
-
-          # Modern gcloud run deploy with Cloud Run best practices
-          gcloud run deploy agentnav-frontend \
-            --image ${IMAGE} \
-            --region us-central1 \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --memory 512Mi \
-            --cpu 1 \
-            --timeout 300s \
-            --concurrency 80 \
-            --min-instances 0 \
-            --max-instances 10 \
-            --cpu-throttling \
-            --port 80 \
-            --quiet
-
-          echo "✅ Frontend deployment completed"
-
-      - name: Deploy backend to Cloud Run
-        if: matrix.service == 'backend'
+      - name: Configure Podman for Artifact Registry
         run: |
-          set -euo pipefail
+          gcloud auth configure-docker \
+            ${{ env.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev
 
-          IMAGE="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/agentnav-backend:latest"
-          SERVICE_ACCOUNT="agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-
-          echo "🚀 Deploying backend to Cloud Run..."
-          echo "   Image: ${IMAGE}"
-          echo "   Region: europe-west1"
-          echo "   Service Account: ${SERVICE_ACCOUNT}"
-
-          # Modern gcloud run deploy with Cloud Run best practices
-          gcloud run deploy agentnav-backend \
-            --image ${IMAGE} \
-            --region europe-west1 \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --service-account ${SERVICE_ACCOUNT} \
-            --memory 8Gi \
-            --cpu 4 \
-            --timeout 300s \
-            --concurrency 80 \
-            --min-instances 0 \
-            --max-instances 10 \
-            --cpu-throttling \
-            --port 8080 \
-            --set-env-vars PORT=8080 \
-            --set-env-vars ENVIRONMENT=production \
-            --set-env-vars ALLOWED_HOSTS="agentnav.lornu.com,*.run.app" \
-            --set-env-vars CORS_ORIGINS="https://agentnav.lornu.com" \
-            --quiet
-
-          echo "✅ Backend deployment completed"
-
-      - name: Get service URLs
-        if: matrix.service == 'frontend'
+      - name: Build and Push Backend Image
+        working-directory: backend
+        env:
+          REGISTRY: ${{ steps.determine.outputs.registry }}
+          ENV_TAG: ${{ steps.determine.outputs.environment_tag }}
+          SHA_TAG: ${{ steps.determine.outputs.sha_tag }}
         run: |
-          echo "Frontend URL:"
-          gcloud run services describe agentnav-frontend \
-            --region us-central1 \
-            --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)"
+          podman build \
+            --tag "${REGISTRY}/agentnav-backend:${ENV_TAG}" \
+            --tag "${REGISTRY}/agentnav-backend:${SHA_TAG}" \
+            -f Dockerfile .
 
-          echo "Backend URL:"
-          gcloud run services describe agentnav-backend \
-            --region europe-west1 \
-            --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)"
+          podman push "${REGISTRY}/agentnav-backend:${ENV_TAG}"
+          podman push "${REGISTRY}/agentnav-backend:${SHA_TAG}"
 
-          echo "Proxy URL (Main Entry Point):"
-          gcloud run services describe agentnav-proxy \
-            --region us-central1 \
-            --project ${GCP_PROJECT_ID} \
-            --format="value(status.url)" || echo "Proxy not deployed yet"
+      - name: Build and Push Frontend Image
+        env:
+          REGISTRY: ${{ steps.determine.outputs.registry }}
+          ENV_TAG: ${{ steps.determine.outputs.environment_tag }}
+          SHA_TAG: ${{ steps.determine.outputs.sha_tag }}
+        run: |
+          podman build \
+            --tag "${REGISTRY}/agentnav-frontend:${ENV_TAG}" \
+            --tag "${REGISTRY}/agentnav-frontend:${SHA_TAG}" \
+            -f Dockerfile .
+
+          podman push "${REGISTRY}/agentnav-frontend:${ENV_TAG}"
+          podman push "${REGISTRY}/agentnav-frontend:${SHA_TAG}"
+
+      - name: Build and Push Proxy Image
+        working-directory: nginx-proxy
+        env:
+          REGISTRY: ${{ steps.determine.outputs.registry }}
+          ENV_TAG: ${{ steps.determine.outputs.environment_tag }}
+          SHA_TAG: ${{ steps.determine.outputs.sha_tag }}
+        run: |
+          podman build \
+            --tag "${REGISTRY}/agentnav-proxy:${ENV_TAG}" \
+            --tag "${REGISTRY}/agentnav-proxy:${SHA_TAG}" \
+            -f Dockerfile .
+
+          podman push "${REGISTRY}/agentnav-proxy:${ENV_TAG}"
+          podman push "${REGISTRY}/agentnav-proxy:${SHA_TAG}"
+
+      - name: Build summary
+        env:
+          REGISTRY: ${{ steps.determine.outputs.registry }}
+          ENV_TAG: ${{ steps.determine.outputs.environment_tag }}
+          SHA_TAG: ${{ steps.determine.outputs.sha_tag }}
+        run: |
+          {
+            echo "## 🐳 Container Build Complete"
+            echo
+            echo "**Registry:** ${REGISTRY}"
+            echo "**Environment Tag:** ${ENV_TAG}"
+            echo "**Images:**"
+            echo "- \`agentnav-backend:${ENV_TAG}\` and \`agentnav-backend:${SHA_TAG}\`"
+            echo "- \`agentnav-frontend:${ENV_TAG}\` and \`agentnav-frontend:${SHA_TAG}\`"
+            echo "- \`agentnav-proxy:${ENV_TAG}\` and \`agentnav-proxy:${SHA_TAG}\`"
+            echo
+            echo "_Built with Podman and pushed to Artifact Registry_"
+          } >>"$GITHUB_STEP_SUMMARY"
