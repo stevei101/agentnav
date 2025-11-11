@@ -1,0 +1,148 @@
+---
+name: "🗑️ Cleanup Cloud Run Services"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "DELETE ALL" to confirm deletion of Cloud Run services'
+        required: true
+        type: string
+      services:
+        description: 'Optional comma-separated list of services to delete (default: auto-detect all)'
+        required: false
+        default: 'auto'
+        type: string
+      regions:
+        description: 'Optional comma-separated list of regions to scan (default: us-central1,europe-west1)'
+        required: false
+        default: 'us-central1,europe-west1'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  cleanup:
+    name: Delete Cloud Run Services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DELETE ALL" ]; then
+            echo "❌ Confirmation failed. You must type DELETE ALL to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: List Cloud Run services before deletion
+        env:
+          REGIONS_INPUT: ${{ github.event.inputs.regions }}
+        run: |
+          REGIONS=$(echo "${REGIONS_INPUT:-us-central1,europe-west1}" | tr ',' ' ')
+          echo "## 📋 Current Cloud Run Services" >>"$GITHUB_STEP_SUMMARY"
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
+          for region in $REGIONS; do
+            echo "Region: $region" >>"$GITHUB_STEP_SUMMARY"
+            if ! gcloud run services list \
+              --region="$region" \
+              --format="table(SERVICE,REGION,URL)" 2>/dev/null >>"$GITHUB_STEP_SUMMARY"; then
+              echo "(no services)" >>"$GITHUB_STEP_SUMMARY"
+            fi
+            echo '' >>"$GITHUB_STEP_SUMMARY"
+          done
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Delete Cloud Run services
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          SERVICES_INPUT: ${{ github.event.inputs.services }}
+          REGIONS_INPUT: ${{ github.event.inputs.regions }}
+        run: |
+          REGIONS=$(echo "${REGIONS_INPUT:-us-central1,europe-west1}" | tr ',' ' ')
+          echo "REGIONS TO SCAN: $REGIONS"
+
+          if [ "$SERVICES_INPUT" = "auto" ]; then
+            SERVICES_TO_DELETE=""
+            for region in $REGIONS; do
+              FOUND=$(gcloud run services list \
+                --region="$region" \
+                --format="value(metadata.name)" 2>/dev/null || true)
+              if [ -n "$FOUND" ]; then
+                SERVICES_TO_DELETE+=$(printf "%s" "$FOUND" | sed "s/$/,$region/"; echo)
+              fi
+            done
+          else
+            SERVICES_TO_DELETE=""
+            for service in $(echo "$SERVICES_INPUT" | tr ',' ' '); do
+              for region in $REGIONS; do
+                SERVICES_TO_DELETE+=$(printf "%s" "$service" | sed "s/$/,$region/"; echo)
+              done
+            done
+          fi
+
+          if [ -z "$SERVICES_TO_DELETE" ]; then
+            echo "✅ No Cloud Run services detected"
+            echo "## ✅ No Services to Delete" >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "## 🗑️ Deleting Services" >>"$GITHUB_STEP_SUMMARY"
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
+
+          DELETED_COUNT=0
+          FAILED_COUNT=0
+
+          while IFS=',' read -r service region; do
+            if [ -n "$service" ] && [ -n "$region" ]; then
+              echo "Deleting $service ($region)"
+              if gcloud run services delete "$service" \
+                --region="$region" \
+                --project="$GCP_PROJECT_ID" \
+                --quiet 2>&1; then
+                echo "✅ Deleted: $service ($region)" >>"$GITHUB_STEP_SUMMARY"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+              else
+                echo "❌ Failed: $service ($region)" >>"$GITHUB_STEP_SUMMARY"
+                FAILED_COUNT=$((FAILED_COUNT + 1))
+              fi
+            fi
+          done <<EOF_SERVICES
+${SERVICES_TO_DELETE}
+EOF_SERVICES
+
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
+          echo "" >>"$GITHUB_STEP_SUMMARY"
+          echo "**Summary:** Deleted $DELETED_COUNT service(s), $FAILED_COUNT failure(s)" >>"$GITHUB_STEP_SUMMARY"
+
+      - name: List Cloud Run services after deletion
+        env:
+          REGIONS_INPUT: ${{ github.event.inputs.regions }}
+        run: |
+          REGIONS=$(echo "${REGIONS_INPUT:-us-central1,europe-west1}" | tr ',' ' ')
+          echo "## 📋 Remaining Cloud Run Services" >>"$GITHUB_STEP_SUMMARY"
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
+          for region in $REGIONS; do
+            echo "Region: $region" >>"$GITHUB_STEP_SUMMARY"
+            if ! gcloud run services list \
+              --region="$region" \
+              --format="table(SERVICE,REGION,URL)" 2>/dev/null >>"$GITHUB_STEP_SUMMARY"; then
+              echo "(no services)" >>"$GITHUB_STEP_SUMMARY"
+            fi
+            echo '' >>"$GITHUB_STEP_SUMMARY"
+          done
+          echo '```' >>"$GITHUB_STEP_SUMMARY"
