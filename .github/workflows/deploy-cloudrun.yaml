@@ -1,90 +1,173 @@
-name: Deploy Agentnav to Cloud Run
+---
+name: "\U0001F680 Deploy to Cloud Run"
 
 on:
+  workflow_run:
+    workflows:
+      - "Build and Push Container Images (Podman)"
+    types:
+      - completed
+    branches:
+      - develop
   push:
-    branches: [main, staging, develop]
-  workflow_dispatch:  # Allow manual trigger from any branch
+    branches:
+      - develop
+    paths:
+      - backend/**
+      - nginx-proxy/**
+      - Dockerfile
+      - .github/workflows/deploy-cloudrun.yaml
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Service to deploy
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
+          - proxy
+          - all
+        default: all
+      image_tag:
+        description: Image tag to deploy (defaults per branch)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
 
 concurrency:
-  group: deploy-agentnav-${{ github.ref_name }}
-  cancel-in-progress: true
+  group: cloud-run-deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
-  TERRAFORM_DIR: terraform
-  TERRAFORM_WORKSPACE: agentnav-dev
-  ALLOWED_HOSTS: ${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}
-  CORS_ORIGINS: ${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
-  FIRESTORE_DATABASE_ID: ${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  ARTIFACT_REGISTRY_LOCATION: europe-west1
+  ARTIFACT_REGISTRY_REPOSITORY: agentnav-containers
+  FRONTEND_REGION: us-central1
+  BACKEND_REGION: europe-west1
+  PROXY_REGION: us-central1
+  ALLOWED_HOSTS: >-
+    ${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}
+  CORS_ORIGINS: >-
+    ${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}
+  FIRESTORE_DATABASE_ID: >-
+    ${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}
 
 jobs:
-  deploy-frontend:
-    name: Deploy Frontend
+  deploy-cloud-run:
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    env:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
-      IMAGE_TAG: ${{ github.sha }}
-      SERVICE_NAME: agentnav-frontend
-      CLOUD_RUN_REGION: us-central1
+    if: >-
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push'
 
     steps:
-      - name: Checkout
+      - name: Debug trigger
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Requested service: '${{ github.event.inputs.service }}'"
+          echo "Requested tag: '${{ github.event.inputs.image_tag }}'"
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (WIF)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Podman / Artifact Registry access
+      - name: Determine deployment context
+        id: context
+        shell: bash
         run: |
-          set -euo pipefail
-          # Artifact Registry is in europe-west1, not the deployment region
-          gcloud auth configure-docker europe-west1-docker.pkg.dev
-
-      - name: "Optional: run frontend checks"
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          # Only run the project-specified prebuild checks if bun is available and not skipped
-          if command -v bun >/dev/null 2>&1; then
-            bun install || true
-            bun run lint || true
-            bun run type-check || true
-            bun run test -- --run || true
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENVIRONMENT="production"
+            TAG="production"
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            ENVIRONMENT="staging"
+            TAG="staging"
           else
-            echo "bun not available in runner; skipping JS checks"
+            ENVIRONMENT="dev"
+            TAG="dev"
           fi
 
-      - name: Build and push frontend image with Podman
-        run: |
-          set -euo pipefail
-          # Use europe-west1 for Artifact Registry (not deployment region)
-          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
-          echo "Building image: ${IMAGE}"
-          podman build -t ${IMAGE} -f Dockerfile .
-          echo "Pushing image: ${IMAGE}"
-          podman push ${IMAGE}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] &&
+             [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            TAG="${{ github.event.inputs.image_tag }}"
+          fi
 
-      - name: Deploy frontend to Cloud Run
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SERVICE="${{ github.event.inputs.service }}"
+          else
+            SERVICE="all"
+          fi
+
+          REGISTRY="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}"
+
+          echo "environment=${ENVIRONMENT}" >>"$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >>"$GITHUB_OUTPUT"
+          echo "service=${SERVICE}" >>"$GITHUB_OUTPUT"
+          echo "registry=${REGISTRY}" >>"$GITHUB_OUTPUT"
+          echo "backend_service=agentnav-backend" >>"$GITHUB_OUTPUT"
+          echo "frontend_service=agentnav-frontend" >>"$GITHUB_OUTPUT"
+          echo "proxy_service=agentnav-proxy" >>"$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy backend service
+        if: >-
+          steps.context.outputs.service == 'backend' ||
+          steps.context.outputs.service == 'all'
         env:
-          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          IMAGE: ${{ steps.context.outputs.registry }}/agentnav-backend:${{ steps.context.outputs.image_tag }}
         run: |
-          set -euo pipefail
-          echo "Deploying frontend: ${IMAGE} to region ${CLOUD_RUN_REGION}"
-          gcloud run deploy ${SERVICE_NAME} \
-            --image ${IMAGE} \
-            --region ${CLOUD_RUN_REGION} \
-            --project ${GCP_PROJECT_ID} \
+          gcloud run deploy "${{ steps.context.outputs.backend_service }}" \
+            --image "${IMAGE}" \
+            --region "${BACKEND_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+            --memory 8Gi \
+            --cpu 4 \
+            --timeout 300s \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --cpu-throttling \
+            --port 8080 \
+            --set-env-vars "ENVIRONMENT=${{ steps.context.outputs.environment }}" \
+            --set-env-vars "PORT=8080" \
+            --set-env-vars "ALLOWED_HOSTS=${ALLOWED_HOSTS}" \
+            --set-env-vars "CORS_ORIGINS=${CORS_ORIGINS}" \
+            --set-env-vars "FIRESTORE_DATABASE_ID=${FIRESTORE_DATABASE_ID}" \
+            --set-env-vars "FIRESTORE_PROJECT_ID=${GCP_PROJECT_ID}" \
+            --set-env-vars "A2A_PROTOCOL_ENABLED=true" \
+            --set-env-vars "ADK_AGENT_CONFIG_PATH=/app/agents" \
+            --set-env-vars "GEMMA_SERVICE_URL=${{ vars.GEMMA_SERVICE_URL || '' }}" \
+            --set-secrets "GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+            --quiet
+
+      - name: Deploy frontend service
+        if: >-
+          steps.context.outputs.service == 'frontend' ||
+          steps.context.outputs.service == 'all'
+        env:
+          IMAGE: ${{ steps.context.outputs.registry }}/agentnav-frontend:${{ steps.context.outputs.image_tag }}
+        run: |
+          gcloud run deploy "${{ steps.context.outputs.frontend_service }}" \
+            --image "${IMAGE}" \
+            --region "${FRONTEND_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
             --platform managed \
             --allow-unauthenticated \
             --memory 512Mi \
@@ -94,136 +177,37 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --cpu-throttling \
+            --port 80 \
             --quiet
 
-  deploy-backend:
-    name: Deploy Backend
-    needs: deploy-frontend
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    env:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
-      IMAGE_TAG: ${{ github.sha }}
-      SERVICE_NAME: agentnav-backend
-      CLOUD_RUN_REGION: europe-west1
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud (WIF)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Podman / Artifact Registry access
+      - name: Resolve service URLs
+        id: urls
         run: |
           set -euo pipefail
-          # Artifact Registry is in europe-west1, not the deployment region
-          gcloud auth configure-docker europe-west1-docker.pkg.dev
+          BACKEND_URL=$(gcloud run services describe \
+            "${{ steps.context.outputs.backend_service }}" \
+            --region "${BACKEND_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
+            --format 'value(status.url)' 2>/dev/null || true)
+          FRONTEND_URL=$(gcloud run services describe \
+            "${{ steps.context.outputs.frontend_service }}" \
+            --region "${FRONTEND_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
+            --format 'value(status.url)' 2>/dev/null || true)
+          echo "backend_url=${BACKEND_URL}" >>"$GITHUB_OUTPUT"
+          echo "frontend_url=${FRONTEND_URL}" >>"$GITHUB_OUTPUT"
 
-      - name: Build and push backend image with Podman
-        run: |
-          set -euo pipefail
-          # Use europe-west1 for Artifact Registry (not deployment region)
-          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
-          echo "Building backend image: ${IMAGE}"
-          podman build -t ${IMAGE} -f backend/Dockerfile backend
-          echo "Pushing backend image: ${IMAGE}"
-          podman push ${IMAGE}
-
-      - name: Deploy backend to Cloud Run
+      - name: Deploy proxy service
+        if: >-
+          steps.context.outputs.service == 'proxy' ||
+          steps.context.outputs.service == 'all'
         env:
-          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          IMAGE: ${{ steps.context.outputs.registry }}/agentnav-proxy:${{ steps.context.outputs.image_tag }}
         run: |
-          set -euo pipefail
-          echo "Deploying backend: ${IMAGE} to region ${CLOUD_RUN_REGION}"
-          gcloud run deploy ${SERVICE_NAME} \
-            --image ${IMAGE} \
-            --region ${CLOUD_RUN_REGION} \
-            --project ${GCP_PROJECT_ID} \
-            --platform managed \
-            --allow-unauthenticated \
-            --service-account agentnav-backend@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
-            --memory 1Gi \
-            --cpu 1 \
-            --timeout 300s \
-            --concurrency 80 \
-            --min-instances 0 \
-            --max-instances 10 \
-            --set-env-vars ENVIRONMENT=dev,ALLOWED_HOSTS="${{ vars.ALLOWED_HOSTS != '' && vars.ALLOWED_HOSTS || 'agentnav.lornu.com,*.run.app' }}",CORS_ORIGINS="${{ vars.CORS_ORIGINS != '' && vars.CORS_ORIGINS || 'https://agentnav.lornu.com' }}",FIRESTORE_DATABASE_ID="${{ vars.FIRESTORE_DATABASE_ID != '' && vars.FIRESTORE_DATABASE_ID || '(default)' }}",FIRESTORE_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}",A2A_PROTOCOL_ENABLED=true,ADK_AGENT_CONFIG_PATH="/app/agents",GEMMA_SERVICE_URL="${{ vars.GEMMA_SERVICE_URL || '' }}" \
-            --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
-            --quiet
-
-  deploy-proxy:
-    name: Deploy Proxy
-    needs: deploy-backend
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    env:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GAR_REPOSITORY != '' && vars.GAR_REPOSITORY || 'agentnav-containers' }}
-      IMAGE_TAG: ${{ github.sha }}
-      SERVICE_NAME: agentnav-proxy
-      CLOUD_RUN_REGION: us-central1
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud (WIF)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Podman / Artifact Registry access
-        run: |
-          set -euo pipefail
-          # Artifact Registry is in europe-west1, not the deployment region
-          gcloud auth configure-docker europe-west1-docker.pkg.dev
-
-      - name: Build and push proxy image with Podman
-        run: |
-          set -euo pipefail
-          # Use europe-west1 for Artifact Registry (not deployment region)
-          IMAGE=europe-west1-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${SERVICE_NAME}:${IMAGE_TAG}
-          echo "Building proxy image: ${IMAGE}"
-          podman build -t ${IMAGE} -f nginx-proxy/Dockerfile nginx-proxy
-          echo "Pushing proxy image: ${IMAGE}"
-          podman push ${IMAGE}
-
-      - name: Deploy proxy to Cloud Run
-        env:
-          IMAGE: europe-west1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
-        run: |
-          set -euo pipefail
-          echo "Deploying proxy: ${IMAGE} to region ${CLOUD_RUN_REGION}"
-          
-          # Get backend and frontend URLs for proxy configuration
-          BACKEND_URL=$(gcloud run services describe agentnav-backend --region europe-west1 --project ${GCP_PROJECT_ID} --format="value(status.url)")
-          FRONTEND_URL=$(gcloud run services describe agentnav-frontend --region us-central1 --project ${GCP_PROJECT_ID} --format="value(status.url)")
-          
-          gcloud run deploy ${SERVICE_NAME} \
-            --image ${IMAGE} \
-            --region ${CLOUD_RUN_REGION} \
-            --project ${GCP_PROJECT_ID} \
+          gcloud run deploy "${{ steps.context.outputs.proxy_service }}" \
+            --image "${IMAGE}" \
+            --region "${PROXY_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
             --platform managed \
             --allow-unauthenticated \
             --memory 512Mi \
@@ -232,6 +216,24 @@ jobs:
             --concurrency 80 \
             --min-instances 0 \
             --max-instances 10 \
-            --set-env-vars AGENTNAV_BACKEND_URL=${BACKEND_URL},AGENTNAV_FRONTEND_URL=${FRONTEND_URL},AGENTNAV_GEMMA_URL="${{ vars.GEMMA_SERVICE_URL || '' }}" \
             --cpu-throttling \
+            --set-env-vars "AGENTNAV_BACKEND_URL=${{ steps.urls.outputs.backend_url }}" \
+            --set-env-vars "AGENTNAV_FRONTEND_URL=${{ steps.urls.outputs.frontend_url }}" \
+            --set-env-vars "AGENTNAV_GEMMA_URL=${{ vars.GEMMA_SERVICE_URL || '' }}" \
             --quiet
+
+      - name: Summarize deployment
+        if: always()
+        run: |
+          {
+            echo "## ✅ Cloud Run Deployment"
+            echo
+            echo "**Environment:** ${{ steps.context.outputs.environment }}"
+            echo "**Services:** ${{ steps.context.outputs.service }}"
+            echo "**Image Tag:** ${{ steps.context.outputs.image_tag }}"
+            echo "**Registry:** ${{ steps.context.outputs.registry }}"
+            echo
+            echo "### Endpoints"
+            echo "- Backend: ${{ steps.urls.outputs.backend_url || 'n/a' }}"
+            echo "- Frontend: ${{ steps.urls.outputs.frontend_url || 'n/a' }}"
+          } >>"$GITHUB_STEP_SUMMARY"

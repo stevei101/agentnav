@@ -162,3 +162,30 @@ output "current_cloud_run_ips" {
     }
   )
 }
+
+# GKE Outputs
+output "gke_cluster_name" {
+  description = "Primary GKE cluster name"
+  value       = google_container_cluster.primary.name
+}
+
+output "gke_cluster_location" {
+  description = "Region where the GKE cluster is deployed"
+  value       = google_container_cluster.primary.location
+}
+
+output "gke_cluster_endpoint" {
+  description = "GKE cluster endpoint"
+  value       = google_container_cluster.primary.endpoint
+  sensitive   = true
+}
+
+output "gke_network" {
+  description = "VPC network used by GKE"
+  value       = google_compute_network.gke.name
+}
+
+output "gke_subnet" {
+  description = "Subnet used by GKE worker nodes"
+  value       = google_compute_subnetwork.gke.name
+}
