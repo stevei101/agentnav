@@ -94,16 +94,26 @@ jobs:
                 --format="value(metadata.name)" \
                 2>/dev/null || true)
               if [ -n "$FOUND" ]; then
-                SERVICES_TO_DELETE+=$(printf '%s\n' "$FOUND" | \
-                  sed "s/$/,$region/")
+                # Build properly formatted list with newline separators
+                FOUND_WITH_REGION=$(echo "$FOUND" | sed "s/$/,$region/")
+                if [ -z "$SERVICES_TO_DELETE" ]; then
+                  SERVICES_TO_DELETE="$FOUND_WITH_REGION"
+                else
+                  # Explicitly add newline between regions to prevent concatenation issues
+                  SERVICES_TO_DELETE=$(printf '%s\n%s' "$SERVICES_TO_DELETE" "$FOUND_WITH_REGION")
+                fi
               fi
             done
           else
             SERVICES_TO_DELETE=""
             for service in $(echo "$SERVICES_INPUT" | tr ',' ' '); do
               for region in $REGIONS; do
-                SERVICES_TO_DELETE+=$(printf '%s\n' "$service" | \
-                  sed "s/$/,$region/")
+                SERVICE_ENTRY="$service,$region"
+                if [ -z "$SERVICES_TO_DELETE" ]; then
+                  SERVICES_TO_DELETE="$SERVICE_ENTRY"
+                else
+                  SERVICES_TO_DELETE=$(printf '%s\n%s' "$SERVICES_TO_DELETE" "$SERVICE_ENTRY")
+                fi
               done
             done
           fi
@@ -121,6 +131,10 @@ jobs:
           FAILED_COUNT=0
 
           while IFS=',' read -r service region; do
+            # Trim whitespace from service and region
+            service=$(echo "$service" | xargs)
+            region=$(echo "$region" | xargs)
+            
             if [ -n "$service" ] && [ -n "$region" ]; then
               echo "Deleting $service ($region)"
               if gcloud run services delete "$service" \
