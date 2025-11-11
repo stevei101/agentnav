@@ -107,7 +107,7 @@ jobs:
           DELETED_COUNT=0
           FAILED_COUNT=0
 
-          while IFS=',' read -r service region; do
+          printf '%s\n' "$SERVICES_TO_DELETE" | while IFS=',' read -r service region; do
             if [ -n "$service" ] && [ -n "$region" ]; then
               echo "Deleting $service ($region)"
               if gcloud run services delete "$service" \
@@ -121,9 +121,7 @@ jobs:
                 FAILED_COUNT=$((FAILED_COUNT + 1))
               fi
             fi
-          done <<EOF_SERVICES
-${SERVICES_TO_DELETE}
-EOF_SERVICES
+          done
 
           echo '```' >>"$GITHUB_STEP_SUMMARY"
           echo "" >>"$GITHUB_STEP_SUMMARY"
