@@ -16,21 +16,25 @@ import { UploadIcon, BrainCircuitIcon } from './components/icons';
 
 const initialAgents: AgentState[] = [
   {
+    id: 'orchestrator-001',
     name: AgentName.ORCHESTRATOR,
     status: AgentStatusValue.IDLE,
     details: 'Ready to coordinate analysis',
   },
   {
+    id: 'summarizer-001',
     name: AgentName.SUMMARIZER,
     status: AgentStatusValue.IDLE,
     details: 'Ready to create summaries',
   },
   {
+    id: 'linker-001',
     name: AgentName.LINKER,
     status: AgentStatusValue.IDLE,
     details: 'Ready to map relationships',
   },
   {
+    id: 'visualizer-001',
     name: AgentName.VISUALIZER,
     status: AgentStatusValue.IDLE,
     details: 'Ready to create visualizations',
